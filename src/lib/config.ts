@@ -22,9 +22,9 @@ export const PROJECT = {
  * يُكتب بالصيغة الدولية بدون + ولا مسافات (مثال: 966555531084)
  * WhatsApp number to receive booking requests (international, no + or spaces)
  */
-export const WHATSAPP_NUMBER = "966555531084";
+export const WHATSAPP_NUMBER = "966595650716";
 
 export const CONTACT = {
-  phone: "+966 55 553 1084",
+  phone: "+966 59 565 0716",
   email: "info@nukhbat-taskeen.sa",
 };
