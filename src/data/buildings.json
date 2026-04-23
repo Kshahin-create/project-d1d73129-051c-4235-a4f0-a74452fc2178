@@ -1,0 +1,82 @@
+[
+  {
+    "number": 1,
+    "type": "مراكز صيانة سيارات",
+    "totalUnits": 24,
+    "rentedUnits": 4,
+    "availableUnits": 20,
+    "expectedAnnualRevenue": 1461200.0
+  },
+  {
+    "number": 2,
+    "type": "مراكز صيانة سيارات",
+    "totalUnits": 24,
+    "rentedUnits": 0,
+    "availableUnits": 24,
+    "expectedAnnualRevenue": 1461200.0
+  },
+  {
+    "number": 3,
+    "type": "مراكز صيانة سيارات",
+    "totalUnits": 24,
+    "rentedUnits": 6,
+    "availableUnits": 18,
+    "expectedAnnualRevenue": 1461200.0
+  },
+  {
+    "number": 4,
+    "type": "مراكز صيانة سيارات",
+    "totalUnits": 24,
+    "rentedUnits": 0,
+    "availableUnits": 24,
+    "expectedAnnualRevenue": 1461200.0
+  },
+  {
+    "number": 5,
+    "type": "مراكز صيانة سيارات",
+    "totalUnits": 24,
+    "rentedUnits": 0,
+    "availableUnits": 24,
+    "expectedAnnualRevenue": 1461200.0
+  },
+  {
+    "number": 6,
+    "type": "مراكز صيانة سيارات",
+    "totalUnits": 24,
+    "rentedUnits": 0,
+    "availableUnits": 24,
+    "expectedAnnualRevenue": 1461200.0
+  },
+  {
+    "number": 7,
+    "type": "محلات قطع غيار السيارات وبناشر",
+    "totalUnits": 22,
+    "rentedUnits": 0,
+    "availableUnits": 22,
+    "expectedAnnualRevenue": 1008374.0
+  },
+  {
+    "number": 8,
+    "type": "محلات قطع غيار السيارات وبناشر",
+    "totalUnits": 22,
+    "rentedUnits": 0,
+    "availableUnits": 22,
+    "expectedAnnualRevenue": 888804.0
+  },
+  {
+    "number": 9,
+    "type": "محلات قطع غيار السيارات وبناشر",
+    "totalUnits": 20,
+    "rentedUnits": 0,
+    "availableUnits": 20,
+    "expectedAnnualRevenue": 913648.0
+  },
+  {
+    "number": 10,
+    "type": "محلات قطع غيار السيارات وبناشر",
+    "totalUnits": 20,
+    "rentedUnits": 0,
+    "availableUnits": 20,
+    "expectedAnnualRevenue": 817348.0
+  }
+]
