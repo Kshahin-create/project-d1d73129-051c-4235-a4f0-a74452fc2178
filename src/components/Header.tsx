@@ -1,15 +1,17 @@
-import { Building2, Phone } from "lucide-react";
+import { Phone } from "lucide-react";
 import { COMPANY, CONTACT } from "@/lib/config";
+import logo from "@/assets/logo.jpeg";
 
 export const Header = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-lg">
       <div className="container-tight flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          {/* Logo placeholder - replace with actual logo when uploaded */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary shadow-soft">
-            <Building2 className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
-          </div>
+          <img
+            src={logo}
+            alt="شعار المدينة الصناعية بشمال مكة المكرمة"
+            className="h-10 w-auto object-contain sm:h-12"
+          />
           <div className="leading-tight">
             <div className="font-display text-sm font-bold text-foreground sm:text-base">
               {COMPANY.name}

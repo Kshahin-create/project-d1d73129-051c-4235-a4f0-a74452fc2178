@@ -1,5 +1,6 @@
-import { Building2, Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, CONTACT, PROJECT } from "@/lib/config";
+import logo from "@/assets/logo.jpeg";
 
 export const Footer = () => {
   return (
@@ -7,10 +8,12 @@ export const Footer = () => {
       <div className="container-tight py-10">
         <div className="grid gap-8 md:grid-cols-3">
           <div>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
-                <Building2 className="h-4 w-4 text-primary-foreground" />
-              </div>
+            <div className="flex items-center gap-3">
+              <img
+                src={logo}
+                alt="شعار المدينة الصناعية بشمال مكة المكرمة"
+                className="h-12 w-auto object-contain"
+              />
               <span className="font-display font-bold">{COMPANY.name}</span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
