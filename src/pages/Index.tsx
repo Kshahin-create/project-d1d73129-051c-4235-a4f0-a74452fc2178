@@ -1,16 +1,176 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ShieldCheck } from "lucide-react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { PROJECT } from "@/lib/config";
+import masterPlan from "@/assets/master-plan-placeholder.jpg";
+import heroBg from "@/assets/hero-bg.jpg";
+import buildings from "@/data/buildings.json";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const totalUnits = buildings.reduce((s, b) => s + b.totalUnits, 0);
+  const availableUnits = buildings.reduce((s, b) => s + b.availableUnits, 0);
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={heroBg} alt="" className="h-full w-full object-cover" width={1920} height={1080} />
+          <div className="absolute inset-0 bg-gradient-to-l from-primary/95 via-primary/90 to-primary/70" />
+        </div>
+
+        <div className="container-tight relative py-16 sm:py-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-2xl text-primary-foreground"
+          >
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium text-accent backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5" />
+              فرصة استثمارية — احجز وحدتك الآن
+            </div>
+
+            <h1 className="mt-5 font-display text-3xl font-extrabold leading-tight text-balance sm:text-5xl">
+              {PROJECT.nameAr}
+            </h1>
+            <p className="mt-2 font-display text-lg text-accent sm:text-xl" dir="ltr">
+              {PROJECT.nameEn}
+            </p>
+
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">
+              مشروع متكامل يضمّ <strong className="text-accent">مراكز صيانة سيارات</strong> و
+              <strong className="text-accent"> محلات قطع غيار وبناشر</strong>. احجز وحدتك في دقائق
+              عبر نموذج ذكي يربطك مباشرة بإدارة المشروع.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                to="/booking"
+                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3.5 font-display text-base font-bold text-accent-foreground shadow-gold transition-transform hover:scale-[1.02]"
+              >
+                ابدأ الحجز الآن
+                <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
+              </Link>
+              <a
+                href="#overview"
+                className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 px-6 py-3.5 font-medium text-primary-foreground backdrop-blur-sm transition hover:bg-primary-foreground/15"
+              >
+                نظرة على المشروع
+              </a>
+            </div>
+
+            {/* Stats */}
+            <div className="mt-10 grid max-w-lg grid-cols-3 gap-3 sm:gap-6">
+              <Stat value={10} label="مباني" />
+              <Stat value={totalUnits} label="إجمالي الوحدات" />
+              <Stat value={availableUnits} label="وحدة متاحة" accent />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Overview + Master plan */}
+      <section id="overview" className="container-tight py-16 sm:py-20">
+        <div className="grid items-start gap-10 lg:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-bold text-accent-foreground">
+              <MapPin className="h-3.5 w-3.5" />
+              شمال مكة المكرمة
+            </div>
+            <h2 className="mt-4 font-display text-3xl font-extrabold sm:text-4xl">
+              موقع استراتيجي لأنشطتك التجارية
+            </h2>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              يضمّ المشروع <strong className="text-foreground">10 مبانٍ</strong> مصمّمة خصيصاً لقطاع
+              صيانة السيارات وقطع الغيار. كل وحدة جاهزة للاستثمار، بمواصفات عالية وتسهيلات تشغيلية.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <Feature icon={<Wrench className="h-5 w-5" />} title="مراكز صيانة" desc="مباني 1-6 (144 وحدة)" />
+              <Feature icon={<Cog className="h-5 w-5" />} title="قطع غيار وبناشر" desc="مباني 7-10 (84 وحدة)" />
+              <Feature icon={<Building2 className="h-5 w-5" />} title="مساحات متنوعة" desc="ركنية وداخلية" />
+              <Feature icon={<ShieldCheck className="h-5 w-5" />} title="تراخيص جاهزة" desc="معتمد من أمانة العاصمة" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="overflow-hidden rounded-2xl border border-border bg-card shadow-elevated"
+          >
+            <div className="flex items-center justify-between border-b border-border bg-secondary/50 px-5 py-3">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <MapPin className="h-4 w-4 text-accent" />
+                الماستر بلان الشامل
+              </div>
+              <span className="text-[10px] text-muted-foreground">نظرة عامة</span>
+            </div>
+            <img
+              src={masterPlan}
+              alt="الماستر بلان الشامل للمدينة الصناعية بشمال مكة المكرمة"
+              className="w-full object-cover"
+              width={1536}
+              height={1024}
+              loading="lazy"
+            />
+            <div className="border-t border-border bg-secondary/30 p-3 text-center text-[11px] text-muted-foreground">
+              💡 سيتم استبدال هذه الصورة بالماستر بلان الأصلي عند رفعه إلى{" "}
+              <code className="rounded bg-background px-1 py-0.5">src/assets/master-plan.png</code>
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="mt-16 flex flex-col items-center gap-5 rounded-2xl bg-gradient-hero p-8 text-center text-primary-foreground shadow-elevated sm:p-12">
+          <h3 className="font-display text-2xl font-bold sm:text-3xl">جاهز لحجز وحدتك؟</h3>
+          <p className="max-w-xl text-primary-foreground/80">
+            أكمل خطوات الحجز بسهولة واستقبل التأكيد مباشرة عبر واتساب.
+          </p>
+          <Link
+            to="/booking"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3 font-display font-bold text-accent-foreground shadow-gold transition-transform hover:scale-105"
+          >
+            ابدأ الآن
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };
 
-const Index = PlaceholderIndex;
+const Stat = ({ value, label, accent }: { value: number; label: string; accent?: boolean }) => (
+  <div className={`rounded-xl border p-3 backdrop-blur-sm sm:p-4 ${accent ? "border-accent/40 bg-accent/10" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
+    <div className={`font-display text-2xl font-extrabold num sm:text-3xl ${accent ? "text-accent" : "text-primary-foreground"}`}>
+      {value}
+    </div>
+    <div className="text-[11px] text-primary-foreground/75 sm:text-xs">{label}</div>
+  </div>
+);
+
+const Feature = ({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) => (
+  <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-foreground">
+      {icon}
+    </div>
+    <div>
+      <div className="text-sm font-bold">{title}</div>
+      <div className="text-xs text-muted-foreground">{desc}</div>
+    </div>
+  </div>
+);
 
 export default Index;
