@@ -89,8 +89,25 @@ const Admin = () => {
     navigate("/auth");
   };
 
-  const openRentDialog = async (unitNumber: number, buildingNumber: number) => {
-    // Fetch unit id
+  const writeAuditLog = async (entry: {
+    unit_id: string;
+    building_number: number;
+    unit_number: number;
+    action: "rent" | "release" | "update";
+    previous_status: string;
+    new_status: string;
+    reason: string;
+    tenant_snapshot?: any;
+  }) => {
+    if (!user) return;
+    await supabase.from("unit_audit_log").insert({
+      ...entry,
+      performed_by: user.id,
+      performed_by_email: user.email ?? null,
+    });
+  };
+
+  const openRentDialog = async (unitNumber: number, buildingNumber: number, currentStatus: string) => {
     const { data: u } = await supabase
       .from("units")
       .select("id")
@@ -98,8 +115,7 @@ const Admin = () => {
       .eq("unit_number", unitNumber)
       .maybeSingle();
     if (!u) return;
-    setEditingUnit({ id: u.id, unitNumber, building: buildingNumber });
-    // Load existing tenant if any
+    setEditingUnit({ id: u.id, unitNumber, building: buildingNumber, wasRented: currentStatus === "rented" });
     const { data: t } = await supabase
       .from("tenants")
       .select("*")
@@ -113,18 +129,27 @@ const Admin = () => {
     });
   };
 
-  const handleRent = async () => {
+  // Step 1: validate form, then open confirmation
+  const requestRentConfirmation = () => {
     if (!editingUnit) return;
     if (!tenantForm.tenant_name.trim()) {
       toast.error("اسم المستأجر مطلوب");
       return;
     }
+    setConfirmRent(true);
+  };
+
+  // Step 2: actually save after confirmation with reason
+  const handleRentConfirmed = async (reason: string) => {
+    if (!editingUnit) return;
     setSaving(true);
     try {
-      // Update unit status
+      const action = editingUnit.wasRented ? "update" : "rent";
+      const previousStatus = editingUnit.wasRented ? "rented" : "available";
+
       const { error: ue } = await supabase.from("units").update({ status: "rented" }).eq("id", editingUnit.id);
       if (ue) throw ue;
-      // Upsert tenant
+
       const { data: existing } = await supabase.from("tenants").select("id").eq("unit_id", editingUnit.id).maybeSingle();
       if (existing) {
         const { error } = await supabase.from("tenants").update(tenantForm).eq("id", existing.id);
@@ -133,7 +158,20 @@ const Admin = () => {
         const { error } = await supabase.from("tenants").insert({ ...tenantForm, unit_id: editingUnit.id });
         if (error) throw error;
       }
-      toast.success(`تم تأجير الوحدة ${editingUnit.unitNumber}`);
+
+      await writeAuditLog({
+        unit_id: editingUnit.id,
+        building_number: editingUnit.building,
+        unit_number: editingUnit.unitNumber,
+        action,
+        previous_status: previousStatus,
+        new_status: "rented",
+        reason,
+        tenant_snapshot: tenantForm,
+      });
+
+      toast.success(`تم ${editingUnit.wasRented ? "تحديث بيانات" : "تأجير"} الوحدة ${editingUnit.unitNumber}`);
+      setConfirmRent(false);
       setEditingUnit(null);
       qc.invalidateQueries({ queryKey: ["buildings-units"] });
     } catch (err: any) {
@@ -143,21 +181,54 @@ const Admin = () => {
     }
   };
 
-  const handleRelease = async (unitNumber: number, buildingNumber: number) => {
-    if (!confirm(`هل أنت متأكد من إخلاء الوحدة ${unitNumber}؟`)) return;
-    const { data: u } = await supabase
-      .from("units").select("id")
-      .eq("building_number", buildingNumber).eq("unit_number", unitNumber).maybeSingle();
-    if (!u) return;
-    await supabase.from("tenants").delete().eq("unit_id", u.id);
-    const { error } = await supabase.from("units").update({ status: "available" }).eq("id", u.id);
-    if (error) {
-      toast.error(error.message);
-      return;
+  const handleReleaseConfirmed = async (reason: string) => {
+    if (!releaseTarget) return;
+    setSaving(true);
+    try {
+      const { data: u } = await supabase
+        .from("units").select("id")
+        .eq("building_number", releaseTarget.buildingNumber)
+        .eq("unit_number", releaseTarget.unitNumber)
+        .maybeSingle();
+      if (!u) throw new Error("الوحدة غير موجودة");
+
+      const { data: tenantSnap } = await supabase.from("tenants").select("*").eq("unit_id", u.id).maybeSingle();
+
+      await supabase.from("tenants").delete().eq("unit_id", u.id);
+      const { error } = await supabase.from("units").update({ status: "available" }).eq("id", u.id);
+      if (error) throw error;
+
+      await writeAuditLog({
+        unit_id: u.id,
+        building_number: releaseTarget.buildingNumber,
+        unit_number: releaseTarget.unitNumber,
+        action: "release",
+        previous_status: "rented",
+        new_status: "available",
+        reason,
+        tenant_snapshot: tenantSnap,
+      });
+
+      toast.success(`تم إخلاء الوحدة ${releaseTarget.unitNumber}`);
+      setReleaseTarget(null);
+      qc.invalidateQueries({ queryKey: ["buildings-units"] });
+    } catch (err: any) {
+      toast.error(err.message || "فشل الإخلاء");
+    } finally {
+      setSaving(false);
     }
-    toast.success(`تم إخلاء الوحدة ${unitNumber}`);
-    qc.invalidateQueries({ queryKey: ["buildings-units"] });
   };
+
+  const openAuditLog = async () => {
+    setShowAuditLog(true);
+    const { data } = await supabase
+      .from("unit_audit_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setAuditEntries(data ?? []);
+  };
+
 
   return (
     <div className="min-h-screen bg-background">
