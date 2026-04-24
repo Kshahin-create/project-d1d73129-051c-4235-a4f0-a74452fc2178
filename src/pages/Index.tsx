@@ -1,16 +1,18 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ShieldCheck, ZoomIn, X } from "lucide-react";
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PROJECT } from "@/lib/config";
-import masterPlan from "@/assets/master-plan-placeholder.jpg";
+import masterPlan from "@/assets/master-plan.jpeg";
 import heroBg from "@/assets/hero-bg.jpg";
 import buildings from "@/data/buildings.json";
 
 const Index = () => {
   const totalUnits = buildings.reduce((s, b) => s + b.totalUnits, 0);
   const availableUnits = buildings.reduce((s, b) => s + b.availableUnits, 0);
+  const [zoomed, setZoomed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,22 +117,59 @@ const Index = () => {
                 <MapPin className="h-4 w-4 text-accent" />
                 الماستر بلان الشامل
               </div>
-              <span className="text-[10px] text-muted-foreground">نظرة عامة</span>
+              <button
+                onClick={() => setZoomed(true)}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[10px] font-medium text-primary-foreground transition hover:bg-primary/90"
+              >
+                <ZoomIn className="h-3 w-3" /> تكبير
+              </button>
             </div>
-            <img
-              src={masterPlan}
-              alt="الماستر بلان الشامل للمدينة الصناعية بشمال مكة المكرمة"
-              className="w-full object-cover"
-              width={1536}
-              height={1024}
-              loading="lazy"
-            />
-            <div className="border-t border-border bg-secondary/30 p-3 text-center text-[11px] text-muted-foreground">
-              💡 سيتم استبدال هذه الصورة بالماستر بلان الأصلي عند رفعه إلى{" "}
-              <code className="rounded bg-background px-1 py-0.5">src/assets/master-plan.png</code>
-            </div>
+            <button
+              type="button"
+              onClick={() => setZoomed(true)}
+              className="block w-full cursor-zoom-in"
+              aria-label="تكبير الماستر بلان"
+            >
+              <img
+                src={masterPlan}
+                alt="الماستر بلان الشامل للمدينة الصناعية بشمال مكة المكرمة"
+                className="w-full bg-secondary object-contain"
+                width={1536}
+                height={2048}
+                loading="lazy"
+              />
+            </button>
           </motion.div>
         </div>
+
+        {/* Lightbox */}
+        <AnimatePresence>
+          {zoomed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setZoomed(false)}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
+            >
+              <button
+                onClick={() => setZoomed(false)}
+                className="absolute left-4 top-4 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
+                aria-label="إغلاق"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <motion.img
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                src={masterPlan}
+                alt="الماستر بلان الشامل"
+                onClick={(e) => e.stopPropagation()}
+                className="max-h-full max-w-full rounded-xl object-contain shadow-elevated"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="mt-16 flex flex-col items-center gap-5 rounded-2xl bg-gradient-hero p-8 text-center text-primary-foreground shadow-elevated sm:p-12">
           <h3 className="font-display text-2xl font-bold sm:text-3xl">جاهز لحجز وحدتك؟</h3>
