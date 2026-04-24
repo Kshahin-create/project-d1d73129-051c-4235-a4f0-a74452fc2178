@@ -23,7 +23,7 @@ export const Header = () => {
         </div>
 
         <a
-          href={`tel:${CONTACT.phone.replace(/\s/g, "")}`}
+          href="tel:0595650716"
           className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-primary/40 hover:text-primary sm:text-sm"
         >
           <Phone className="h-3.5 w-3.5" />
