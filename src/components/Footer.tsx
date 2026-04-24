@@ -1,6 +1,6 @@
 import { Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, CONTACT, PROJECT } from "@/lib/config";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo-nukhbat.jpeg";
 
 export const Footer = () => {
   return (
@@ -11,13 +11,13 @@ export const Footer = () => {
             <div className="flex items-center gap-3">
               <img
                 src={logo}
-                alt="شعار المدينة الصناعية بشمال مكة المكرمة"
-                className="h-12 w-auto object-contain"
+                alt="شعار شركة نخبة تسكين العقارية"
+                className="h-14 w-auto object-contain"
               />
               <span className="font-display font-bold">{COMPANY.name}</span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              المشغّل الرسمي لـ <strong className="text-foreground">{PROJECT.nameAr}</strong>
+              مدير التشغيل والتأجير لـ <strong className="text-foreground">{PROJECT.nameAr}</strong>
             </p>
           </div>
 
@@ -25,7 +25,7 @@ export const Footer = () => {
             <h3 className="font-display font-bold text-foreground">الجهات المعنية</h3>
             <p className="text-muted-foreground"><span className="text-foreground">المالك:</span> {PROJECT.owner}</p>
             <p className="text-muted-foreground"><span className="text-foreground">المستثمر:</span> {PROJECT.investor}</p>
-            <p className="text-muted-foreground"><span className="text-foreground">المشغّل:</span> {PROJECT.operator}</p>
+            <p className="text-muted-foreground"><span className="text-foreground">مدير التشغيل والتأجير:</span> {PROJECT.operator}</p>
           </div>
 
           <div className="space-y-2 text-sm">

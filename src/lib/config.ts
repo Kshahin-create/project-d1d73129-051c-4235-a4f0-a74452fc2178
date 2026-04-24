@@ -6,15 +6,16 @@
 export const COMPANY = {
   name: "نخبة تسكين العقارية",
   nameEn: "Nukhbat Taskeen Real Estate",
-  tagline: "إدارة وتشغيل وتأجير",
+  tagline: "مدير التشغيل والتأجير",
 };
 
 export const PROJECT = {
   nameAr: "المدينة الصناعية بشمال مكة المكرمة",
   nameEn: "Makkah North Industrial City",
-  owner: "أمانة العاصمة المقدسة",
+  owner: "شركة البلد الأمين للاستثمار والتطوير العقاري",
   investor: "شركة القمة الهادفة الحديثة",
   operator: "نخبة تسكين العقارية",
+  operatorRole: "مدير التشغيل والتأجير",
 };
 
 /**
@@ -26,5 +27,5 @@ export const WHATSAPP_NUMBER = "966595650716";
 
 export const CONTACT = {
   phone: "+966 59 565 0716",
-  email: "info@nukhbat-taskeen.sa",
+  email: "taskinaqaria@gmail.com",
 };
