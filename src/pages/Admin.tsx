@@ -336,13 +336,13 @@ const Admin = () => {
                         {u.status === "rented" ? (
                           <div className="flex gap-1.5">
                             <button
-                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber)}
+                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
                               className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10"
                             >
                               عرض/تعديل
                             </button>
                             <button
-                              onClick={() => handleRelease(u.unitNumber, u.buildingNumber)}
+                              onClick={() => setReleaseTarget({ unitNumber: u.unitNumber, buildingNumber: u.buildingNumber })}
                               className="rounded-lg bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success hover:bg-success/20"
                             >
                               إخلاء
@@ -350,7 +350,7 @@ const Admin = () => {
                           </div>
                         ) : (
                           <button
-                            onClick={() => openRentDialog(u.unitNumber, u.buildingNumber)}
+                            onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
                             className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90"
                           >
                             تأجير
@@ -369,13 +369,13 @@ const Admin = () => {
         )}
       </main>
 
-      {/* Rent dialog */}
+      {/* Tenant data form dialog */}
       {editingUnit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm" onClick={() => setEditingUnit(null)}>
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-elevated" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold">
-                تأجير الوحدة <span className="num">{editingUnit.unitNumber}</span> — مبنى <span className="num">{editingUnit.building}</span>
+                {editingUnit.wasRented ? "تعديل بيانات" : "تأجير"} الوحدة <span className="num">{editingUnit.unitNumber}</span> — مبنى <span className="num">{editingUnit.building}</span>
               </h3>
               <button onClick={() => setEditingUnit(null)} className="rounded-lg p-1 hover:bg-secondary">
                 <X className="h-4 w-4" />
@@ -395,16 +395,52 @@ const Admin = () => {
                 إلغاء
               </button>
               <button
-                onClick={handleRent}
+                onClick={requestRentConfirmation}
                 disabled={saving}
                 className="flex-1 rounded-xl bg-gradient-primary py-2.5 text-sm font-bold text-primary-foreground shadow-card hover:shadow-elevated disabled:opacity-50"
               >
-                {saving ? "جاري الحفظ..." : "حفظ التأجير"}
+                متابعة للتأكيد
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Confirm rent / update */}
+      <ConfirmDialog
+        open={confirmRent}
+        title={editingUnit?.wasRented ? "تأكيد تحديث بيانات المستأجر" : `تأكيد تأجير الوحدة ${editingUnit?.unitNumber ?? ""}`}
+        description={
+          editingUnit?.wasRented
+            ? "سيتم حفظ التغييرات على بيانات المستأجر وسيتم تسجيل العملية في سجل التدقيق."
+            : `سيتم تغيير حالة الوحدة إلى "مؤجرة" وتسجيل بيانات المستأجر "${tenantForm.tenant_name}". اكتب سبب العملية للتوثيق.`
+        }
+        confirmLabel="تأكيد وحفظ"
+        variant="primary"
+        loading={saving}
+        reasonPlaceholder="مثال: عقد إيجار جديد رقم 1234 / تجديد عقد..."
+        reasonSuggestions={
+          editingUnit?.wasRented
+            ? ["تحديث بيانات المستأجر", "تصحيح خطأ إدخال", "تجديد العقد"]
+            : ["عقد إيجار جديد", "حجز موثّق", "نقل من قائمة الانتظار"]
+        }
+        onConfirm={handleRentConfirmed}
+        onCancel={() => setConfirmRent(false)}
+      />
+
+      {/* Confirm release */}
+      <ConfirmDialog
+        open={!!releaseTarget}
+        title={`تأكيد إخلاء الوحدة ${releaseTarget?.unitNumber ?? ""}`}
+        description={`سيتم تغيير حالة الوحدة إلى "متاحة" وحذف بيانات المستأجر الحالي. سيُحفظ نسخة من بياناته في سجل التدقيق.`}
+        confirmLabel="تأكيد الإخلاء"
+        variant="destructive"
+        loading={saving}
+        reasonPlaceholder="مثال: انتهاء العقد / فسخ بناءً على طلب المستأجر..."
+        reasonSuggestions={["انتهاء العقد", "فسخ من المستأجر", "إخلال بشروط العقد", "تصحيح إدخال خاطئ"]}
+        onConfirm={handleReleaseConfirmed}
+        onCancel={() => setReleaseTarget(null)}
+      />
 
       <Footer />
     </div>
