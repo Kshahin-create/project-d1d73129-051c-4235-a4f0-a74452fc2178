@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { PROJECT } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.jpeg";
 import heroBg from "@/assets/hero-bg.jpg";
+import overviewBg from "@/assets/overview-bg.png";
 import buildings from "@/data/buildings.json";
 
 const Index = () => {
@@ -77,8 +78,12 @@ const Index = () => {
       </section>
 
       {/* Overview + Master plan */}
-      <section id="overview" className="container-tight py-16 sm:py-20">
-        <div className="grid items-start gap-10 lg:grid-cols-2">
+      <section id="overview" className="relative overflow-hidden py-16 sm:py-20">
+        <div className="absolute inset-0 -z-10">
+          <img src={overviewBg} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-background/92 backdrop-blur-sm" />
+        </div>
+        <div className="container-tight grid items-start gap-10 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -142,47 +147,49 @@ const Index = () => {
           </motion.div>
         </div>
 
-        {/* Lightbox */}
-        <AnimatePresence>
-          {zoomed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setZoomed(false)}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
-            >
-              <button
+        <div className="container-tight">
+          {/* Lightbox */}
+          <AnimatePresence>
+            {zoomed && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={() => setZoomed(false)}
-                className="absolute left-4 top-4 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
-                aria-label="إغلاق"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
               >
-                <X className="h-5 w-5" />
-              </button>
-              <motion.img
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                src={masterPlan}
-                alt="الماستر بلان الشامل"
-                onClick={(e) => e.stopPropagation()}
-                className="max-h-full max-w-full rounded-xl object-contain shadow-elevated"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <button
+                  onClick={() => setZoomed(false)}
+                  className="absolute left-4 top-4 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
+                  aria-label="إغلاق"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <motion.img
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  src={masterPlan}
+                  alt="الماستر بلان الشامل"
+                  onClick={(e) => e.stopPropagation()}
+                  className="max-h-full max-w-full rounded-xl object-contain shadow-elevated"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        <div className="mt-16 flex flex-col items-center gap-5 rounded-2xl bg-gradient-hero p-8 text-center text-primary-foreground shadow-elevated sm:p-12">
-          <h3 className="font-display text-2xl font-bold sm:text-3xl">جاهز لحجز وحدتك؟</h3>
-          <p className="max-w-xl text-primary-foreground/80">
-            أكمل خطوات الحجز بسهولة واستقبل التأكيد مباشرة عبر واتساب.
-          </p>
-          <Link
-            to="/booking"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3 font-display font-bold text-accent-foreground shadow-gold transition-transform hover:scale-105"
-          >
-            ابدأ الآن
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+          <div className="mt-16 flex flex-col items-center gap-5 rounded-2xl bg-gradient-hero p-8 text-center text-primary-foreground shadow-elevated sm:p-12">
+            <h3 className="font-display text-2xl font-bold sm:text-3xl">جاهز لحجز وحدتك؟</h3>
+            <p className="max-w-xl text-primary-foreground/80">
+              أكمل خطوات الحجز بسهولة واستقبل التأكيد مباشرة عبر واتساب.
+            </p>
+            <Link
+              to="/booking"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3 font-display font-bold text-accent-foreground shadow-gold transition-transform hover:scale-105"
+            >
+              ابدأ الآن
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
