@@ -207,16 +207,37 @@ const Stat = ({ value, label, accent }: { value: number; label: string; accent?:
   </div>
 );
 
-const Feature = ({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) => (
-  <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-foreground">
-      {icon}
-    </div>
-    <div>
-      <div className="text-sm font-bold">{title}</div>
-      <div className="text-xs text-muted-foreground">{desc}</div>
-    </div>
-  </div>
-);
+const Feature = ({ icon, title, desc, to }: { icon: React.ReactNode; title: string; desc: string; to?: string }) => {
+  const content = (
+    <>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-foreground">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <div className="text-sm font-bold">{title}</div>
+        <div className="text-xs text-muted-foreground">{desc}</div>
+        {to && (
+          <div className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-accent">
+            اختر هذا النشاط
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">{content}</div>;
+};
 
 export default Index;
