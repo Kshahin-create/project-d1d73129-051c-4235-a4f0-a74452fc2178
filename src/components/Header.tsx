@@ -27,8 +27,7 @@ export const Header = () => {
           className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-primary/40 hover:text-primary sm:text-sm"
         >
           <Phone className="h-3.5 w-3.5" />
-          <span className="num hidden sm:inline">{CONTACT.phone}</span>
-          <span className="sm:hidden">اتصل</span>
+          <span className="num text-[11px] sm:text-sm">0595650716</span>
         </a>
       </div>
     </header>
