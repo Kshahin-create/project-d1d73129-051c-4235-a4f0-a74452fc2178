@@ -450,6 +450,63 @@ const Admin = () => {
         onCancel={() => setReleaseTarget(null)}
       />
 
+      {/* Audit log drawer */}
+      {showAuditLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm" onClick={() => setShowAuditLog(false)}>
+          <div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl border border-border bg-card shadow-elevated" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border p-5">
+              <div className="flex items-center gap-2">
+                <History className="h-5 w-5 text-primary" />
+                <h3 className="font-display text-lg font-bold">سجل التدقيق — آخر 100 عملية</h3>
+              </div>
+              <button onClick={() => setShowAuditLog(false)} className="rounded-lg p-1 hover:bg-secondary">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5">
+              {auditEntries.length === 0 ? (
+                <p className="py-12 text-center text-sm text-muted-foreground">لا توجد عمليات مسجّلة بعد</p>
+              ) : (
+                <ul className="space-y-3">
+                  {auditEntries.map((e) => {
+                    const labels: Record<string, { text: string; cls: string }> = {
+                      rent: { text: "تأجير", cls: "bg-primary/10 text-primary" },
+                      release: { text: "إخلاء", cls: "bg-success/10 text-success" },
+                      update: { text: "تحديث", cls: "bg-accent/10 text-accent-foreground" },
+                    };
+                    const lbl = labels[e.action] ?? { text: e.action, cls: "bg-secondary" };
+                    return (
+                      <li key={e.id} className="rounded-xl border border-border bg-secondary/40 p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", lbl.cls)}>
+                              {lbl.text}
+                            </span>
+                            <span className="font-medium">
+                              مبنى <span className="num">{e.building_number}</span> — وحدة <span className="num">{e.unit_number}</span>
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {e.previous_status} ← {e.new_status}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground num">
+                            {new Date(e.created_at).toLocaleString("ar-EG")}
+                          </div>
+                        </div>
+                        <p className="mt-2 text-sm">{e.reason}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          بواسطة: {e.performed_by_email ?? "—"}
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
