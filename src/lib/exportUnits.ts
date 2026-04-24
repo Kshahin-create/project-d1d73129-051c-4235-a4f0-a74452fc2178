@@ -91,10 +91,12 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
   * { box-sizing: border-box; }
   body {
     font-family: "Segoe UI", "Tahoma", "Arial", sans-serif;
-    color: #0f172a;
+    color: hsl(195, 45%, 12%);
     margin: 0;
     padding: 16px;
     direction: rtl;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .header {
     display: flex;
