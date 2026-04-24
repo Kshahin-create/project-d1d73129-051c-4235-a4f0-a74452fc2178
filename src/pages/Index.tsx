@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { PROJECT } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.jpeg";
 import heroBg from "@/assets/hero-bg.jpg";
+import overviewBg from "@/assets/overview-bg.png";
 import buildings from "@/data/buildings.json";
 
 const Index = () => {
@@ -77,8 +78,12 @@ const Index = () => {
       </section>
 
       {/* Overview + Master plan */}
-      <section id="overview" className="container-tight py-16 sm:py-20">
-        <div className="grid items-start gap-10 lg:grid-cols-2">
+      <section id="overview" className="relative overflow-hidden py-16 sm:py-20">
+        <div className="absolute inset-0 -z-10">
+          <img src={overviewBg} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-background/92 backdrop-blur-sm" />
+        </div>
+        <div className="container-tight grid items-start gap-10 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
