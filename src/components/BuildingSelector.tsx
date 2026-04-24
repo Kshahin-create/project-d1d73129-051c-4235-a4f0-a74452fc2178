@@ -8,32 +8,40 @@ interface BuildingSelectorProps {
   units: Unit[];
   onSelect: (b: Building) => void;
   selected?: number;
+  activityFilter?: "service" | "parts" | null;
 }
 
-export const BuildingSelector = ({ buildings, units, onSelect, selected }: BuildingSelectorProps) => {
+export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   const service = buildings.filter((b) => b.type.includes("صيانة"));
   const parts = buildings.filter((b) => !b.type.includes("صيانة"));
 
+  const showService = !activityFilter || activityFilter === "service";
+  const showParts = !activityFilter || activityFilter === "parts";
+
   return (
     <div className="space-y-10">
-      <Section
-        title="مراكز صيانة السيارات"
-        subtitle="المباني من 1 إلى 6"
-        icon={<Wrench className="h-5 w-5" />}
-        buildings={service}
-        units={units}
-        onSelect={onSelect}
-        selected={selected}
-      />
-      <Section
-        title="محلات قطع الغيار والبناشر"
-        subtitle="المباني من 7 إلى 10"
-        icon={<Cog className="h-5 w-5" />}
-        buildings={parts}
-        units={units}
-        onSelect={onSelect}
-        selected={selected}
-      />
+      {showService && (
+        <Section
+          title="مراكز صيانة السيارات"
+          subtitle="المباني من 1 إلى 6"
+          icon={<Wrench className="h-5 w-5" />}
+          buildings={service}
+          units={units}
+          onSelect={onSelect}
+          selected={selected}
+        />
+      )}
+      {showParts && (
+        <Section
+          title="محلات قطع الغيار والبناشر"
+          subtitle="المباني من 7 إلى 10"
+          icon={<Cog className="h-5 w-5" />}
+          buildings={parts}
+          units={units}
+          onSelect={onSelect}
+          selected={selected}
+        />
+      )}
     </div>
   );
 };

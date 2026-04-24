@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Home, CheckCircle2 } from "lucide-react";
 import { Header } from "@/components/Header";
@@ -38,6 +38,8 @@ const FORM_ID = "customer-booking-form";
 
 const Booking = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activityFilter = searchParams.get("activity") as "service" | "parts" | null;
   const [step, setStep] = useState(1);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
@@ -125,6 +127,7 @@ const Booking = () => {
                   units={units}
                   onSelect={handleBuildingSelect}
                   selected={selectedBuilding?.number}
+                  activityFilter={activityFilter}
                 />
               </StepWrap>
             )}
