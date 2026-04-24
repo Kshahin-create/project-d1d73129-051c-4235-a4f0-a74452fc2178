@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, CONTACT, PROJECT } from "@/lib/config";
 import logo from "@/assets/logo-nukhbat.jpeg";
@@ -42,8 +43,13 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-border/60 pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} {COMPANY.name}. جميع الحقوق محفوظة.
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-center text-xs text-muted-foreground sm:flex-row sm:text-right">
+          <div>© {new Date().getFullYear()} {COMPANY.name}. جميع الحقوق محفوظة.</div>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className="transition hover:text-primary">سياسة الخصوصية والأمان</Link>
+            <span className="text-border">|</span>
+            <Link to="/terms" className="transition hover:text-primary">الشروط والأحكام</Link>
+          </div>
         </div>
       </div>
     </footer>
