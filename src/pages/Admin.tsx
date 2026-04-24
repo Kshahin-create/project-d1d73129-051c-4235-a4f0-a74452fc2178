@@ -326,6 +326,32 @@ const Admin = () => {
           >
             غير مؤجر
           </button>
+
+          <div className="ms-auto flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground num">
+              ({buildingUnits.length} وحدة)
+            </span>
+            <button
+              onClick={() => {
+                if (buildingUnits.length === 0) return toast.error("لا توجد بيانات للتصدير");
+                exportUnitsToExcel(buildingUnits);
+                toast.success("تم تصدير ملف Excel");
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-success/40 hover:text-success"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+            </button>
+            <button
+              onClick={() => {
+                if (buildingUnits.length === 0) return toast.error("لا توجد بيانات للتصدير");
+                exportUnitsToCSV(buildingUnits);
+                toast.success("تم تصدير ملف CSV");
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:text-primary"
+            >
+              <FileText className="h-3.5 w-3.5" /> CSV
+            </button>
+          </div>
         </div>
 
         {/* Search */}
