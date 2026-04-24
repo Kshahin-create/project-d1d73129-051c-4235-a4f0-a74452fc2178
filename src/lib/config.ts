@@ -31,6 +31,15 @@ export const CONTACT = {
 };
 
 /**
+ * روابط التواصل الاجتماعي للمشروع
+ * Project social media links
+ */
+export const SOCIAL = {
+  instagram: "https://www.instagram.com/mnicity",
+  tiktok: "https://www.tiktok.com/@mni.city",
+};
+
+/**
  * موقع المشروع على خرائط جوجل
  * Project location on Google Maps
  */
