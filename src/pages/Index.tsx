@@ -106,8 +106,6 @@ const Index = () => {
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <Feature icon={<Wrench className="h-5 w-5" />} title="مراكز صيانة" desc="مباني 1-6 (144 وحدة)" to="/booking?activity=service" />
               <Feature icon={<Cog className="h-5 w-5" />} title="قطع غيار وبناشر" desc="مباني 7-10 (84 وحدة)" to="/booking?activity=parts" />
-              <Feature icon={<Building2 className="h-5 w-5" />} title="مساحات متنوعة" desc="ركنية وداخلية" />
-              <Feature icon={<ShieldCheck className="h-5 w-5" />} title="تراخيص جاهزة" desc="معتمد من أمانة العاصمة" />
             </div>
           </motion.div>
 
