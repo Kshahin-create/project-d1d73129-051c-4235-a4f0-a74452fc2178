@@ -115,6 +115,59 @@ export type Database = {
           },
         ]
       }
+      unit_audit_log: {
+        Row: {
+          action: string
+          building_number: number
+          created_at: string
+          id: string
+          new_status: string | null
+          performed_by: string | null
+          performed_by_email: string | null
+          previous_status: string | null
+          reason: string
+          tenant_snapshot: Json | null
+          unit_id: string | null
+          unit_number: number
+        }
+        Insert: {
+          action: string
+          building_number: number
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          reason: string
+          tenant_snapshot?: Json | null
+          unit_id?: string | null
+          unit_number: number
+        }
+        Update: {
+          action?: string
+          building_number?: number
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          reason?: string
+          tenant_snapshot?: Json | null
+          unit_id?: string | null
+          unit_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_audit_log_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           activity: string | null
