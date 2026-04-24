@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X, History, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X, History, SlidersHorizontal, FileSpreadsheet, FileText } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -10,6 +10,7 @@ import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { exportUnitsToExcel, exportUnitsToCSV } from "@/lib/exportUnits";
 
 interface TenantForm {
   tenant_name: string;
@@ -325,6 +326,32 @@ const Admin = () => {
           >
             غير مؤجر
           </button>
+
+          <div className="ms-auto flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground num">
+              ({buildingUnits.length} وحدة)
+            </span>
+            <button
+              onClick={() => {
+                if (buildingUnits.length === 0) return toast.error("لا توجد بيانات للتصدير");
+                exportUnitsToExcel(buildingUnits);
+                toast.success("تم تصدير ملف Excel");
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-success/40 hover:text-success"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+            </button>
+            <button
+              onClick={() => {
+                if (buildingUnits.length === 0) return toast.error("لا توجد بيانات للتصدير");
+                exportUnitsToCSV(buildingUnits);
+                toast.success("تم تصدير ملف CSV");
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:text-primary"
+            >
+              <FileText className="h-3.5 w-3.5" /> CSV
+            </button>
+          </div>
         </div>
 
         {/* Search */}
