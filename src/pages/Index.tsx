@@ -8,6 +8,7 @@ import { PROJECT, LOCATION } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.jpeg";
 import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-bg.png";
+import landSpaces from "@/assets/land-spaces.png";
 import buildings from "@/data/buildings.json";
 
 const Index = () => {
