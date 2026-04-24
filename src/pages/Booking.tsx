@@ -11,12 +11,8 @@ import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
-import unitsData from "@/data/units.json";
-import buildingsData from "@/data/buildings.json";
+import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import type { Unit, Building } from "@/data/types";
-
-const units = unitsData as Unit[];
-const buildings = buildingsData as Building[];
 
 /**
  * صور مخططات المباني - أضف الصور إلى src/assets/plans/ بالاسم building-{n}.png
@@ -46,9 +42,13 @@ const Booking = () => {
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
+  const { data, isLoading } = useBuildingsAndUnits();
+  const buildings = data?.buildings ?? [];
+  const units = data?.units ?? [];
+
   const buildingUnits = useMemo(
     () => (selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding.number) : []),
-    [selectedBuilding]
+    [selectedBuilding, units]
   );
 
   const whatsapp = useMemo(() => {
