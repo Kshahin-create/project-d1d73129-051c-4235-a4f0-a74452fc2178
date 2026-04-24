@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ShieldCheck, ZoomIn, X } from "lucide-react";
+import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ShieldCheck, ZoomIn, X, Navigation } from "lucide-react";
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { PROJECT } from "@/lib/config";
+import { PROJECT, LOCATION } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.jpeg";
 import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-bg.png";
@@ -176,6 +176,46 @@ const Index = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Project location on map */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-16 overflow-hidden rounded-2xl border border-border bg-card shadow-elevated"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-secondary/50 px-5 py-3">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <MapPin className="h-4 w-4 text-accent" />
+                موقع المشروع على الخريطة
+              </div>
+              <a
+                href={LOCATION.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:bg-primary/90"
+              >
+                <Navigation className="h-3.5 w-3.5" />
+                فتح في خرائط جوجل
+              </a>
+            </div>
+            <div className="px-5 pt-4 text-sm text-muted-foreground">
+              <span className="font-bold text-foreground">العنوان:</span> {LOCATION.addressAr}
+            </div>
+            <div className="p-4">
+              <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-border sm:aspect-[16/9]">
+                <iframe
+                  src={LOCATION.embedUrl}
+                  title="موقع المشروع على خرائط جوجل"
+                  className="h-full w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </motion.div>
 
           <div className="mt-16 flex flex-col items-center gap-5 rounded-2xl bg-gradient-hero p-8 text-center text-primary-foreground shadow-elevated sm:p-12">
             <h3 className="font-display text-2xl font-bold sm:text-3xl">جاهز لحجز وحدتك؟</h3>
