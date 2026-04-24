@@ -26,9 +26,13 @@ const Admin = () => {
 
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number } | null>(null);
+  const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number; wasRented: boolean } | null>(null);
   const [tenantForm, setTenantForm] = useState<TenantForm>({ tenant_name: "", business_name: "", activity_type: "", phone: "" });
   const [saving, setSaving] = useState(false);
+  const [confirmRent, setConfirmRent] = useState(false);
+  const [releaseTarget, setReleaseTarget] = useState<{ unitNumber: number; buildingNumber: number } | null>(null);
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [auditEntries, setAuditEntries] = useState<any[]>([]);
 
   // Auth gate
   if (!authLoading && !user) {
