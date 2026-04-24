@@ -10,7 +10,7 @@ import { UnitGrid } from "@/components/UnitGrid";
 import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import unitsData from "@/data/units.json";
 import buildingsData from "@/data/buildings.json";
 import type { Unit, Building } from "@/data/types";
@@ -51,15 +51,19 @@ const Booking = () => {
     [selectedBuilding]
   );
 
-  const whatsappHref = useMemo(() => {
-    if (!selectedUnit || !customer) return "#";
-    return buildWhatsAppLink(selectedUnit, {
+  const whatsapp = useMemo(() => {
+    if (!selectedUnit || !customer) return null;
+    const data = {
       fullName: customer.fullName,
       phone: customer.phone,
       email: customer.email || undefined,
       business: customer.business,
       notes: customer.notes || undefined,
-    });
+    };
+    return {
+      ...buildWhatsAppLinks(selectedUnit, data),
+      message: buildWhatsAppMessage(selectedUnit, data),
+    };
   }, [selectedUnit, customer]);
 
   const handleBuildingSelect = (b: Building) => {
@@ -220,11 +224,13 @@ const Booking = () => {
                         </dl>
                       </div>
                       <WhatsAppButton
-                        href={whatsappHref}
-                        onClick={() => setTimeout(() => setSubmitted(true), 400)}
+                        href={whatsapp?.appUrl ?? "#"}
+                        webHref={whatsapp?.webUrl}
+                        message={whatsapp?.message}
+                        onClick={() => setTimeout(() => setSubmitted(true), 600)}
                       />
                       <p className="text-center text-xs text-muted-foreground">
-                        بالضغط على الزر، سيتم فتح واتساب مع رسالة جاهزة تحتوي على جميع تفاصيل طلبك.
+                        سيتم نسخ الرسالة تلقائياً وفتح واتساب. إذا لم يكن التطبيق مثبّتاً، استخدم رابط واتساب ويب البديل.
                       </p>
                     </>
                   )}
