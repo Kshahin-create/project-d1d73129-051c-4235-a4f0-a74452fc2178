@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CookiePreferences } from "@/components/CookiePreferences";
 import { COMPANY, CONTACT } from "@/lib/config";
 
 /**
@@ -82,7 +83,10 @@ const Privacy = () => {
 
           <Section title="ملفات تعريف الارتباط (Cookies)">
             يستخدم الموقع ملفات تعريف ارتباط أساسية لضمان عمل الموقع بشكل صحيح فقط. لا نستخدم ملفات تتبّع أو تحليلات
-            لأغراض تسويقية بدون موافقتك.
+            لأغراض تسويقية بدون موافقتك. يمكنك إدارة تفضيلاتك أدناه في أي وقت.
+            <div className="mt-4 not-prose">
+              <CookiePreferences />
+            </div>
           </Section>
 
           <Section title="حقوقك">
