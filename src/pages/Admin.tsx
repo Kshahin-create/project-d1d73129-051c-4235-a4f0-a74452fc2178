@@ -351,6 +351,20 @@ const Admin = () => {
             >
               <FileText className="h-3.5 w-3.5" /> CSV
             </button>
+            <button
+              onClick={() => {
+                if (buildingUnits.length === 0) return toast.error("لا توجد بيانات للتصدير");
+                exportUnitsToPDF(buildingUnits, {
+                  buildingFilter: selectedBuilding,
+                  statusFilter,
+                  search,
+                });
+                toast.success("جاري تجهيز PDF...");
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-destructive/40 hover:text-destructive"
+            >
+              <FileDown className="h-3.5 w-3.5" /> PDF
+            </button>
           </div>
         </div>
 
