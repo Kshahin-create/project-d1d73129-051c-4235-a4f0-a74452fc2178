@@ -318,6 +318,7 @@ const Admin = () => {
                     <th className="px-4 py-3 text-right">المساحة</th>
                     <th className="px-4 py-3 text-right">السعر</th>
                     <th className="px-4 py-3 text-right">الحالة</th>
+                    <th className="px-4 py-3 text-right">المستأجر</th>
                     <th className="px-4 py-3 text-right">إجراء</th>
                   </tr>
                 </thead>
