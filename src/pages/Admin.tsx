@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X } from "lucide-react";
+import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X, History } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { supabase } from "@/integrations/supabase/client";
