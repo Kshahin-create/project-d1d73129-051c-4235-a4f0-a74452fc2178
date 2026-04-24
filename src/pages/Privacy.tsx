@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CookiePreferences } from "@/components/CookiePreferences";
 import { COMPANY, CONTACT } from "@/lib/config";
 
 /**
