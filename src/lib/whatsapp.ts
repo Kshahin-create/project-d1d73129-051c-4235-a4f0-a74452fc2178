@@ -10,10 +10,10 @@ export interface CustomerData {
 }
 
 /**
- * يولّد رابط واتساب يحتوي على رسالة طلب الحجز منسّقة بالعربية
- * Generates a WhatsApp link with a formatted Arabic booking request message.
+ * يبني نص رسالة واتساب الخام (بدون ترميز URL)
+ * Builds the raw WhatsApp message text (un-encoded).
  */
-export function buildWhatsAppLink(unit: Unit, customer: CustomerData): string {
+export function buildWhatsAppMessage(unit: Unit, customer: CustomerData): string {
   const date = new Date().toLocaleDateString("ar-SA", {
     year: "numeric",
     month: "long",
@@ -38,8 +38,62 @@ export function buildWhatsAppLink(unit: Unit, customer: CustomerData): string {
     `📅 *تاريخ الطلب:* ${date}`,
     "",
     "_تم الإرسال عبر استمارة الحجز الإلكترونية - نخبة تسكين العقارية_",
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
 
-  const text = encodeURIComponent(lines.join("\n"));
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
+  return lines.join("\n");
+}
+
+/**
+ * يولّد روابط واتساب (تطبيق + ويب) ونص الرسالة
+ * Generates WhatsApp links (app + web) and the raw text.
+ */
+export function buildWhatsAppLinks(unit: Unit, customer: CustomerData) {
+  const text = buildWhatsAppMessage(unit, customer);
+  const encoded = encodeURIComponent(text);
+  return {
+    text,
+    // الرابط العالمي - يفتح التطبيق إن وُجد، وإلا واتساب ويب
+    appUrl: `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`,
+    // رابط واتساب ويب كبديل صريح
+    webUrl: `https://web.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encoded}`,
+    // رابط api.whatsapp.com كبديل ثانٍ يعمل على معظم الأجهزة
+    apiUrl: `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encoded}`,
+  };
+}
+
+/**
+ * متوافق مع الإصدار السابق - يُرجع رابط wa.me فقط
+ * Backwards-compatible: returns the wa.me link only.
+ */
+export function buildWhatsAppLink(unit: Unit, customer: CustomerData): string {
+  return buildWhatsAppLinks(unit, customer).appUrl;
+}
+
+/**
+ * نسخ نص إلى الحافظة مع آلية بديلة للمتصفحات القديمة/غير الآمنة
+ * Copy text to clipboard with a legacy fallback.
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fallthrough to legacy
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 }
