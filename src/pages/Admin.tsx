@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X, History } from "lucide-react";
+import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X, History, SlidersHorizontal } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -25,6 +25,7 @@ const Admin = () => {
   const { data, isLoading } = useBuildingsAndUnits();
 
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "rented" | "available">("all");
   const [search, setSearch] = useState("");
   const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number; wasRented: boolean } | null>(null);
   const [tenantForm, setTenantForm] = useState<TenantForm>({ tenant_name: "", business_name: "", activity_type: "", phone: "" });
@@ -70,12 +71,15 @@ const Admin = () => {
 
   const buildingUnits = useMemo(() => {
     let list = selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding) : units;
+    if (statusFilter !== "all") {
+      list = list.filter((u) => u.status === statusFilter);
+    }
     if (search.trim()) {
       const q = search.trim();
       list = list.filter((u) => String(u.unitNumber).includes(q));
     }
     return list;
-  }, [selectedBuilding, units, search]);
+  }, [selectedBuilding, units, search, statusFilter]);
 
   const stats = useMemo(() => {
     const total = units.length;
@@ -267,7 +271,7 @@ const Admin = () => {
         </div>
 
         {/* Building filter */}
-        <div className="mb-5 flex flex-wrap items-center gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSelectedBuilding(null)}
             className={cn(
@@ -289,6 +293,38 @@ const Admin = () => {
               مبنى {b.number}
             </button>
           ))}
+        </div>
+
+        {/* Status filter */}
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+          <button
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "all" ? "bg-accent text-accent-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            كل الحالات
+          </button>
+          <button
+            onClick={() => setStatusFilter("rented")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "rented" ? "bg-destructive text-destructive-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            مؤجر
+          </button>
+          <button
+            onClick={() => setStatusFilter("available")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "available" ? "bg-success text-success-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            غير مؤجر
+          </button>
         </div>
 
         {/* Search */}
