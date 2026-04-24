@@ -9,9 +9,11 @@ import masterPlan from "@/assets/master-plan.jpeg";
 import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-city.png";
 import landSpaces from "@/assets/land-spaces.png";
-import buildings from "@/data/buildings.json";
+import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 
 const Index = () => {
+  const { data } = useBuildingsAndUnits();
+  const buildings = data?.buildings ?? [];
   const totalUnits = buildings.reduce((s, b) => s + b.totalUnits, 0);
   const availableUnits = buildings.reduce((s, b) => s + b.availableUnits, 0);
   const [zoomed, setZoomed] = useState(false);
