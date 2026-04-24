@@ -42,9 +42,13 @@ const Booking = () => {
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
+  const { data, isLoading } = useBuildingsAndUnits();
+  const buildings = data?.buildings ?? [];
+  const units = data?.units ?? [];
+
   const buildingUnits = useMemo(
     () => (selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding.number) : []),
-    [selectedBuilding]
+    [selectedBuilding, units]
   );
 
   const whatsapp = useMemo(() => {
