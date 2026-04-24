@@ -123,11 +123,29 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
   .stat .label { font-size: 10px; color: #64748b; }
   .stat .value { font-size: 16px; font-weight: 800; margin-top: 2px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  thead { background: #0ea5e9; color: white; }
-  th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: right; }
-  tbody tr:nth-child(even) { background: #f8fafc; }
-  .status-rented { color: #b91c1c; font-weight: 700; }
-  .status-available { color: #047857; font-weight: 700; }
+  thead { background: hsl(195, 70%, 18%); color: hsl(40, 50%, 96%); }
+  th, td { border: 1px solid hsl(195, 20%, 88%); padding: 6px 8px; text-align: right; }
+  tbody tr:nth-child(even) { background: hsl(195, 25%, 97%); }
+  /* Status badges — match /admin table colors exactly */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    line-height: 1.4;
+  }
+  .status-badge::before {
+    content: ""; display: inline-block;
+    width: 6px; height: 6px; border-radius: 999px;
+    background: currentColor;
+  }
+  .status-rented {
+    color: hsl(0, 72%, 48%);
+    background: hsl(0, 72%, 48%, 0.1);
+  }
+  .status-available {
+    color: hsl(152, 60%, 36%);
+    background: hsl(152, 60%, 36%, 0.1);
+  }
   .footer {
     margin-top: 18px; padding-top: 10px;
     border-top: 1px solid #e2e8f0;
