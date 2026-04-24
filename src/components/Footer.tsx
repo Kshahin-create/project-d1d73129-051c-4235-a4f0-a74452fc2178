@@ -47,6 +47,26 @@ export const Footer = () => {
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-4 w-4" /> شمال مكة المكرمة
             </div>
+            <div className="flex items-center gap-3 pt-2">
+              <a
+                href={SOCIAL.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="حسابنا على إنستقرام"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary"
+              >
+                <Instagram className="h-4 w-4" />
+              </a>
+              <a
+                href={SOCIAL.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="حسابنا على تيك توك"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary hover:text-primary"
+              >
+                <TikTokIcon className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </div>
 
