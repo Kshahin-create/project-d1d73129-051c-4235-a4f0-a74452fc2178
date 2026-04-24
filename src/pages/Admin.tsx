@@ -318,6 +318,7 @@ const Admin = () => {
                     <th className="px-4 py-3 text-right">المساحة</th>
                     <th className="px-4 py-3 text-right">السعر</th>
                     <th className="px-4 py-3 text-right">الحالة</th>
+                    <th className="px-4 py-3 text-right">المستأجر</th>
                     <th className="px-4 py-3 text-right">إجراء</th>
                   </tr>
                 </thead>
@@ -338,6 +339,13 @@ const Admin = () => {
                           <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
                             <CheckCircle2 className="h-2.5 w-2.5" /> متاح
                           </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-xs">
+                        {u.tenant ? (
+                          <span className="font-medium text-foreground">{u.tenant}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5">
@@ -368,7 +376,7 @@ const Admin = () => {
                     </tr>
                   ))}
                   {buildingUnits.length === 0 && (
-                    <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">لا توجد نتائج</td></tr>
+                    <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">لا توجد نتائج</td></tr>
                   )}
                 </tbody>
               </table>
