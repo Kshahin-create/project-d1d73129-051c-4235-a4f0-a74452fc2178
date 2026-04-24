@@ -341,6 +341,13 @@ const Admin = () => {
                           </span>
                         )}
                       </td>
+                      <td className="px-4 py-2.5 text-xs">
+                        {u.tenant ? (
+                          <span className="font-medium text-foreground">{u.tenant}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2.5">
                         {u.status === "rented" ? (
                           <div className="flex gap-1.5">
