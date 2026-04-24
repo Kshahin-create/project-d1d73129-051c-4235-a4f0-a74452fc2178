@@ -242,12 +242,20 @@ const Admin = () => {
             <h1 className="mt-2 font-display text-2xl font-extrabold sm:text-3xl">لوحة تحكم الوحدات</h1>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm hover:border-destructive/40 hover:text-destructive"
-          >
-            <LogOut className="h-4 w-4" /> خروج
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openAuditLog}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm hover:border-primary/40 hover:text-primary"
+            >
+              <History className="h-4 w-4" /> سجل التدقيق
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm hover:border-destructive/40 hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" /> خروج
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
