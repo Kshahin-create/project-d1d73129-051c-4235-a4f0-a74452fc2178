@@ -79,26 +79,27 @@ const Index = () => {
       </section>
 
       {/* Overview + Master plan */}
-      <section id="overview" className="relative overflow-hidden py-16 sm:py-20">
+      <section id="overview" className="relative overflow-hidden py-12 sm:py-20">
         <div className="absolute inset-0 -z-10">
           <img src={overviewBg} alt="" className="h-full w-full object-cover" loading="lazy" />
-          <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
+          <div className="absolute inset-0 bg-background/92 sm:bg-background/85 backdrop-blur-[3px]" />
         </div>
-        <div className="container-tight grid items-start gap-10 lg:grid-cols-2">
+        <div className="container-tight grid items-start gap-8 sm:gap-10 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="rounded-2xl bg-background/70 p-4 backdrop-blur-sm sm:bg-transparent sm:p-0 sm:backdrop-blur-0"
           >
-            <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-bold text-accent-foreground">
+            <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-[11px] font-bold text-accent-foreground sm:text-xs">
               <MapPin className="h-3.5 w-3.5" />
               شمال مكة المكرمة
             </div>
-            <h2 className="mt-4 font-display text-3xl font-extrabold sm:text-4xl">
+            <h2 className="mt-4 font-display text-2xl font-extrabold leading-tight sm:text-4xl">
               موقع استراتيجي لأنشطتك التجارية
             </h2>
-            <p className="mt-4 leading-relaxed text-muted-foreground">
+            <p className="mt-4 text-sm leading-7 text-muted-foreground sm:text-base sm:leading-relaxed">
               تضم <strong className="text-foreground">المرحلة الأولى</strong> للتأجير المبكر من المشروع
               {" "}<strong className="text-foreground">10 مبانٍ</strong> مصمّمة خصيصاً لقطاع صيانة السيارات
               وقطع الغيار. كل وحدة <strong className="text-foreground">جاهزة للتشغيل</strong> بمواصفات عالية
