@@ -271,7 +271,7 @@ const Admin = () => {
         </div>
 
         {/* Building filter */}
-        <div className="mb-5 flex flex-wrap items-center gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSelectedBuilding(null)}
             className={cn(
@@ -293,6 +293,38 @@ const Admin = () => {
               مبنى {b.number}
             </button>
           ))}
+        </div>
+
+        {/* Status filter */}
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+          <button
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "all" ? "bg-accent text-accent-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            كل الحالات
+          </button>
+          <button
+            onClick={() => setStatusFilter("rented")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "rented" ? "bg-destructive text-destructive-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            مؤجر
+          </button>
+          <button
+            onClick={() => setStatusFilter("available")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "available" ? "bg-success text-success-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            غير مؤجر
+          </button>
         </div>
 
         {/* Search */}
