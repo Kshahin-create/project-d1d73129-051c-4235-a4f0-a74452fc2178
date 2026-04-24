@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X, History } from "lucide-react";
+import { ArrowRight, LogOut, Building2, Lock, CheckCircle2, Search, Users, TrendingUp, X, History, SlidersHorizontal } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -25,6 +25,7 @@ const Admin = () => {
   const { data, isLoading } = useBuildingsAndUnits();
 
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "rented" | "available">("all");
   const [search, setSearch] = useState("");
   const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number; wasRented: boolean } | null>(null);
   const [tenantForm, setTenantForm] = useState<TenantForm>({ tenant_name: "", business_name: "", activity_type: "", phone: "" });
@@ -70,12 +71,15 @@ const Admin = () => {
 
   const buildingUnits = useMemo(() => {
     let list = selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding) : units;
+    if (statusFilter !== "all") {
+      list = list.filter((u) => u.status === statusFilter);
+    }
     if (search.trim()) {
       const q = search.trim();
       list = list.filter((u) => String(u.unitNumber).includes(q));
     }
     return list;
-  }, [selectedBuilding, units, search]);
+  }, [selectedBuilding, units, search, statusFilter]);
 
   const stats = useMemo(() => {
     const total = units.length;
