@@ -11,12 +11,13 @@ export const useBuildingsAndUnits = () => {
         supabase.from("units").select("*").order("building_number").order("unit_number").limit(2000),
         supabase.from("tenants").select("*"),
       ]);
-      if (bRes.error) throw bRes.error;
+      // buildings may fail for unauthenticated users after RLS change —
+      // fall back to deriving building info from public units data.
       if (uRes.error) throw uRes.error;
       if (tRes.error) throw tRes.error;
 
       const unitsRaw = uRes.data ?? [];
-      const buildingsRaw = bRes.data ?? [];
+      const buildingsRaw = bRes.error ? [] : (bRes.data ?? []);
       const tenantsRaw = tRes.data ?? [];
 
       // Map tenants by unit_id for quick lookup
@@ -25,11 +26,13 @@ export const useBuildingsAndUnits = () => {
         tenantByUnitId.set(t.unit_id, { name: t.tenant_name, data: t });
       }
 
+      // Build units first so we can derive building stats from them if needed
       const units: Unit[] = unitsRaw.map((u) => {
         const tenantInfo = tenantByUnitId.get(u.id);
+        const building = buildingsRaw.find((b) => b.number === u.building_number);
         return {
           buildingNumber: u.building_number,
-          buildingType: buildingsRaw.find((b) => b.number === u.building_number)?.type ?? "",
+          buildingType: building?.type ?? "",
           unitNumber: u.unit_number,
           unitType: u.unit_type,
           area: Number(u.area),
@@ -40,18 +43,37 @@ export const useBuildingsAndUnits = () => {
         };
       });
 
-      const buildings: Building[] = buildingsRaw.map((b) => {
-        const bu = units.filter((u) => u.buildingNumber === b.number);
-        const rented = bu.filter((u) => u.status === "rented").length;
-        return {
-          number: b.number,
-          type: b.type,
-          totalUnits: bu.length,
-          rentedUnits: rented,
-          availableUnits: bu.length - rented,
-          expectedAnnualRevenue: Number(b.expected_annual_revenue),
-        };
-      });
+      // If buildings query succeeded, use it directly.
+      // Otherwise derive minimal building list from units (public data).
+      let buildings: Building[];
+      if (buildingsRaw.length > 0) {
+        buildings = buildingsRaw.map((b) => {
+          const bu = units.filter((u) => u.buildingNumber === b.number);
+          const rented = bu.filter((u) => u.status === "rented").length;
+          return {
+            number: b.number,
+            type: b.type,
+            totalUnits: bu.length,
+            rentedUnits: rented,
+            availableUnits: bu.length - rented,
+            expectedAnnualRevenue: Number(b.expected_annual_revenue),
+          };
+        });
+      } else {
+        const uniqueBuildingNumbers = [...new Set(unitsRaw.map((u) => u.building_number))].sort((a, b) => a - b);
+        buildings = uniqueBuildingNumbers.map((bn) => {
+          const bu = units.filter((u) => u.buildingNumber === bn);
+          const rented = bu.filter((u) => u.status === "rented").length;
+          return {
+            number: bn,
+            type: bu[0]?.buildingType ?? "غير محدد",
+            totalUnits: bu.length,
+            rentedUnits: rented,
+            availableUnits: bu.length - rented,
+            expectedAnnualRevenue: 0,
+          };
+        });
+      }
 
       return { buildings, units };
     },
