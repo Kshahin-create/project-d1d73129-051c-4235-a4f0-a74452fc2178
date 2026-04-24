@@ -7,7 +7,7 @@ import { Footer } from "@/components/Footer";
 import { PROJECT, LOCATION } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.jpeg";
 import heroBg from "@/assets/hero-bg.jpg";
-import overviewBg from "@/assets/overview-bg.png";
+import overviewBg from "@/assets/overview-city.png";
 import landSpaces from "@/assets/land-spaces.png";
 import buildings from "@/data/buildings.json";
 
@@ -82,7 +82,7 @@ const Index = () => {
       <section id="overview" className="relative overflow-hidden py-16 sm:py-20">
         <div className="absolute inset-0 -z-10">
           <img src={overviewBg} alt="" className="h-full w-full object-cover" loading="lazy" />
-          <div className="absolute inset-0 bg-background/92 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
         </div>
         <div className="container-tight grid items-start gap-10 lg:grid-cols-2">
           <motion.div
@@ -99,8 +99,11 @@ const Index = () => {
               موقع استراتيجي لأنشطتك التجارية
             </h2>
             <p className="mt-4 leading-relaxed text-muted-foreground">
-              يضمّ المشروع <strong className="text-foreground">10 مبانٍ</strong> مصمّمة خصيصاً لقطاع
-              صيانة السيارات وقطع الغيار. كل وحدة جاهزة للاستثمار، بمواصفات عالية وتسهيلات تشغيلية.
+              تضم <strong className="text-foreground">المرحلة الأولى</strong> للتأجير المبكر من المشروع
+              {" "}<strong className="text-foreground">10 مبانٍ</strong> مصمّمة خصيصاً لقطاع صيانة السيارات
+              وقطع الغيار. كل وحدة <strong className="text-foreground">جاهزة للتشغيل</strong> بمواصفات عالية
+              وتسهيلات تشغيلية، بجوار <strong className="text-foreground">محطة الفحص الفني الدوري</strong>،
+              تشغيل من أول يوم عمل.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
