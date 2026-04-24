@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ShieldCheck, ZoomIn, X, Navigation } from "lucide-react";
+import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ZoomIn, X, Navigation } from "lucide-react";
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
