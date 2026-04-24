@@ -100,7 +100,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 3px solid #0ea5e9;
+    border-bottom: 3px solid hsl(38, 78%, 52%);
     padding-bottom: 12px;
     margin-bottom: 16px;
   }
