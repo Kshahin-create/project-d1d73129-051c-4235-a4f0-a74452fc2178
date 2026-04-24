@@ -177,8 +177,8 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
 
   <div class="stats">
     <div class="stat"><div class="label">إجمالي الوحدات</div><div class="value">${units.length}</div></div>
-    <div class="stat"><div class="label">مؤجرة</div><div class="value" style="color:#b91c1c">${totalRented}</div></div>
-    <div class="stat"><div class="label">متاحة</div><div class="value" style="color:#047857">${totalAvailable}</div></div>
+    <div class="stat"><div class="label">مؤجرة</div><div class="value" style="color:hsl(0,72%,48%)">${totalRented}</div></div>
+    <div class="stat"><div class="label">متاحة</div><div class="value" style="color:hsl(152,60%,36%)">${totalAvailable}</div></div>
     <div class="stat"><div class="label">إيراد سنوي (مؤجر)</div><div class="value">${totalRevenue.toLocaleString("ar-EG")} ر.س</div></div>
   </div>
 
@@ -191,7 +191,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
         const v = (r as any)[h];
         if (h === "الحالة") {
           const cls = v === "مؤجر" ? "status-rented" : "status-available";
-          return `<td class="${cls}">${escapeHtml(v)}</td>`;
+          return `<td><span class="status-badge ${cls}">${escapeHtml(v)}</span></td>`;
         }
         if (h === "السعر (سنوي)" && typeof v === "number") {
           return `<td>${v.toLocaleString("ar-EG")}</td>`;
