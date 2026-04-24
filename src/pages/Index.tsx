@@ -178,6 +178,29 @@ const Index = () => {
             )}
           </AnimatePresence>
 
+          {/* Land spaces visual banner — مساحات مرنة */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mt-16 overflow-hidden rounded-2xl border border-border bg-card shadow-elevated"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-secondary/50 px-5 py-3">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <Building2 className="h-4 w-4 text-accent" />
+                مساحات مرنة لأنشطة متعددة
+              </div>
+              <span className="text-xs text-muted-foreground">أرض المشروع</span>
+            </div>
+            <img
+              src={landSpaces}
+              alt="مساحات مرنة بأرض المشروع — ورش سيارات ومحلات قطع غيار ومحطة فحص فني دوري"
+              className="w-full object-cover"
+              loading="lazy"
+            />
+          </motion.div>
+
           {/* Project location on map */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
