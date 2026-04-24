@@ -1,6 +1,6 @@
 import { Phone } from "lucide-react";
 import { COMPANY, CONTACT } from "@/lib/config";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo-nukhbat.jpeg";
 
 export const Header = () => {
   return (
@@ -9,8 +9,8 @@ export const Header = () => {
         <div className="flex items-center gap-3">
           <img
             src={logo}
-            alt="شعار المدينة الصناعية بشمال مكة المكرمة"
-            className="h-10 w-auto object-contain sm:h-12"
+            alt="شعار شركة نخبة تسكين العقارية"
+            className="h-12 w-auto object-contain sm:h-14"
           />
           <div className="leading-tight">
             <div className="font-display text-sm font-bold text-foreground sm:text-base">
