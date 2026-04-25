@@ -64,15 +64,30 @@ export const useBuildingsAndUnits = () => {
         buildings = uniqueBuildingNumbers.map((bn) => {
           const bu = units.filter((u) => u.buildingNumber === bn);
           const rented = bu.filter((u) => u.status === "rented").length;
+          // Derive building type from the activity of its units so the
+          // service/parts filter still works for unauthenticated users.
+          const activity = bu[0]?.activity ?? "";
+          const derivedType = activity.includes("صيانة")
+            ? "مراكز صيانة سيارات"
+            : activity
+              ? "محلات قطع غيار السيارات وبناشر"
+              : "غير محدد";
           return {
             number: bn,
-            type: bu[0]?.buildingType ?? "غير محدد",
+            type: derivedType,
             totalUnits: bu.length,
             rentedUnits: rented,
             availableUnits: bu.length - rented,
             expectedAnnualRevenue: 0,
           };
         });
+        // Also patch units' buildingType so downstream UI shows the correct label.
+        for (const u of units) {
+          if (!u.buildingType) {
+            const b = buildings.find((bb) => bb.number === u.buildingNumber);
+            if (b) u.buildingType = b.type;
+          }
+        }
       }
 
       return { buildings, units };
