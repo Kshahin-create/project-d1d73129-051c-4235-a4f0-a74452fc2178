@@ -8,24 +8,26 @@ import { getPlanLayout } from "@/data/buildingPlans";
 interface UnitGridProps {
   buildingNumber: number;
   units: Unit[];
-  selectedUnit?: number;
+  /** Selected unit numbers (multi-select). */
+  selectedUnits?: number[];
   onSelect: (unit: Unit) => void;
   /** Optional building plan image. Add PNGs to src/assets/plans/ as building-{n}.png */
   planImage?: string;
 }
 
-export const UnitGrid = ({ buildingNumber, units, selectedUnit, onSelect, planImage }: UnitGridProps) => {
+export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, planImage }: UnitGridProps) => {
   const [zoomed, setZoomed] = useState(false);
   const [hoveredUnit, setHoveredUnit] = useState<number | null>(null);
   const layout = getPlanLayout(buildingNumber);
   const unitsByNumber = new Map(units.map((u) => [u.unitNumber, u]));
+  const selectedSet = new Set(selectedUnits);
 
   const renderOverlay = (interactive: boolean) =>
     layout?.units.map((area) => {
       const unit = unitsByNumber.get(area.unitNumber);
       if (!unit) return null;
       const isRented = unit.status === "rented";
-      const isSelected = selectedUnit === unit.unitNumber;
+      const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
 
       return (
