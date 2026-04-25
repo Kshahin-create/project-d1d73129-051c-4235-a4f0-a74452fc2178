@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Home, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Home, CheckCircle2, X as XIcon } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProgressSteps } from "@/components/ProgressSteps";
@@ -14,11 +14,6 @@ import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import type { Unit, Building } from "@/data/types";
 
-/**
- * صور مخططات المباني - أضف الصور إلى src/assets/plans/ بالاسم building-{n}.png
- * Building plan images: drop files into src/assets/plans/building-{n}.png
- * Using Vite's import.meta.glob to load them dynamically without breaking if missing.
- */
 const planModules = import.meta.glob("@/assets/plans/building-*.png", {
   eager: true,
   import: "default",
@@ -29,7 +24,7 @@ function getPlanImage(buildingNumber: number): string | undefined {
   return key ? planModules[key] : undefined;
 }
 
-const STEPS = ["المبنى", "الوحدة", "التفاصيل", "بياناتك", "الإرسال"];
+const STEPS = ["المبنى", "الوحدات", "التفاصيل", "بياناتك", "الإرسال"];
 const FORM_ID = "customer-booking-form";
 
 const Booking = () => {
@@ -38,7 +33,7 @@ const Booking = () => {
   const activityFilter = searchParams.get("activity") as "service" | "parts" | null;
   const [step, setStep] = useState(1);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
-  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const bookingContentRef = useRef<HTMLDivElement>(null);
@@ -52,8 +47,16 @@ const Booking = () => {
     [selectedBuilding, units]
   );
 
+  const selectedUnitNumbers = useMemo(() => selectedUnits.map((u) => u.unitNumber), [selectedUnits]);
+
+  const totals = useMemo(() => {
+    const area = selectedUnits.reduce((s, u) => s + u.area, 0);
+    const price = selectedUnits.reduce((s, u) => s + u.price, 0);
+    return { area, price, count: selectedUnits.length };
+  }, [selectedUnits]);
+
   const whatsapp = useMemo(() => {
-    if (!selectedUnit || !customer) return null;
+    if (selectedUnits.length === 0 || !customer) return null;
     const data = {
       fullName: customer.fullName,
       phone: customer.phone,
@@ -62,21 +65,32 @@ const Booking = () => {
       notes: customer.notes || undefined,
     };
     return {
-      ...buildWhatsAppLinks(selectedUnit, data),
-      message: buildWhatsAppMessage(selectedUnit, data),
+      ...buildWhatsAppLinks(selectedUnits, data),
+      message: buildWhatsAppMessage(selectedUnits, data),
     };
-  }, [selectedUnit, customer]);
+  }, [selectedUnits, customer]);
 
   const handleBuildingSelect = (b: Building) => {
     setSelectedBuilding(b);
-    setSelectedUnit(null);
+    setSelectedUnits([]);
     setStep(2);
   };
 
-  const handleUnitSelect = (u: Unit) => {
+  const handleUnitToggle = (u: Unit) => {
     if (u.status === "rented") return;
-    setSelectedUnit(u);
-    setStep(3);
+    setSelectedUnits((prev) => {
+      const exists = prev.some((p) => p.unitNumber === u.unitNumber && p.buildingNumber === u.buildingNumber);
+      if (exists) {
+        return prev.filter((p) => !(p.unitNumber === u.unitNumber && p.buildingNumber === u.buildingNumber));
+      }
+      return [...prev, u];
+    });
+  };
+
+  const removeSelected = (u: Unit) => {
+    setSelectedUnits((prev) =>
+      prev.filter((p) => !(p.unitNumber === u.unitNumber && p.buildingNumber === u.buildingNumber))
+    );
   };
 
   const handleFormSubmit = (data: CustomerFormData) => {
@@ -105,7 +119,6 @@ const Booking = () => {
       <Header />
 
       <main className="container-tight py-8 sm:py-10">
-        {/* Breadcrumb + back */}
         <div className="mb-6 flex items-center justify-between">
           <button
             onClick={goBack}
@@ -119,12 +132,10 @@ const Booking = () => {
           </Link>
         </div>
 
-        {/* Progress */}
         <div className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
           <ProgressSteps current={step} steps={STEPS} />
         </div>
 
-        {/* Step content */}
         <div ref={bookingContentRef} className="scroll-mt-24">
         <AnimatePresence mode="wait">
           <motion.div
@@ -149,22 +160,82 @@ const Booking = () => {
             {step === 2 && selectedBuilding && (
               <StepWrap
                 title={`المبنى رقم ${selectedBuilding.number} — ${selectedBuilding.type}`}
-                desc="راجع مخطط المبنى واختر الوحدة التي ترغب بحجزها. الوحدات المؤجرة مقفلة."
+                desc="يمكنك اختيار وحدة واحدة أو أكثر. اضغط على الوحدة لإضافتها/إزالتها، ثم اضغط متابعة."
               >
                 <UnitGrid
                   buildingNumber={selectedBuilding.number}
                   units={buildingUnits}
-                  selectedUnit={selectedUnit?.unitNumber}
-                  onSelect={handleUnitSelect}
+                  selectedUnits={selectedUnitNumbers}
+                  onSelect={handleUnitToggle}
                   planImage={getPlanImage(selectedBuilding.number)}
                 />
+
+                {/* Sticky selection bar */}
+                <div className="sticky bottom-3 z-30 mt-6">
+                  <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-elevated backdrop-blur-md">
+                    {selectedUnits.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground">
+                        لم تختر أي وحدة بعد — اضغط على الوحدات في المخطط أو القائمة.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                          <div className="text-sm font-bold">
+                            الوحدات المختارة:{" "}
+                            <span className="num text-primary">{totals.count}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            إجمالي المساحة:{" "}
+                            <span className="num font-bold text-foreground">{totals.area}</span> م² —
+                            الإيجار السنوي:{" "}
+                            <span className="num font-bold text-accent">
+                              {totals.price.toLocaleString("en-US")}
+                            </span>{" "}
+                            ريال
+                          </div>
+                        </div>
+                        <div className="mb-3 flex flex-wrap gap-1.5">
+                          {selectedUnits.map((u) => (
+                            <span
+                              key={`${u.buildingNumber}-${u.unitNumber}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary"
+                            >
+                              <span className="num">#{u.unitNumber}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeSelected(u)}
+                                className="rounded-full p-0.5 transition hover:bg-primary/20"
+                                aria-label={`إزالة الوحدة ${u.unitNumber}`}
+                              >
+                                <XIcon className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    <button
+                      onClick={() => setStep(3)}
+                      disabled={selectedUnits.length === 0}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      متابعة ({selectedUnits.length})
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               </StepWrap>
             )}
 
-            {step === 3 && selectedUnit && (
-              <StepWrap title="تفاصيل الوحدة" desc="راجع تفاصيل الوحدة قبل المتابعة.">
-                <div className="mx-auto max-w-xl space-y-4">
-                  <UnitDetailsCard unit={selectedUnit} />
+            {step === 3 && selectedUnits.length > 0 && (
+              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات قبل المتابعة.">
+                <div className="mx-auto max-w-3xl space-y-4">
+                  <SelectionTotals totals={totals} />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {selectedUnits.map((u) => (
+                      <UnitDetailsCard key={`${u.buildingNumber}-${u.unitNumber}`} unit={u} />
+                    ))}
+                  </div>
                   <button
                     onClick={() => setStep(4)}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3.5 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated"
@@ -176,7 +247,7 @@ const Booking = () => {
               </StepWrap>
             )}
 
-            {step === 4 && selectedUnit && (
+            {step === 4 && selectedUnits.length > 0 && (
               <StepWrap title="بياناتك" desc="أدخل بياناتك لإتمام طلب الحجز.">
                 <div className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-5">
                   <div className="lg:col-span-3">
@@ -192,14 +263,17 @@ const Booking = () => {
                       </button>
                     </div>
                   </div>
-                  <div className="lg:col-span-2">
-                    <UnitDetailsCard unit={selectedUnit} />
+                  <div className="lg:col-span-2 space-y-3">
+                    <SelectionTotals totals={totals} />
+                    {selectedUnits.map((u) => (
+                      <UnitDetailsCard key={`${u.buildingNumber}-${u.unitNumber}`} unit={u} />
+                    ))}
                   </div>
                 </div>
               </StepWrap>
             )}
 
-            {step === 5 && selectedUnit && customer && (
+            {step === 5 && selectedUnits.length > 0 && customer && (
               <StepWrap title="إرسال الطلب" desc="ستفتح محادثة واتساب جاهزة بكل تفاصيل طلبك.">
                 <div className="mx-auto max-w-xl space-y-5">
                   {submitted ? (
@@ -222,7 +296,12 @@ const Booking = () => {
                     </div>
                   ) : (
                     <>
-                      <UnitDetailsCard unit={selectedUnit} />
+                      <SelectionTotals totals={totals} />
+                      <div className="space-y-3">
+                        {selectedUnits.map((u) => (
+                          <UnitDetailsCard key={`${u.buildingNumber}-${u.unitNumber}`} unit={u} />
+                        ))}
+                      </div>
                       <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
                         <h4 className="mb-3 font-display font-bold">ملخص بياناتك</h4>
                         <dl className="space-y-1.5 text-sm">
@@ -272,6 +351,29 @@ const StepWrap = ({
       <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
     </div>
     {children}
+  </div>
+);
+
+const SelectionTotals = ({ totals }: { totals: { count: number; area: number; price: number } }) => (
+  <div className="rounded-2xl border border-accent/30 bg-accent-soft/30 p-4 shadow-card">
+    <div className="grid grid-cols-3 gap-3 text-center">
+      <div>
+        <div className="text-[11px] text-muted-foreground">عدد الوحدات</div>
+        <div className="num mt-1 font-display text-xl font-extrabold text-primary">{totals.count}</div>
+      </div>
+      <div>
+        <div className="text-[11px] text-muted-foreground">إجمالي المساحة</div>
+        <div className="num mt-1 font-display text-xl font-extrabold">
+          {totals.area} <span className="text-xs font-medium text-muted-foreground">م²</span>
+        </div>
+      </div>
+      <div>
+        <div className="text-[11px] text-muted-foreground">الإيجار السنوي</div>
+        <div className="num mt-1 font-display text-xl font-extrabold text-accent">
+          {totals.price.toLocaleString("en-US")}
+        </div>
+      </div>
+    </div>
   </div>
 );
 
