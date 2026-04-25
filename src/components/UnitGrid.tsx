@@ -120,7 +120,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
             const isRented = u.status === "rented";
-            const isSelected = selectedUnit === u.unitNumber;
+            const isSelected = selectedSet.has(u.unitNumber);
             const isCorner = u.unitType === "ركنية";
             return (
               <motion.button
