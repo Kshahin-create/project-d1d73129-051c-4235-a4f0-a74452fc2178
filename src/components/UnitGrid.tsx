@@ -40,14 +40,18 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
           onMouseLeave={() => interactive && setHoveredUnit(null)}
           aria-label={`وحدة ${area.unitNumber}${isRented ? " (مؤجرة)" : ""}`}
           className={cn(
-            "absolute flex items-center justify-center rounded-md border-2 text-[10px] font-bold transition-all duration-200 sm:text-xs",
-            "focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1",
-            isRented && "cursor-not-allowed border-destructive/70 bg-destructive/40 text-destructive-foreground",
+            "absolute box-border flex items-center justify-center text-[10px] font-bold transition-colors duration-200 sm:text-xs",
+            "focus:outline-none focus:ring-1 focus:ring-accent",
+            // المؤجرة: لون أحمر شفاف يغطي الوحدة بالكامل بنفس أبعادها
+            isRented &&
+              "cursor-not-allowed border border-destructive/80 bg-destructive/55 text-white",
+            // المتاحة (غير مختارة): شفافة، تظهر فقط عند المرور
             !isRented && !isSelected &&
-              "border-accent/0 bg-accent/0 text-transparent hover:border-accent hover:bg-accent/30 hover:text-accent-foreground",
+              "border border-transparent bg-transparent text-transparent hover:border-accent hover:bg-accent/25 hover:text-accent-foreground",
+            // المختارة: لون ذهبي شفاف بحدود رفيعة، نفس أبعاد الوحدة بالضبط
             !isRented && isSelected &&
-              "border-accent bg-accent/70 text-accent-foreground shadow-elevated ring-2 ring-accent",
-            isHovered && !isSelected && !isRented && "scale-105 z-10"
+              "border border-accent bg-accent/55 text-accent-foreground",
+            isHovered && !isSelected && !isRented && "z-10"
           )}
           style={{
             left: `${area.x}%`,
