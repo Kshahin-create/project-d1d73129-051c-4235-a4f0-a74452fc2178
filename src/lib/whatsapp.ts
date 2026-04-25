@@ -10,24 +10,49 @@ export interface CustomerData {
 }
 
 /**
- * يبني نص رسالة واتساب الخام (بدون ترميز URL)
- * Builds the raw WhatsApp message text (un-encoded).
+ * يبني نص رسالة واتساب الخام (بدون ترميز URL) - يدعم وحدة واحدة أو عدة وحدات
+ * Builds the raw WhatsApp message text (un-encoded). Supports one or many units.
  */
-export function buildWhatsAppMessage(unit: Unit, customer: CustomerData): string {
+export function buildWhatsAppMessage(unitOrUnits: Unit | Unit[], customer: CustomerData): string {
+  const units = Array.isArray(unitOrUnits) ? unitOrUnits : [unitOrUnits];
   const date = new Date().toLocaleDateString("ar-SA", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const lines = [
+  const totalArea = units.reduce((s, u) => s + u.area, 0);
+  const totalPrice = units.reduce((s, u) => s + u.price, 0);
+
+  const header = [
     "🏢 *طلب حجز جديد - المدينة الصناعية بشمال مكة*",
     "",
-    `📍 *المبنى:* رقم ${unit.buildingNumber} - ${unit.buildingType}`,
-    `🔢 *رقم الوحدة:* ${unit.unitNumber}${unit.unitType ? ` (${unit.unitType})` : ""}`,
-    `📐 *المساحة:* ${unit.area} م²`,
-    `💰 *السعر السنوي:* ${unit.price.toLocaleString("en-US")} ريال`,
+    `📦 *عدد الوحدات المطلوبة:* ${units.length}`,
     "",
+  ];
+
+  const unitsBlock: string[] = [];
+  units.forEach((unit, idx) => {
+    if (units.length > 1) unitsBlock.push(`— *وحدة ${idx + 1}* —`);
+    unitsBlock.push(
+      `📍 *المبنى:* رقم ${unit.buildingNumber} - ${unit.buildingType}`,
+      `🔢 *رقم الوحدة:* ${unit.unitNumber}${unit.unitType ? ` (${unit.unitType})` : ""}`,
+      `📐 *المساحة:* ${unit.area} م²`,
+      `💰 *السعر السنوي:* ${unit.price.toLocaleString("en-US")} ريال`,
+      ""
+    );
+  });
+
+  if (units.length > 1) {
+    unitsBlock.push(
+      "— *الإجمالي* —",
+      `📐 *إجمالي المساحات:* ${totalArea.toLocaleString("en-US")} م²`,
+      `💰 *إجمالي الإيجار السنوي:* ${totalPrice.toLocaleString("en-US")} ريال`,
+      ""
+    );
+  }
+
+  const customerBlock = [
     "👤 *بيانات العميل:*",
     `• الاسم: ${customer.fullName}`,
     `• الجوال: ${customer.phone}`,
@@ -40,38 +65,32 @@ export function buildWhatsAppMessage(unit: Unit, customer: CustomerData): string
     "_تم الإرسال عبر استمارة الحجز الإلكترونية - نخبة تسكين العقارية_",
   ].filter(Boolean) as string[];
 
-  return lines.join("\n");
+  return [...header, ...unitsBlock, ...customerBlock].join("\n");
 }
 
 /**
  * يولّد روابط واتساب (تطبيق + ويب) ونص الرسالة
- * Generates WhatsApp links (app + web) and the raw text.
  */
-export function buildWhatsAppLinks(unit: Unit, customer: CustomerData) {
-  const text = buildWhatsAppMessage(unit, customer);
+export function buildWhatsAppLinks(unitOrUnits: Unit | Unit[], customer: CustomerData) {
+  const text = buildWhatsAppMessage(unitOrUnits, customer);
   const encoded = encodeURIComponent(text);
   return {
     text,
-    // الرابط العالمي - يفتح التطبيق إن وُجد، وإلا واتساب ويب
     appUrl: `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`,
-    // رابط واتساب ويب كبديل صريح
     webUrl: `https://web.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encoded}`,
-    // رابط api.whatsapp.com كبديل ثانٍ يعمل على معظم الأجهزة
     apiUrl: `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encoded}`,
   };
 }
 
 /**
- * متوافق مع الإصدار السابق - يُرجع رابط wa.me فقط
- * Backwards-compatible: returns the wa.me link only.
+ * متوافق مع الإصدار السابق
  */
-export function buildWhatsAppLink(unit: Unit, customer: CustomerData): string {
+export function buildWhatsAppLink(unit: Unit | Unit[], customer: CustomerData): string {
   return buildWhatsAppLinks(unit, customer).appUrl;
 }
 
 /**
- * نسخ نص إلى الحافظة مع آلية بديلة للمتصفحات القديمة/غير الآمنة
- * Copy text to clipboard with a legacy fallback.
+ * نسخ نص إلى الحافظة
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
   try {
