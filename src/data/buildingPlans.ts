@@ -1,7 +1,8 @@
 /**
  * إحداثيات الوحدات على صور مخططات المباني (نسبية بالنسبة المئوية).
  * كل وحدة تُعرّف بـ x, y (الزاوية العلوية اليسرى) و w, h (العرض والارتفاع).
- * النسب تكون من 0 إلى 100.
+ * النسب من 0 إلى 100. القيم مُستخرجة بصريًا من صور المخططات الأصلية
+ * بحيث تنطبق مربعات الاختيار التفاعلية على حدود الوحدات الخضراء تمامًا.
  */
 
 export interface PlanUnitArea {
@@ -17,81 +18,122 @@ export interface PlanLayout {
   units: PlanUnitArea[];
 }
 
-/**
- * Generic two-row layout (12 units per row) used across buildings 1–6.
- * topStart  → number of the LEFT-most unit in the top row.
- * botStart  → number of the LEFT-most unit in the bottom row.
- *
- * Row geometry can be tuned per-building if the image proportions differ.
- */
-function buildTwoRowLayout(opts: {
-  topStart: number;
-  botStart: number;
-  cols?: number;
-  left?: number;
-  right?: number;
-  topY?: number;
-  topH?: number;
-  botY?: number;
-  botH?: number;
-  aspectRatio?: number;
-}): PlanLayout {
-  const {
-    topStart,
-    botStart,
-    cols = 12,
-    left = 3.2,
-    right = 96.8,
-    topY = 24.5,
-    topH = 28.5,
-    botY = 56.5,
-    botH = 28.5,
-    aspectRatio = 1920 / 1280,
-  } = opts;
-
-  const colWidth = (right - left) / cols;
-  const units: PlanUnitArea[] = [];
-
-  for (let i = 0; i < cols; i++) {
-    units.push({
-      unitNumber: topStart + i,
-      x: left + i * colWidth,
-      y: topY,
-      w: colWidth,
-      h: topH,
-    });
-  }
-  for (let i = 0; i < cols; i++) {
-    units.push({
-      unitNumber: botStart + i,
-      x: left + i * colWidth,
-      y: botY,
-      w: colWidth,
-      h: botH,
-    });
-  }
-
-  return { aspectRatio, units };
+interface BuildingGeometry {
+  /** إحداثيات أعمدة الـ12 وحدة من اليسار لليمين [xStart, xEnd] بالنسبة المئوية */
+  columns: [number, number][];
+  topY: number;
+  topH: number;
+  botY: number;
+  botH: number;
+  aspectRatio: number;
 }
 
+function buildLayout(g: BuildingGeometry, topStart: number, botStart: number): PlanLayout {
+  const units: PlanUnitArea[] = [];
+  for (let i = 0; i < g.columns.length; i++) {
+    const [x1, x2] = g.columns[i];
+    units.push({
+      unitNumber: topStart + i,
+      x: x1,
+      y: g.topY,
+      w: x2 - x1,
+      h: g.topH,
+    });
+  }
+  for (let i = 0; i < g.columns.length; i++) {
+    const [x1, x2] = g.columns[i];
+    units.push({
+      unitNumber: botStart + i,
+      x: x1,
+      y: g.botY,
+      w: x2 - x1,
+      h: g.botH,
+    });
+  }
+  return { aspectRatio: g.aspectRatio, units };
+}
+
+// ===== الإحداثيات المُقاسة من الصور الأصلية =====
+
+const B1: BuildingGeometry = {
+  aspectRatio: 1920 / 1279,
+  topY: 37.76, topH: 6.88,
+  botY: 57.00, botH: 6.88,
+  columns: [
+    [1.09, 9.95], [9.95, 17.97], [17.97, 25.94], [25.94, 33.91],
+    [33.91, 41.88], [41.88, 49.79], [49.79, 57.76], [57.76, 65.78],
+    [65.78, 73.70], [73.70, 81.72], [81.72, 89.64], [89.64, 98.70],
+  ],
+};
+
+const B2: BuildingGeometry = {
+  aspectRatio: 1600 / 1066,
+  topY: 37.80, topH: 6.85,
+  botY: 56.94, botH: 6.85,
+  columns: [
+    [1.31, 10.31], [10.31, 18.25], [18.25, 26.12], [26.12, 34.06],
+    [34.06, 41.94], [41.94, 49.81], [49.81, 57.69], [57.69, 65.62],
+    [65.62, 73.50], [73.50, 81.38], [81.38, 89.31], [89.31, 98.50],
+  ],
+};
+
+const B3: BuildingGeometry = {
+  aspectRatio: 1600 / 1066,
+  topY: 37.80, topH: 6.75,
+  botY: 57.04, botH: 6.75,
+  columns: [
+    [1.12, 10.12], [10.12, 18.06], [18.06, 26.00], [26.00, 33.94],
+    [33.94, 41.88], [41.88, 49.81], [49.81, 57.75], [57.75, 65.69],
+    [65.69, 73.62], [73.62, 81.56], [81.56, 89.50], [89.50, 98.69],
+  ],
+};
+
+const B4: BuildingGeometry = {
+  aspectRatio: 1600 / 1066,
+  topY: 37.80, topH: 6.75,
+  botY: 57.04, botH: 6.75,
+  columns: [
+    [1.12, 10.12], [10.12, 18.06], [18.06, 26.00], [26.00, 33.94],
+    [33.94, 41.88], [41.88, 49.81], [49.81, 57.75], [57.75, 65.69],
+    [65.69, 73.62], [73.62, 81.56], [81.56, 89.50], [89.50, 98.69],
+  ],
+};
+
+const B5: BuildingGeometry = {
+  aspectRatio: 1920 / 1279,
+  topY: 37.76, topH: 6.88,
+  botY: 57.00, botH: 6.88,
+  columns: [
+    [1.15, 10.05], [10.05, 18.02], [18.02, 25.99], [25.99, 33.91],
+    [33.91, 41.88], [41.88, 49.84], [49.84, 57.76], [57.76, 65.73],
+    [65.73, 73.70], [73.70, 81.61], [81.61, 89.58], [89.58, 98.70],
+  ],
+};
+
+const B6: BuildingGeometry = {
+  aspectRatio: 1600 / 1066,
+  topY: 37.80, topH: 6.75,
+  botY: 57.04, botH: 6.75,
+  columns: [
+    [1.12, 10.06], [10.06, 18.00], [18.00, 25.94], [25.94, 33.88],
+    [33.88, 41.81], [41.81, 49.81], [49.81, 57.75], [57.75, 65.75],
+    [65.75, 73.69], [73.69, 81.62], [81.62, 89.56], [89.56, 98.69],
+  ],
+};
+
 export const BUILDING_PLANS: Record<number, PlanLayout> = {
-  // مبنى 1 — صف علوي 411→422، صف سفلي 399→410
-  1: buildTwoRowLayout({ topStart: 411, botStart: 399 }),
-
-  // مبنى 2 — صف علوي 363→374، صف سفلي 351→362
-  2: buildTwoRowLayout({ topStart: 363, botStart: 351 }),
-
-  // مبنى 3 — صف علوي 315→326، صف سفلي 303→314
-  3: buildTwoRowLayout({ topStart: 315, botStart: 303 }),
-
-  // مبنى 4 — صف علوي 267→278، صف سفلي 255→266
-  4: buildTwoRowLayout({ topStart: 267, botStart: 255 }),
-
-  // مبنى 5 — صف علوي 219→230، صف سفلي 207→218
-  5: buildTwoRowLayout({ topStart: 219, botStart: 207 }),
-
-  // مبنى 6 — صف علوي 171→182، صف سفلي 159→170
-  6: buildTwoRowLayout({ topStart: 171, botStart: 159 }),
+  // مبنى 1 — الصف العلوي 411→422 (يسار→يمين)، الصف السفلي 399→410
+  1: buildLayout(B1, 411, 399),
+  // مبنى 2 — الصف العلوي 363→374، الصف السفلي 351→362
+  2: buildLayout(B2, 363, 351),
+  // مبنى 3 — الصف العلوي 315→326، الصف السفلي 303→314
+  3: buildLayout(B3, 315, 303),
+  // مبنى 4 — الصف العلوي 267→278، الصف السفلي 255→266
+  4: buildLayout(B4, 267, 255),
+  // مبنى 5 — الصف العلوي 219→230، الصف السفلي 207→218
+  5: buildLayout(B5, 219, 207),
+  // مبنى 6 — الصف العلوي 171→182، الصف السفلي 159→170
+  6: buildLayout(B6, 171, 159),
 };
 
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
