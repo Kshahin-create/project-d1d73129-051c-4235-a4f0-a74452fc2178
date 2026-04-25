@@ -377,6 +377,9 @@ const SelectionTotals = ({ totals }: { totals: { count: number; area: number; pr
         </div>
       </div>
     </div>
+    <p className="mt-2 text-center text-[11px] text-muted-foreground">
+      الإيجار السنوي المُعلّن غير شامل ضريبة القيمة المضافة ١٥٪؜
+    </p>
   </div>
 );
 
