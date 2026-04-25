@@ -47,6 +47,10 @@ export const UnitDetailsCard = ({ unit }: { unit: Unit }) => {
           </span>{" "}
           <span className="text-xs text-muted-foreground">ريال/م²</span>
         </Row>
+        <div className="flex items-center gap-2 bg-destructive/5 px-6 py-2.5 text-[11px] text-muted-foreground">
+          <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-bold text-destructive">ملاحظة</span>
+          قيمة الإيجار السنوي غير شاملة ضريبة القيمة المضافة ١٥٪؜
+        </div>
       </div>
     </motion.div>
   );
