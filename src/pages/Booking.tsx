@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Home, CheckCircle2 } from "lucide-react";
@@ -41,6 +41,7 @@ const Booking = () => {
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const bookingContentRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useBuildingsAndUnits();
   const buildings = data?.buildings ?? [];
@@ -83,6 +84,14 @@ const Booking = () => {
     setStep(5);
   };
 
+  useEffect(() => {
+    if (step !== 1) return;
+    const timeout = window.setTimeout(() => {
+      bookingContentRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+    }, 80);
+    return () => window.clearTimeout(timeout);
+  }, [activityFilter, isLoading, step]);
+
   const goBack = () => {
     if (step === 1) {
       navigate("/");
@@ -116,6 +125,7 @@ const Booking = () => {
         </div>
 
         {/* Step content */}
+        <div ref={bookingContentRef} className="scroll-mt-24">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -239,6 +249,7 @@ const Booking = () => {
             )}
           </motion.div>
         </AnimatePresence>
+        </div>
       </main>
 
       <Footer />
