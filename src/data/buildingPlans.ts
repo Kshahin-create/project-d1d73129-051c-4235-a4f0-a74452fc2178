@@ -2,8 +2,6 @@
  * إحداثيات الوحدات على صور مخططات المباني (نسبية بالنسبة المئوية).
  * كل وحدة تُعرّف بـ x, y (الزاوية العلوية اليسرى) و w, h (العرض والارتفاع).
  * النسب تكون من 0 إلى 100.
- *
- * Building plan unit coordinates (relative percentages on the plan image).
  */
 
 export interface PlanUnitArea {
@@ -15,45 +13,57 @@ export interface PlanUnitArea {
 }
 
 export interface PlanLayout {
-  /** نسبة العرض إلى الارتفاع للصورة الأصلية، تُستخدم للحفاظ على التناسب */
   aspectRatio: number;
   units: PlanUnitArea[];
 }
 
 /**
- * مبنى رقم 1: صفان من 12 وحدة.
- * الصف العلوي (411-422) والصف السفلي (399-410)
- * الترتيب من اليمين إلى اليسار في الصورة.
+ * Generic two-row layout (12 units per row) used across buildings 1–6.
+ * topStart  → number of the LEFT-most unit in the top row.
+ * botStart  → number of the LEFT-most unit in the bottom row.
+ *
+ * Row geometry can be tuned per-building if the image proportions differ.
  */
-function buildBuilding1Layout(): PlanLayout {
+function buildTwoRowLayout(opts: {
+  topStart: number;
+  botStart: number;
+  cols?: number;
+  left?: number;
+  right?: number;
+  topY?: number;
+  topH?: number;
+  botY?: number;
+  botH?: number;
+  aspectRatio?: number;
+}): PlanLayout {
+  const {
+    topStart,
+    botStart,
+    cols = 12,
+    left = 3.2,
+    right = 96.8,
+    topY = 24.5,
+    topH = 28.5,
+    botY = 56.5,
+    botH = 28.5,
+    aspectRatio = 1920 / 1280,
+  } = opts;
+
+  const colWidth = (right - left) / cols;
   const units: PlanUnitArea[] = [];
 
-  // إعدادات هندسية مستخرجة من الصورة بصرياً
-  const left = 3.2;       // % - بداية أول عمود من اليسار
-  const right = 96.8;     // % - نهاية آخر عمود
-  const cols = 12;
-  const colWidth = (right - left) / cols; // ≈ 7.8%
-
-  // الصف العلوي: 411 (يسار) → 422 (يمين)... لكن الصورة بالعكس: 422 يمين، 411 يسار
-  // عند العرض: x=0 هو اليسار. 411 في أقصى اليسار، 422 في أقصى اليمين.
-  const topY = 24.5;
-  const topH = 28.5;
   for (let i = 0; i < cols; i++) {
     units.push({
-      unitNumber: 411 + i, // 411..422 من اليسار لليمين
+      unitNumber: topStart + i,
       x: left + i * colWidth,
       y: topY,
       w: colWidth,
       h: topH,
     });
   }
-
-  // الصف السفلي: 399 (يسار) → 410 (يمين)
-  const botY = 56.5;
-  const botH = 28.5;
   for (let i = 0; i < cols; i++) {
     units.push({
-      unitNumber: 399 + i, // 399..410 من اليسار لليمين
+      unitNumber: botStart + i,
       x: left + i * colWidth,
       y: botY,
       w: colWidth,
@@ -61,14 +71,27 @@ function buildBuilding1Layout(): PlanLayout {
     });
   }
 
-  return {
-    aspectRatio: 1920 / 1280,
-    units,
-  };
+  return { aspectRatio, units };
 }
 
 export const BUILDING_PLANS: Record<number, PlanLayout> = {
-  1: buildBuilding1Layout(),
+  // مبنى 1 — صف علوي 411→422، صف سفلي 399→410
+  1: buildTwoRowLayout({ topStart: 411, botStart: 399 }),
+
+  // مبنى 2 — صف علوي 363→374، صف سفلي 351→362
+  2: buildTwoRowLayout({ topStart: 363, botStart: 351 }),
+
+  // مبنى 3 — صف علوي 315→326، صف سفلي 303→314
+  3: buildTwoRowLayout({ topStart: 315, botStart: 303 }),
+
+  // مبنى 4 — صف علوي 267→278، صف سفلي 255→266
+  4: buildTwoRowLayout({ topStart: 267, botStart: 255 }),
+
+  // مبنى 5 — صف علوي 219→230، صف سفلي 207→218
+  5: buildTwoRowLayout({ topStart: 219, botStart: 207 }),
+
+  // مبنى 6 — صف علوي 171→182، صف سفلي 159→170
+  6: buildTwoRowLayout({ topStart: 171, botStart: 159 }),
 };
 
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
