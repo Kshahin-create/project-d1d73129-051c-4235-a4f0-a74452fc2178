@@ -57,8 +57,8 @@ function buildLayout(g: BuildingGeometry, topStart: number, botStart: number): P
 
 const B1: BuildingGeometry = {
   aspectRatio: 1920 / 1279,
-  topY: 37.76, topH: 6.88,
-  botY: 57.00, botH: 6.88,
+  topY: 32.84, topH: 14.07,
+  botY: 52.38, botH: 13.76,
   columns: [
     [1.09, 9.95], [9.95, 17.97], [17.97, 25.94], [25.94, 33.91],
     [33.91, 41.88], [41.88, 49.79], [49.79, 57.76], [57.76, 65.78],
@@ -68,8 +68,8 @@ const B1: BuildingGeometry = {
 
 const B2: BuildingGeometry = {
   aspectRatio: 1600 / 1066,
-  topY: 37.80, topH: 6.85,
-  botY: 56.94, botH: 6.85,
+  topY: 33.02, topH: 13.88,
+  botY: 52.53, botH: 13.41,
   columns: [
     [1.31, 10.31], [10.31, 18.25], [18.25, 26.12], [26.12, 34.06],
     [34.06, 41.94], [41.94, 49.81], [49.81, 57.69], [57.69, 65.62],
@@ -79,8 +79,8 @@ const B2: BuildingGeometry = {
 
 const B3: BuildingGeometry = {
   aspectRatio: 1600 / 1066,
-  topY: 37.80, topH: 6.75,
-  botY: 57.04, botH: 6.75,
+  topY: 33.02, topH: 11.73,
+  botY: 52.53, botH: 11.35,
   columns: [
     [1.12, 10.12], [10.12, 18.06], [18.06, 26.00], [26.00, 33.94],
     [33.94, 41.88], [41.88, 49.81], [49.81, 57.75], [57.75, 65.69],
@@ -90,8 +90,8 @@ const B3: BuildingGeometry = {
 
 const B4: BuildingGeometry = {
   aspectRatio: 1600 / 1066,
-  topY: 37.80, topH: 6.75,
-  botY: 57.04, botH: 6.75,
+  topY: 33.02, topH: 11.73,
+  botY: 52.53, botH: 11.44,
   columns: [
     [1.12, 10.12], [10.12, 18.06], [18.06, 26.00], [26.00, 33.94],
     [33.94, 41.88], [41.88, 49.81], [49.81, 57.75], [57.75, 65.69],
@@ -101,8 +101,8 @@ const B4: BuildingGeometry = {
 
 const B5: BuildingGeometry = {
   aspectRatio: 1920 / 1279,
-  topY: 37.76, topH: 6.88,
-  botY: 57.00, botH: 6.88,
+  topY: 32.99, topH: 13.92,
+  botY: 52.54, botH: 13.53,
   columns: [
     [1.15, 10.05], [10.05, 18.02], [18.02, 25.99], [25.99, 33.91],
     [33.91, 41.88], [41.88, 49.84], [49.84, 57.76], [57.76, 65.73],
@@ -112,8 +112,8 @@ const B5: BuildingGeometry = {
 
 const B6: BuildingGeometry = {
   aspectRatio: 1600 / 1066,
-  topY: 37.80, topH: 6.75,
-  botY: 57.04, botH: 6.75,
+  topY: 33.02, topH: 11.73,
+  botY: 52.53, botH: 11.44,
   columns: [
     [1.12, 10.06], [10.06, 18.00], [18.00, 25.94], [25.94, 33.88],
     [33.88, 41.81], [41.81, 49.81], [49.81, 57.75], [57.75, 65.75],
