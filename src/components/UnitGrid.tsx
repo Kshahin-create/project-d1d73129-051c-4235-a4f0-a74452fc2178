@@ -3,6 +3,7 @@ import { Lock, CheckCircle2, ZoomIn, X } from "lucide-react";
 import { useState } from "react";
 import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { getPlanLayout } from "@/data/buildingPlans";
 
 interface UnitGridProps {
   buildingNumber: number;
@@ -15,25 +16,82 @@ interface UnitGridProps {
 
 export const UnitGrid = ({ buildingNumber, units, selectedUnit, onSelect, planImage }: UnitGridProps) => {
   const [zoomed, setZoomed] = useState(false);
+  const [hoveredUnit, setHoveredUnit] = useState<number | null>(null);
+  const layout = getPlanLayout(buildingNumber);
+  const unitsByNumber = new Map(units.map((u) => [u.unitNumber, u]));
+
+  const renderOverlay = (interactive: boolean) =>
+    layout?.units.map((area) => {
+      const unit = unitsByNumber.get(area.unitNumber);
+      if (!unit) return null;
+      const isRented = unit.status === "rented";
+      const isSelected = selectedUnit === unit.unitNumber;
+      const isHovered = hoveredUnit === unit.unitNumber;
+
+      return (
+        <button
+          key={area.unitNumber}
+          type="button"
+          disabled={isRented || !interactive}
+          onClick={() => interactive && onSelect(unit)}
+          onMouseEnter={() => interactive && setHoveredUnit(unit.unitNumber)}
+          onMouseLeave={() => interactive && setHoveredUnit(null)}
+          aria-label={`وحدة ${area.unitNumber}${isRented ? " (مؤجرة)" : ""}`}
+          className={cn(
+            "absolute flex items-center justify-center rounded-md border-2 text-[10px] font-bold transition-all duration-200 sm:text-xs",
+            "focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1",
+            isRented && "cursor-not-allowed border-destructive/70 bg-destructive/40 text-destructive-foreground",
+            !isRented && !isSelected &&
+              "border-accent/0 bg-accent/0 text-transparent hover:border-accent hover:bg-accent/30 hover:text-accent-foreground",
+            !isRented && isSelected &&
+              "border-accent bg-accent/70 text-accent-foreground shadow-elevated ring-2 ring-accent",
+            isHovered && !isSelected && !isRented && "scale-105 z-10"
+          )}
+          style={{
+            left: `${area.x}%`,
+            top: `${area.y}%`,
+            width: `${area.w}%`,
+            height: `${area.h}%`,
+          }}
+        >
+          <span className="num drop-shadow-sm">{area.unitNumber}</span>
+        </button>
+      );
+    });
 
   return (
     <div className="space-y-6">
-      {/* Plan image */}
+      {/* Plan image with interactive overlay */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         {planImage ? (
           <>
-            <img
-              src={planImage}
-              alt={`مخطط مبنى ${buildingNumber}`}
-              className="h-full max-h-[420px] w-full cursor-zoom-in object-contain bg-secondary"
-              onClick={() => setZoomed(true)}
-            />
+            <div className="relative w-full">
+              <img
+                src={planImage}
+                alt={`مخطط مبنى ${buildingNumber}`}
+                className="block h-auto max-h-[520px] w-full object-contain bg-secondary"
+              />
+              {/* Interactive unit overlay */}
+              {layout && (
+                <div className="absolute inset-0" aria-hidden={false}>
+                  {renderOverlay(true)}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setZoomed(true)}
-              className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1.5 text-xs font-medium text-primary-foreground backdrop-blur-sm"
+              className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1.5 text-xs font-medium text-primary-foreground backdrop-blur-sm hover:bg-primary"
             >
               <ZoomIn className="h-3.5 w-3.5" /> تكبير المخطط
             </button>
+
+            {/* Hint */}
+            {layout && (
+              <div className="absolute right-3 top-3 z-20 rounded-full bg-card/90 px-3 py-1.5 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm sm:text-xs">
+                اضغط على الوحدة في المخطط لاختيارها
+              </div>
+            )}
           </>
         ) : (
           <div className="flex h-48 flex-col items-center justify-center gap-2 bg-secondary text-muted-foreground">
@@ -50,13 +108,13 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnit, onSelect, planIm
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
-        <LegendDot colorClass="bg-primary" label="مختار" />
-        <LegendDot colorClass="bg-muted border border-border opacity-60" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
+        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
       </div>
 
-      {/* Units grid */}
+      {/* Units grid (alternative quick selection) */}
       <div>
-        <h4 className="mb-3 font-display font-bold">اختر رقم الوحدة</h4>
+        <h4 className="mb-3 font-display font-bold">أو اختر رقم الوحدة من القائمة</h4>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
             const isRented = u.status === "rented";
@@ -115,17 +173,27 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnit, onSelect, planIm
           >
             <button
               onClick={() => setZoomed(false)}
-              className="absolute left-4 top-4 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
+              className="absolute left-4 top-4 z-10 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
             >
               <X className="h-5 w-5" />
             </button>
-            <motion.img
+            <motion.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              src={planImage}
-              alt={`مخطط مبنى ${buildingNumber}`}
-              className="max-h-full max-w-full rounded-xl object-contain shadow-elevated"
-            />
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-h-full max-w-full"
+            >
+              <img
+                src={planImage}
+                alt={`مخطط مبنى ${buildingNumber}`}
+                className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-elevated"
+              />
+              {layout && (
+                <div className="absolute inset-0">
+                  {renderOverlay(true)}
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
