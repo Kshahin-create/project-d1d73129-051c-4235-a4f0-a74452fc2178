@@ -30,6 +30,14 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
       const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
 
+      // إطار 1px ثابت داخلي عبر inset box-shadow:
+      // لا يأخذ أي بكسل من مساحة الوحدة ولا يُسبب أي إزاحة عند التبديل بين الحالات
+      const ringColor = isRented
+        ? "hsl(var(--destructive))"
+        : isSelected
+          ? "hsl(var(--accent))"
+          : "transparent";
+
       return (
         <button
           key={area.unitNumber}
@@ -40,17 +48,15 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
           onMouseLeave={() => interactive && setHoveredUnit(null)}
           aria-label={`وحدة ${area.unitNumber}${isRented ? " (مؤجرة)" : ""}`}
           className={cn(
-            "absolute box-border flex items-center justify-center text-[10px] font-bold transition-colors duration-200 sm:text-xs",
-            "focus:outline-none focus:ring-1 focus:ring-accent",
-            // المؤجرة: لون أحمر شفاف يغطي الوحدة بالكامل بنفس أبعادها
-            isRented &&
-              "cursor-not-allowed border border-destructive/80 bg-destructive/55 text-white",
-            // المتاحة (غير مختارة): شفافة، تظهر فقط عند المرور
+            "absolute box-border flex items-center justify-center border-0 p-0 text-[10px] font-bold transition-colors duration-200 sm:text-xs",
+            "focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
+            // المؤجرة: تعبئة حمراء شفافة بكامل أبعاد الوحدة
+            isRented && "cursor-not-allowed bg-destructive/55 text-white",
+            // المتاحة (غير مختارة): شفافة، تظهر عند المرور فقط
             !isRented && !isSelected &&
-              "border border-transparent bg-transparent text-transparent hover:border-accent hover:bg-accent/25 hover:text-accent-foreground",
-            // المختارة: لون ذهبي شفاف بحدود رفيعة، نفس أبعاد الوحدة بالضبط
-            !isRented && isSelected &&
-              "border border-accent bg-accent/55 text-accent-foreground",
+              "bg-transparent text-transparent hover:bg-accent/25 hover:text-accent-foreground",
+            // المختارة: تعبئة ذهبية شفافة
+            !isRented && isSelected && "bg-accent/55 text-accent-foreground",
             isHovered && !isSelected && !isRented && "z-10"
           )}
           style={{
@@ -58,6 +64,8 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
             top: `${area.y}%`,
             width: `${area.w}%`,
             height: `${area.h}%`,
+            // inset shadow = 1px ثابتة داخل حدود الوحدة على كل أحجام الشاشات
+            boxShadow: ringColor === "transparent" ? undefined : `inset 0 0 0 1px ${ringColor}`,
           }}
         >
           <span className="num drop-shadow-sm">{area.unitNumber}</span>
