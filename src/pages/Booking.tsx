@@ -215,6 +215,7 @@ const Booking = () => {
                         <div className="mb-2 text-[11px] text-muted-foreground text-center">
                           الإيجار السنوي المُعلّن غير شامل ضريبة القيمة المضافة ١٥٪؜
                         </div>
+                      </>
                     )}
                     <button
                       onClick={() => setStep(3)}
