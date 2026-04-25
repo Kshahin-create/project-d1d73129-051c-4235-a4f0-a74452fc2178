@@ -14,13 +14,15 @@ import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import type { Unit, Building } from "@/data/types";
 
-const planModules = import.meta.glob("@/assets/plans/building-*.png", {
+const planModules = import.meta.glob("@/assets/plans/building-*.{png,jpg,jpeg}", {
   eager: true,
   import: "default",
 }) as Record<string, string>;
 
 function getPlanImage(buildingNumber: number): string | undefined {
-  const key = Object.keys(planModules).find((k) => k.endsWith(`building-${buildingNumber}.png`));
+  const key = Object.keys(planModules).find((k) =>
+    /\/building-(\d+)\.(png|jpe?g)$/.test(k) && k.includes(`building-${buildingNumber}.`)
+  );
   return key ? planModules[key] : undefined;
 }
 
