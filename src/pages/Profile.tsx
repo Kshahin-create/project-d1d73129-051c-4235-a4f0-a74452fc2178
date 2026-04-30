@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Save, UserCircle2, LogOut } from "lucide-react";
+import { isValidPhoneNumber } from "libphonenumber-js";
+import { PhoneField } from "@/components/PhoneField";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,8 +72,8 @@ const Profile = () => {
       toast.error("الاسم الكامل مطلوب");
       return;
     }
-    if (!/^(\+?966|0)?5\d{8}$|^\+[1-9]\d{7,14}$/.test(data.phone.trim())) {
-      toast.error("رقم جوال غير صحيح");
+    if (!data.phone || !isValidPhoneNumber(data.phone)) {
+      toast.error("رقم جوال غير صحيح، تأكد من اختيار الدولة وكتابة الرقم كامل");
       return;
     }
 
@@ -152,14 +154,10 @@ const Profile = () => {
                 </Field>
 
                 <Field label="رقم الجوال" required>
-                  <input
-                    type="tel"
-                    required
+                  <PhoneField
                     value={data.phone}
-                    onChange={(e) => update("phone", e.target.value)}
-                    dir="ltr"
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-left focus:border-primary focus:outline-none"
-                    placeholder="+966 5X XXX XXXX"
+                    onChange={(v) => update("phone", v)}
+                    required
                   />
                 </Field>
 
