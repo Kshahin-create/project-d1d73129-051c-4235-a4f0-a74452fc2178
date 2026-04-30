@@ -385,40 +385,38 @@ const Admin = () => {
         {isLoading ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">جاري التحميل...</div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card" dir="rtl">
             <div className="overflow-x-auto">
-              <table dir="rtl" className="w-full min-w-[960px] table-auto border-collapse text-right text-sm">
-                <colgroup>
-                  <col className="w-[7%]" />
-                  <col className="w-[9%]" />
-                  <col className="w-[9%]" />
-                  <col className="w-[10%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[11%]" />
-                  <col className="w-[26%]" />
-                  <col className="w-[16%]" />
-                </colgroup>
-                <thead className="bg-secondary text-xs uppercase text-muted-foreground">
-                  <tr>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">المبنى</th>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">الوحدة</th>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">النوع</th>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">المساحة</th>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">السعر</th>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">الحالة</th>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">المستأجر</th>
-                    <th className="px-3 py-3 text-right whitespace-nowrap">إجراء</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+              <div className="min-w-[980px]">
+                {/* Header */}
+                <div
+                  className="grid items-center gap-3 bg-secondary px-4 py-3 text-xs font-semibold uppercase text-muted-foreground"
+                  style={{ gridTemplateColumns: "70px 80px 90px 110px 120px 110px minmax(180px,1fr) 180px" }}
+                >
+                  <div className="text-right">المبنى</div>
+                  <div className="text-right">الوحدة</div>
+                  <div className="text-right">النوع</div>
+                  <div className="text-right">المساحة</div>
+                  <div className="text-right">السعر</div>
+                  <div className="text-right">الحالة</div>
+                  <div className="text-right">المستأجر</div>
+                  <div className="text-right">إجراء</div>
+                </div>
+
+                {/* Rows */}
+                <div className="divide-y divide-border">
                   {buildingUnits.map((u) => (
-                    <tr key={`${u.buildingNumber}-${u.unitNumber}`} className="hover:bg-secondary/40">
-                      <td className="px-3 py-2.5 num text-right align-middle whitespace-nowrap">{u.buildingNumber}</td>
-                      <td className="px-3 py-2.5 num text-right align-middle font-bold whitespace-nowrap">{u.unitNumber}</td>
-                      <td className="px-3 py-2.5 text-right align-middle text-xs whitespace-nowrap">{u.unitType}</td>
-                      <td className="px-3 py-2.5 num text-right align-middle text-xs whitespace-nowrap">{u.area} م²</td>
-                      <td className="px-3 py-2.5 num text-right align-middle text-xs whitespace-nowrap">{u.price.toLocaleString("ar-EG")}</td>
-                      <td className="px-3 py-2.5 text-right align-middle">
+                    <div
+                      key={`${u.buildingNumber}-${u.unitNumber}`}
+                      className="grid items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/40"
+                      style={{ gridTemplateColumns: "70px 80px 90px 110px 120px 110px minmax(180px,1fr) 180px" }}
+                    >
+                      <div className="num text-right">{u.buildingNumber}</div>
+                      <div className="num text-right font-bold">{u.unitNumber}</div>
+                      <div className="text-right text-xs">{u.unitType}</div>
+                      <div className="num text-right text-xs">{u.area} م²</div>
+                      <div className="num text-right text-xs">{u.price.toLocaleString("ar-EG")}</div>
+                      <div className="text-right">
                         {u.status === "rented" ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive whitespace-nowrap">
                             <Lock className="h-2.5 w-2.5" /> مؤجر
@@ -428,17 +426,17 @@ const Admin = () => {
                             <CheckCircle2 className="h-2.5 w-2.5" /> متاح
                           </span>
                         )}
-                      </td>
-                      <td className="px-3 py-2.5 text-right align-middle text-xs">
+                      </div>
+                      <div className="truncate text-right text-xs">
                         {u.tenant ? (
                           <span className="font-medium text-foreground">{u.tenant}</span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
-                      </td>
-                      <td className="px-3 py-2.5 text-right align-middle">
+                      </div>
+                      <div className="text-right">
                         {u.status === "rented" ? (
-                          <div className="flex flex-wrap justify-start gap-1.5">
+                          <div className="flex flex-wrap gap-1.5">
                             <button
                               onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
                               className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10 whitespace-nowrap"
@@ -460,14 +458,14 @@ const Admin = () => {
                             تأجير
                           </button>
                         )}
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   ))}
                   {buildingUnits.length === 0 && (
-                    <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">لا توجد نتائج</td></tr>
+                    <div className="px-4 py-10 text-center text-muted-foreground">لا توجد نتائج</div>
                   )}
-                </tbody>
-              </table>
+                </div>
+              </div>
             </div>
           </div>
         )}
