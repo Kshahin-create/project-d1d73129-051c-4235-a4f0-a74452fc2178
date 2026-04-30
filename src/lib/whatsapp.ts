@@ -15,7 +15,7 @@ export interface CustomerData {
  */
 export function buildWhatsAppMessage(unitOrUnits: Unit | Unit[], customer: CustomerData): string {
   const units = Array.isArray(unitOrUnits) ? unitOrUnits : [unitOrUnits];
-  const date = new Date().toLocaleDateString("ar-SA", {
+  const date = new Date().toLocaleDateString("ar-SA-u-nu-latn", {
     year: "numeric",
     month: "long",
     day: "numeric",
