@@ -1,0 +1,1 @@
+UPDATE public.units SET status='reserved' WHERE (building_number, unit_number) IN ((8,108),(8,109),(8,110),(8,116),(8,117),(8,118),(10,155),(10,156));
