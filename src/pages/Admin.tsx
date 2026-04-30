@@ -284,9 +284,10 @@ const Admin = () => {
         </div>
 
         {/* Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <StatCard icon={<Building2 />} label="إجمالي الوحدات" value={stats.total} color="text-primary" />
           <StatCard icon={<CheckCircle2 />} label="متاحة" value={stats.available} color="text-success" />
+          <StatCard icon={<Lock />} label="محجوزة" value={stats.reserved} color="text-accent" />
           <StatCard icon={<Users />} label="مؤجرة" value={stats.rented} color="text-destructive" />
           <StatCard icon={<TrendingUp />} label="إيراد سنوي" value={stats.revenue.toLocaleString("ar-EG")} color="text-accent" small />
         </div>
