@@ -50,12 +50,13 @@ export const useBuildingsAndUnits = () => {
         buildings = buildingsRaw.map((b) => {
           const bu = units.filter((u) => u.buildingNumber === b.number);
           const rented = bu.filter((u) => u.status === "rented").length;
+          const reserved = bu.filter((u) => u.status === "reserved").length;
           return {
             number: b.number,
             type: b.type,
             totalUnits: bu.length,
             rentedUnits: rented,
-            availableUnits: bu.length - rented,
+            availableUnits: bu.length - rented - reserved,
             expectedAnnualRevenue: Number(b.expected_annual_revenue),
           };
         });
