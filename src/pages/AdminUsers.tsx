@@ -190,6 +190,7 @@ const AdminUsers = () => {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </main>
