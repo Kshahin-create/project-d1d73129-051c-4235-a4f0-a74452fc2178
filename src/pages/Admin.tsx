@@ -101,7 +101,7 @@ const Admin = () => {
     unit_id: string;
     building_number: number;
     unit_number: number;
-    action: "rent" | "release" | "update";
+    action: "rent" | "reserve" | "release" | "update";
     previous_status: string;
     new_status: string;
     reason: string;
