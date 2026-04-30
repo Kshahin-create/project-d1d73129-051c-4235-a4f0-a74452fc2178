@@ -164,7 +164,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
                 </div>
                 {isRented ? (
                   <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-destructive">
-                    <Lock className="h-2.5 w-2.5" /> مؤجر
+                    <Lock className="h-2.5 w-2.5" /> {u.status === "reserved" ? "محجوز" : "مؤجر"}
                   </div>
                 ) : isSelected ? (
                   <CheckCircle2 className="mt-1 h-3.5 w-3.5 text-primary-foreground" />
