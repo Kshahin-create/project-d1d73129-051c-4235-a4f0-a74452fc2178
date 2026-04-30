@@ -79,11 +79,22 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         {planImage ? (
           <>
-            <div className="relative w-full">
+            <div
+              className="relative mx-auto"
+              style={
+                layout
+                  ? {
+                      aspectRatio: String(layout.aspectRatio),
+                      width: "100%",
+                      maxWidth: `calc(520px * ${layout.aspectRatio})`,
+                    }
+                  : { width: "100%" }
+              }
+            >
               <img
                 src={planImage}
                 alt={`مخطط مبنى ${buildingNumber}`}
-                className="block h-auto max-h-[520px] w-full object-contain bg-secondary"
+                className="block h-full w-full object-fill bg-secondary"
               />
               {/* Interactive unit overlay */}
               {layout && (
