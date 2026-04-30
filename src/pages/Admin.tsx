@@ -289,7 +289,7 @@ const Admin = () => {
           <StatCard icon={<CheckCircle2 />} label="متاحة" value={stats.available} color="text-success" />
           <StatCard icon={<Lock />} label="محجوزة" value={stats.reserved} color="text-accent" />
           <StatCard icon={<Users />} label="مؤجرة" value={stats.rented} color="text-destructive" />
-          <StatCard icon={<TrendingUp />} label="إيراد سنوي" value={stats.revenue.toLocaleString("ar-EG")} color="text-accent" small />
+          <StatCard icon={<TrendingUp />} label="إيراد سنوي" value={stats.revenue.toLocaleString("en-US")} color="text-accent" small />
         </div>
 
         {/* Building filter */}
