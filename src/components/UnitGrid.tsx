@@ -80,8 +80,16 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
         {planImage ? (
           <>
             <div
-              className="relative mx-auto w-full"
-              style={layout ? { aspectRatio: String(layout.aspectRatio), maxHeight: 520, maxWidth: layout.aspectRatio < 1 ? `calc(520px * ${layout.aspectRatio})` : undefined } : undefined}
+              className="relative mx-auto"
+              style={
+                layout
+                  ? {
+                      aspectRatio: String(layout.aspectRatio),
+                      width: "100%",
+                      maxWidth: `calc(520px * ${layout.aspectRatio})`,
+                    }
+                  : { width: "100%" }
+              }
             >
               <img
                 src={planImage}
