@@ -29,7 +29,7 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/", label: "الرئيسية", Icon: Home },
   { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
   { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
-  { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard },
+  { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, adminOnly: true },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
 ];
 
