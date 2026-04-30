@@ -151,13 +151,22 @@ const Dashboard = () => {
       tone: "blue" as const,
     },
     {
-      label: "وحدات شاغرة",
+      label: "وحدات محجوزة",
+      value: stats.reserved,
+      sub: stats.total
+        ? `${((stats.reserved / stats.total) * 100).toFixed(1)}% قيد الحجز`
+        : "—",
+      Icon: CheckCircle2,
+      tone: "amber" as const,
+    },
+    {
+      label: "وحدات متاحة",
       value: stats.available,
       sub: stats.total
         ? `${((stats.available / stats.total) * 100).toFixed(1)}% متاح للحجز`
         : "—",
       Icon: Circle,
-      tone: "red" as const,
+      tone: "green" as const,
     },
     {
       label: "إيراد سنوي محقق",
