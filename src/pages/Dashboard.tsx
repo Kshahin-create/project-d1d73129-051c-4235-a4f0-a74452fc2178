@@ -417,16 +417,16 @@ const Dashboard = () => {
             ))}
           </div>
           <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-right text-sm">
+            <table dir="rtl" className="w-full min-w-[760px] border-collapse text-right text-sm">
               <thead className="bg-primary text-primary-foreground">
                 <tr>
-                  <th className="p-3 text-xs font-semibold">المبنى</th>
-                  <th className="p-3 text-xs font-semibold">رقم الوحدة</th>
-                  <th className="p-3 text-xs font-semibold">النوع</th>
-                  <th className="p-3 text-xs font-semibold">المساحة</th>
-                  <th className="p-3 text-xs font-semibold">النشاط</th>
-                  <th className="p-3 text-xs font-semibold">الإيجار السنوي</th>
-                  <th className="p-3 text-xs font-semibold">الحالة</th>
+                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">المبنى</th>
+                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">رقم الوحدة</th>
+                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">النوع</th>
+                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">المساحة</th>
+                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">النشاط</th>
+                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">الإيجار السنوي</th>
+                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">الحالة</th>
                 </tr>
               </thead>
               <tbody>
@@ -435,18 +435,18 @@ const Dashboard = () => {
                     key={`${u.buildingNumber}-${u.unitNumber}`}
                     className="border-b last:border-0 hover:bg-muted/40"
                   >
-                    <td className="num p-2.5 text-xs">{u.buildingNumber}</td>
-                    <td className="num p-2.5 text-xs font-bold">{u.unitNumber}</td>
-                    <td className="p-2.5 text-xs">{u.unitType ?? "—"}</td>
-                    <td className="num p-2.5 text-xs">{u.area} م²</td>
-                    <td className="p-2.5 text-xs">{u.activity ?? "—"}</td>
-                    <td className="num p-2.5 text-xs font-semibold">
+                    <td className="num p-2.5 text-right text-xs whitespace-nowrap">{u.buildingNumber}</td>
+                    <td className="num p-2.5 text-right text-xs font-bold whitespace-nowrap">{u.unitNumber}</td>
+                    <td className="p-2.5 text-right text-xs whitespace-nowrap">{u.unitType ?? "—"}</td>
+                    <td className="num p-2.5 text-right text-xs whitespace-nowrap">{u.area} م²</td>
+                    <td className="p-2.5 text-right text-xs">{u.activity ?? "—"}</td>
+                    <td className="num p-2.5 text-right text-xs font-semibold whitespace-nowrap">
                       {fmt(u.price)}
                     </td>
-                    <td className="p-2.5 text-xs">
+                    <td className="p-2.5 text-right text-xs whitespace-nowrap">
                       <span
                         className={cn(
-                          "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                          "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
                           u.status === "rented"
                             ? "bg-blue-100 text-blue-800"
                             : "bg-red-100 text-red-800",
