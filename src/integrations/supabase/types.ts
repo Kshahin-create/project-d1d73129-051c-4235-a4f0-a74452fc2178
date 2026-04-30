@@ -280,6 +280,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          is_admin: boolean
+          user_id: string
+        }[]
+      }
+      admin_set_role: {
+        Args: { _make_admin: boolean; _target_user: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
