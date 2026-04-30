@@ -110,7 +110,7 @@ const Booking = () => {
   };
 
   const handleUnitToggle = (u: Unit) => {
-    if (u.status === "rented") return;
+    if (u.status === "rented" || u.status === "reserved") return;
     setSelectedUnits((prev) => {
       const exists = prev.some((p) => p.unitNumber === u.unitNumber && p.buildingNumber === u.buildingNumber);
       if (exists) {

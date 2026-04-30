@@ -38,7 +38,7 @@ export const useBuildingsAndUnits = () => {
           area: Number(u.area),
           activity: u.activity,
           price: Number(u.price),
-          status: u.status as "available" | "rented",
+          status: u.status as "available" | "rented" | "reserved",
           tenant: tenantInfo?.name ?? null,
         };
       });

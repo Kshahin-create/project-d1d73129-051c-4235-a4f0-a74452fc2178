@@ -6,7 +6,7 @@ export interface Unit {
   area: number;
   activity: string | null;
   price: number;
-  status: "available" | "rented";
+  status: "available" | "rented" | "reserved";
   tenant: string | null;
 }
 
