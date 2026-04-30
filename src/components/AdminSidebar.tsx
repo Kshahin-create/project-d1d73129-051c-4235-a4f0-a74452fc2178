@@ -13,6 +13,9 @@ import {
   X,
   UserCircle2,
   User,
+  Users,
+  History,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
