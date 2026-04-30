@@ -194,16 +194,19 @@ const AdminUsers = () => {
 
       <ConfirmDialog
         open={!!pendingChange}
-        onOpenChange={(o) => !o && setPendingChange(null)}
         title={pendingChange?.is_admin ? "إزالة صلاحية الأدمن" : "ترقية إلى أدمن"}
         description={
           pendingChange?.is_admin
             ? `هل تريد إزالة صلاحية الأدمن من «${pendingChange?.display_name || pendingChange?.email}»؟`
             : `هل تريد منح صلاحية الأدمن لـ «${pendingChange?.display_name || pendingChange?.email}»؟ سيتمكن من إدارة كل شيء.`
         }
-        confirmText="تأكيد"
-        cancelText="إلغاء"
+        confirmLabel="تأكيد"
+        variant={pendingChange?.is_admin ? "destructive" : "primary"}
+        reasonRequired={true}
+        reasonPlaceholder="اكتب سبب التغيير (مثال: ترقية مدير جديد)"
+        loading={!!busyId}
         onConfirm={handleConfirmChange}
+        onCancel={() => setPendingChange(null)}
       />
 
       <Footer />
