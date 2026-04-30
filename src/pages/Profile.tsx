@@ -27,7 +27,7 @@ const empty: ProfileData = {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [data, setData] = useState<ProfileData>(empty);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
