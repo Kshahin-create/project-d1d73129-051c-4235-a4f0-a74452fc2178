@@ -218,6 +218,35 @@ const B9_LAYOUT: PlanLayout = {
   ],
 };
 
+// مبنى 10 — مخطط رأسي (portrait) viewBox 600x900، عمودين × 10 صفوف، 20 وحدة
+const B10_LAYOUT: PlanLayout = {
+  aspectRatio: 600 / 900,
+  units: [
+    // العمود الأيسر (من الأعلى للأسفل): 148 (ركنية)، 147→140، 139 (ركنية)
+    { unitNumber: 148, x: 35.87, y: 10.27, w: 10.01, h: 13.65 },
+    { unitNumber: 147, x: 35.11, y: 24.17, w: 14.61, h: 6.72 },
+    { unitNumber: 146, x: 35.11, y: 31.41, w: 14.61, h: 6.72 },
+    { unitNumber: 145, x: 35.11, y: 38.37, w: 14.61, h: 6.72 },
+    { unitNumber: 144, x: 35.11, y: 45.68, w: 14.61, h: 6.47 },
+    { unitNumber: 143, x: 35.06, y: 52.69, w: 14.73, h: 6.68 },
+    { unitNumber: 142, x: 35.11, y: 59.70, w: 14.61, h: 6.72 },
+    { unitNumber: 141, x: 35.11, y: 66.75, w: 14.61, h: 6.72 },
+    { unitNumber: 140, x: 35.11, y: 73.82, w: 14.61, h: 6.72 },
+    { unitNumber: 139, x: 34.68, y: 81.05, w: 11.20, h: 13.87 },
+    // العمود الأيمن (من الأعلى للأسفل): 158 (ركنية)، 157→150، 149 (ركنية)
+    { unitNumber: 158, x: 53.87, y: 10.27, w: 10.24, h: 13.66 },
+    { unitNumber: 157, x: 50.12, y: 24.19, w: 14.67, h: 6.72 },
+    { unitNumber: 156, x: 50.12, y: 31.41, w: 14.66, h: 6.72 },
+    { unitNumber: 155, x: 50.06, y: 38.37, w: 14.72, h: 6.72 },
+    { unitNumber: 154, x: 50.00, y: 45.67, w: 14.79, h: 6.48 },
+    { unitNumber: 153, x: 50.06, y: 52.69, w: 14.38, h: 6.68 },
+    { unitNumber: 152, x: 50.00, y: 59.70, w: 14.50, h: 6.72 },
+    { unitNumber: 151, x: 50.00, y: 66.75, w: 14.50, h: 6.72 },
+    { unitNumber: 150, x: 50.00, y: 73.82, w: 14.50, h: 6.72 },
+    { unitNumber: 149, x: 53.87, y: 81.05, w: 10.92, h: 13.87 },
+  ],
+};
+
 export const BUILDING_PLANS: Record<number, PlanLayout> = {
   // مبنى 1 — الصف العلوي 411→422 (يسار→يمين)، الصف السفلي 399→410
   1: buildLayout(B1, 411, 399),
@@ -234,6 +263,7 @@ export const BUILDING_PLANS: Record<number, PlanLayout> = {
   7: B7_LAYOUT,
   8: B8_LAYOUT,
   9: B9_LAYOUT,
+  10: B10_LAYOUT,
 };
 
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
