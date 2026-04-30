@@ -144,6 +144,13 @@
   }
 }
 
+/* Add bottom safe-area for floating FABs (WhatsApp + admin sidebar trigger) on mobile */
+@media (max-width: 1023px) {
+  main {
+    padding-bottom: 5.5rem;
+  }
+}
+
 @layer utilities {
   .bg-gradient-hero {
     background: var(--gradient-hero);
