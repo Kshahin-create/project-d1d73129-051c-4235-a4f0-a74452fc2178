@@ -17,16 +17,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
 
-const planModules = import.meta.glob("@/assets/plans/building-*.{png,jpg,jpeg}", {
+const planModules = import.meta.glob("@/assets/plans/building-*.{svg,png,jpg,jpeg}", {
   eager: true,
   import: "default",
 }) as Record<string, string>;
 
 function getPlanImage(buildingNumber: number): string | undefined {
-  const key = Object.keys(planModules).find((k) =>
-    /\/building-(\d+)\.(png|jpe?g)$/.test(k) && k.includes(`building-${buildingNumber}.`)
-  );
-  return key ? planModules[key] : undefined;
+  // Prefer SVG > PNG > JPG for sharper rendering
+  const exts = ["svg", "png", "jpg", "jpeg"];
+  for (const ext of exts) {
+    const key = Object.keys(planModules).find((k) => k.endsWith(`building-${buildingNumber}.${ext}`));
+    if (key) return planModules[key];
+  }
+  return undefined;
 }
 
 const STEPS = ["المبنى", "الوحدات", "التفاصيل", "بياناتك", "الإرسال"];
