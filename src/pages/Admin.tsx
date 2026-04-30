@@ -557,23 +557,33 @@ const Admin = () => {
         </div>
       )}
 
-      {/* Confirm rent / update */}
+      {/* Confirm rent / reserve / update */}
       <ConfirmDialog
         open={confirmRent}
-        title={editingUnit?.wasRented ? "تأكيد تحديث بيانات المستأجر" : `تأكيد تأجير الوحدة ${editingUnit?.unitNumber ?? ""}`}
+        title={
+          editingUnit?.wasRented
+            ? "تأكيد تحديث بيانات المستأجر"
+            : editingUnit?.mode === "reserve"
+              ? `تأكيد حجز الوحدة ${editingUnit?.unitNumber ?? ""}`
+              : `تأكيد تأجير الوحدة ${editingUnit?.unitNumber ?? ""}`
+        }
         description={
           editingUnit?.wasRented
             ? "سيتم حفظ التغييرات على بيانات المستأجر وسيتم تسجيل العملية في سجل التدقيق."
-            : `سيتم تغيير حالة الوحدة إلى "مؤجرة" وتسجيل بيانات المستأجر "${tenantForm.tenant_name}". اكتب سبب العملية للتوثيق.`
+            : editingUnit?.mode === "reserve"
+              ? `سيتم تغيير حالة الوحدة إلى "محجوزة" مع حفظ بيانات "${tenantForm.tenant_name}". اكتب سبب الحجز للتوثيق.`
+              : `سيتم تغيير حالة الوحدة إلى "مؤجرة" وتسجيل بيانات المستأجر "${tenantForm.tenant_name}". اكتب سبب العملية للتوثيق.`
         }
         confirmLabel="تأكيد وحفظ"
         variant="primary"
         loading={saving}
-        reasonPlaceholder="مثال: عقد إيجار جديد رقم 1234 / تجديد عقد..."
+        reasonPlaceholder="مثال: عقد إيجار جديد رقم 1234 / حجز مبدئي..."
         reasonSuggestions={
           editingUnit?.wasRented
             ? ["تحديث بيانات المستأجر", "تصحيح خطأ إدخال", "تجديد العقد"]
-            : ["عقد إيجار جديد", "حجز موثّق", "نقل من قائمة الانتظار"]
+            : editingUnit?.mode === "reserve"
+              ? ["حجز مبدئي", "بانتظار توقيع العقد", "بانتظار الدفعة المقدمة"]
+              : ["عقد إيجار جديد", "تحويل من حجز إلى تأجير", "نقل من قائمة الانتظار"]
         }
         onConfirm={handleRentConfirmed}
         onCancel={() => setConfirmRent(false)}
