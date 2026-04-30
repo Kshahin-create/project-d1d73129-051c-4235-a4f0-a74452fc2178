@@ -188,7 +188,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
     <div class="stat"><div class="label">مؤجرة</div><div class="value" style="color:hsl(0,72%,48%)">${totalRented}</div></div>
     <div class="stat"><div class="label">محجوزة</div><div class="value" style="color:hsl(38,92%,40%)">${totalReserved}</div></div>
     <div class="stat"><div class="label">متاحة</div><div class="value" style="color:hsl(152,60%,36%)">${totalAvailable}</div></div>
-    <div class="stat"><div class="label">إيراد سنوي (مؤجر)</div><div class="value">${totalRevenue.toLocaleString("ar-EG")} ر.س</div></div>
+    <div class="stat"><div class="label">إيراد سنوي (مؤجر)</div><div class="value">${totalRevenue.toLocaleString("en-US")} ر.س</div></div>
   </div>
 
   <table>
