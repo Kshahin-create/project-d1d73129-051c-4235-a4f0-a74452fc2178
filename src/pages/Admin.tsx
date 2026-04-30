@@ -26,13 +26,13 @@ const Admin = () => {
   const { data, isLoading } = useBuildingsAndUnits();
 
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "rented" | "available">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "rented" | "reserved" | "available">("all");
   const [search, setSearch] = useState("");
-  const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number; wasRented: boolean } | null>(null);
+  const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number; wasRented: boolean; mode: "rent" | "reserve" } | null>(null);
   const [tenantForm, setTenantForm] = useState<TenantForm>({ tenant_name: "", business_name: "", activity_type: "", phone: "" });
   const [saving, setSaving] = useState(false);
   const [confirmRent, setConfirmRent] = useState(false);
-  const [releaseTarget, setReleaseTarget] = useState<{ unitNumber: number; buildingNumber: number } | null>(null);
+  const [releaseTarget, setReleaseTarget] = useState<{ unitNumber: number; buildingNumber: number; status: "rented" | "reserved" } | null>(null);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditEntries, setAuditEntries] = useState<any[]>([]);
 
@@ -54,8 +54,10 @@ const Admin = () => {
   const stats = useMemo(() => {
     const total = units.length;
     const rented = units.filter((u) => u.status === "rented").length;
+    const reserved = units.filter((u) => u.status === "reserved").length;
+    const available = units.filter((u) => u.status === "available").length;
     const revenue = units.filter((u) => u.status === "rented").reduce((s, u) => s + u.price, 0);
-    return { total, rented, available: total - rented, revenue };
+    return { total, rented, reserved, available, revenue };
   }, [units]);
 
   // Auth gate (after hooks to keep hook order stable)
