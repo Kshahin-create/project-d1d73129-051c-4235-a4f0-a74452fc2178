@@ -115,7 +115,12 @@ const Admin = () => {
     });
   };
 
-  const openRentDialog = async (unitNumber: number, buildingNumber: number, currentStatus: string) => {
+  const openRentDialog = async (
+    unitNumber: number,
+    buildingNumber: number,
+    currentStatus: string,
+    mode: "rent" | "reserve" = "rent",
+  ) => {
     const { data: u } = await supabase
       .from("units")
       .select("id")
@@ -123,7 +128,13 @@ const Admin = () => {
       .eq("unit_number", unitNumber)
       .maybeSingle();
     if (!u) return;
-    setEditingUnit({ id: u.id, unitNumber, building: buildingNumber, wasRented: currentStatus === "rented" });
+    setEditingUnit({
+      id: u.id,
+      unitNumber,
+      building: buildingNumber,
+      wasRented: currentStatus === "rented" || currentStatus === "reserved",
+      mode,
+    });
     const { data: t } = await supabase
       .from("tenants")
       .select("*")
@@ -152,10 +163,15 @@ const Admin = () => {
     if (!editingUnit) return;
     setSaving(true);
     try {
-      const action = editingUnit.wasRented ? "update" : "rent";
-      const previousStatus = editingUnit.wasRented ? "rented" : "available";
+      const targetStatus = editingUnit.mode === "reserve" ? "reserved" : "rented";
+      const action = editingUnit.wasRented ? "update" : editingUnit.mode === "reserve" ? "reserve" : "rent";
+      // previous status — best effort: derive from current units cache
+      const currentUnit = units.find(
+        (u) => u.buildingNumber === editingUnit.building && u.unitNumber === editingUnit.unitNumber,
+      );
+      const previousStatus = currentUnit?.status ?? "available";
 
-      const { error: ue } = await supabase.from("units").update({ status: "rented" }).eq("id", editingUnit.id);
+      const { error: ue } = await supabase.from("units").update({ status: targetStatus }).eq("id", editingUnit.id);
       if (ue) throw ue;
 
       const { data: existing } = await supabase.from("tenants").select("id").eq("unit_id", editingUnit.id).maybeSingle();
@@ -173,12 +189,13 @@ const Admin = () => {
         unit_number: editingUnit.unitNumber,
         action,
         previous_status: previousStatus,
-        new_status: "rented",
+        new_status: targetStatus,
         reason,
         tenant_snapshot: tenantForm,
       });
 
-      toast.success(`تم ${editingUnit.wasRented ? "تحديث بيانات" : "تأجير"} الوحدة ${editingUnit.unitNumber}`);
+      const verb = editingUnit.wasRented ? "تحديث بيانات" : editingUnit.mode === "reserve" ? "حجز" : "تأجير";
+      toast.success(`تم ${verb} الوحدة ${editingUnit.unitNumber}`);
       setConfirmRent(false);
       setEditingUnit(null);
       qc.invalidateQueries({ queryKey: ["buildings-units"] });
@@ -211,7 +228,7 @@ const Admin = () => {
         building_number: releaseTarget.buildingNumber,
         unit_number: releaseTarget.unitNumber,
         action: "release",
-        previous_status: "rented",
+        previous_status: releaseTarget.status,
         new_status: "available",
         reason,
         tenant_snapshot: tenantSnap,
