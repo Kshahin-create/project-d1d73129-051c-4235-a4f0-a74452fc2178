@@ -1,13 +1,12 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-
-// Saudi / international mobile: +9665XXXXXXXX or 05XXXXXXXX, or international +<country>
-const phoneRegex = /^(\+?966|0)?5\d{8}$|^\+[1-9]\d{7,14}$/;
+import { PhoneField } from "@/components/PhoneField";
 
 export const customerSchema = z.object({
   fullName: z
@@ -18,7 +17,9 @@ export const customerSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(phoneRegex, "رقم جوال غير صحيح (مثال: 0555531084 أو +966555531084)"),
+    .refine((v) => !!v && isValidPhoneNumber(v), {
+      message: "رقم جوال غير صحيح، تأكد من اختيار الدولة وكتابة الرقم كامل",
+    }),
   email: z
     .string()
     .trim()
