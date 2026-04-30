@@ -36,16 +36,44 @@ const Booking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activityFilter = searchParams.get("activity") as "service" | "parts" | null;
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
+  const [savedProfile, setSavedProfile] = useState<Partial<CustomerFormData> | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const bookingContentRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useBuildingsAndUnits();
   const buildings = data?.buildings ?? [];
   const units = data?.units ?? [];
+
+  // Fetch saved customer profile when user logs in
+  useEffect(() => {
+    if (!user) {
+      setSavedProfile(null);
+      return;
+    }
+    supabase
+      .from("customer_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setSavedProfile({
+            fullName: data.full_name ?? "",
+            phone: data.phone ?? "",
+            email: data.email ?? user.email ?? "",
+            business: data.business_name ?? "",
+            notes: data.notes ?? "",
+          });
+        } else {
+          setSavedProfile({ email: user.email ?? "" });
+        }
+      });
+  }, [user]);
 
   const buildingUnits = useMemo(
     () => (selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding.number) : []),
