@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Building2, Package, FileText, CheckCircle2, Circle, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const fmt = (n: number) => new Intl.NumberFormat("ar-SA").format(Math.round(n));
+const fmt = (n: number) => new Intl.NumberFormat("en-US").format(Math.round(n));
 
 type FilterKey =
   | "all"
@@ -230,7 +230,7 @@ const Dashboard = () => {
                   )}
                   aria-hidden
                 />
-                {lastUpdate.toLocaleTimeString("ar-SA")}
+                {lastUpdate.toLocaleTimeString("ar-SA-u-nu-latn")}
               </span>
             </div>
           </div>

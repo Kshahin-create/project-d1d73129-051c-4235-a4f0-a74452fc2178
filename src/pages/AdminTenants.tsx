@@ -203,7 +203,7 @@ const AdminTenants = () => {
                     )}
                     {t.start_date && (
                       <div className="text-muted-foreground">
-                        البداية: {new Date(t.start_date).toLocaleDateString("ar-EG")}
+                        البداية: {new Date(t.start_date).toLocaleDateString("ar-EG-u-nu-latn")}
                       </div>
                     )}
                   </div>

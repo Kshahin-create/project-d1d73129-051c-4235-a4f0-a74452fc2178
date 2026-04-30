@@ -145,7 +145,7 @@ const AdminUsers = () => {
                       <td className="p-3 font-medium">{r.display_name || "—"}</td>
                       <td className="p-3 text-muted-foreground">{r.email || "—"}</td>
                       <td className="p-3 text-xs text-muted-foreground">
-                        {new Date(r.created_at).toLocaleDateString("ar-EG")}
+                        {new Date(r.created_at).toLocaleDateString("ar-EG-u-nu-latn")}
                       </td>
                       <td className="p-3">
                         {r.is_admin ? (
