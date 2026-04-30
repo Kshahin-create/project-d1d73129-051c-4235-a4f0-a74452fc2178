@@ -160,3 +160,38 @@
     text-wrap: balance;
   }
 }
+
+/* Phone input (react-phone-number-input) overrides */
+.phone-field .PhoneInputCountry {
+  margin-right: 0;
+  margin-left: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.phone-field .PhoneInputCountryIcon {
+  width: 1.25rem;
+  height: auto;
+  box-shadow: none;
+  background: transparent;
+}
+.phone-field .PhoneInputCountrySelectArrow {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.7;
+}
+.phone-field .PhoneInputInput {
+  background: transparent;
+  border: 0;
+  outline: none;
+  width: 100%;
+  font-size: 0.95rem;
+  color: hsl(var(--foreground));
+  text-align: left;
+  direction: ltr;
+}
+.phone-field .PhoneInputInput::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+.phone-field .PhoneInputCountrySelect {
+  color: hsl(var(--foreground));
+}
