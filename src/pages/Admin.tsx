@@ -444,7 +444,7 @@ const Admin = () => {
                       <div className="num text-right font-bold">{u.unitNumber}</div>
                       <div className="text-right text-xs">{u.unitType}</div>
                       <div className="num text-right text-xs">{u.area} م²</div>
-                      <div className="num text-right text-xs">{u.price.toLocaleString("ar-EG")}</div>
+                      <div className="num text-right text-xs">{u.price.toLocaleString("en-US")}</div>
                       <div className="text-right">
                         {u.status === "rented" ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive whitespace-nowrap">
