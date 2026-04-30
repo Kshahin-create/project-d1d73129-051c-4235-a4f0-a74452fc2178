@@ -127,6 +127,35 @@ const B6: BuildingGeometry = {
   ],
 };
 
+// مبنى 7 — مخطط رأسي (portrait) viewBox 600x900، عمودين × 11 صف، 22 وحدة
+const B7_LAYOUT: PlanLayout = {
+  aspectRatio: 600 / 900,
+  units: [
+    { unitNumber: 75, x: 35.11, y: 10.36, w: 10.77, h: 12.48 },
+    { unitNumber: 76, x: 35.19, y: 23.23, w: 14.30, h: 6.08 },
+    { unitNumber: 77, x: 35.19, y: 29.72, w: 14.49, h: 6.21 },
+    { unitNumber: 78, x: 35.19, y: 36.15, w: 14.49, h: 6.17 },
+    { unitNumber: 79, x: 35.19, y: 42.67, w: 14.61, h: 6.36 },
+    { unitNumber: 80, x: 35.07, y: 49.28, w: 14.73, h: 6.14 },
+    { unitNumber: 81, x: 35.19, y: 55.75, w: 14.61, h: 6.05 },
+    { unitNumber: 82, x: 35.13, y: 62.14, w: 14.61, h: 6.31 },
+    { unitNumber: 83, x: 35.13, y: 68.81, w: 14.61, h: 6.15 },
+    { unitNumber: 84, x: 35.03, y: 75.22, w: 14.61, h: 6.15 },
+    { unitNumber: 85, x: 34.68, y: 81.70, w: 11.20, h: 12.88 },
+    { unitNumber: 86, x: 53.35, y: 10.36, w: 10.76, h: 12.50 },
+    { unitNumber: 87, x: 49.93, y: 23.23, w: 14.20, h: 6.09 },
+    { unitNumber: 88, x: 50.02, y: 29.71, w: 14.08, h: 6.22 },
+    { unitNumber: 89, x: 50.08, y: 36.15, w: 14.05, h: 6.17 },
+    { unitNumber: 90, x: 50.08, y: 42.67, w: 14.30, h: 6.36 },
+    { unitNumber: 91, x: 50.02, y: 49.28, w: 14.38, h: 6.14 },
+    { unitNumber: 92, x: 49.96, y: 55.75, w: 14.50, h: 6.05 },
+    { unitNumber: 93, x: 50.08, y: 62.14, w: 14.50, h: 6.31 },
+    { unitNumber: 94, x: 49.88, y: 68.81, w: 14.76, h: 6.15 },
+    { unitNumber: 95, x: 49.88, y: 75.22, w: 14.61, h: 6.15 },
+    { unitNumber: 96, x: 53.46, y: 81.61, w: 10.92, h: 12.96 },
+  ],
+};
+
 export const BUILDING_PLANS: Record<number, PlanLayout> = {
   // مبنى 1 — الصف العلوي 411→422 (يسار→يمين)، الصف السفلي 399→410
   1: buildLayout(B1, 411, 399),
@@ -140,6 +169,7 @@ export const BUILDING_PLANS: Record<number, PlanLayout> = {
   5: buildLayout(B5, 219, 207),
   // مبنى 6 — الصف العلوي 171→182، الصف السفلي 159→170
   6: buildLayout(B6, 171, 159),
+  7: B7_LAYOUT,
 };
 
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
