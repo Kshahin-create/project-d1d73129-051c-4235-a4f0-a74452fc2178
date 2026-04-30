@@ -65,6 +65,7 @@ export const useBuildingsAndUnits = () => {
         buildings = uniqueBuildingNumbers.map((bn) => {
           const bu = units.filter((u) => u.buildingNumber === bn);
           const rented = bu.filter((u) => u.status === "rented").length;
+          const reserved = bu.filter((u) => u.status === "reserved").length;
           // Derive building type from the activity of its units so the
           // service/parts filter still works for unauthenticated users.
           const activity = bu[0]?.activity ?? "";
@@ -78,7 +79,7 @@ export const useBuildingsAndUnits = () => {
             type: derivedType,
             totalUnits: bu.length,
             rentedUnits: rented,
-            availableUnits: bu.length - rented,
+            availableUnits: bu.length - rented - reserved,
             expectedAnnualRevenue: 0,
           };
         });
