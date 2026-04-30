@@ -387,27 +387,27 @@ const Admin = () => {
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table dir="rtl" className="w-full min-w-[860px] border-collapse text-right text-sm">
                 <thead className="bg-secondary text-xs uppercase text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-3 text-right">المبنى</th>
-                    <th className="px-4 py-3 text-right">الوحدة</th>
-                    <th className="px-4 py-3 text-right">النوع</th>
-                    <th className="px-4 py-3 text-right">المساحة</th>
-                    <th className="px-4 py-3 text-right">السعر</th>
-                    <th className="px-4 py-3 text-right">الحالة</th>
-                    <th className="px-4 py-3 text-right">المستأجر</th>
-                    <th className="px-4 py-3 text-right">إجراء</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">المبنى</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">الوحدة</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">النوع</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">المساحة</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">السعر</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">الحالة</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">المستأجر</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">إجراء</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {buildingUnits.map((u) => (
                     <tr key={`${u.buildingNumber}-${u.unitNumber}`} className="hover:bg-secondary/40">
-                      <td className="px-4 py-2.5 num">{u.buildingNumber}</td>
-                      <td className="px-4 py-2.5 num font-bold">{u.unitNumber}</td>
-                      <td className="px-4 py-2.5 text-xs">{u.unitType}</td>
-                      <td className="px-4 py-2.5 num text-xs">{u.area} م²</td>
-                      <td className="px-4 py-2.5 num text-xs">{u.price.toLocaleString("ar-EG")}</td>
+                      <td className="px-4 py-2.5 num text-right whitespace-nowrap">{u.buildingNumber}</td>
+                      <td className="px-4 py-2.5 num text-right font-bold whitespace-nowrap">{u.unitNumber}</td>
+                      <td className="px-4 py-2.5 text-right text-xs whitespace-nowrap">{u.unitType}</td>
+                      <td className="px-4 py-2.5 num text-right text-xs whitespace-nowrap">{u.area} م²</td>
+                      <td className="px-4 py-2.5 num text-right text-xs whitespace-nowrap">{u.price.toLocaleString("ar-EG")}</td>
                       <td className="px-4 py-2.5">
                         {u.status === "rented" ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
