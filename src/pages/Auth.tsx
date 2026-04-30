@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Mail, ArrowRight, LogIn } from "lucide-react";
+import { Lock, Mail, ArrowRight, LogIn, User, Phone, Briefcase, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,13 +14,17 @@ const Auth = () => {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [activityType, setActivityType] = useState("");
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
       if (isAdmin) navigate("/admin");
-      else navigate("/");
+      else navigate("/profile");
     }
   }, [user, isAdmin, authLoading, navigate]);
 
@@ -30,16 +34,40 @@ const Auth = () => {
 
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        if (!fullName.trim() || fullName.trim().length < 3) {
+          throw new Error("الاسم الكامل مطلوب (3 أحرف على الأقل)");
+        }
+        if (!/^(\+?966|0)?5\d{8}$|^\+[1-9]\d{7,14}$/.test(phone.trim())) {
+          throw new Error("رقم جوال غير صحيح");
+        }
+
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/admin`,
-            data: { display_name: name || email },
+            emailRedirectTo: `${window.location.origin}/profile`,
+            data: { display_name: fullName || email },
           },
         });
         if (error) throw error;
-        toast.success("تم إنشاء الحساب! تحقق من بريدك لتأكيده.");
+
+        // Save customer profile (auto-confirm is on, so session exists)
+        const newUserId = signUpData.user?.id;
+        if (newUserId) {
+          await supabase.from("customer_profiles").upsert(
+            {
+              user_id: newUserId,
+              full_name: fullName.trim(),
+              phone: phone.trim(),
+              email: email.trim(),
+              business_name: businessName.trim() || null,
+              activity_type: activityType.trim() || null,
+              notes: notes.trim() || null,
+            },
+            { onConflict: "user_id" }
+          );
+        }
+        toast.success("تم إنشاء الحساب بنجاح");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -55,7 +83,7 @@ const Auth = () => {
   const handleGoogle = async () => {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/admin`,
+      redirect_uri: `${window.location.origin}/profile`,
     });
     if (result.error) {
       toast.error("فشل تسجيل الدخول عبر Google");
@@ -78,12 +106,12 @@ const Auth = () => {
                 <LogIn className="h-6 w-6" />
               </div>
               <h1 className="mt-4 font-display text-2xl font-extrabold">
-                {mode === "login" ? "تسجيل دخول الإدارة" : "إنشاء حساب"}
+                {mode === "login" ? "تسجيل الدخول" : "إنشاء حساب جديد"}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {mode === "login"
-                  ? "للوصول إلى لوحة تحكم الوحدات"
-                  : "أنشئ حسابك للوصول إلى الإدارة"}
+                  ? "ادخل لمتابعة الحجوزات وحفظ بياناتك"
+                  : "سجّل بياناتك مرة واحدة واستخدمها في كل حجز"}
               </p>
             </div>
 
@@ -107,49 +135,99 @@ const Auth = () => {
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               {mode === "signup" && (
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">الاسم</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
-                    placeholder="اسمك"
-                  />
-                </div>
+                <>
+                  <FieldWithIcon icon={User} label="الاسم الكامل" required>
+                    <input
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      maxLength={100}
+                      className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                      placeholder="محمد عبدالله السالم"
+                    />
+                  </FieldWithIcon>
+
+                  <FieldWithIcon icon={Phone} label="رقم الجوال" required>
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      dir="ltr"
+                      className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 text-left focus:border-primary focus:outline-none"
+                      placeholder="+966 5X XXX XXXX"
+                    />
+                  </FieldWithIcon>
+                </>
               )}
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">البريد الإلكتروني</label>
-                <div className="relative">
-                  <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    dir="ltr"
-                    className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 text-right focus:border-primary focus:outline-none"
-                    placeholder="admin@example.com"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">كلمة المرور</label>
-                <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
+
+              <FieldWithIcon icon={Mail} label="البريد الإلكتروني" required>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  dir="ltr"
+                  className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 text-right focus:border-primary focus:outline-none"
+                  placeholder="name@example.com"
+                />
+              </FieldWithIcon>
+
+              <FieldWithIcon icon={Lock} label="كلمة المرور" required>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </FieldWithIcon>
+
+              {mode === "signup" && (
+                <>
+                  <FieldWithIcon icon={Briefcase} label="اسم المنشأة / النشاط التجاري">
+                    <input
+                      type="text"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      maxLength={150}
+                      className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                      placeholder="مركز صيانة سيارات / محل قطع غيار..."
+                    />
+                  </FieldWithIcon>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">نوع النشاط</label>
+                    <select
+                      value={activityType}
+                      onChange={(e) => setActivityType(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
+                    >
+                      <option value="">اختر نوع النشاط (اختياري)</option>
+                      <option value="مراكز صيانة سيارات">مراكز صيانة سيارات</option>
+                      <option value="محلات قطع غيار وبناشر">محلات قطع غيار وبناشر</option>
+                      <option value="أخرى">أخرى</option>
+                    </select>
+                  </div>
+
+                  <FieldWithIcon icon={FileText} label="ملاحظات (اختياري)">
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={2}
+                      maxLength={500}
+                      className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                      placeholder="أي تفاصيل إضافية..."
+                    />
+                  </FieldWithIcon>
+                </>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -162,7 +240,7 @@ const Auth = () => {
             <div className="mt-5 text-center text-sm text-muted-foreground">
               {mode === "login" ? (
                 <>ليس لديك حساب؟{" "}
-                  <button onClick={() => setMode("signup")} className="font-medium text-primary hover:underline">إنشاء حساب</button>
+                  <button onClick={() => setMode("signup")} className="font-medium text-primary hover:underline">إنشاء حساب جديد</button>
                 </>
               ) : (
                 <>لديك حساب بالفعل؟{" "}
@@ -171,15 +249,34 @@ const Auth = () => {
               )}
             </div>
           </div>
-
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            🔒 الوصول للوحة الإدارة يتطلب صلاحيات أدمن
-          </p>
         </div>
       </main>
       <Footer />
     </div>
   );
 };
+
+const FieldWithIcon = ({
+  icon: Icon,
+  label,
+  required,
+  children,
+}: {
+  icon: typeof Mail;
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) => (
+  <div>
+    <label className="mb-1.5 block text-sm font-medium">
+      {label}
+      {required && <span className="mr-1 text-destructive">*</span>}
+    </label>
+    <div className="relative">
+      <Icon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+      {children}
+    </div>
+  </div>
+);
 
 export default Auth;
