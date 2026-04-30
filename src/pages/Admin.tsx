@@ -526,7 +526,7 @@ const Admin = () => {
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-elevated" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold">
-                {editingUnit.wasRented ? "تعديل بيانات" : "تأجير"} الوحدة <span className="num">{editingUnit.unitNumber}</span> — مبنى <span className="num">{editingUnit.building}</span>
+                {editingUnit.wasRented ? "تعديل بيانات" : editingUnit.mode === "reserve" ? "حجز" : "تأجير"} الوحدة <span className="num">{editingUnit.unitNumber}</span> — مبنى <span className="num">{editingUnit.building}</span>
               </h3>
               <button onClick={() => setEditingUnit(null)} className="rounded-lg p-1 hover:bg-secondary">
                 <X className="h-4 w-4" />
