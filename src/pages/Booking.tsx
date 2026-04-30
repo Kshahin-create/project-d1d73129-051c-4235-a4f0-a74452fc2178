@@ -306,9 +306,42 @@ const Booking = () => {
             {step === 4 && selectedUnits.length > 0 && (
               <StepWrap title="بياناتك" desc="أدخل بياناتك لإتمام طلب الحجز.">
                 <div className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-5">
-                  <div className="lg:col-span-3">
+                  <div className="lg:col-span-3 space-y-4">
+                    {!user ? (
+                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm">
+                        <div className="flex items-start gap-3">
+                          <LogIn className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                          <div className="flex-1">
+                            <p className="font-bold text-foreground">سجّل حسابك واحفظ بياناتك</p>
+                            <p className="mt-1 text-muted-foreground">
+                              لو عملت حساب، بياناتك هتتحفظ وتتعبّى تلقائياً في أي حجز جاي.
+                            </p>
+                            <Link
+                              to="/auth"
+                              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90"
+                            >
+                              تسجيل / إنشاء حساب
+                              <ArrowLeft className="h-3.5 w-3.5" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-success/30 bg-success/5 p-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <UserCircle2 className="h-5 w-5 text-success" />
+                          <span className="text-muted-foreground">
+                            مسجّل دخول كـ <span className="font-bold text-foreground">{user.email}</span> — بياناتك هتتحفظ تلقائياً.
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
-                      <CustomerForm formId={FORM_ID} onSubmit={handleFormSubmit} />
+                      <CustomerForm
+                        formId={FORM_ID}
+                        onSubmit={handleFormSubmit}
+                        defaultValues={savedProfile ?? undefined}
+                      />
                       <button
                         type="submit"
                         form={FORM_ID}
