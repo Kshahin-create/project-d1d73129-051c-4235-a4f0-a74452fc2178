@@ -58,7 +58,7 @@ export interface PDFExportMeta {
 
 export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
   const rows = buildRows(units);
-  const dateStr = new Date().toLocaleString("ar-EG", {
+  const dateStr = new Date().toLocaleString("ar-EG-u-nu-latn", {
     dateStyle: "full",
     timeStyle: "short",
   });
