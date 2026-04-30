@@ -39,8 +39,8 @@ const Auth = () => {
         if (!fullName.trim() || fullName.trim().length < 3) {
           throw new Error("الاسم الكامل مطلوب (3 أحرف على الأقل)");
         }
-        if (!/^(\+?966|0)?5\d{8}$|^\+[1-9]\d{7,14}$/.test(phone.trim())) {
-          throw new Error("رقم جوال غير صحيح");
+        if (!phone || !isValidPhoneNumber(phone)) {
+          throw new Error("رقم جوال غير صحيح، تأكد من اختيار الدولة وكتابة الرقم كامل");
         }
 
         const { data: signUpData, error } = await supabase.auth.signUp({
@@ -152,17 +152,12 @@ const Auth = () => {
                     />
                   </FieldWithIcon>
 
-                  <FieldWithIcon icon={Phone} label="رقم الجوال" required>
-                    <input
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      dir="ltr"
-                      className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 text-left focus:border-primary focus:outline-none"
-                      placeholder="+966 5X XXX XXXX"
-                    />
-                  </FieldWithIcon>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      رقم الجوال<span className="mr-1 text-destructive">*</span>
+                    </label>
+                    <PhoneField value={phone} onChange={setPhone} required />
+                  </div>
                 </>
               )}
 
