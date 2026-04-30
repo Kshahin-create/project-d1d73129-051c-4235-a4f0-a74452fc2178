@@ -128,6 +128,26 @@ const Booking = () => {
 
   const handleFormSubmit = (data: CustomerFormData) => {
     setCustomer(data);
+    // Save / update profile if user is logged in (fire-and-forget)
+    if (user) {
+      supabase
+        .from("customer_profiles")
+        .upsert(
+          {
+            user_id: user.id,
+            full_name: data.fullName,
+            phone: data.phone,
+            email: data.email || user.email,
+            business_name: data.business,
+            notes: data.notes || null,
+          },
+          { onConflict: "user_id" }
+        )
+        .then(({ error }) => {
+          if (error) console.error("profile save error:", error);
+          else toast.success("تم حفظ بياناتك للاستخدام في المرات القادمة");
+        });
+    }
     setStep(5);
   };
 
