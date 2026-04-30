@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Lock, Mail, ArrowRight, LogIn, User, Phone, Briefcase, FileText } from "lucide-react";
+import { isValidPhoneNumber } from "libphonenumber-js";
+import { PhoneField } from "@/components/PhoneField";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
