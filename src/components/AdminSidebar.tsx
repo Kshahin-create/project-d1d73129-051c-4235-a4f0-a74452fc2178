@@ -34,6 +34,9 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
   { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, adminOnly: true },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
+  { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, adminOnly: true },
+  { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
+  { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
 ];
 
 export const AdminSidebar = () => {
