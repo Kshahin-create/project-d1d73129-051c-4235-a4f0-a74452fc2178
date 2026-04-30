@@ -12,6 +12,7 @@ import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
+import { supabase } from "@/integrations/supabase/client";
 import type { Unit, Building } from "@/data/types";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{png,jpg,jpeg}", {
