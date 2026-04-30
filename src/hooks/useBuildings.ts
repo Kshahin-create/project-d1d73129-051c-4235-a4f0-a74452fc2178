@@ -38,7 +38,7 @@ export const useBuildingsAndUnits = () => {
           area: Number(u.area),
           activity: u.activity,
           price: Number(u.price),
-          status: u.status as "available" | "rented",
+          status: u.status as "available" | "rented" | "reserved",
           tenant: tenantInfo?.name ?? null,
         };
       });
@@ -50,12 +50,13 @@ export const useBuildingsAndUnits = () => {
         buildings = buildingsRaw.map((b) => {
           const bu = units.filter((u) => u.buildingNumber === b.number);
           const rented = bu.filter((u) => u.status === "rented").length;
+          const reserved = bu.filter((u) => u.status === "reserved").length;
           return {
             number: b.number,
             type: b.type,
             totalUnits: bu.length,
             rentedUnits: rented,
-            availableUnits: bu.length - rented,
+            availableUnits: bu.length - rented - reserved,
             expectedAnnualRevenue: Number(b.expected_annual_revenue),
           };
         });
@@ -64,6 +65,7 @@ export const useBuildingsAndUnits = () => {
         buildings = uniqueBuildingNumbers.map((bn) => {
           const bu = units.filter((u) => u.buildingNumber === bn);
           const rented = bu.filter((u) => u.status === "rented").length;
+          const reserved = bu.filter((u) => u.status === "reserved").length;
           // Derive building type from the activity of its units so the
           // service/parts filter still works for unauthenticated users.
           const activity = bu[0]?.activity ?? "";
@@ -77,7 +79,7 @@ export const useBuildingsAndUnits = () => {
             type: derivedType,
             totalUnits: bu.length,
             rentedUnits: rented,
-            availableUnits: bu.length - rented,
+            availableUnits: bu.length - rented - reserved,
             expectedAnnualRevenue: 0,
           };
         });

@@ -10,7 +10,7 @@ const buildRows = (units: Unit[]) =>
     "النشاط": u.activity ?? "",
     "المساحة (م²)": u.area,
     "السعر (سنوي)": u.price,
-    "الحالة": u.status === "rented" ? "مؤجر" : "متاح",
+    "الحالة": u.status === "rented" ? "مؤجر" : u.status === "reserved" ? "محجوز" : "متاح",
     "المستأجر": u.tenant ?? "",
   }));
 
@@ -52,7 +52,7 @@ const escapeHtml = (s: string | number | null | undefined) =>
 
 export interface PDFExportMeta {
   buildingFilter?: number | null;
-  statusFilter?: "all" | "rented" | "available";
+  statusFilter?: "all" | "rented" | "available" | "reserved";
   search?: string;
 }
 
@@ -64,7 +64,8 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
   });
 
   const totalRented = units.filter((u) => u.status === "rented").length;
-  const totalAvailable = units.length - totalRented;
+  const totalReserved = units.filter((u) => u.status === "reserved").length;
+  const totalAvailable = units.filter((u) => u.status === "available").length;
   const totalRevenue = units
     .filter((u) => u.status === "rented")
     .reduce((s, u) => s + u.price, 0);
@@ -72,7 +73,8 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
   const filterChips: string[] = [];
   filterChips.push(meta.buildingFilter ? `مبنى رقم ${meta.buildingFilter}` : "كل المباني");
   if (meta.statusFilter === "rented") filterChips.push("الحالة: مؤجر");
-  else if (meta.statusFilter === "available") filterChips.push("الحالة: غير مؤجر");
+  else if (meta.statusFilter === "reserved") filterChips.push("الحالة: محجوز");
+  else if (meta.statusFilter === "available") filterChips.push("الحالة: متاح");
   else filterChips.push("الحالة: الكل");
   if (meta.search?.trim()) filterChips.push(`بحث: "${meta.search.trim()}"`);
 
@@ -144,6 +146,10 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
     color: hsl(0, 72%, 48%);
     background: hsl(0, 72%, 48%, 0.1);
   }
+  .status-reserved {
+    color: hsl(38, 92%, 40%);
+    background: hsl(38, 92%, 40%, 0.12);
+  }
   .status-available {
     color: hsl(152, 60%, 36%);
     background: hsl(152, 60%, 36%, 0.1);
@@ -180,6 +186,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
   <div class="stats">
     <div class="stat"><div class="label">إجمالي الوحدات</div><div class="value">${units.length}</div></div>
     <div class="stat"><div class="label">مؤجرة</div><div class="value" style="color:hsl(0,72%,48%)">${totalRented}</div></div>
+    <div class="stat"><div class="label">محجوزة</div><div class="value" style="color:hsl(38,92%,40%)">${totalReserved}</div></div>
     <div class="stat"><div class="label">متاحة</div><div class="value" style="color:hsl(152,60%,36%)">${totalAvailable}</div></div>
     <div class="stat"><div class="label">إيراد سنوي (مؤجر)</div><div class="value">${totalRevenue.toLocaleString("ar-EG")} ر.س</div></div>
   </div>
@@ -192,7 +199,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
       ${rows.map((r) => `<tr>${headers.map((h) => {
         const v = (r as any)[h];
         if (h === "الحالة") {
-          const cls = v === "مؤجر" ? "status-rented" : "status-available";
+          const cls = v === "مؤجر" ? "status-rented" : v === "محجوز" ? "status-reserved" : "status-available";
           return `<td><span class="status-badge ${cls}">${escapeHtml(v)}</span></td>`;
         }
         if (h === "السعر (سنوي)" && typeof v === "number") {

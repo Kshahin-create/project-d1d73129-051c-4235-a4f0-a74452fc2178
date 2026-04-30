@@ -26,7 +26,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
     layout?.units.map((area) => {
       const unit = unitsByNumber.get(area.unitNumber);
       if (!unit) return null;
-      const isRented = unit.status === "rented";
+      const isRented = unit.status === "rented" || unit.status === "reserved";
       const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
 
@@ -123,7 +123,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
-        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label="مؤجر / محجوز" icon={<Lock className="h-3 w-3" />} />
       </div>
 
       {/* Units grid (alternative quick selection) */}
@@ -131,7 +131,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
         <h4 className="mb-3 font-display font-bold">أو اختر رقم الوحدة من القائمة</h4>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
-            const isRented = u.status === "rented";
+            const isRented = u.status === "rented" || u.status === "reserved";
             const isSelected = selectedSet.has(u.unitNumber);
             const isCorner = u.unitType === "ركنية";
             return (
@@ -164,7 +164,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
                 </div>
                 {isRented ? (
                   <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-destructive">
-                    <Lock className="h-2.5 w-2.5" /> مؤجر
+                    <Lock className="h-2.5 w-2.5" /> {u.status === "reserved" ? "محجوز" : "مؤجر"}
                   </div>
                 ) : isSelected ? (
                   <CheckCircle2 className="mt-1 h-3.5 w-3.5 text-primary-foreground" />

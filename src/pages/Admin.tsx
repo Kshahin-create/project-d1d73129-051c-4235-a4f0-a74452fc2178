@@ -26,13 +26,13 @@ const Admin = () => {
   const { data, isLoading } = useBuildingsAndUnits();
 
   const [selectedBuilding, setSelectedBuilding] = useState<number | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "rented" | "available">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "rented" | "reserved" | "available">("all");
   const [search, setSearch] = useState("");
-  const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number; wasRented: boolean } | null>(null);
+  const [editingUnit, setEditingUnit] = useState<{ id: string; unitNumber: number; building: number; wasRented: boolean; mode: "rent" | "reserve" } | null>(null);
   const [tenantForm, setTenantForm] = useState<TenantForm>({ tenant_name: "", business_name: "", activity_type: "", phone: "" });
   const [saving, setSaving] = useState(false);
   const [confirmRent, setConfirmRent] = useState(false);
-  const [releaseTarget, setReleaseTarget] = useState<{ unitNumber: number; buildingNumber: number } | null>(null);
+  const [releaseTarget, setReleaseTarget] = useState<{ unitNumber: number; buildingNumber: number; status: "rented" | "reserved" } | null>(null);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditEntries, setAuditEntries] = useState<any[]>([]);
 
@@ -54,8 +54,10 @@ const Admin = () => {
   const stats = useMemo(() => {
     const total = units.length;
     const rented = units.filter((u) => u.status === "rented").length;
+    const reserved = units.filter((u) => u.status === "reserved").length;
+    const available = units.filter((u) => u.status === "available").length;
     const revenue = units.filter((u) => u.status === "rented").reduce((s, u) => s + u.price, 0);
-    return { total, rented, available: total - rented, revenue };
+    return { total, rented, reserved, available, revenue };
   }, [units]);
 
   // Auth gate (after hooks to keep hook order stable)
@@ -99,7 +101,7 @@ const Admin = () => {
     unit_id: string;
     building_number: number;
     unit_number: number;
-    action: "rent" | "release" | "update";
+    action: "rent" | "reserve" | "release" | "update";
     previous_status: string;
     new_status: string;
     reason: string;
@@ -113,7 +115,12 @@ const Admin = () => {
     });
   };
 
-  const openRentDialog = async (unitNumber: number, buildingNumber: number, currentStatus: string) => {
+  const openRentDialog = async (
+    unitNumber: number,
+    buildingNumber: number,
+    currentStatus: string,
+    mode: "rent" | "reserve" = "rent",
+  ) => {
     const { data: u } = await supabase
       .from("units")
       .select("id")
@@ -121,7 +128,13 @@ const Admin = () => {
       .eq("unit_number", unitNumber)
       .maybeSingle();
     if (!u) return;
-    setEditingUnit({ id: u.id, unitNumber, building: buildingNumber, wasRented: currentStatus === "rented" });
+    setEditingUnit({
+      id: u.id,
+      unitNumber,
+      building: buildingNumber,
+      wasRented: currentStatus === "rented" || currentStatus === "reserved",
+      mode,
+    });
     const { data: t } = await supabase
       .from("tenants")
       .select("*")
@@ -150,10 +163,15 @@ const Admin = () => {
     if (!editingUnit) return;
     setSaving(true);
     try {
-      const action = editingUnit.wasRented ? "update" : "rent";
-      const previousStatus = editingUnit.wasRented ? "rented" : "available";
+      const targetStatus = editingUnit.mode === "reserve" ? "reserved" : "rented";
+      const action = editingUnit.wasRented ? "update" : editingUnit.mode === "reserve" ? "reserve" : "rent";
+      // previous status — best effort: derive from current units cache
+      const currentUnit = units.find(
+        (u) => u.buildingNumber === editingUnit.building && u.unitNumber === editingUnit.unitNumber,
+      );
+      const previousStatus = currentUnit?.status ?? "available";
 
-      const { error: ue } = await supabase.from("units").update({ status: "rented" }).eq("id", editingUnit.id);
+      const { error: ue } = await supabase.from("units").update({ status: targetStatus }).eq("id", editingUnit.id);
       if (ue) throw ue;
 
       const { data: existing } = await supabase.from("tenants").select("id").eq("unit_id", editingUnit.id).maybeSingle();
@@ -171,12 +189,13 @@ const Admin = () => {
         unit_number: editingUnit.unitNumber,
         action,
         previous_status: previousStatus,
-        new_status: "rented",
+        new_status: targetStatus,
         reason,
         tenant_snapshot: tenantForm,
       });
 
-      toast.success(`تم ${editingUnit.wasRented ? "تحديث بيانات" : "تأجير"} الوحدة ${editingUnit.unitNumber}`);
+      const verb = editingUnit.wasRented ? "تحديث بيانات" : editingUnit.mode === "reserve" ? "حجز" : "تأجير";
+      toast.success(`تم ${verb} الوحدة ${editingUnit.unitNumber}`);
       setConfirmRent(false);
       setEditingUnit(null);
       qc.invalidateQueries({ queryKey: ["buildings-units"] });
@@ -209,7 +228,7 @@ const Admin = () => {
         building_number: releaseTarget.buildingNumber,
         unit_number: releaseTarget.unitNumber,
         action: "release",
-        previous_status: "rented",
+        previous_status: releaseTarget.status,
         new_status: "available",
         reason,
         tenant_snapshot: tenantSnap,
@@ -265,9 +284,10 @@ const Admin = () => {
         </div>
 
         {/* Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <StatCard icon={<Building2 />} label="إجمالي الوحدات" value={stats.total} color="text-primary" />
           <StatCard icon={<CheckCircle2 />} label="متاحة" value={stats.available} color="text-success" />
+          <StatCard icon={<Lock />} label="محجوزة" value={stats.reserved} color="text-accent" />
           <StatCard icon={<Users />} label="مؤجرة" value={stats.rented} color="text-destructive" />
           <StatCard icon={<TrendingUp />} label="إيراد سنوي" value={stats.revenue.toLocaleString("ar-EG")} color="text-accent" small />
         </div>
@@ -319,13 +339,22 @@ const Admin = () => {
             مؤجر
           </button>
           <button
+            onClick={() => setStatusFilter("reserved")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "reserved" ? "bg-accent text-accent-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            محجوز
+          </button>
+          <button
             onClick={() => setStatusFilter("available")}
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-medium transition",
               statusFilter === "available" ? "bg-success text-success-foreground" : "border border-border bg-card hover:border-primary/40"
             )}
           >
-            غير مؤجر
+            متاح
           </button>
 
           <div className="ms-auto flex items-center gap-2">
@@ -421,6 +450,10 @@ const Admin = () => {
                           <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive whitespace-nowrap">
                             <Lock className="h-2.5 w-2.5" /> مؤجر
                           </span>
+                        ) : u.status === "reserved" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent-foreground whitespace-nowrap">
+                            <Lock className="h-2.5 w-2.5" /> محجوز
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success whitespace-nowrap">
                             <CheckCircle2 className="h-2.5 w-2.5" /> متاح
@@ -435,28 +468,44 @@ const Admin = () => {
                         )}
                       </div>
                       <div className="text-right">
-                        {u.status === "rented" ? (
+                        {u.status === "rented" || u.status === "reserved" ? (
                           <div className="flex flex-wrap gap-1.5">
                             <button
-                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
+                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, u.status === "reserved" ? "reserve" : "rent")}
                               className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10 whitespace-nowrap"
                             >
                               عرض/تعديل
                             </button>
+                            {u.status === "reserved" && (
+                              <button
+                                onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "rent")}
+                                className="rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/20 whitespace-nowrap"
+                              >
+                                تأجير
+                              </button>
+                            )}
                             <button
-                              onClick={() => setReleaseTarget({ unitNumber: u.unitNumber, buildingNumber: u.buildingNumber })}
+                              onClick={() => setReleaseTarget({ unitNumber: u.unitNumber, buildingNumber: u.buildingNumber, status: u.status as "rented" | "reserved" })}
                               className="rounded-lg bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success hover:bg-success/20 whitespace-nowrap"
                             >
                               إخلاء
                             </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
-                            className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 whitespace-nowrap"
-                          >
-                            تأجير
-                          </button>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "rent")}
+                              className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 whitespace-nowrap"
+                            >
+                              تأجير
+                            </button>
+                            <button
+                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "reserve")}
+                              className="rounded-lg bg-accent/20 px-3 py-1 text-[11px] font-bold text-accent-foreground hover:bg-accent/30 whitespace-nowrap"
+                            >
+                              حجز
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -477,7 +526,7 @@ const Admin = () => {
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-elevated" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold">
-                {editingUnit.wasRented ? "تعديل بيانات" : "تأجير"} الوحدة <span className="num">{editingUnit.unitNumber}</span> — مبنى <span className="num">{editingUnit.building}</span>
+                {editingUnit.wasRented ? "تعديل بيانات" : editingUnit.mode === "reserve" ? "حجز" : "تأجير"} الوحدة <span className="num">{editingUnit.unitNumber}</span> — مبنى <span className="num">{editingUnit.building}</span>
               </h3>
               <button onClick={() => setEditingUnit(null)} className="rounded-lg p-1 hover:bg-secondary">
                 <X className="h-4 w-4" />
@@ -508,23 +557,33 @@ const Admin = () => {
         </div>
       )}
 
-      {/* Confirm rent / update */}
+      {/* Confirm rent / reserve / update */}
       <ConfirmDialog
         open={confirmRent}
-        title={editingUnit?.wasRented ? "تأكيد تحديث بيانات المستأجر" : `تأكيد تأجير الوحدة ${editingUnit?.unitNumber ?? ""}`}
+        title={
+          editingUnit?.wasRented
+            ? "تأكيد تحديث بيانات المستأجر"
+            : editingUnit?.mode === "reserve"
+              ? `تأكيد حجز الوحدة ${editingUnit?.unitNumber ?? ""}`
+              : `تأكيد تأجير الوحدة ${editingUnit?.unitNumber ?? ""}`
+        }
         description={
           editingUnit?.wasRented
             ? "سيتم حفظ التغييرات على بيانات المستأجر وسيتم تسجيل العملية في سجل التدقيق."
-            : `سيتم تغيير حالة الوحدة إلى "مؤجرة" وتسجيل بيانات المستأجر "${tenantForm.tenant_name}". اكتب سبب العملية للتوثيق.`
+            : editingUnit?.mode === "reserve"
+              ? `سيتم تغيير حالة الوحدة إلى "محجوزة" مع حفظ بيانات "${tenantForm.tenant_name}". اكتب سبب الحجز للتوثيق.`
+              : `سيتم تغيير حالة الوحدة إلى "مؤجرة" وتسجيل بيانات المستأجر "${tenantForm.tenant_name}". اكتب سبب العملية للتوثيق.`
         }
         confirmLabel="تأكيد وحفظ"
         variant="primary"
         loading={saving}
-        reasonPlaceholder="مثال: عقد إيجار جديد رقم 1234 / تجديد عقد..."
+        reasonPlaceholder="مثال: عقد إيجار جديد رقم 1234 / حجز مبدئي..."
         reasonSuggestions={
           editingUnit?.wasRented
             ? ["تحديث بيانات المستأجر", "تصحيح خطأ إدخال", "تجديد العقد"]
-            : ["عقد إيجار جديد", "حجز موثّق", "نقل من قائمة الانتظار"]
+            : editingUnit?.mode === "reserve"
+              ? ["حجز مبدئي", "بانتظار توقيع العقد", "بانتظار الدفعة المقدمة"]
+              : ["عقد إيجار جديد", "تحويل من حجز إلى تأجير", "نقل من قائمة الانتظار"]
         }
         onConfirm={handleRentConfirmed}
         onCancel={() => setConfirmRent(false)}
@@ -565,8 +624,9 @@ const Admin = () => {
                   {auditEntries.map((e) => {
                     const labels: Record<string, { text: string; cls: string }> = {
                       rent: { text: "تأجير", cls: "bg-primary/10 text-primary" },
+                      reserve: { text: "حجز", cls: "bg-accent/15 text-accent-foreground" },
                       release: { text: "إخلاء", cls: "bg-success/10 text-success" },
-                      update: { text: "تحديث", cls: "bg-accent/10 text-accent-foreground" },
+                      update: { text: "تحديث", cls: "bg-secondary text-foreground" },
                     };
                     const lbl = labels[e.action] ?? { text: e.action, cls: "bg-secondary" };
                     return (
