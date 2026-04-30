@@ -128,7 +128,8 @@ const AdminUsers = () => {
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">لا توجد نتائج</div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
               <thead className="border-b border-border bg-secondary/50 text-xs">
                 <tr>
                   <th className="p-3 text-right font-semibold">الاسم</th>
