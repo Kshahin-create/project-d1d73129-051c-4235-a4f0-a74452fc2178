@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Home, CheckCircle2, X as XIcon } from "lucide-react";
+import { ArrowRight, ArrowLeft, Home, CheckCircle2, X as XIcon, LogIn, UserCircle2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProgressSteps } from "@/components/ProgressSteps";
@@ -13,6 +13,8 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{png,jpg,jpeg}", {
@@ -34,16 +36,44 @@ const Booking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activityFilter = searchParams.get("activity") as "service" | "parts" | null;
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
+  const [savedProfile, setSavedProfile] = useState<Partial<CustomerFormData> | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const bookingContentRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useBuildingsAndUnits();
   const buildings = data?.buildings ?? [];
   const units = data?.units ?? [];
+
+  // Fetch saved customer profile when user logs in
+  useEffect(() => {
+    if (!user) {
+      setSavedProfile(null);
+      return;
+    }
+    supabase
+      .from("customer_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setSavedProfile({
+            fullName: data.full_name ?? "",
+            phone: data.phone ?? "",
+            email: data.email ?? user.email ?? "",
+            business: data.business_name ?? "",
+            notes: data.notes ?? "",
+          });
+        } else {
+          setSavedProfile({ email: user.email ?? "" });
+        }
+      });
+  }, [user]);
 
   const buildingUnits = useMemo(
     () => (selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding.number) : []),
@@ -98,6 +128,26 @@ const Booking = () => {
 
   const handleFormSubmit = (data: CustomerFormData) => {
     setCustomer(data);
+    // Save / update profile if user is logged in (fire-and-forget)
+    if (user) {
+      supabase
+        .from("customer_profiles")
+        .upsert(
+          {
+            user_id: user.id,
+            full_name: data.fullName,
+            phone: data.phone,
+            email: data.email || user.email,
+            business_name: data.business,
+            notes: data.notes || null,
+          },
+          { onConflict: "user_id" }
+        )
+        .then(({ error }) => {
+          if (error) console.error("profile save error:", error);
+          else toast.success("تم حفظ بياناتك للاستخدام في المرات القادمة");
+        });
+    }
     setStep(5);
   };
 
@@ -256,9 +306,42 @@ const Booking = () => {
             {step === 4 && selectedUnits.length > 0 && (
               <StepWrap title="بياناتك" desc="أدخل بياناتك لإتمام طلب الحجز.">
                 <div className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-5">
-                  <div className="lg:col-span-3">
+                  <div className="lg:col-span-3 space-y-4">
+                    {!user ? (
+                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm">
+                        <div className="flex items-start gap-3">
+                          <LogIn className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                          <div className="flex-1">
+                            <p className="font-bold text-foreground">سجّل حسابك واحفظ بياناتك</p>
+                            <p className="mt-1 text-muted-foreground">
+                              لو عملت حساب، بياناتك هتتحفظ وتتعبّى تلقائياً في أي حجز جاي.
+                            </p>
+                            <Link
+                              to="/auth"
+                              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90"
+                            >
+                              تسجيل / إنشاء حساب
+                              <ArrowLeft className="h-3.5 w-3.5" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-success/30 bg-success/5 p-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <UserCircle2 className="h-5 w-5 text-success" />
+                          <span className="text-muted-foreground">
+                            مسجّل دخول كـ <span className="font-bold text-foreground">{user.email}</span> — بياناتك هتتحفظ تلقائياً.
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
-                      <CustomerForm formId={FORM_ID} onSubmit={handleFormSubmit} />
+                      <CustomerForm
+                        formId={FORM_ID}
+                        onSubmit={handleFormSubmit}
+                        defaultValues={savedProfile ?? undefined}
+                      />
                       <button
                         type="submit"
                         form={FORM_ID}
