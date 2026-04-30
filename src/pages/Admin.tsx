@@ -387,57 +387,67 @@ const Admin = () => {
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="overflow-x-auto">
-              <table dir="rtl" className="w-full min-w-[860px] border-collapse text-right text-sm">
+              <table dir="rtl" className="w-full min-w-[960px] table-auto border-collapse text-right text-sm">
+                <colgroup>
+                  <col className="w-[7%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[16%]" />
+                </colgroup>
                 <thead className="bg-secondary text-xs uppercase text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">المبنى</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">الوحدة</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">النوع</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">المساحة</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">السعر</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">الحالة</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">المستأجر</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">إجراء</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">المبنى</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">الوحدة</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">النوع</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">المساحة</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">السعر</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">الحالة</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">المستأجر</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">إجراء</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {buildingUnits.map((u) => (
                     <tr key={`${u.buildingNumber}-${u.unitNumber}`} className="hover:bg-secondary/40">
-                      <td className="px-4 py-2.5 num text-right whitespace-nowrap">{u.buildingNumber}</td>
-                      <td className="px-4 py-2.5 num text-right font-bold whitespace-nowrap">{u.unitNumber}</td>
-                      <td className="px-4 py-2.5 text-right text-xs whitespace-nowrap">{u.unitType}</td>
-                      <td className="px-4 py-2.5 num text-right text-xs whitespace-nowrap">{u.area} م²</td>
-                      <td className="px-4 py-2.5 num text-right text-xs whitespace-nowrap">{u.price.toLocaleString("ar-EG")}</td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-3 py-2.5 num text-right align-middle whitespace-nowrap">{u.buildingNumber}</td>
+                      <td className="px-3 py-2.5 num text-right align-middle font-bold whitespace-nowrap">{u.unitNumber}</td>
+                      <td className="px-3 py-2.5 text-right align-middle text-xs whitespace-nowrap">{u.unitType}</td>
+                      <td className="px-3 py-2.5 num text-right align-middle text-xs whitespace-nowrap">{u.area} م²</td>
+                      <td className="px-3 py-2.5 num text-right align-middle text-xs whitespace-nowrap">{u.price.toLocaleString("ar-EG")}</td>
+                      <td className="px-3 py-2.5 text-right align-middle">
                         {u.status === "rented" ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive whitespace-nowrap">
                             <Lock className="h-2.5 w-2.5" /> مؤجر
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success whitespace-nowrap">
                             <CheckCircle2 className="h-2.5 w-2.5" /> متاح
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-xs">
+                      <td className="px-3 py-2.5 text-right align-middle text-xs">
                         {u.tenant ? (
                           <span className="font-medium text-foreground">{u.tenant}</span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-3 py-2.5 text-right align-middle">
                         {u.status === "rented" ? (
-                          <div className="flex gap-1.5">
+                          <div className="flex flex-wrap justify-start gap-1.5">
                             <button
                               onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
-                              className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10"
+                              className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10 whitespace-nowrap"
                             >
                               عرض/تعديل
                             </button>
                             <button
                               onClick={() => setReleaseTarget({ unitNumber: u.unitNumber, buildingNumber: u.buildingNumber })}
-                              className="rounded-lg bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success hover:bg-success/20"
+                              className="rounded-lg bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success hover:bg-success/20 whitespace-nowrap"
                             >
                               إخلاء
                             </button>
@@ -445,7 +455,7 @@ const Admin = () => {
                         ) : (
                           <button
                             onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
-                            className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90"
+                            className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 whitespace-nowrap"
                           >
                             تأجير
                           </button>
@@ -454,7 +464,7 @@ const Admin = () => {
                     </tr>
                   ))}
                   {buildingUnits.length === 0 && (
-                    <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">لا توجد نتائج</td></tr>
+                    <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">لا توجد نتائج</td></tr>
                   )}
                 </tbody>
               </table>
