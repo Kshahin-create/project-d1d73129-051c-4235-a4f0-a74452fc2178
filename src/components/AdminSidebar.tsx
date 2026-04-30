@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   UserCircle2,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,9 +25,10 @@ type LinkItem = {
   adminOnly?: boolean;
 };
 
-const allLinks: LinkItem[] = [
+const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/", label: "الرئيسية", Icon: Home },
   { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
+  { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
   { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
 ];
@@ -68,7 +70,9 @@ export const AdminSidebar = () => {
 
   if (loading) return null;
 
-  const links = allLinks.filter((l) => !l.adminOnly || isAdmin);
+  const links = allLinks.filter(
+    (l) => (!l.adminOnly || isAdmin) && (!l.authOnly || !!user),
+  );
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
