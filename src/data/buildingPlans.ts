@@ -158,6 +158,37 @@ const B7_LAYOUT: PlanLayout = {
   ],
 };
 
+// مبنى 8 — مخطط رأسي (portrait) viewBox 600x900، عمودين × 11 صف، 22 وحدة
+const B8_LAYOUT: PlanLayout = {
+  aspectRatio: 600 / 900,
+  units: [
+    // العمود الأيسر (من الأعلى للأسفل): 107 (ركنية)، 106→98، 97 (ركنية)
+    { unitNumber: 107, x: 35.11, y: 10.36, w: 10.77, h: 12.48 },
+    { unitNumber: 106, x: 35.19, y: 23.23, w: 14.30, h: 6.08 },
+    { unitNumber: 105, x: 35.19, y: 29.72, w: 14.49, h: 6.21 },
+    { unitNumber: 104, x: 35.19, y: 36.15, w: 14.49, h: 6.17 },
+    { unitNumber: 103, x: 35.19, y: 42.67, w: 14.61, h: 6.36 },
+    { unitNumber: 102, x: 35.07, y: 49.28, w: 14.73, h: 6.14 },
+    { unitNumber: 101, x: 35.19, y: 55.75, w: 14.61, h: 6.05 },
+    { unitNumber: 100, x: 35.13, y: 62.14, w: 14.61, h: 6.31 },
+    { unitNumber: 99, x: 35.13, y: 68.81, w: 14.61, h: 6.15 },
+    { unitNumber: 98, x: 35.03, y: 75.22, w: 14.61, h: 6.15 },
+    { unitNumber: 97, x: 34.68, y: 81.70, w: 11.20, h: 12.88 },
+    // العمود الأيمن (من الأعلى للأسفل): 118 (ركنية)، 117→109، 108 (ركنية)
+    { unitNumber: 118, x: 53.35, y: 10.36, w: 10.76, h: 12.50 },
+    { unitNumber: 117, x: 49.93, y: 23.23, w: 14.20, h: 6.09 },
+    { unitNumber: 116, x: 50.02, y: 29.71, w: 14.08, h: 6.22 },
+    { unitNumber: 115, x: 50.08, y: 36.15, w: 14.05, h: 6.17 },
+    { unitNumber: 114, x: 50.08, y: 42.67, w: 14.30, h: 6.36 },
+    { unitNumber: 113, x: 50.02, y: 49.28, w: 14.38, h: 6.14 },
+    { unitNumber: 112, x: 49.96, y: 55.75, w: 14.50, h: 6.05 },
+    { unitNumber: 111, x: 50.08, y: 62.14, w: 14.50, h: 6.31 },
+    { unitNumber: 110, x: 49.88, y: 68.81, w: 14.76, h: 6.15 },
+    { unitNumber: 109, x: 49.88, y: 75.22, w: 14.61, h: 6.15 },
+    { unitNumber: 108, x: 53.46, y: 81.61, w: 10.92, h: 12.96 },
+  ],
+};
+
 export const BUILDING_PLANS: Record<number, PlanLayout> = {
   // مبنى 1 — الصف العلوي 411→422 (يسار→يمين)، الصف السفلي 399→410
   1: buildLayout(B1, 411, 399),
@@ -172,6 +203,7 @@ export const BUILDING_PLANS: Record<number, PlanLayout> = {
   // مبنى 6 — الصف العلوي 171→182، الصف السفلي 159→170
   6: buildLayout(B6, 171, 159),
   7: B7_LAYOUT,
+  8: B8_LAYOUT,
 };
 
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
