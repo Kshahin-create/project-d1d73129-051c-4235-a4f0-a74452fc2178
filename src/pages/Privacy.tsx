@@ -30,7 +30,7 @@ const Privacy = () => {
           <div>
             <h1 className="font-display text-3xl font-extrabold sm:text-4xl">سياسة الخصوصية والأمان</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              آخر تحديث: {new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
+              آخر تحديث: {new Date().toLocaleDateString("ar-SA-u-nu-latn", { year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
         </div>

@@ -259,24 +259,24 @@ const Admin = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container-tight py-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
             <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
               <ArrowRight className="h-3.5 w-3.5" /> العودة للموقع
             </Link>
-            <h1 className="mt-2 font-display text-2xl font-extrabold sm:text-3xl">لوحة تحكم الوحدات</h1>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <h1 className="mt-2 font-display text-xl font-extrabold sm:text-3xl">لوحة تحكم الوحدات</h1>
+            <p className="truncate text-xs text-muted-foreground sm:text-sm">{user?.email}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={openAuditLog}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm hover:border-primary/40 hover:text-primary"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs hover:border-primary/40 hover:text-primary sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
             >
               <History className="h-4 w-4" /> سجل التدقيق
             </button>
             <button
               onClick={handleSignOut}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm hover:border-destructive/40 hover:text-destructive"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs hover:border-destructive/40 hover:text-destructive sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
             >
               <LogOut className="h-4 w-4" /> خروج
             </button>

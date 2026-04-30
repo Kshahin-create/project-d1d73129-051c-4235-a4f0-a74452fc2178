@@ -124,6 +124,13 @@
     direction: ltr;
     unicode-bidi: embed;
     display: inline-block;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  /* Force English (Latin) digits everywhere across Arabic UI */
+  html[lang="ar"], body, * {
+    -moz-font-feature-settings: "lnum";
   }
 }
 
@@ -134,6 +141,13 @@
 
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border/60;
+  }
+}
+
+/* Add bottom safe-area for floating FABs (WhatsApp + admin sidebar trigger) on mobile */
+@media (max-width: 1023px) {
+  main {
+    padding-bottom: 5.5rem;
   }
 }
 
