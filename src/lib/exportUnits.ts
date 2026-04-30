@@ -203,7 +203,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
           return `<td><span class="status-badge ${cls}">${escapeHtml(v)}</span></td>`;
         }
         if (h === "السعر (سنوي)" && typeof v === "number") {
-          return `<td>${v.toLocaleString("ar-EG")}</td>`;
+          return `<td>${v.toLocaleString("en-US")}</td>`;
         }
         return `<td>${escapeHtml(v)}</td>`;
       }).join("")}</tr>`).join("")}
