@@ -12,6 +12,7 @@ const fmt = (n: number) => new Intl.NumberFormat("ar-SA").format(Math.round(n));
 type FilterKey =
   | "all"
   | "rented"
+  | "reserved"
   | "available"
   | "ركنية"
   | "داخلية"
@@ -22,7 +23,8 @@ type FilterKey =
 const filters: { key: FilterKey; label: string }[] = [
   { key: "all", label: "الكل" },
   { key: "rented", label: "مؤجر" },
-  { key: "available", label: "شاغر" },
+  { key: "reserved", label: "محجوز" },
+  { key: "available", label: "متاح" },
   { key: "ركنية", label: "ركنية" },
   { key: "داخلية", label: "داخلية" },
   { key: "صيانة", label: "صيانة سيارات" },
@@ -67,7 +69,8 @@ const Dashboard = () => {
   const stats = useMemo(() => {
     const total = units.length;
     const rented = units.filter((u) => u.status === "rented").length;
-    const available = total - rented;
+    const reserved = units.filter((u) => u.status === "reserved").length;
+    const available = units.filter((u) => u.status === "available").length;
     const totalArea = units.reduce((s, u) => s + (Number(u.area) || 0), 0);
     const rentedRevenue = units
       .filter((u) => u.status === "rented")
@@ -80,6 +83,7 @@ const Dashboard = () => {
     return {
       total,
       rented,
+      reserved,
       available,
       totalArea,
       rentedRevenue,
@@ -96,6 +100,8 @@ const Dashboard = () => {
           return true;
         case "rented":
           return u.status === "rented";
+        case "reserved":
+          return u.status === "reserved";
         case "available":
           return u.status === "available";
         case "ركنية":
