@@ -124,6 +124,13 @@
     direction: ltr;
     unicode-bidi: embed;
     display: inline-block;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  /* Force English (Latin) digits everywhere across Arabic UI */
+  html[lang="ar"], body, * {
+    -moz-font-feature-settings: "lnum";
   }
 }
 
