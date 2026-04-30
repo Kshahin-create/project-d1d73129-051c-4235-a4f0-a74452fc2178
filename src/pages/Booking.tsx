@@ -322,7 +322,37 @@ const Booking = () => {
                         href={whatsapp?.appUrl ?? "#"}
                         webHref={whatsapp?.webUrl}
                         message={whatsapp?.message}
-                        onClick={() => setTimeout(() => setSubmitted(true), 600)}
+                        onClick={() => {
+                          // إرسال بيانات الحجز إلى n8n (fire-and-forget)
+                          if (customer && selectedUnits.length > 0) {
+                            supabase.functions
+                              .invoke("booking-webhook", {
+                                body: {
+                                  customer: {
+                                    fullName: customer.fullName,
+                                    phone: customer.phone,
+                                    email: customer.email || undefined,
+                                    business: customer.business,
+                                    notes: customer.notes || undefined,
+                                  },
+                                  units: selectedUnits.map((u) => ({
+                                    buildingNumber: u.buildingNumber,
+                                    buildingType: u.buildingType,
+                                    unitNumber: u.unitNumber,
+                                    unitType: u.unitType,
+                                    area: u.area,
+                                    activity: u.activity,
+                                    price: u.price,
+                                  })),
+                                  message: whatsapp?.message,
+                                },
+                              })
+                              .then(({ error }) => {
+                                if (error) console.error("n8n webhook error:", error);
+                              });
+                          }
+                          setTimeout(() => setSubmitted(true), 600);
+                        }}
                       />
                       <p className="text-center text-xs text-muted-foreground">
                         سيتم نسخ الرسالة تلقائياً وفتح واتساب. إذا لم يكن التطبيق مثبّتاً، استخدم رابط واتساب ويب البديل.
