@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Home, CheckCircle2, X as XIcon } from "lucide-react";
+import { ArrowRight, ArrowLeft, Home, CheckCircle2, X as XIcon, LogIn, UserCircle2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProgressSteps } from "@/components/ProgressSteps";
@@ -13,6 +13,8 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{png,jpg,jpeg}", {
