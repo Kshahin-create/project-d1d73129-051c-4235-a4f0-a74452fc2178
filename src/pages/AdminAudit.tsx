@@ -107,12 +107,31 @@ const AdminAudit = () => {
               </p>
             </div>
           </div>
-          <Link
-            to="/admin"
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-secondary"
-          >
-            <ArrowRight className="h-4 w-4" /> رجوع للوحة الأدمن
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportAuditToExcel(filtered)}
+              disabled={!filtered.length}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-secondary disabled:opacity-50"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Excel
+            </button>
+            <button
+              onClick={() => {
+                const label = actionFilter === "all" ? undefined : `العملية: ${({rent:"تأجير",reserve:"حجز",release:"إخلاء",update:"تعديل"} as any)[actionFilter]}`;
+                exportAuditToPDF(filtered, label);
+              }}
+              disabled={!filtered.length}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-secondary disabled:opacity-50"
+            >
+              <FileText className="h-4 w-4 text-rose-600" /> PDF
+            </button>
+            <Link
+              to="/admin"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-secondary"
+            >
+              <ArrowRight className="h-4 w-4" /> رجوع
+            </Link>
+          </div>
         </div>
 
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
