@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
+import { AdminSidebar } from "@/components/AdminSidebar";
 import Index from "./pages/Index.tsx";
 import Booking from "./pages/Booking.tsx";
 import Privacy from "./pages/Privacy.tsx";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         <FloatingWhatsApp />
+        <AdminSidebar />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
