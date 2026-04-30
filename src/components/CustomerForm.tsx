@@ -38,17 +38,28 @@ export type CustomerFormData = z.infer<typeof customerSchema>;
 interface Props {
   onSubmit: (data: CustomerFormData) => void;
   formId: string;
+  defaultValues?: Partial<CustomerFormData>;
 }
 
-export const CustomerForm = ({ onSubmit, formId }: Props) => {
+export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
     mode: "onBlur",
+    defaultValues,
   });
+
+  // Re-populate when defaultValues arrive asynchronously (e.g., after profile fetch)
+  useEffect(() => {
+    if (defaultValues && Object.values(defaultValues).some((v) => v !== undefined && v !== "")) {
+      reset({ ...defaultValues } as CustomerFormData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(defaultValues)]);
 
   return (
     <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
