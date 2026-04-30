@@ -339,13 +339,22 @@ const Admin = () => {
             مؤجر
           </button>
           <button
+            onClick={() => setStatusFilter("reserved")}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              statusFilter === "reserved" ? "bg-accent text-accent-foreground" : "border border-border bg-card hover:border-primary/40"
+            )}
+          >
+            محجوز
+          </button>
+          <button
             onClick={() => setStatusFilter("available")}
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-medium transition",
               statusFilter === "available" ? "bg-success text-success-foreground" : "border border-border bg-card hover:border-primary/40"
             )}
           >
-            غير مؤجر
+            متاح
           </button>
 
           <div className="ms-auto flex items-center gap-2">
