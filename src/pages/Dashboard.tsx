@@ -341,8 +341,9 @@ const Dashboard = () => {
             {buildings.map((b) => {
               const bUnits = units.filter((u) => u.buildingNumber === b.number);
               const rented = bUnits.filter((u) => u.status === "rented").length;
+              const reserved = bUnits.filter((u) => u.status === "reserved").length;
               const total = bUnits.length;
-              const free = total - rented;
+              const free = total - rented - reserved;
               const pct = total ? (rented / total) * 100 : 0;
               const tone =
                 pct >= 60
@@ -366,7 +367,7 @@ const Dashboard = () => {
                       {b.type}
                     </span>
                   </div>
-                  <div className="mb-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="mb-3 grid grid-cols-4 gap-2 text-center">
                     <div className="rounded-lg bg-muted/40 p-2">
                       <div className="num text-lg font-extrabold">{total}</div>
                       <div className="text-[10px] text-muted-foreground">إجمالي</div>
@@ -377,11 +378,17 @@ const Dashboard = () => {
                       </div>
                       <div className="text-[10px] text-muted-foreground">مؤجر</div>
                     </div>
-                    <div className="rounded-lg bg-red-50 p-2">
-                      <div className="num text-lg font-extrabold text-red-700">
+                    <div className="rounded-lg bg-amber-50 p-2">
+                      <div className="num text-lg font-extrabold text-amber-700">
+                        {reserved}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">محجوز</div>
+                    </div>
+                    <div className="rounded-lg bg-green-50 p-2">
+                      <div className="num text-lg font-extrabold text-green-700">
                         {free}
                       </div>
-                      <div className="text-[10px] text-muted-foreground">شاغر</div>
+                      <div className="text-[10px] text-muted-foreground">متاح</div>
                     </div>
                   </div>
                   <div className="mb-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -468,10 +475,12 @@ const Dashboard = () => {
                             "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap",
                             u.status === "rented"
                               ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800",
+                              : u.status === "reserved"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-green-100 text-green-800",
                           )}
                         >
-                          {u.status === "rented" ? "مؤجر" : "شاغر"}
+                          {u.status === "rented" ? "مؤجر" : u.status === "reserved" ? "محجوز" : "متاح"}
                         </span>
                       </div>
                     </div>
