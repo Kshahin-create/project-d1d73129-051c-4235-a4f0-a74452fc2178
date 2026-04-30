@@ -387,17 +387,27 @@ const Admin = () => {
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="overflow-x-auto">
-              <table dir="rtl" className="w-full min-w-[860px] border-collapse text-right text-sm">
+              <table dir="rtl" className="w-full min-w-[960px] table-auto border-collapse text-right text-sm">
+                <colgroup>
+                  <col className="w-[7%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[16%]" />
+                </colgroup>
                 <thead className="bg-secondary text-xs uppercase text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">المبنى</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">الوحدة</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">النوع</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">المساحة</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">السعر</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">الحالة</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">المستأجر</th>
-                    <th className="px-4 py-3 text-right whitespace-nowrap">إجراء</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">المبنى</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">الوحدة</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">النوع</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">المساحة</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">السعر</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">الحالة</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">المستأجر</th>
+                    <th className="px-3 py-3 text-right whitespace-nowrap">إجراء</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
