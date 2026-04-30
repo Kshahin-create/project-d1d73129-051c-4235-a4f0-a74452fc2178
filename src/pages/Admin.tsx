@@ -450,6 +450,10 @@ const Admin = () => {
                           <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive whitespace-nowrap">
                             <Lock className="h-2.5 w-2.5" /> مؤجر
                           </span>
+                        ) : u.status === "reserved" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent-foreground whitespace-nowrap">
+                            <Lock className="h-2.5 w-2.5" /> محجوز
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success whitespace-nowrap">
                             <CheckCircle2 className="h-2.5 w-2.5" /> متاح
@@ -464,28 +468,44 @@ const Admin = () => {
                         )}
                       </div>
                       <div className="text-right">
-                        {u.status === "rented" ? (
+                        {u.status === "rented" || u.status === "reserved" ? (
                           <div className="flex flex-wrap gap-1.5">
                             <button
-                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
+                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, u.status === "reserved" ? "reserve" : "rent")}
                               className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10 whitespace-nowrap"
                             >
                               عرض/تعديل
                             </button>
+                            {u.status === "reserved" && (
+                              <button
+                                onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "rent")}
+                                className="rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/20 whitespace-nowrap"
+                              >
+                                تأجير
+                              </button>
+                            )}
                             <button
-                              onClick={() => setReleaseTarget({ unitNumber: u.unitNumber, buildingNumber: u.buildingNumber })}
+                              onClick={() => setReleaseTarget({ unitNumber: u.unitNumber, buildingNumber: u.buildingNumber, status: u.status as "rented" | "reserved" })}
                               className="rounded-lg bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success hover:bg-success/20 whitespace-nowrap"
                             >
                               إخلاء
                             </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status)}
-                            className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 whitespace-nowrap"
-                          >
-                            تأجير
-                          </button>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "rent")}
+                              className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 whitespace-nowrap"
+                            >
+                              تأجير
+                            </button>
+                            <button
+                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "reserve")}
+                              className="rounded-lg bg-accent/20 px-3 py-1 text-[11px] font-bold text-accent-foreground hover:bg-accent/30 whitespace-nowrap"
+                            >
+                              حجز
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
