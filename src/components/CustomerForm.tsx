@@ -48,6 +48,7 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
@@ -70,13 +71,12 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
       </Field>
 
       <Field label="رقم الجوال" required error={errors.phone?.message}>
-        <Input
-          {...register("phone")}
-          type="tel"
-          dir="ltr"
-          placeholder="+966 5X XXX XXXX"
-          autoComplete="tel"
-          className="text-left"
+        <Controller
+          control={control}
+          name="phone"
+          render={({ field }) => (
+            <PhoneField value={field.value ?? ""} onChange={field.onChange} />
+          )}
         />
       </Field>
 
