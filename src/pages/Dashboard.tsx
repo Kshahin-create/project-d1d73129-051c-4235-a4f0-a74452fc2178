@@ -206,16 +206,16 @@ const Dashboard = () => {
 
       {/* Hero strip */}
       <section className="border-b bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-        <div className="container-tight flex flex-wrap items-center justify-between gap-4 py-6">
-          <div>
-            <h1 className="font-display text-xl font-bold sm:text-2xl">
+        <div className="container-tight flex flex-col gap-4 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:py-6">
+          <div className="min-w-0">
+            <h1 className="font-display text-lg font-bold leading-tight sm:text-2xl">
               داشبورد المدينة الصناعية بشمال مكة المكرمة
             </h1>
-            <p className="mt-1 text-xs opacity-80 sm:text-sm">
+            <p className="mt-1 text-[11px] opacity-80 sm:text-sm">
               المستثمر: القمة الهادفة الحديثة · مدير التشغيل: نخبة تسكين العقارية
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs sm:text-sm">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] sm:text-sm">
             <div className="flex flex-col">
               <span className="opacity-70">المستهدف</span>
               <span className="font-semibold">إشغال {targetPct}% خلال 6 أشهر</span>
