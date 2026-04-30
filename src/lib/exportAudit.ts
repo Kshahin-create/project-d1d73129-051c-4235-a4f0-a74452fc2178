@@ -34,7 +34,7 @@ const fileStamp = () => {
 
 const buildRows = (entries: AuditRow[]) =>
   entries.map((e) => ({
-    "التاريخ": new Date(e.created_at).toLocaleString("ar-EG"),
+    "التاريخ": new Date(e.created_at).toLocaleString("ar-EG-u-nu-latn"),
     "المبنى": e.building_number,
     "الوحدة": e.unit_number,
     "العملية": ACTION_AR[e.action] ?? e.action,
