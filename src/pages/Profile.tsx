@@ -173,39 +173,43 @@ const Profile = () => {
                   />
                 </Field>
 
-                <Field label="اسم المنشأة / النشاط التجاري">
-                  <input
-                    type="text"
-                    value={data.business_name}
-                    onChange={(e) => update("business_name", e.target.value)}
-                    maxLength={150}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
-                    placeholder="مركز صيانة سيارات / محل قطع غيار..."
-                  />
-                </Field>
+                {!isAdmin && (
+                  <>
+                    <Field label="اسم المنشأة / النشاط التجاري">
+                      <input
+                        type="text"
+                        value={data.business_name}
+                        onChange={(e) => update("business_name", e.target.value)}
+                        maxLength={150}
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
+                        placeholder="مركز صيانة سيارات / محل قطع غيار..."
+                      />
+                    </Field>
 
-                <Field label="نوع النشاط">
-                  <select
-                    value={data.activity_type}
-                    onChange={(e) => update("activity_type", e.target.value)}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
-                  >
-                    <option value="">اختر نوع النشاط</option>
-                    <option value="مراكز صيانة سيارات">مراكز صيانة سيارات</option>
-                    <option value="محلات قطع غيار وبناشر">محلات قطع غيار وبناشر</option>
-                    <option value="أخرى">أخرى</option>
-                  </select>
-                </Field>
+                    <Field label="نوع النشاط">
+                      <select
+                        value={data.activity_type}
+                        onChange={(e) => update("activity_type", e.target.value)}
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
+                      >
+                        <option value="">اختر نوع النشاط</option>
+                        <option value="مراكز صيانة سيارات">مراكز صيانة سيارات</option>
+                        <option value="محلات قطع غيار وبناشر">محلات قطع غيار وبناشر</option>
+                        <option value="أخرى">أخرى</option>
+                      </select>
+                    </Field>
 
-                <Field label="ملاحظات">
-                  <textarea
-                    value={data.notes}
-                    onChange={(e) => update("notes", e.target.value)}
-                    rows={3}
-                    maxLength={500}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
-                  />
-                </Field>
+                    <Field label="ملاحظات">
+                      <textarea
+                        value={data.notes}
+                        onChange={(e) => update("notes", e.target.value)}
+                        rows={3}
+                        maxLength={500}
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
+                      />
+                    </Field>
+                  </>
+                )}
 
                 <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                   <button
