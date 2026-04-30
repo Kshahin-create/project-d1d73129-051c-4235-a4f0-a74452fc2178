@@ -36,7 +36,29 @@ const Admin = () => {
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditEntries, setAuditEntries] = useState<any[]>([]);
 
-  // Auth gate
+  const buildings = data?.buildings ?? [];
+  const units = data?.units ?? [];
+
+  const buildingUnits = useMemo(() => {
+    let list = selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding) : units;
+    if (statusFilter !== "all") {
+      list = list.filter((u) => u.status === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.trim();
+      list = list.filter((u) => String(u.unitNumber).includes(q));
+    }
+    return list;
+  }, [selectedBuilding, units, search, statusFilter]);
+
+  const stats = useMemo(() => {
+    const total = units.length;
+    const rented = units.filter((u) => u.status === "rented").length;
+    const revenue = units.filter((u) => u.status === "rented").reduce((s, u) => s + u.price, 0);
+    return { total, rented, available: total - rented, revenue };
+  }, [units]);
+
+  // Auth gate (after hooks to keep hook order stable)
   if (!authLoading && !user) {
     navigate("/auth");
     return null;
@@ -67,27 +89,6 @@ const Admin = () => {
     );
   }
 
-  const buildings = data?.buildings ?? [];
-  const units = data?.units ?? [];
-
-  const buildingUnits = useMemo(() => {
-    let list = selectedBuilding ? units.filter((u) => u.buildingNumber === selectedBuilding) : units;
-    if (statusFilter !== "all") {
-      list = list.filter((u) => u.status === statusFilter);
-    }
-    if (search.trim()) {
-      const q = search.trim();
-      list = list.filter((u) => String(u.unitNumber).includes(q));
-    }
-    return list;
-  }, [selectedBuilding, units, search, statusFilter]);
-
-  const stats = useMemo(() => {
-    const total = units.length;
-    const rented = units.filter((u) => u.status === "rented").length;
-    const revenue = units.filter((u) => u.status === "rented").reduce((s, u) => s + u.price, 0);
-    return { total, rented, available: total - rented, revenue };
-  }, [units]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
