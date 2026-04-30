@@ -182,14 +182,10 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>داشبورد المدينة الصناعية بشمال مكة | نخبة تسكين</title>
-        <meta
-          name="description"
-          content="داشبورد لحظي لأداء المدينة الصناعية بشمال مكة المكرمة: إشغال، إيرادات، وتفاصيل الوحدات."
-        />
-        <link rel="canonical" href="/dashboard" />
-      </Helmet>
+      {(() => {
+        document.title = "داشبورد المدينة الصناعية بشمال مكة | نخبة تسكين";
+        return null;
+      })()}
 
       <Header />
 
