@@ -624,8 +624,9 @@ const Admin = () => {
                   {auditEntries.map((e) => {
                     const labels: Record<string, { text: string; cls: string }> = {
                       rent: { text: "تأجير", cls: "bg-primary/10 text-primary" },
+                      reserve: { text: "حجز", cls: "bg-accent/15 text-accent-foreground" },
                       release: { text: "إخلاء", cls: "bg-success/10 text-success" },
-                      update: { text: "تحديث", cls: "bg-accent/10 text-accent-foreground" },
+                      update: { text: "تحديث", cls: "bg-secondary text-foreground" },
                     };
                     const lbl = labels[e.action] ?? { text: e.action, cls: "bg-secondary" };
                     return (
