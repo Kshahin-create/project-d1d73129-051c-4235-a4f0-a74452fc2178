@@ -58,7 +58,7 @@ export interface PDFExportMeta {
 
 export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
   const rows = buildRows(units);
-  const dateStr = new Date().toLocaleString("ar-EG", {
+  const dateStr = new Date().toLocaleString("ar-EG-u-nu-latn", {
     dateStyle: "full",
     timeStyle: "short",
   });
@@ -188,7 +188,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
     <div class="stat"><div class="label">مؤجرة</div><div class="value" style="color:hsl(0,72%,48%)">${totalRented}</div></div>
     <div class="stat"><div class="label">محجوزة</div><div class="value" style="color:hsl(38,92%,40%)">${totalReserved}</div></div>
     <div class="stat"><div class="label">متاحة</div><div class="value" style="color:hsl(152,60%,36%)">${totalAvailable}</div></div>
-    <div class="stat"><div class="label">إيراد سنوي (مؤجر)</div><div class="value">${totalRevenue.toLocaleString("ar-EG")} ر.س</div></div>
+    <div class="stat"><div class="label">إيراد سنوي (مؤجر)</div><div class="value">${totalRevenue.toLocaleString("en-US")} ر.س</div></div>
   </div>
 
   <table>
@@ -203,7 +203,7 @@ export const exportUnitsToPDF = (units: Unit[], meta: PDFExportMeta = {}) => {
           return `<td><span class="status-badge ${cls}">${escapeHtml(v)}</span></td>`;
         }
         if (h === "السعر (سنوي)" && typeof v === "number") {
-          return `<td>${v.toLocaleString("ar-EG")}</td>`;
+          return `<td>${v.toLocaleString("en-US")}</td>`;
         }
         return `<td>${escapeHtml(v)}</td>`;
       }).join("")}</tr>`).join("")}

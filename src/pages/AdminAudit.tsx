@@ -181,7 +181,7 @@ const AdminAudit = () => {
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-b border-border last:border-0 align-top">
                     <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(r.created_at).toLocaleString("ar-EG")}
+                      {new Date(r.created_at).toLocaleString("ar-EG-u-nu-latn")}
                     </td>
                     <td className="p-3 font-medium whitespace-nowrap">
                       مبنى {r.building_number} - وحدة {r.unit_number}

@@ -34,7 +34,7 @@ const fileStamp = () => {
 
 const buildRows = (entries: AuditRow[]) =>
   entries.map((e) => ({
-    "التاريخ": new Date(e.created_at).toLocaleString("ar-EG"),
+    "التاريخ": new Date(e.created_at).toLocaleString("ar-EG-u-nu-latn"),
     "المبنى": e.building_number,
     "الوحدة": e.unit_number,
     "العملية": ACTION_AR[e.action] ?? e.action,
@@ -60,7 +60,7 @@ const escapeHtml = (s: string | number | null | undefined) =>
 
 export const exportAuditToPDF = (entries: AuditRow[], filterLabel?: string) => {
   const rows = buildRows(entries);
-  const dateStr = new Date().toLocaleString("ar-EG", { dateStyle: "full", timeStyle: "short" });
+  const dateStr = new Date().toLocaleString("ar-EG-u-nu-latn", { dateStyle: "full", timeStyle: "short" });
   const headers = ["التاريخ", "المبنى", "الوحدة", "العملية", "الحالة السابقة", "الحالة الجديدة", "المنفّذ", "السبب"];
 
   const counts = entries.reduce<Record<string, number>>((acc, e) => {
