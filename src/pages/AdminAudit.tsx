@@ -5,7 +5,8 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { History, Lock, Search, ArrowRight, Filter } from "lucide-react";
+import { History, Lock, Search, ArrowRight, Filter, FileSpreadsheet, FileText } from "lucide-react";
+import { exportAuditToExcel, exportAuditToPDF } from "@/lib/exportAudit";
 
 interface AuditRow {
   id: string;
