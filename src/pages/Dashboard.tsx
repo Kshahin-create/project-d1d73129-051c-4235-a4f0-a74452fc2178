@@ -416,49 +416,57 @@ const Dashboard = () => {
               </button>
             ))}
           </div>
-          <div className="overflow-x-auto rounded-lg border">
-            <table dir="rtl" className="w-full min-w-[760px] border-collapse text-right text-sm">
-              <thead className="bg-primary text-primary-foreground">
-                <tr>
-                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">المبنى</th>
-                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">رقم الوحدة</th>
-                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">النوع</th>
-                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">المساحة</th>
-                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">النشاط</th>
-                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">الإيجار السنوي</th>
-                  <th className="p-3 text-right text-xs font-semibold whitespace-nowrap">الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUnits.slice(0, 500).map((u) => (
-                  <tr
-                    key={`${u.buildingNumber}-${u.unitNumber}`}
-                    className="border-b last:border-0 hover:bg-muted/40"
-                  >
-                    <td className="num p-2.5 text-right text-xs whitespace-nowrap">{u.buildingNumber}</td>
-                    <td className="num p-2.5 text-right text-xs font-bold whitespace-nowrap">{u.unitNumber}</td>
-                    <td className="p-2.5 text-right text-xs whitespace-nowrap">{u.unitType ?? "—"}</td>
-                    <td className="num p-2.5 text-right text-xs whitespace-nowrap">{u.area} م²</td>
-                    <td className="p-2.5 text-right text-xs">{u.activity ?? "—"}</td>
-                    <td className="num p-2.5 text-right text-xs font-semibold whitespace-nowrap">
-                      {fmt(u.price)}
-                    </td>
-                    <td className="p-2.5 text-right text-xs whitespace-nowrap">
-                      <span
-                        className={cn(
-                          "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-                          u.status === "rented"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-red-100 text-red-800",
-                        )}
-                      >
-                        {u.status === "rented" ? "مؤجر" : "شاغر"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="overflow-hidden rounded-lg border" dir="rtl">
+            <div className="overflow-x-auto">
+              <div className="min-w-[820px]">
+                {/* Header */}
+                <div
+                  className="grid items-center gap-3 bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground"
+                  style={{ gridTemplateColumns: "70px 100px 90px 100px minmax(160px,1fr) 130px 90px" }}
+                >
+                  <div className="text-right">المبنى</div>
+                  <div className="text-right">رقم الوحدة</div>
+                  <div className="text-right">النوع</div>
+                  <div className="text-right">المساحة</div>
+                  <div className="text-right">النشاط</div>
+                  <div className="text-right">الإيجار السنوي</div>
+                  <div className="text-right">الحالة</div>
+                </div>
+
+                {/* Rows */}
+                <div className="divide-y">
+                  {filteredUnits.slice(0, 500).map((u) => (
+                    <div
+                      key={`${u.buildingNumber}-${u.unitNumber}`}
+                      className="grid items-center gap-3 px-4 py-2.5 text-xs hover:bg-muted/40"
+                      style={{ gridTemplateColumns: "70px 100px 90px 100px minmax(160px,1fr) 130px 90px" }}
+                    >
+                      <div className="num text-right">{u.buildingNumber}</div>
+                      <div className="num text-right font-bold">{u.unitNumber}</div>
+                      <div className="text-right">{u.unitType ?? "—"}</div>
+                      <div className="num text-right">{u.area} م²</div>
+                      <div className="truncate text-right">{u.activity ?? "—"}</div>
+                      <div className="num text-right font-semibold">{fmt(u.price)}</div>
+                      <div className="text-right">
+                        <span
+                          className={cn(
+                            "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+                            u.status === "rented"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-red-100 text-red-800",
+                          )}
+                        >
+                          {u.status === "rented" ? "مؤجر" : "شاغر"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredUnits.length === 0 && (
+                    <div className="px-4 py-10 text-center text-muted-foreground">لا توجد نتائج</div>
+                  )}
+                </div>
+              </div>
+            </div>
             {filteredUnits.length > 500 && (
               <div className="border-t p-3 text-center text-xs text-muted-foreground">
                 عرض أول 500 وحدة من {fmt(filteredUnits.length)}
