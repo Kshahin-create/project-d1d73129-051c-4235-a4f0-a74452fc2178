@@ -644,7 +644,7 @@ const Admin = () => {
                             </span>
                           </div>
                           <div className="text-[11px] text-muted-foreground num">
-                            {new Date(e.created_at).toLocaleString("ar-EG")}
+                            {new Date(e.created_at).toLocaleString("ar-EG-u-nu-latn")}
                           </div>
                         </div>
                         <p className="mt-2 text-sm">{e.reason}</p>
