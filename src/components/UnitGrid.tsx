@@ -113,7 +113,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
 
             {/* Hint */}
             {layout && (
-              <div className="absolute right-3 top-3 z-20 rounded-full bg-card/90 px-3 py-1.5 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm sm:text-xs">
+              <div className="hidden sm:block absolute right-3 top-3 z-20 rounded-full bg-card/90 px-3 py-1.5 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm sm:text-xs">
                 اضغط على الوحدة في المخطط لاختيارها
               </div>
             )}
