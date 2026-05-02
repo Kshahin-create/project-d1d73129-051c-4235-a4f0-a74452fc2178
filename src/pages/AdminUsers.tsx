@@ -5,9 +5,11 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, ShieldOff, Lock, Users, Search, ArrowRight } from "lucide-react";
+import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+
+type AppRole = "admin" | "control" | "user";
 
 interface UserRow {
   user_id: string;
@@ -15,7 +17,14 @@ interface UserRow {
   display_name: string | null;
   created_at: string;
   is_admin: boolean;
+  role: AppRole;
 }
+
+const ROLE_META: Record<AppRole, { label: string; icon: typeof Shield; cls: string }> = {
+  admin: { label: "أدمن", icon: Shield, cls: "bg-primary/10 text-primary" },
+  control: { label: "Control (دعم/صيانة)", icon: Wrench, cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  user: { label: "مستخدم", icon: UserIcon, cls: "bg-secondary text-muted-foreground" },
+};
 
 const AdminUsers = () => {
   const navigate = useNavigate();
@@ -23,7 +32,7 @@ const AdminUsers = () => {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
-  const [pendingChange, setPendingChange] = useState<UserRow | null>(null);
+  const [pendingChange, setPendingChange] = useState<{ row: UserRow; newRole: AppRole } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = async () => {
@@ -62,10 +71,10 @@ const AdminUsers = () => {
 
   const handleConfirmChange = async () => {
     if (!pendingChange) return;
-    setBusyId(pendingChange.user_id);
-    const { error } = await supabase.rpc("admin_set_role", {
-      _target_user: pendingChange.user_id,
-      _make_admin: !pendingChange.is_admin,
+    setBusyId(pendingChange.row.user_id);
+    const { error } = await supabase.rpc("admin_set_user_role", {
+      _target_user: pendingChange.row.user_id,
+      _new_role: pendingChange.newRole,
     });
     setBusyId(null);
     setPendingChange(null);
@@ -86,6 +95,12 @@ const AdminUsers = () => {
     );
   });
 
+  const counts = {
+    admin: rows.filter((r) => r.role === "admin").length,
+    control: rows.filter((r) => r.role === "control").length,
+    user: rows.filter((r) => r.role === "user").length,
+  };
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <Header />
@@ -98,7 +113,7 @@ const AdminUsers = () => {
             <div className="min-w-0">
               <h1 className="font-display text-xl font-bold sm:text-2xl">إدارة المستخدمين</h1>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                {rows.length} مستخدم — {rows.filter((r) => r.is_admin).length} أدمن
+                {rows.length} مستخدم — {counts.admin} أدمن · {counts.control} control · {counts.user} عادي
               </p>
             </div>
           </div>
@@ -129,67 +144,59 @@ const AdminUsers = () => {
             <div className="p-12 text-center text-muted-foreground">لا توجد نتائج</div>
           ) : (
             <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead className="border-b border-border bg-secondary/50 text-xs">
-                <tr>
-                  <th className="p-3 text-right font-semibold">الاسم</th>
-                  <th className="p-3 text-right font-semibold">البريد</th>
-                  <th className="p-3 text-right font-semibold">تاريخ التسجيل</th>
-                  <th className="p-3 text-right font-semibold">الدور</th>
-                  <th className="p-3 text-right font-semibold">إجراء</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((r) => {
-                  const isSelf = r.user_id === user?.id;
-                  return (
-                    <tr key={r.user_id} className="border-b border-border last:border-0">
-                      <td className="p-3 font-medium">{r.display_name || "—"}</td>
-                      <td className="p-3 text-muted-foreground">{r.email || "—"}</td>
-                      <td className="p-3 text-xs text-muted-foreground">
-                        {new Date(r.created_at).toLocaleDateString("ar-EG-u-nu-latn")}
-                      </td>
-                      <td className="p-3">
-                        {r.is_admin ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                            <Shield className="h-3 w-3" /> أدمن
+              <table className="w-full min-w-[680px] text-sm">
+                <thead className="border-b border-border bg-secondary/50 text-xs">
+                  <tr>
+                    <th className="p-3 text-right font-semibold">الاسم</th>
+                    <th className="p-3 text-right font-semibold">البريد</th>
+                    <th className="p-3 text-right font-semibold">تاريخ التسجيل</th>
+                    <th className="p-3 text-right font-semibold">الدور الحالي</th>
+                    <th className="p-3 text-right font-semibold">تغيير الدور</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r) => {
+                    const isSelf = r.user_id === user?.id;
+                    const meta = ROLE_META[r.role] ?? ROLE_META.user;
+                    const Icon = meta.icon;
+                    return (
+                      <tr key={r.user_id} className="border-b border-border last:border-0">
+                        <td className="p-3 font-medium">{r.display_name || "—"}</td>
+                        <td className="p-3 text-muted-foreground">{r.email || "—"}</td>
+                        <td className="p-3 text-xs text-muted-foreground">
+                          {new Date(r.created_at).toLocaleDateString("ar-EG-u-nu-latn")}
+                        </td>
+                        <td className="p-3">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${meta.cls}`}>
+                            <Icon className="h-3 w-3" /> {meta.label}
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-xs font-semibold text-muted-foreground">
-                            مستخدم
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {isSelf ? (
-                          <span className="text-xs text-muted-foreground">(أنت)</span>
-                        ) : (
-                          <button
-                            disabled={busyId === r.user_id}
-                            onClick={() => setPendingChange(r)}
-                            className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                              r.is_admin
-                                ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
-                                : "bg-primary text-primary-foreground hover:opacity-90"
-                            }`}
-                          >
-                            {r.is_admin ? (
-                              <>
-                                <ShieldOff className="h-3 w-3" /> إزالة الأدمن
-                              </>
-                            ) : (
-                              <>
-                                <Shield className="h-3 w-3" /> ترقية لأدمن
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="p-3">
+                          {isSelf ? (
+                            <span className="text-xs text-muted-foreground">(أنت)</span>
+                          ) : (
+                            <select
+                              disabled={busyId === r.user_id}
+                              value={r.role}
+                              onChange={(e) => {
+                                const newRole = e.target.value as AppRole;
+                                if (newRole !== r.role) {
+                                  setPendingChange({ row: r, newRole });
+                                }
+                              }}
+                              className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium focus:border-primary focus:outline-none"
+                            >
+                              <option value="user">مستخدم</option>
+                              <option value="control">Control (دعم/صيانة)</option>
+                              <option value="admin">أدمن</option>
+                            </select>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -197,16 +204,16 @@ const AdminUsers = () => {
 
       <ConfirmDialog
         open={!!pendingChange}
-        title={pendingChange?.is_admin ? "إزالة صلاحية الأدمن" : "ترقية إلى أدمن"}
+        title="تأكيد تغيير الدور"
         description={
-          pendingChange?.is_admin
-            ? `هل تريد إزالة صلاحية الأدمن من «${pendingChange?.display_name || pendingChange?.email}»؟`
-            : `هل تريد منح صلاحية الأدمن لـ «${pendingChange?.display_name || pendingChange?.email}»؟ سيتمكن من إدارة كل شيء.`
+          pendingChange
+            ? `هل تريد تغيير دور «${pendingChange.row.display_name || pendingChange.row.email}» من "${ROLE_META[pendingChange.row.role].label}" إلى "${ROLE_META[pendingChange.newRole].label}"؟`
+            : ""
         }
-        confirmLabel="تأكيد"
-        variant={pendingChange?.is_admin ? "destructive" : "primary"}
+        confirmLabel="تأكيد التغيير"
+        variant={pendingChange?.newRole === "admin" ? "primary" : pendingChange?.newRole === "user" && pendingChange?.row.role === "admin" ? "destructive" : "primary"}
         reasonRequired={true}
-        reasonPlaceholder="اكتب سبب التغيير (مثال: ترقية مدير جديد)"
+        reasonPlaceholder="اكتب سبب التغيير (مثال: تعيين مسؤول صيانة)"
         loading={!!busyId}
         onConfirm={handleConfirmChange}
         onCancel={() => setPendingChange(null)}
