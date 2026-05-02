@@ -329,11 +329,19 @@ export type Database = {
           display_name: string
           email: string
           is_admin: boolean
+          role: string
           user_id: string
         }[]
       }
       admin_set_role: {
         Args: { _make_admin: boolean; _target_user: string }
+        Returns: undefined
+      }
+      admin_set_user_role: {
+        Args: {
+          _new_role: Database["public"]["Enums"]["app_role"]
+          _target_user: string
+        }
         Returns: undefined
       }
       has_role: {
@@ -354,7 +362,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "control"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -482,7 +490,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "control"],
     },
   },
 } as const
