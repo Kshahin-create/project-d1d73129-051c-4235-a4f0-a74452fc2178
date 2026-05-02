@@ -11,6 +11,7 @@ interface BookingUnit {
 }
 
 interface BookingPayload {
+  booking_id?: string;
   customer: {
     fullName: string;
     phone: string;
