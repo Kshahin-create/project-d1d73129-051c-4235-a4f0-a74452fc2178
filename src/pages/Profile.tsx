@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Save, UserCircle2, LogOut } from "lucide-react";
+import { ArrowRight, Save, UserCircle2, LogOut, Package, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PhoneField } from "@/components/PhoneField";
 import { Header } from "@/components/Header";
@@ -8,6 +8,23 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+type BookingRow = {
+  id: string;
+  status: string;
+  total_area: number;
+  total_price: number;
+  units_count: number;
+  whatsapp_sent: boolean;
+  created_at: string;
+  booking_units: {
+    building_number: number;
+    unit_number: number;
+    unit_type: string | null;
+    area: number;
+    price: number;
+  }[];
+};
 
 type ProfileData = {
   full_name: string;
