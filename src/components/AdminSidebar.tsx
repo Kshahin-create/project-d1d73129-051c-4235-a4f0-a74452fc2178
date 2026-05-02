@@ -40,7 +40,7 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
   { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
-  { to: "/api-docs", label: "توثيق الـ API", Icon: Code2 },
+  { to: "/api-docs", label: "توثيق الـ API", Icon: Code2, adminOnly: true },
 ];
 
 export const AdminSidebar = () => {
