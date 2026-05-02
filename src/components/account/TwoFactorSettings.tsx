@@ -42,9 +42,20 @@ export const TwoFactorSettings = () => {
   const startEnroll = async () => {
     setEnrolling(true);
     try {
+      // امسح أي factors غير مُتحقق منها (من محاولات سابقة) عشان نتجنب تعارض الاسم
+      const { data: existing } = await supabase.auth.mfa.listFactors();
+      const stale = [
+        ...(existing?.totp ?? []),
+        ...(existing?.phone ?? []),
+      ].filter((f: any) => f.status !== "verified");
+      for (const f of stale) {
+        await supabase.auth.mfa.unenroll({ factorId: f.id });
+      }
+
+      const friendlyName = `Authenticator ${Date.now()}`;
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: `Authenticator ${new Date().toLocaleDateString("ar-EG")}`,
+        friendlyName,
       });
       if (error) throw error;
       setEnrollData({
