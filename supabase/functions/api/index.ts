@@ -389,6 +389,7 @@ Deno.serve(async (req) => {
         "PATCH /tenants/:id",
         "DELETE /tenants/:id",
         "GET /stats",
+        "GET /stats/overview?days=N",
       ],
     });
   }
