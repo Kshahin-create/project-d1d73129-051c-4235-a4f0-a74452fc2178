@@ -205,6 +205,11 @@ const Auth = () => {
         password,
       });
       if (error) throw error;
+      const needsMfa = await checkMfaChallenge();
+      if (needsMfa) {
+        toast.message("أدخل رمز التحقق بخطوتين من تطبيق المصادقة");
+        return;
+      }
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (err: any) {
       toast.error(err.message || "بيانات الدخول غير صحيحة");
