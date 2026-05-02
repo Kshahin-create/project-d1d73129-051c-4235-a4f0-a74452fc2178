@@ -50,6 +50,8 @@ const Profile = () => {
   const [data, setData] = useState<ProfileData>(empty);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [bookings, setBookings] = useState<BookingRow[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
