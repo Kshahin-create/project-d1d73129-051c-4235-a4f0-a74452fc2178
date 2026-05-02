@@ -1,4 +1,5 @@
 export interface Unit {
+  id?: string;
   buildingNumber: number;
   buildingType: string;
   unitNumber: number;
