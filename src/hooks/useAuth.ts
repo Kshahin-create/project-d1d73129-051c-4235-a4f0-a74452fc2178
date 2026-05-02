@@ -7,24 +7,27 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isControl, setIsControl] = useState(false);
 
   useEffect(() => {
+    const fetchRoles = async (uid: string) => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid);
+      const roles = (data ?? []).map((r) => r.role as string);
+      setIsAdmin(roles.includes("admin"));
+      setIsControl(roles.includes("control"));
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        // Defer role fetch to avoid deadlock
-        setTimeout(async () => {
-          const { data } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", sess.user.id)
-            .eq("role", "admin")
-            .maybeSingle();
-          setIsAdmin(!!data);
-        }, 0);
+        setTimeout(() => fetchRoles(sess.user.id), 0);
       } else {
         setIsAdmin(false);
+        setIsControl(false);
       }
     });
 
@@ -32,13 +35,7 @@ export const useAuth = () => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
-        const { data: r } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.session.user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-        setIsAdmin(!!r);
+        await fetchRoles(data.session.user.id);
       }
       setLoading(false);
     });
@@ -46,5 +43,5 @@ export const useAuth = () => {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  return { session, user, loading, isAdmin };
+  return { session, user, loading, isAdmin, isControl };
 };

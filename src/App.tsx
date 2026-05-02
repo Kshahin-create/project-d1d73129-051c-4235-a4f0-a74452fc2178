@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
 import AdminApiKeys from "./pages/AdminApiKeys.tsx";
 import ApiDocs from "./pages/ApiDocs.tsx";
+import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin/api-keys" element={<AdminApiKeys />} />
           <Route path="/api-docs" element={<ApiDocs />} />
+          <Route path="/control" element={<ControlDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

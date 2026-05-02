@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, isAdmin, isControl, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,9 +26,10 @@ const Auth = () => {
   useEffect(() => {
     if (!authLoading && user) {
       if (isAdmin) navigate("/admin");
+      else if (isControl) navigate("/control");
       else navigate("/profile");
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, isControl, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

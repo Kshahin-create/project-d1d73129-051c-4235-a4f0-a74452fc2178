@@ -18,6 +18,7 @@ import {
   ClipboardList,
   KeyRound,
   Code2,
+  Wrench,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,12 +29,14 @@ type LinkItem = {
   label: string;
   Icon: typeof Home;
   adminOnly?: boolean;
+  controlOnly?: boolean;
 };
 
 const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/", label: "الرئيسية", Icon: Home },
   { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
   { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
+  { to: "/control", label: "لوحة الكنترول", Icon: Wrench, controlOnly: true },
   { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, adminOnly: true },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
   { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, adminOnly: true },
@@ -44,7 +47,7 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, user, loading } = useAuth();
+  const { isAdmin, isControl, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -81,7 +84,10 @@ export const AdminSidebar = () => {
   if (loading) return null;
 
   const links = allLinks.filter(
-    (l) => (!l.adminOnly || isAdmin) && (!l.authOnly || !!user),
+    (l) =>
+      (!l.adminOnly || isAdmin) &&
+      (!l.controlOnly || isControl || isAdmin) &&
+      (!l.authOnly || !!user),
   );
 
   const handleSignOut = async () => {
@@ -89,7 +95,11 @@ export const AdminSidebar = () => {
     window.location.href = "/";
   };
 
-  const title = isAdmin ? "لوحة الأدمن" : "القائمة";
+  const title = isAdmin
+    ? "لوحة الأدمن"
+    : isControl
+      ? "لوحة الكنترول"
+      : "القائمة";
 
   return (
     <>
