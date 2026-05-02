@@ -84,7 +84,10 @@ export const AdminSidebar = () => {
   if (loading) return null;
 
   const links = allLinks.filter(
-    (l) => (!l.adminOnly || isAdmin) && (!l.authOnly || !!user),
+    (l) =>
+      (!l.adminOnly || isAdmin) &&
+      (!l.controlOnly || isControl || isAdmin) &&
+      (!l.authOnly || !!user),
   );
 
   const handleSignOut = async () => {
@@ -92,7 +95,11 @@ export const AdminSidebar = () => {
     window.location.href = "/";
   };
 
-  const title = isAdmin ? "لوحة الأدمن" : "القائمة";
+  const title = isAdmin
+    ? "لوحة الأدمن"
+    : isControl
+      ? "لوحة الكنترول"
+      : "القائمة";
 
   return (
     <>
