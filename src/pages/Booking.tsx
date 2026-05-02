@@ -141,7 +141,7 @@ const Booking = () => {
 
   const handleFormSubmit = (data: CustomerFormData) => {
     setCustomer(data);
-    // Save / update profile if user is logged in (fire-and-forget)
+    // حفظ بيانات البروفايل (fire-and-forget)
     if (user) {
       supabase
         .from("customer_profiles")
@@ -158,11 +158,34 @@ const Booking = () => {
         )
         .then(({ error }) => {
           if (error) console.error("profile save error:", error);
-          else toast.success("تم حفظ بياناتك للاستخدام في المرات القادمة");
         });
     }
     setStep(5);
   };
+
+  // إنشاء الحجز في قاعدة البيانات (تغيير حالة الوحدات إلى محجوزة)
+  const createBookingInDb = async (): Promise<string | null> => {
+    if (!user || !customer || selectedUnits.length === 0) return null;
+    if (bookingId) return bookingId; // موجود بالفعل
+    setCreatingBooking(true);
+    const { data: newId, error } = await supabase.rpc("create_booking", {
+      _customer_full_name: customer.fullName,
+      _customer_phone: customer.phone,
+      _customer_email: customer.email || user.email || null,
+      _business_name: customer.business || null,
+      _notes: customer.notes || null,
+      _unit_ids: selectedUnits.map((u) => u.id).filter(Boolean) as string[],
+    });
+    setCreatingBooking(false);
+    if (error || !newId) {
+      toast.error(error?.message || "تعذّر إنشاء الحجز");
+      return null;
+    }
+    setBookingId(newId as string);
+    toast.success("تم تسجيل حجزك ✅ — أكمل لإرسال البيانات على واتساب");
+    return newId as string;
+  };
+
 
   useEffect(() => {
     if (step !== 1) return;
