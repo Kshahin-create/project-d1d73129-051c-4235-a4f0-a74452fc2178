@@ -189,6 +189,8 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container-tight py-12">
