@@ -441,35 +441,38 @@ const Booking = () => {
                         href={whatsapp?.appUrl ?? "#"}
                         webHref={whatsapp?.webUrl}
                         message={whatsapp?.message}
+                        disabled={creatingBooking || !bookingId}
                         onClick={() => {
-                          // إرسال بيانات الحجز إلى n8n (fire-and-forget)
-                          if (customer && selectedUnits.length > 0) {
-                            supabase.functions
-                              .invoke("booking-webhook", {
-                                body: {
-                                  customer: {
-                                    fullName: customer.fullName,
-                                    phone: customer.phone,
-                                    email: customer.email || undefined,
-                                    business: customer.business,
-                                    notes: customer.notes || undefined,
-                                  },
-                                  units: selectedUnits.map((u) => ({
-                                    buildingNumber: u.buildingNumber,
-                                    buildingType: u.buildingType,
-                                    unitNumber: u.unitNumber,
-                                    unitType: u.unitType,
-                                    area: u.area,
-                                    activity: u.activity,
-                                    price: u.price,
-                                  })),
-                                  message: whatsapp?.message,
+                          if (!bookingId || !customer) return;
+                          // إرسال webhook + تحديث حالة الحجز
+                          supabase.functions
+                            .invoke("booking-webhook", {
+                              body: {
+                                booking_id: bookingId,
+                                customer: {
+                                  fullName: customer.fullName,
+                                  phone: customer.phone,
+                                  email: customer.email || undefined,
+                                  business: customer.business,
+                                  notes: customer.notes || undefined,
                                 },
-                              })
-                              .then(({ error }) => {
-                                if (error) console.error("n8n webhook error:", error);
-                              });
-                          }
+                                units: selectedUnits.map((u) => ({
+                                  buildingNumber: u.buildingNumber,
+                                  buildingType: u.buildingType,
+                                  unitNumber: u.unitNumber,
+                                  unitType: u.unitType,
+                                  area: u.area,
+                                  activity: u.activity,
+                                  price: u.price,
+                                })),
+                                message: whatsapp?.message,
+                              },
+                            })
+                            .then(({ error }) => {
+                              if (error) console.error("n8n webhook error:", error);
+                            });
+                          // تحديث الحجز إلى تم إرسال واتساب
+                          supabase.rpc("mark_booking_whatsapp_sent", { _booking_id: bookingId });
                           setTimeout(() => setSubmitted(true), 600);
                         }}
                       />
