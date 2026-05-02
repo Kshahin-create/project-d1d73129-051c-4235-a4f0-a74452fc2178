@@ -329,11 +329,19 @@ export type Database = {
           display_name: string
           email: string
           is_admin: boolean
+          role: string
           user_id: string
         }[]
       }
       admin_set_role: {
         Args: { _make_admin: boolean; _target_user: string }
+        Returns: undefined
+      }
+      admin_set_user_role: {
+        Args: {
+          _new_role: Database["public"]["Enums"]["app_role"]
+          _target_user: string
+        }
         Returns: undefined
       }
       has_role: {
