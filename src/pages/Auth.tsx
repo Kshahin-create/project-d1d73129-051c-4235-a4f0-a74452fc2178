@@ -128,10 +128,9 @@ const Auth = () => {
       if (res?.error) throw new Error(res.error);
       if (!res?.verification_token) throw new Error("استجابة غير صحيحة");
 
-      // Establish session
+      // Establish session using the hashed token from generateLink (magiclink)
       const { error: vErr } = await supabase.auth.verifyOtp({
-        type: "email",
-        email: res.email,
+        type: "magiclink",
         token_hash: res.verification_token,
       });
       if (vErr) throw vErr;
