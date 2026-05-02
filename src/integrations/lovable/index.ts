@@ -12,7 +12,7 @@ type SignInOptions = {
 export const lovable = {
   auth: {
     signInWithOAuth: async (provider: "google" | "apple" | "microsoft" | "lovable", opts?: SignInOptions) => {
-      const result = await lovableAuth.signInWithOAuth(provider, {
+      const result = await lovableAuth.signInWithOAuth(provider as unknown as Parameters<typeof lovableAuth.signInWithOAuth>[0], {
         redirect_uri: opts?.redirect_uri,
         extraParams: {
           ...opts?.extraParams,
