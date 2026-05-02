@@ -183,6 +183,40 @@ const Booking = () => {
     }
     setBookingId(newId as string);
     toast.success("تم تسجيل حجزك ✅ — أكمل لإرسال البيانات على واتساب");
+
+    // إرسال إيميل تأكيد الحجز للعميل (لا نوقف التدفق لو فشل)
+    const recipientEmail = customer.email || user.email;
+    if (recipientEmail) {
+      supabase.functions
+        .invoke("send-transactional-email", {
+          body: {
+            templateName: "booking-confirmation",
+            recipientEmail,
+            idempotencyKey: `booking-confirm-${newId}`,
+            templateData: {
+              customerName: customer.fullName,
+              bookingId: newId,
+              businessName: customer.business || null,
+              units: selectedUnits.map((u) => ({
+                buildingNumber: u.buildingNumber,
+                unitNumber: u.unitNumber,
+                unitType: u.unitType,
+                area: u.area,
+                activity: u.activity,
+                price: u.price,
+              })),
+              totalArea: selectedUnits.reduce((s, u) => s + (Number(u.area) || 0), 0),
+              totalPrice: selectedUnits.reduce((s, u) => s + (Number(u.price) || 0), 0),
+            },
+          },
+        })
+        .then(({ error: emailErr }) => {
+          if (emailErr) {
+            console.error("booking confirmation email error:", emailErr);
+          }
+        });
+    }
+
     return newId as string;
   };
 
