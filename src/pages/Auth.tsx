@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Lock,
   Mail,
@@ -23,6 +23,8 @@ type Mode = "login-password" | "login-otp" | "signup";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { user, isAdmin, isControl, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<Mode>("login-otp");
 
@@ -45,11 +47,12 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && user) {
-      if (isAdmin) navigate("/admin");
+      if (redirectTo) navigate(redirectTo);
+      else if (isAdmin) navigate("/admin");
       else if (isControl) navigate("/control");
       else navigate("/profile");
     }
-  }, [user, isAdmin, isControl, authLoading, navigate]);
+  }, [user, isAdmin, isControl, authLoading, navigate, redirectTo]);
 
   useEffect(() => {
     if (cooldown <= 0) return;

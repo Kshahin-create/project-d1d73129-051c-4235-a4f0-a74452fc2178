@@ -39,8 +39,18 @@ const Booking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activityFilter = searchParams.get("activity") as "service" | "parts" | null;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [creatingBooking, setCreatingBooking] = useState(false);
+
+  // إجبار تسجيل الدخول قبل الحجز
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.info("سجّل دخولك أو أنشئ حساب لإتمام الحجز");
+      navigate("/auth?redirect=/booking" + (activityFilter ? `?activity=${activityFilter}` : ""));
+    }
+  }, [user, authLoading, navigate, activityFilter]);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
@@ -131,7 +141,7 @@ const Booking = () => {
 
   const handleFormSubmit = (data: CustomerFormData) => {
     setCustomer(data);
-    // Save / update profile if user is logged in (fire-and-forget)
+    // حفظ بيانات البروفايل (fire-and-forget)
     if (user) {
       supabase
         .from("customer_profiles")
@@ -148,11 +158,34 @@ const Booking = () => {
         )
         .then(({ error }) => {
           if (error) console.error("profile save error:", error);
-          else toast.success("تم حفظ بياناتك للاستخدام في المرات القادمة");
         });
     }
     setStep(5);
   };
+
+  // إنشاء الحجز في قاعدة البيانات (تغيير حالة الوحدات إلى محجوزة)
+  const createBookingInDb = async (): Promise<string | null> => {
+    if (!user || !customer || selectedUnits.length === 0) return null;
+    if (bookingId) return bookingId; // موجود بالفعل
+    setCreatingBooking(true);
+    const { data: newId, error } = await supabase.rpc("create_booking", {
+      _customer_full_name: customer.fullName,
+      _customer_phone: customer.phone,
+      _customer_email: customer.email || user.email || null,
+      _business_name: customer.business || null,
+      _notes: customer.notes || null,
+      _unit_ids: selectedUnits.map((u) => u.id).filter(Boolean) as string[],
+    });
+    setCreatingBooking(false);
+    if (error || !newId) {
+      toast.error(error?.message || "تعذّر إنشاء الحجز");
+      return null;
+    }
+    setBookingId(newId as string);
+    toast.success("تم تسجيل حجزك ✅ — أكمل لإرسال البيانات على واتساب");
+    return newId as string;
+  };
+
 
   useEffect(() => {
     if (step !== 1) return;
@@ -161,6 +194,14 @@ const Booking = () => {
     }, 80);
     return () => window.clearTimeout(timeout);
   }, [activityFilter, isLoading, step]);
+
+  // إنشاء الحجز في DB تلقائياً عند الدخول لخطوة الإرسال
+  useEffect(() => {
+    if (step === 5 && customer && selectedUnits.length > 0 && !bookingId && !creatingBooking) {
+      createBookingInDb();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, customer, selectedUnits.length]);
 
   const goBack = () => {
     if (step === 1) {
@@ -404,39 +445,54 @@ const Booking = () => {
                           {customer.notes && <SummaryRow label="ملاحظات" value={customer.notes} />}
                         </dl>
                       </div>
+                      {creatingBooking && (
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-center text-sm text-primary">
+                          جاري تثبيت حجزك في النظام...
+                        </div>
+                      )}
+                      {bookingId && !creatingBooking && (
+                        <div className="rounded-xl border border-success/30 bg-success/5 p-3 text-center text-sm">
+                          ✅ تم تثبيت حجزك — رقم الحجز:{" "}
+                          <span className="font-mono font-bold">{bookingId.slice(0, 8)}</span>
+                          {" — "} الآن أرسل التفاصيل عبر واتساب
+                        </div>
+                      )}
                       <WhatsAppButton
                         href={whatsapp?.appUrl ?? "#"}
                         webHref={whatsapp?.webUrl}
                         message={whatsapp?.message}
+                        disabled={creatingBooking || !bookingId}
                         onClick={() => {
-                          // إرسال بيانات الحجز إلى n8n (fire-and-forget)
-                          if (customer && selectedUnits.length > 0) {
-                            supabase.functions
-                              .invoke("booking-webhook", {
-                                body: {
-                                  customer: {
-                                    fullName: customer.fullName,
-                                    phone: customer.phone,
-                                    email: customer.email || undefined,
-                                    business: customer.business,
-                                    notes: customer.notes || undefined,
-                                  },
-                                  units: selectedUnits.map((u) => ({
-                                    buildingNumber: u.buildingNumber,
-                                    buildingType: u.buildingType,
-                                    unitNumber: u.unitNumber,
-                                    unitType: u.unitType,
-                                    area: u.area,
-                                    activity: u.activity,
-                                    price: u.price,
-                                  })),
-                                  message: whatsapp?.message,
+                          if (!bookingId || !customer) return;
+                          // إرسال webhook + تحديث حالة الحجز
+                          supabase.functions
+                            .invoke("booking-webhook", {
+                              body: {
+                                booking_id: bookingId,
+                                customer: {
+                                  fullName: customer.fullName,
+                                  phone: customer.phone,
+                                  email: customer.email || undefined,
+                                  business: customer.business,
+                                  notes: customer.notes || undefined,
                                 },
-                              })
-                              .then(({ error }) => {
-                                if (error) console.error("n8n webhook error:", error);
-                              });
-                          }
+                                units: selectedUnits.map((u) => ({
+                                  buildingNumber: u.buildingNumber,
+                                  buildingType: u.buildingType,
+                                  unitNumber: u.unitNumber,
+                                  unitType: u.unitType,
+                                  area: u.area,
+                                  activity: u.activity,
+                                  price: u.price,
+                                })),
+                                message: whatsapp?.message,
+                              },
+                            })
+                            .then(({ error }) => {
+                              if (error) console.error("n8n webhook error:", error);
+                            });
+                          // تحديث الحجز إلى تم إرسال واتساب
+                          supabase.rpc("mark_booking_whatsapp_sent", { _booking_id: bookingId });
                           setTimeout(() => setSubmitted(true), 600);
                         }}
                       />

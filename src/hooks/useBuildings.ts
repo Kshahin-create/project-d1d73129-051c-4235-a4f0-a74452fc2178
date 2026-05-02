@@ -31,6 +31,7 @@ export const useBuildingsAndUnits = () => {
         const tenantInfo = tenantByUnitId.get(u.id);
         const building = buildingsRaw.find((b) => b.number === u.building_number);
         return {
+          id: u.id,
           buildingNumber: u.building_number,
           buildingType: building?.type ?? "",
           unitNumber: u.unit_number,

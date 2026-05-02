@@ -56,6 +56,104 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_units: {
+        Row: {
+          activity: string | null
+          area: number
+          booking_id: string
+          building_number: number
+          created_at: string
+          id: string
+          price: number
+          unit_id: string
+          unit_number: number
+          unit_type: string | null
+        }
+        Insert: {
+          activity?: string | null
+          area?: number
+          booking_id: string
+          building_number: number
+          created_at?: string
+          id?: string
+          price?: number
+          unit_id: string
+          unit_number: number
+          unit_type?: string | null
+        }
+        Update: {
+          activity?: string | null
+          area?: number
+          booking_id?: string
+          building_number?: number
+          created_at?: string
+          id?: string
+          price?: number
+          unit_id?: string
+          unit_number?: number
+          unit_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_units_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_full_name: string
+          customer_phone: string
+          id: string
+          notes: string | null
+          status: string
+          total_area: number
+          total_price: number
+          units_count: number
+          updated_at: string
+          user_id: string
+          whatsapp_sent: boolean
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_full_name: string
+          customer_phone: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_area?: number
+          total_price?: number
+          units_count?: number
+          updated_at?: string
+          user_id: string
+          whatsapp_sent?: boolean
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_full_name?: string
+          customer_phone?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_area?: number
+          total_price?: number
+          units_count?: number
+          updated_at?: string
+          user_id?: string
+          whatsapp_sent?: boolean
+        }
+        Relationships: []
+      }
       buildings: {
         Row: {
           created_at: string
@@ -377,12 +475,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_booking: {
+        Args: {
+          _business_name: string
+          _customer_email: string
+          _customer_full_name: string
+          _customer_phone: string
+          _notes: string
+          _unit_ids: string[]
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_booking_whatsapp_sent: {
+        Args: { _booking_id: string }
+        Returns: undefined
       }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
       verify_api_key: {
