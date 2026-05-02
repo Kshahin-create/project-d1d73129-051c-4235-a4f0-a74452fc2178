@@ -263,9 +263,119 @@ const Profile = () => {
               </form>
             )}
           </div>
+
+          {/* قسم حجوزاتي */}
+          {!isAdmin && (
+            <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
+              <div className="mb-5 flex items-center gap-3 border-b border-border pb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+                  <Package className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="font-display text-lg font-extrabold">حجوزاتي</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {bookings.length > 0 ? `${bookings.length} حجز` : "لم تقم بأي حجز بعد"}
+                  </p>
+                </div>
+              </div>
+
+              {bookingsLoading ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  جاري تحميل الحجوزات...
+                </div>
+              ) : bookings.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-muted-foreground">لا توجد حجوزات بعد</p>
+                  <Link
+                    to="/booking"
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90"
+                  >
+                    احجز أول وحدة
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {bookings.map((b) => (
+                    <BookingCard key={b.id} booking={b} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
       <Footer />
+    </div>
+  );
+};
+
+const statusLabel = (s: string) =>
+  s === "confirmed" ? "مؤكّد" : s === "cancelled" ? "ملغى" : "قيد المعالجة";
+
+const BookingCard = ({ booking }: { booking: BookingRow }) => {
+  const date = new Date(booking.created_at).toLocaleDateString("ar-EG", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const isConfirmed = booking.status === "confirmed";
+  const isCancelled = booking.status === "cancelled";
+
+  return (
+    <div className="rounded-xl border border-border bg-background p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>{date}</span>
+          <span className="font-mono opacity-60">#{booking.id.slice(0, 8)}</span>
+        </div>
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
+            isConfirmed
+              ? "bg-success/15 text-success"
+              : isCancelled
+                ? "bg-destructive/15 text-destructive"
+                : "bg-primary/15 text-primary"
+          }`}
+        >
+          {isConfirmed ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+          {statusLabel(booking.status)}
+        </span>
+      </div>
+
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {booking.booking_units?.map((u, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary"
+          >
+            مبنى {u.building_number} — وحدة #{u.unit_number}
+          </span>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 border-t border-border pt-3 text-center text-xs">
+        <div>
+          <div className="text-muted-foreground">الوحدات</div>
+          <div className="num mt-0.5 font-bold">{booking.units_count}</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">المساحة</div>
+          <div className="num mt-0.5 font-bold">{Number(booking.total_area)} م²</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">الإيجار</div>
+          <div className="num mt-0.5 font-bold text-accent">
+            {Number(booking.total_price).toLocaleString("en-US")}
+          </div>
+        </div>
+      </div>
+
+      {booking.whatsapp_sent && (
+        <div className="mt-3 text-center text-[11px] text-success">
+          ✓ تم إرسال التفاصيل عبر واتساب
+        </div>
+      )}
     </div>
   );
 };
