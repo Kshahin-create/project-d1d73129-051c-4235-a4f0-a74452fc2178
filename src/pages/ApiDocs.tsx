@@ -131,7 +131,13 @@ const endpoints: Endpoint[] = [
 ];
 
 const ApiDocs = () => {
+  const { isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState("all");
+
+  useEffect(() => {
+    if (!loading && !isAdmin) navigate("/");
+  }, [loading, isAdmin, navigate]);
 
   const postmanCollection = useMemo(
     () => ({
