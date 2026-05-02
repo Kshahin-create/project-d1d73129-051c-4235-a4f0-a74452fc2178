@@ -5,6 +5,8 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 import { PhoneField } from "@/components/PhoneField";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { LinkedAccounts } from "@/components/account/LinkedAccounts";
+import { TwoFactorSettings } from "@/components/account/TwoFactorSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -302,6 +304,12 @@ const Profile = () => {
               )}
             </div>
           )}
+
+          {/* أمان الحساب */}
+          <div className="mt-6 space-y-6">
+            <LinkedAccounts />
+            <TwoFactorSettings />
+          </div>
         </div>
       </main>
       <Footer />
