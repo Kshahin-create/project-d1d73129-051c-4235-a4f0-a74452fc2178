@@ -188,6 +188,11 @@ const Auth = () => {
         token_hash: res.verification_token,
       });
       if (vErr) throw vErr;
+      const needsMfa = await checkMfaChallenge();
+      if (needsMfa) {
+        toast.message("أدخل رمز التحقق بخطوتين من تطبيق المصادقة");
+        return;
+      }
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (e: any) {
       toast.error(e.message || "تعذر التحقق من الرمز");
