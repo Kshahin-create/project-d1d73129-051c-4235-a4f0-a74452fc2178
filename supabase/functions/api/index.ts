@@ -391,6 +391,16 @@ Deno.serve(async (req) => {
       const g = requireScope(ctx, "read");
       return g ?? (await getStats());
     }
+    // GET /stats/overview?days=N — full ops overview (emails, bookings, users)
+    if (path === "/stats/overview" && req.method === "GET") {
+      const g = requireScope(ctx, "read");
+      if (g) return g;
+      const days = Math.min(
+        Math.max(1, Number(url.searchParams.get("days") ?? "7") || 7),
+        90,
+      );
+      return await getOverview(days);
+    }
     return err(`Route not found: ${req.method} ${path}`, 404);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
