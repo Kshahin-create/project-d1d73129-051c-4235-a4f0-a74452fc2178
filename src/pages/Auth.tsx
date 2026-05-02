@@ -103,7 +103,7 @@ const Auth = () => {
       else if (isControl) navigate("/control");
       else navigate("/profile");
     }
-  }, [user, isAdmin, isControl, authLoading, navigate, redirectTo]);
+  }, [user, isAdmin, isControl, authLoading, navigate, redirectTo, mfaChallenge]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
