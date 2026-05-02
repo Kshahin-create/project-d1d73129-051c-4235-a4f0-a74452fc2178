@@ -47,7 +47,7 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, user, loading } = useAuth();
+  const { isAdmin, isControl, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
