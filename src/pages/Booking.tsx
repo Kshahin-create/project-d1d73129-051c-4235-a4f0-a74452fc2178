@@ -445,6 +445,18 @@ const Booking = () => {
                           {customer.notes && <SummaryRow label="ملاحظات" value={customer.notes} />}
                         </dl>
                       </div>
+                      {creatingBooking && (
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-center text-sm text-primary">
+                          جاري تثبيت حجزك في النظام...
+                        </div>
+                      )}
+                      {bookingId && !creatingBooking && (
+                        <div className="rounded-xl border border-success/30 bg-success/5 p-3 text-center text-sm">
+                          ✅ تم تثبيت حجزك — رقم الحجز:{" "}
+                          <span className="font-mono font-bold">{bookingId.slice(0, 8)}</span>
+                          {" — "} الآن أرسل التفاصيل عبر واتساب
+                        </div>
+                      )}
                       <WhatsAppButton
                         href={whatsapp?.appUrl ?? "#"}
                         webHref={whatsapp?.webUrl}
