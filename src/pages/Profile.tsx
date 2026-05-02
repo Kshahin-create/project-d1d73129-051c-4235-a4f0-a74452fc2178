@@ -80,6 +80,22 @@ const Profile = () => {
       });
   }, [user]);
 
+  // جلب حجوزات المستخدم
+  useEffect(() => {
+    if (!user) return;
+    setBookingsLoading(true);
+    supabase
+      .from("bookings")
+      .select("id,status,total_area,total_price,units_count,whatsapp_sent,created_at,booking_units(building_number,unit_number,unit_type,area,price)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data: rows, error }) => {
+        if (error) console.error(error);
+        setBookings((rows as BookingRow[] | null) ?? []);
+        setBookingsLoading(false);
+      });
+  }, [user]);
+
   const update = (k: keyof ProfileData, v: string) =>
     setData((d) => ({ ...d, [k]: v }));
 
