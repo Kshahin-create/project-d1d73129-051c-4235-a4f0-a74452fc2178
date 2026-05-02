@@ -19,6 +19,7 @@ import {
   KeyRound,
   Code2,
   Wrench,
+  Activity,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,7 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
   { to: "/control", label: "لوحة الكنترول", Icon: Wrench, controlOnly: true },
   { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, adminOnly: true },
+  { to: "/admin/stats", label: "إحصائيات السيرفر", Icon: Activity, adminOnly: true },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
   { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, adminOnly: true },
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
