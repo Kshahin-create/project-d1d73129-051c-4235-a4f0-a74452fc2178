@@ -2,3 +2,6 @@ project_id = "wqzseofoerwevfebguse"
 
 [functions.booking-webhook]
 verify_jwt = false
+
+[functions.api]
+verify_jwt = false

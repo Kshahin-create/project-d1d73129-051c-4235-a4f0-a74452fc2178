@@ -16,6 +16,8 @@ import {
   Users,
   History,
   ClipboardList,
+  KeyRound,
+  Code2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +39,8 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, adminOnly: true },
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
+  { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
+  { to: "/api-docs", label: "توثيق الـ API", Icon: Code2 },
 ];
 
 export const AdminSidebar = () => {

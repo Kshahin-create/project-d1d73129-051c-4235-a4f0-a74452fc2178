@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          scopes: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          scopes?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          scopes?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       buildings: {
         Row: {
           created_at: string
@@ -300,6 +342,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      touch_api_key: { Args: { _id: string }; Returns: undefined }
+      verify_api_key: {
+        Args: { _key_hash: string }
+        Returns: {
+          id: string
+          is_valid: boolean
+          scopes: string[]
+        }[]
       }
     }
     Enums: {
