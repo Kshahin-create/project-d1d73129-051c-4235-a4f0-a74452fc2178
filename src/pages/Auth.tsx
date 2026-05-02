@@ -263,6 +263,52 @@ const Auth = () => {
           </Link>
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
+            {mfaChallenge ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <ShieldCheck className="h-6 w-6" />
+                  </div>
+                  <h1 className="mt-4 font-display text-2xl font-extrabold">
+                    التحقق بخطوتين
+                  </h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    افتح تطبيق المصادقة وأدخل الرمز المكوّن من 6 أرقام
+                  </p>
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                  dir="ltr"
+                  autoFocus
+                  className="w-full rounded-xl border border-border bg-background px-3 py-3 text-center font-mono text-2xl tracking-widest focus:border-primary focus:outline-none"
+                  placeholder="000000"
+                />
+                <button
+                  type="button"
+                  onClick={verifyMfa}
+                  disabled={loading || mfaCode.length !== 6}
+                  className="w-full rounded-xl bg-gradient-primary py-3 font-display font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:opacity-50"
+                >
+                  {loading ? "جاري التحقق..." : "تأكيد"}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setMfaChallenge(null);
+                    setMfaCode("");
+                  }}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground"
+                >
+                  إلغاء وتسجيل الخروج
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="mb-6 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 {mode === "signup" ? (
