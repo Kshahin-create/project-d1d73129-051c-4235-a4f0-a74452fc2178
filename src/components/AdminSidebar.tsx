@@ -18,6 +18,7 @@ import {
   ClipboardList,
   KeyRound,
   Code2,
+  Wrench,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
