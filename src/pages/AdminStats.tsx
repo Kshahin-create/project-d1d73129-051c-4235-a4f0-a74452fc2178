@@ -125,34 +125,6 @@ const AdminStats = () => {
     if (!loading && (!user || !isAdmin)) navigate("/");
   }, [loading, user, isAdmin, navigate]);
 
-  const load = async (d: number) => {
-    setFetching(true);
-    const { data: res, error } = await supabase.functions.invoke("admin-stats", {
-      method: "GET",
-      body: undefined,
-      headers: {},
-      // pass days via query string
-    });
-    // supabase-js v2 doesn't support query params in invoke, so call again with URL
-    setFetching(false);
-    if (error) {
-      // Fallback: direct fetch with auth header
-      try {
-        const sess = await supabase.auth.getSession();
-        const token = sess.data.session?.access_token;
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-stats?days=${d}`;
-        const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error ?? "فشل التحميل");
-        setData(j);
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
-      return;
-    }
-    setData(res as StatsResponse);
-  };
-
   // direct fetch with proper days param
   const loadWithDays = async (d: number) => {
     setFetching(true);
