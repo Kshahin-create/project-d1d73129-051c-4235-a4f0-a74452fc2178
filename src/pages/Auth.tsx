@@ -177,7 +177,18 @@ const Auth = () => {
     }
   };
 
-  return (
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) throw result.error;
+    } catch (err: any) {
+      toast.error(err.message || "تعذر تسجيل الدخول عبر Google");
+      setLoading(false);
+    }
+  };
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container-tight py-12">
