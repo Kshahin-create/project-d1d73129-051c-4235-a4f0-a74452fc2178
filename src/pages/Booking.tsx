@@ -195,6 +195,14 @@ const Booking = () => {
     return () => window.clearTimeout(timeout);
   }, [activityFilter, isLoading, step]);
 
+  // إنشاء الحجز في DB تلقائياً عند الدخول لخطوة الإرسال
+  useEffect(() => {
+    if (step === 5 && customer && selectedUnits.length > 0 && !bookingId && !creatingBooking) {
+      createBookingInDb();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, customer, selectedUnits.length]);
+
   const goBack = () => {
     if (step === 1) {
       navigate("/");
