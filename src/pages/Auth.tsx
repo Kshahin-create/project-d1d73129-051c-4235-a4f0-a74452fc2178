@@ -97,7 +97,7 @@ const Auth = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !mfaChallenge) {
       if (redirectTo) navigate(redirectTo);
       else if (isAdmin) navigate("/admin");
       else if (isControl) navigate("/control");
