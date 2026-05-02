@@ -46,14 +46,64 @@ const Auth = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // MFA (TOTP) challenge state
+  const [mfaChallenge, setMfaChallenge] = useState<{
+    factorId: string;
+    challengeId: string;
+  } | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  const checkMfaChallenge = async (): Promise<boolean> => {
+    // Returns true if a challenge was started (caller should stop)
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalData?.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totp = factors?.totp?.find((f) => f.status === "verified");
+      if (totp) {
+        const { data: chal, error } = await supabase.auth.mfa.challenge({
+          factorId: totp.id,
+        });
+        if (!error && chal) {
+          setMfaChallenge({ factorId: totp.id, challengeId: chal.id });
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const verifyMfa = async () => {
+    if (!mfaChallenge) return;
+    if (!/^\d{6}$/.test(mfaCode)) {
+      toast.error("الرمز يجب أن يكون 6 أرقام");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfaChallenge.factorId,
+        challengeId: mfaChallenge.challengeId,
+        code: mfaCode,
+      });
+      if (error) throw error;
+      toast.success("تم تسجيل الدخول بنجاح");
+      setMfaChallenge(null);
+      setMfaCode("");
+    } catch (e: any) {
+      toast.error(e.message || "رمز غير صحيح");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !mfaChallenge) {
       if (redirectTo) navigate(redirectTo);
       else if (isAdmin) navigate("/admin");
       else if (isControl) navigate("/control");
       else navigate("/profile");
     }
-  }, [user, isAdmin, isControl, authLoading, navigate, redirectTo]);
+  }, [user, isAdmin, isControl, authLoading, navigate, redirectTo, mfaChallenge]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -138,6 +188,11 @@ const Auth = () => {
         token_hash: res.verification_token,
       });
       if (vErr) throw vErr;
+      const needsMfa = await checkMfaChallenge();
+      if (needsMfa) {
+        toast.message("أدخل رمز التحقق بخطوتين من تطبيق المصادقة");
+        return;
+      }
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (e: any) {
       toast.error(e.message || "تعذر التحقق من الرمز");
@@ -155,6 +210,11 @@ const Auth = () => {
         password,
       });
       if (error) throw error;
+      const needsMfa = await checkMfaChallenge();
+      if (needsMfa) {
+        toast.message("أدخل رمز التحقق بخطوتين من تطبيق المصادقة");
+        return;
+      }
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (err: any) {
       toast.error(err.message || "بيانات الدخول غير صحيحة");
@@ -203,6 +263,52 @@ const Auth = () => {
           </Link>
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
+            {mfaChallenge ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <ShieldCheck className="h-6 w-6" />
+                  </div>
+                  <h1 className="mt-4 font-display text-2xl font-extrabold">
+                    التحقق بخطوتين
+                  </h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    افتح تطبيق المصادقة وأدخل الرمز المكوّن من 6 أرقام
+                  </p>
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                  dir="ltr"
+                  autoFocus
+                  className="w-full rounded-xl border border-border bg-background px-3 py-3 text-center font-mono text-2xl tracking-widest focus:border-primary focus:outline-none"
+                  placeholder="000000"
+                />
+                <button
+                  type="button"
+                  onClick={verifyMfa}
+                  disabled={loading || mfaCode.length !== 6}
+                  className="w-full rounded-xl bg-gradient-primary py-3 font-display font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:opacity-50"
+                >
+                  {loading ? "جاري التحقق..." : "تأكيد"}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setMfaChallenge(null);
+                    setMfaCode("");
+                  }}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground"
+                >
+                  إلغاء وتسجيل الخروج
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="mb-6 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 {mode === "signup" ? (
@@ -495,6 +601,8 @@ const Auth = () => {
                 </>
               )}
             </div>
+            </>
+            )}
           </div>
         </div>
       </main>
