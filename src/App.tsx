@@ -16,6 +16,8 @@ import AdminAudit from "./pages/AdminAudit.tsx";
 import AdminTenants from "./pages/AdminTenants.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
+import AdminApiKeys from "./pages/AdminApiKeys.tsx";
+import ApiDocs from "./pages/ApiDocs.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
