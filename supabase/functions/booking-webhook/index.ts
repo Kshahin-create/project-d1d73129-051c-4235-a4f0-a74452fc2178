@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
     const payload = {
       source: "نخبة تسكين - استمارة الحجز",
       submitted_at: new Date().toISOString(),
+      booking_id: body.booking_id ?? null,
       customer: body.customer,
       units: body.units,
       totals: {
