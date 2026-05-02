@@ -20,6 +20,7 @@ import AdminApiKeys from "./pages/AdminApiKeys.tsx";
 import ApiDocs from "./pages/ApiDocs.tsx";
 import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Unsubscribe from "./pages/Unsubscribe.tsx";
 
 const queryClient = new QueryClient();
 
