@@ -46,6 +46,56 @@ const Auth = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // MFA (TOTP) challenge state
+  const [mfaChallenge, setMfaChallenge] = useState<{
+    factorId: string;
+    challengeId: string;
+  } | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  const checkMfaChallenge = async (): Promise<boolean> => {
+    // Returns true if a challenge was started (caller should stop)
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalData?.nextLevel === "aal2" && aalData.currentLevel !== "aal2") {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totp = factors?.totp?.find((f) => f.status === "verified");
+      if (totp) {
+        const { data: chal, error } = await supabase.auth.mfa.challenge({
+          factorId: totp.id,
+        });
+        if (!error && chal) {
+          setMfaChallenge({ factorId: totp.id, challengeId: chal.id });
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const verifyMfa = async () => {
+    if (!mfaChallenge) return;
+    if (!/^\d{6}$/.test(mfaCode)) {
+      toast.error("الرمز يجب أن يكون 6 أرقام");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfaChallenge.factorId,
+        challengeId: mfaChallenge.challengeId,
+        code: mfaCode,
+      });
+      if (error) throw error;
+      toast.success("تم تسجيل الدخول بنجاح");
+      setMfaChallenge(null);
+      setMfaCode("");
+    } catch (e: any) {
+      toast.error(e.message || "رمز غير صحيح");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       if (redirectTo) navigate(redirectTo);
