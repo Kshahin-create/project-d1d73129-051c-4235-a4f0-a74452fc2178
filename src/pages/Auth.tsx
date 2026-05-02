@@ -14,6 +14,7 @@ import {
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PhoneField } from "@/components/PhoneField";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -158,6 +159,20 @@ const Auth = () => {
     } catch (err: any) {
       toast.error(err.message || "بيانات الدخول غير صحيحة");
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) throw result.error;
+      // If redirected, the browser is leaving — nothing more to do.
+    } catch (err: any) {
+      toast.error(err.message || "تعذر تسجيل الدخول عبر Apple");
       setLoading(false);
     }
   };
