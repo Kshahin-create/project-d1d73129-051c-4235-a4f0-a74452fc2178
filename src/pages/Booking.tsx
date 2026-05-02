@@ -39,8 +39,18 @@ const Booking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activityFilter = searchParams.get("activity") as "service" | "parts" | null;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [creatingBooking, setCreatingBooking] = useState(false);
+
+  // إجبار تسجيل الدخول قبل الحجز
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.info("سجّل دخولك أو أنشئ حساب لإتمام الحجز");
+      navigate("/auth?redirect=/booking" + (activityFilter ? `?activity=${activityFilter}` : ""));
+    }
+  }, [user, authLoading, navigate, activityFilter]);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
