@@ -17,6 +17,7 @@ import AdminTenants from "./pages/AdminTenants.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
 import AdminApiKeys from "./pages/AdminApiKeys.tsx";
+import AdminStats from "./pages/AdminStats.tsx";
 import ApiDocs from "./pages/ApiDocs.tsx";
 import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin/api-keys" element={<AdminApiKeys />} />
+          <Route path="/admin/stats" element={<AdminStats />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/control" element={<ControlDashboard />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />

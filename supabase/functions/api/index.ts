@@ -297,7 +297,71 @@ async function getStats() {
   });
 }
 
-// ---------- Router ----------
+async function getOverview(days: number) {
+  const since = new Date();
+  since.setUTCDate(since.getUTCDate() - days);
+  const sinceIso = since.toISOString();
+
+  const [units, buildings, profiles, bookings, emailRows] = await Promise.all([
+    admin.from("units").select("status, price").limit(5000),
+    admin.from("buildings").select("number"),
+    admin.from("profiles").select("created_at").gte("created_at", sinceIso),
+    admin
+      .from("bookings")
+      .select("created_at, total_price, units_count")
+      .gte("created_at", sinceIso),
+    admin
+      .from("email_send_log")
+      .select("message_id, status, template_name, created_at")
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(5000),
+  ]);
+
+  const u = units.data ?? [];
+  const total = u.length;
+  const rented = u.filter((x) => x.status === "rented").length;
+  const reserved = u.filter((x) => x.status === "reserved").length;
+
+  // Dedup emails by message_id (latest first)
+  const seen = new Set<string>();
+  const latest: any[] = [];
+  for (const r of emailRows.data ?? []) {
+    const k = r.message_id ?? `${r.template_name}-${r.created_at}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    latest.push(r);
+  }
+  const emailCounts = { total: latest.length, sent: 0, failed: 0, suppressed: 0 };
+  for (const r of latest) {
+    if (r.status === "sent") emailCounts.sent++;
+    else if (["dlq", "failed", "bounced"].includes(r.status)) emailCounts.failed++;
+    else if (["suppressed", "complained"].includes(r.status)) emailCounts.suppressed++;
+  }
+
+  const bk = bookings.data ?? [];
+  const totalRevenue = bk.reduce((s, r) => s + Number(r.total_price ?? 0), 0);
+
+  return json({
+    data: {
+      range_days: days,
+      buildings_count: buildings.data?.length ?? 0,
+      units: {
+        total,
+        rented,
+        reserved,
+        available: total - rented - reserved,
+        occupancy_rate: total > 0 ? +((rented / total) * 100).toFixed(2) : 0,
+      },
+      new_signups: profiles.data?.length ?? 0,
+      bookings: {
+        count: bk.length,
+        total_revenue: totalRevenue,
+      },
+      emails: emailCounts,
+    },
+  });
+}
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -325,6 +389,7 @@ Deno.serve(async (req) => {
         "PATCH /tenants/:id",
         "DELETE /tenants/:id",
         "GET /stats",
+        "GET /stats/overview?days=N",
       ],
     });
   }
@@ -390,6 +455,16 @@ Deno.serve(async (req) => {
     if (path === "/stats" && req.method === "GET") {
       const g = requireScope(ctx, "read");
       return g ?? (await getStats());
+    }
+    // GET /stats/overview?days=N — full ops overview (emails, bookings, users)
+    if (path === "/stats/overview" && req.method === "GET") {
+      const g = requireScope(ctx, "read");
+      if (g) return g;
+      const days = Math.min(
+        Math.max(1, Number(url.searchParams.get("days") ?? "7") || 7),
+        90,
+      );
+      return await getOverview(days);
     }
     return err(`Route not found: ${req.method} ${path}`, 404);
   } catch (e) {
