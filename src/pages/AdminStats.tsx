@@ -21,7 +21,6 @@ import {
   KeyRound,
   RefreshCw,
   TrendingUp,
-  AlertTriangle,
   CheckCircle2,
   Server,
 } from "lucide-react";
