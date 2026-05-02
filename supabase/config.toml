@@ -1,16 +1,15 @@
 project_id = "wqzseofoerwevfebguse"
 
-[functions.booking-webhook]
-verify_jwt = false
-
-[functions.api]
-verify_jwt = false
-
-[functions.send-otp]
-verify_jwt = false
-
-[functions.verify-otp]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.api]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.booking-webhook]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.send-otp]
+    verify_jwt = false
+  [functions.verify-otp]
+    verify_jwt = false
