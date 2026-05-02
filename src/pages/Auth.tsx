@@ -14,6 +14,7 @@ import {
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PhoneField } from "@/components/PhoneField";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -162,6 +163,20 @@ const Auth = () => {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) throw result.error;
+      // If redirected, the browser is leaving — nothing more to do.
+    } catch (err: any) {
+      toast.error(err.message || "تعذر تسجيل الدخول عبر Apple");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -201,7 +216,28 @@ const Auth = () => {
               </p>
             </div>
 
-            {/* Tabs */}
+            {/* Apple Sign In */}
+            <button
+              type="button"
+              onClick={handleAppleSignIn}
+              disabled={loading}
+              dir="ltr"
+              className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-foreground py-3 font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+                <path d="M16.365 1.43c0 1.14-.46 2.27-1.21 3.06-.81.85-2.13 1.5-3.22 1.41-.13-1.13.43-2.32 1.18-3.13.84-.91 2.27-1.6 3.25-1.34zM20.7 17.46c-.55 1.27-.81 1.83-1.51 2.95-.98 1.55-2.36 3.49-4.07 3.5-1.52.02-1.91-.99-3.97-.98-2.06.01-2.49 1-4.01.98-1.71-.02-3.02-1.77-4-3.32C.45 16.16-.16 11.61 1.66 8.74 2.95 6.71 4.99 5.55 7 5.55c2.04 0 3.32 1.12 5 1.12 1.63 0 2.62-1.12 4.98-1.12 1.79 0 3.69.98 5.04 2.67-4.43 2.43-3.71 8.76-1.32 9.24z" />
+              </svg>
+              <span>تسجيل الدخول عبر Apple</span>
+            </button>
+
+            {mode !== "signup" && (
+              <div className="mb-4 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                <span>أو</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+            )}
+
             {mode !== "signup" && (
               <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1 text-sm">
                 <button
