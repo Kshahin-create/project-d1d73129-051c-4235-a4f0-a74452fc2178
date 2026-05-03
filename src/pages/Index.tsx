@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PROJECT, LOCATION } from "@/lib/config";
-import masterPlan from "@/assets/master-plan.jpeg";
+import masterPlan from "@/assets/master-plan.png";
 import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-city.png";
 import landSpaces from "@/assets/land-spaces.png";
