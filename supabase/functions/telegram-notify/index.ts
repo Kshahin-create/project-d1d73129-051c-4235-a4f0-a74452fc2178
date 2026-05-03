@@ -89,22 +89,40 @@ Deno.serve(async (req) => {
 
     const text = lines.join("\n");
 
-    const results = await Promise.all(
-      chatIds.map(async (chat_id) => {
+    // إرسال كل ID لوحده بشكل تسلسلي والتحقق من نجاح كل واحدة
+    const results: Array<{ key: string; chat_id: string; ok: boolean; status?: number; error?: string; message_id?: number }> = [];
+    for (const { key, value: chat_id } of chatIdEntries) {
+      try {
         const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
         });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok || !j.ok) console.error("Telegram error", chat_id, r.status, j);
-        return { chat_id, ok: r.ok && j.ok };
-      })
-    );
+        const j = await r.json().catch(() => ({} as any));
+        const ok = r.ok && j?.ok === true;
+        if (!ok) {
+          console.error(`Telegram send failed [${key}=${chat_id}] status=${r.status}`, j);
+          results.push({ key, chat_id, ok: false, status: r.status, error: j?.description || `HTTP ${r.status}` });
+        } else {
+          console.log(`Telegram send OK [${key}=${chat_id}] message_id=${j.result?.message_id}`);
+          results.push({ key, chat_id, ok: true, status: r.status, message_id: j.result?.message_id });
+        }
+      } catch (err) {
+        const m = err instanceof Error ? err.message : "Unknown";
+        console.error(`Telegram send threw [${key}=${chat_id}]:`, m);
+        results.push({ key, chat_id, ok: false, error: m });
+      }
+    }
 
-    return new Response(JSON.stringify({ success: true, results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const allOk = results.every((r) => r.ok);
+    const anyOk = results.some((r) => r.ok);
+    return new Response(
+      JSON.stringify({ success: anyOk, all_ok: allOk, total: results.length, sent: results.filter((r) => r.ok).length, results }),
+      {
+        status: allOk ? 200 : anyOk ? 207 : 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown";
     console.error("telegram-notify error:", msg);
