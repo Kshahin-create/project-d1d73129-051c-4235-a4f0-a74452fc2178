@@ -91,14 +91,14 @@ const ControlDashboard = () => {
       navigate("/auth");
       return;
     }
-    if (!isControl && !isAdmin) {
+    if (!isControl && !isAdmin && !isManager) {
       navigate("/profile");
     }
-  }, [authLoading, user, isControl, isAdmin, navigate]);
+  }, [authLoading, user, isControl, isAdmin, isManager, navigate]);
 
   const { data: units = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ["control-units"],
-    enabled: !!user && (isControl || isAdmin),
+    enabled: !!user && (isControl || isAdmin || isManager),
     queryFn: async (): Promise<UnitRow[]> => {
       const { data, error } = await supabase
         .from("units")
