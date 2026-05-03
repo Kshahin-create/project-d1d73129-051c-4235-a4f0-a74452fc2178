@@ -184,6 +184,33 @@ const Booking = () => {
     setBookingId(newId as string);
     toast.success("تم تسجيل حجزك ✅ — أكمل لإرسال البيانات على واتساب");
 
+    // إشعار تيليجرام (لا نوقف التدفق لو فشل)
+    supabase.functions
+      .invoke("telegram-notify", {
+        body: {
+          booking_id: newId,
+          customer: {
+            fullName: customer.fullName,
+            phone: customer.phone,
+            email: customer.email || user.email || undefined,
+            business: customer.business || undefined,
+            notes: customer.notes || undefined,
+          },
+          units: selectedUnits.map((u) => ({
+            buildingNumber: u.buildingNumber,
+            buildingType: u.buildingType,
+            unitNumber: u.unitNumber,
+            unitType: u.unitType,
+            area: u.area,
+            activity: u.activity,
+            price: u.price,
+          })),
+        },
+      })
+      .then(({ error: tgErr }) => {
+        if (tgErr) console.error("telegram notify error:", tgErr);
+      });
+
     // إرسال إيميل تأكيد الحجز للعميل (لا نوقف التدفق لو فشل)
     const recipientEmail = customer.email || user.email;
     if (recipientEmail) {
