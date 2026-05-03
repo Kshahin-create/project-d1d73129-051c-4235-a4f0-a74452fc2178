@@ -26,45 +26,44 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
     layout?.units.map((area) => {
       const unit = unitsByNumber.get(area.unitNumber);
       if (!unit) return null;
-      const isRented = unit.status === "rented" || unit.status === "reserved";
+      const isRented = unit.status === "rented";
+      const isReserved = unit.status === "reserved";
+      const isLocked = isRented || isReserved;
       const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
 
-      // إطار 1px ثابت داخلي عبر inset box-shadow:
-      // لا يأخذ أي بكسل من مساحة الوحدة ولا يُسبب أي إزاحة عند التبديل بين الحالات
       const ringColor = isRented
         ? "hsl(var(--destructive))"
-        : isSelected
-          ? "hsl(var(--accent))"
-          : "transparent";
+        : isReserved
+          ? "hsl(38 92% 50%)" // amber-500
+          : isSelected
+            ? "hsl(var(--accent))"
+            : "transparent";
 
       return (
         <button
           key={area.unitNumber}
           type="button"
-          disabled={isRented || !interactive}
+          disabled={isLocked || !interactive}
           onClick={() => interactive && onSelect(unit)}
           onMouseEnter={() => interactive && setHoveredUnit(unit.unitNumber)}
           onMouseLeave={() => interactive && setHoveredUnit(null)}
-          aria-label={`وحدة ${area.unitNumber}${isRented ? " (مؤجرة)" : ""}`}
+          aria-label={`وحدة ${area.unitNumber}${isRented ? " (مؤجرة)" : isReserved ? " (محجوزة)" : ""}`}
           className={cn(
             "absolute box-border flex items-center justify-center border-0 p-0 text-[10px] font-bold transition-colors duration-200 sm:text-xs",
             "focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
-            // المؤجرة: تعبئة حمراء شفافة بكامل أبعاد الوحدة
             isRented && "cursor-not-allowed bg-destructive/55 text-white",
-            // المتاحة (غير مختارة): شفافة، تظهر عند المرور فقط
-            !isRented && !isSelected &&
+            isReserved && "cursor-not-allowed bg-amber-500/55 text-white",
+            !isLocked && !isSelected &&
               "bg-transparent text-transparent hover:bg-accent/25 hover:text-accent-foreground",
-            // المختارة: تعبئة ذهبية شفافة
-            !isRented && isSelected && "bg-accent/55 text-accent-foreground",
-            isHovered && !isSelected && !isRented && "z-10"
+            !isLocked && isSelected && "bg-accent/55 text-accent-foreground",
+            isHovered && !isSelected && !isLocked && "z-10"
           )}
           style={{
             left: `${area.x}%`,
             top: `${area.y}%`,
             width: `${area.w}%`,
             height: `${area.h}%`,
-            // inset shadow = 1px ثابتة داخل حدود الوحدة على كل أحجام الشاشات
             boxShadow: ringColor === "transparent" ? undefined : `inset 0 0 0 1px ${ringColor}`,
           }}
         >
@@ -134,7 +133,8 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
-        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label="مؤجر / محجوز" icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-amber-500/40 border-2 border-amber-500/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
       </div>
 
       {/* Units grid (alternative quick selection) */}
@@ -142,27 +142,31 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
         <h4 className="mb-3 font-display font-bold">أو اختر رقم الوحدة من القائمة</h4>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
-            const isRented = u.status === "rented" || u.status === "reserved";
+            const isRented = u.status === "rented";
+            const isReserved = u.status === "reserved";
+            const isLocked = isRented || isReserved;
             const isSelected = selectedSet.has(u.unitNumber);
             const isCorner = u.unitType === "ركنية";
             return (
               <motion.button
                 key={u.unitNumber}
-                whileHover={!isRented ? { scale: 1.05 } : undefined}
-                whileTap={!isRented ? { scale: 0.96 } : undefined}
-                disabled={isRented}
+                whileHover={!isLocked ? { scale: 1.05 } : undefined}
+                whileTap={!isLocked ? { scale: 0.96 } : undefined}
+                disabled={isLocked}
                 onClick={() => onSelect(u)}
                 className={cn(
                   "group relative flex aspect-square flex-col items-center justify-center rounded-xl border-2 p-1 text-center transition-all",
                   isRented &&
-                    "cursor-not-allowed border-border bg-muted opacity-70",
-                  !isRented && !isSelected &&
+                    "cursor-not-allowed border-destructive/40 bg-destructive/10 opacity-80",
+                  isReserved &&
+                    "cursor-not-allowed border-amber-500/40 bg-amber-500/10 opacity-80",
+                  !isLocked && !isSelected &&
                     "border-border bg-card hover:border-primary hover:shadow-card",
                   isSelected &&
                     "border-primary bg-primary text-primary-foreground shadow-elevated"
                 )}
               >
-                {isCorner && !isRented && (
+                {isCorner && !isLocked && (
                   <span className="absolute right-1 top-1 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-bold text-accent-foreground">
                     ركنية
                   </span>
@@ -175,7 +179,11 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
                 </div>
                 {isRented ? (
                   <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-destructive">
-                    <Lock className="h-2.5 w-2.5" /> {u.status === "reserved" ? "محجوز" : "مؤجر"}
+                    <Lock className="h-2.5 w-2.5" /> مؤجر
+                  </div>
+                ) : isReserved ? (
+                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-amber-600">
+                    <Lock className="h-2.5 w-2.5" /> محجوز
                   </div>
                 ) : isSelected ? (
                   <CheckCircle2 className="mt-1 h-3.5 w-3.5 text-primary-foreground" />
