@@ -41,6 +41,7 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
   { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, adminOnly: true },
   { to: "/admin/stats", label: "إحصائيات السيرفر", Icon: Activity, adminOnly: true },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
+  { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, adminOnly: true },
   { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, adminOnly: true },
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
