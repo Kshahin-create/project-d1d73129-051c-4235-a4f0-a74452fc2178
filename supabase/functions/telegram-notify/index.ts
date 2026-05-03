@@ -27,10 +27,22 @@ Deno.serve(async (req) => {
 
   try {
     const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
-    const chatIdsRaw = Deno.env.get("TELEGRAM_CHAT_IDS");
-    if (!token || !chatIdsRaw) throw new Error("Telegram secrets not configured");
+    if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
 
-    const chatIds = chatIdsRaw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
+    // كل ID في secret منفصل عشان نضمن إن كل رسالة تتبعت لوحدها
+    const chatIdEntries: { key: string; value: string }[] = [];
+    for (const key of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2"]) {
+      const v = Deno.env.get(key)?.trim();
+      if (v) chatIdEntries.push({ key, value: v });
+    }
+    // Backward compatibility: لو لسه فيه القديم
+    const legacy = Deno.env.get("TELEGRAM_CHAT_IDS");
+    if (legacy && chatIdEntries.length === 0) {
+      legacy.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean).forEach((v, i) =>
+        chatIdEntries.push({ key: `LEGACY_${i + 1}`, value: v })
+      );
+    }
+    if (chatIdEntries.length === 0) throw new Error("No Telegram chat IDs configured");
     const body = (await req.json()) as Payload;
 
     if (!body?.customer?.fullName || !Array.isArray(body.units) || body.units.length === 0) {
