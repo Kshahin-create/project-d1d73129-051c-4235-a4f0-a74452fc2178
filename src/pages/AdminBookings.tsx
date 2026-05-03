@@ -40,7 +40,8 @@ const STATUS: Record<string, { label: string; cls: string; Icon: typeof Clock }>
 
 const AdminBookings = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, isManager, loading } = useAuth();
+  const canAccess = isAdmin || isManager;
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
@@ -58,8 +59,8 @@ const AdminBookings = () => {
   };
 
   useEffect(() => {
-    if (!loading && isAdmin) load();
-  }, [loading, isAdmin]);
+    if (!loading && canAccess) load();
+  }, [loading, canAccess]);
 
   const filtered = useMemo(() => {
     let list = rows;
@@ -88,7 +89,7 @@ const AdminBookings = () => {
     navigate("/auth");
     return null;
   }
-  if (!loading && user && !isAdmin) {
+  if (!loading && user && !canAccess) {
     return (
       <div className="min-h-screen bg-background">
         <Header />

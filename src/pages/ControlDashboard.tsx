@@ -71,7 +71,7 @@ const FILTERS: { key: "all" | StatusKey; label: string }[] = [
 ];
 
 const ControlDashboard = () => {
-  const { user, loading: authLoading, isControl, isAdmin } = useAuth();
+  const { user, loading: authLoading, isControl, isAdmin, isManager } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
