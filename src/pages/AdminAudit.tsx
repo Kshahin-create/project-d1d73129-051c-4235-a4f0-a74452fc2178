@@ -5,33 +5,47 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { History, Lock, Search, ArrowRight, Filter, FileSpreadsheet, FileText } from "lucide-react";
-import { exportAuditToExcel, exportAuditToPDF } from "@/lib/exportAudit";
+import { History, Lock, Search, ArrowRight, Filter, ChevronDown, ChevronLeft } from "lucide-react";
 
 interface AuditRow {
   id: string;
-  building_number: number;
-  unit_number: number;
-  action: string;
-  previous_status: string | null;
-  new_status: string | null;
-  reason: string;
-  performed_by_email: string | null;
   created_at: string;
-  tenant_snapshot: any;
+  actor_id: string | null;
+  actor_email: string | null;
+  actor_role: string | null;
+  action: "INSERT" | "UPDATE" | "DELETE" | string;
+  entity_table: string;
+  entity_id: string | null;
+  before_data: any;
+  after_data: any;
+  changed_fields: string[] | null;
+  ip_address: string | null;
+  user_agent: string | null;
 }
 
-const STATUS_AR: Record<string, string> = {
-  available: "متاح",
-  rented: "مؤجر",
-  reserved: "محجوز",
+const ACTION_AR: Record<string, { label: string; cls: string }> = {
+  INSERT: { label: "إضافة", cls: "bg-emerald-500/10 text-emerald-600" },
+  UPDATE: { label: "تعديل", cls: "bg-amber-500/10 text-amber-600" },
+  DELETE: { label: "حذف", cls: "bg-destructive/10 text-destructive" },
 };
 
-const ACTION_AR: Record<string, string> = {
-  rent: "تأجير",
-  reserve: "حجز",
-  release: "إخلاء",
-  update: "تعديل",
+const TABLE_AR: Record<string, string> = {
+  units: "الوحدات",
+  buildings: "المباني",
+  tenants: "المستأجرون",
+  bookings: "الحجوزات",
+  booking_units: "وحدات الحجز",
+  user_roles: "أدوار المستخدمين",
+  profiles: "الملفات الشخصية",
+  api_keys: "مفاتيح الـ API",
+  customer_profiles: "ملفات العملاء",
+};
+
+const formatVal = (v: any): string => {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "object") return JSON.stringify(v);
+  if (typeof v === "boolean") return v ? "نعم" : "لا";
+  return String(v);
 };
 
 const AdminAudit = () => {
@@ -41,16 +55,18 @@ const AdminAudit = () => {
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [tableFilter, setTableFilter] = useState<string>("all");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setFetching(true);
     const { data, error } = await supabase
-      .from("unit_audit_log")
+      .from("audit_log" as any)
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(500);
+      .limit(1000);
     if (error) toast.error("تعذر التحميل: " + error.message);
-    else setRows((data as AuditRow[]) ?? []);
+    else setRows((data as any as AuditRow[]) ?? []);
     setFetching(false);
   };
 
@@ -58,19 +74,39 @@ const AdminAudit = () => {
     if (!loading && isAdmin) load();
   }, [loading, isAdmin]);
 
+  const tables = useMemo(() => {
+    const s = new Set(rows.map((r) => r.entity_table));
+    return Array.from(s).sort();
+  }, [rows]);
+
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (actionFilter !== "all" && r.action !== actionFilter) return false;
+      if (tableFilter !== "all" && r.entity_table !== tableFilter) return false;
       const q = search.trim().toLowerCase();
       if (!q) return true;
-      return (
-        String(r.unit_number).includes(q) ||
-        String(r.building_number).includes(q) ||
-        (r.performed_by_email ?? "").toLowerCase().includes(q) ||
-        (r.reason ?? "").toLowerCase().includes(q)
-      );
+      const haystack = [
+        r.actor_email,
+        r.entity_table,
+        r.entity_id,
+        JSON.stringify(r.before_data ?? {}),
+        JSON.stringify(r.after_data ?? {}),
+        (r.changed_fields ?? []).join(","),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
     });
-  }, [rows, search, actionFilter]);
+  }, [rows, search, actionFilter, tableFilter]);
+
+  const toggle = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   if (!loading && !user) {
     navigate("/auth");
@@ -101,37 +137,18 @@ const AdminAudit = () => {
               <History className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-xl font-bold sm:text-2xl">سجل التدقيق</h1>
+              <h1 className="font-display text-xl font-bold sm:text-2xl">سجل التدقيق الكامل</h1>
               <p className="text-xs text-muted-foreground sm:text-sm">
                 {filtered.length} عملية من إجمالي {rows.length}
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => exportAuditToExcel(filtered)}
-              disabled={!filtered.length}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs font-medium hover:bg-secondary disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
-            >
-              <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Excel
-            </button>
-            <button
-              onClick={() => {
-                const label = actionFilter === "all" ? undefined : `العملية: ${({rent:"تأجير",reserve:"حجز",release:"إخلاء",update:"تعديل"} as any)[actionFilter]}`;
-                exportAuditToPDF(filtered, label);
-              }}
-              disabled={!filtered.length}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs font-medium hover:bg-secondary disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
-            >
-              <FileText className="h-4 w-4 text-rose-600" /> PDF
-            </button>
-            <Link
-              to="/admin"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary sm:px-4 sm:py-2 sm:text-sm"
-            >
-              <ArrowRight className="h-4 w-4" /> رجوع
-            </Link>
-          </div>
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary sm:px-4 sm:py-2 sm:text-sm"
+          >
+            <ArrowRight className="h-4 w-4" /> رجوع
+          </Link>
         </div>
 
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
@@ -140,7 +157,7 @@ const AdminAudit = () => {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ابحث برقم الوحدة، المبنى، البريد، أو السبب..."
+              placeholder="ابحث في كل الحقول..."
               className="flex-1 bg-transparent text-sm outline-none"
             />
           </div>
@@ -152,56 +169,132 @@ const AdminAudit = () => {
               className="bg-transparent text-sm outline-none"
             >
               <option value="all">كل العمليات</option>
-              <option value="rent">تأجير</option>
-              <option value="reserve">حجز</option>
-              <option value="release">إخلاء</option>
-              <option value="update">تعديل</option>
+              <option value="INSERT">إضافة</option>
+              <option value="UPDATE">تعديل</option>
+              <option value="DELETE">حذف</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-2">
+            <select
+              value={tableFilter}
+              onChange={(e) => setTableFilter(e.target.value)}
+              className="bg-transparent text-sm outline-none"
+            >
+              <option value="all">كل الجداول</option>
+              {tables.map((t) => (
+                <option key={t} value={t}>{TABLE_AR[t] ?? t}</option>
+              ))}
             </select>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+        <div className="rounded-2xl border border-border bg-card">
           {fetching ? (
             <div className="p-12 text-center text-muted-foreground">جارِ التحميل...</div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">لا توجد سجلات</div>
           ) : (
-            <table className="w-full min-w-[760px] text-sm">
-              <thead className="border-b border-border bg-secondary/50 text-xs">
-                <tr>
-                  <th className="p-3 text-right font-semibold">التاريخ</th>
-                  <th className="p-3 text-right font-semibold">الوحدة</th>
-                  <th className="p-3 text-right font-semibold">العملية</th>
-                  <th className="p-3 text-right font-semibold">من → إلى</th>
-                  <th className="p-3 text-right font-semibold">المنفّذ</th>
-                  <th className="p-3 text-right font-semibold">السبب</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((r) => (
-                  <tr key={r.id} className="border-b border-border last:border-0 align-top">
-                    <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(r.created_at).toLocaleString("ar-EG-u-nu-latn")}
-                    </td>
-                    <td className="p-3 font-medium whitespace-nowrap">
-                      مبنى {r.building_number} - وحدة {r.unit_number}
-                    </td>
-                    <td className="p-3">
-                      <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                        {ACTION_AR[r.action] ?? r.action}
-                      </span>
-                    </td>
-                    <td className="p-3 text-xs">
-                      {r.previous_status ? STATUS_AR[r.previous_status] ?? r.previous_status : "—"}
-                      {" → "}
-                      {r.new_status ? STATUS_AR[r.new_status] ?? r.new_status : "—"}
-                    </td>
-                    <td className="p-3 text-xs text-muted-foreground">{r.performed_by_email || "—"}</td>
-                    <td className="p-3 text-xs">{r.reason}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ul className="divide-y divide-border">
+              {filtered.map((r) => {
+                const act = ACTION_AR[r.action] ?? { label: r.action, cls: "bg-secondary text-foreground" };
+                const isOpen = expanded.has(r.id);
+                const changed = r.changed_fields ?? [];
+                return (
+                  <li key={r.id} className="p-3">
+                    <button
+                      onClick={() => toggle(r.id)}
+                      className="flex w-full items-start gap-3 text-right"
+                    >
+                      <div className="mt-0.5 shrink-0 text-muted-foreground">
+                        {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${act.cls}`}>
+                            {act.label}
+                          </span>
+                          <span className="text-sm font-semibold">
+                            {TABLE_AR[r.entity_table] ?? r.entity_table}
+                          </span>
+                          {r.entity_id && (
+                            <span className="font-mono text-[10px] text-muted-foreground">#{r.entity_id.slice(0, 8)}</span>
+                          )}
+                          {r.action === "UPDATE" && changed.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              ({changed.length} حقل تغيّر)
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                          <span>{new Date(r.created_at).toLocaleString("ar-EG-u-nu-latn")}</span>
+                          <span>•</span>
+                          <span>{r.actor_email || r.actor_id?.slice(0, 8) || "نظام"}</span>
+                          {r.ip_address && (<><span>•</span><span dir="ltr">{r.ip_address}</span></>)}
+                        </div>
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="mt-3 mr-7 space-y-3 rounded-xl bg-secondary/30 p-3 text-xs">
+                        {r.action === "UPDATE" && changed.length > 0 && (
+                          <div>
+                            <div className="mb-2 font-semibold">الحقول المتغيّرة:</div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-[11px]">
+                                <thead className="text-muted-foreground">
+                                  <tr>
+                                    <th className="p-1.5 text-right">الحقل</th>
+                                    <th className="p-1.5 text-right">قبل</th>
+                                    <th className="p-1.5 text-right">بعد</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {changed.map((f) => (
+                                    <tr key={f} className="border-t border-border/50">
+                                      <td className="p-1.5 font-mono">{f}</td>
+                                      <td className="p-1.5 text-destructive break-all">{formatVal(r.before_data?.[f])}</td>
+                                      <td className="p-1.5 text-emerald-600 break-all">{formatVal(r.after_data?.[f])}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {(r.action === "INSERT" || r.action === "DELETE" || r.action === "UPDATE") && (
+                          <div className="grid gap-2 md:grid-cols-2">
+                            {r.before_data && (
+                              <div>
+                                <div className="mb-1 font-semibold text-destructive">قبل:</div>
+                                <pre dir="ltr" className="max-h-64 overflow-auto rounded-lg bg-background p-2 text-[10px]">
+                                  {JSON.stringify(r.before_data, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                            {r.after_data && (
+                              <div>
+                                <div className="mb-1 font-semibold text-emerald-600">بعد:</div>
+                                <pre dir="ltr" className="max-h-64 overflow-auto rounded-lg bg-background p-2 text-[10px]">
+                                  {JSON.stringify(r.after_data, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {r.user_agent && (
+                          <div className="text-[10px] text-muted-foreground break-all">
+                            <span className="font-semibold">المتصفح: </span>
+                            <span dir="ltr">{r.user_agent}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       </main>
