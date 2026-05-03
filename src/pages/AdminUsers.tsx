@@ -9,7 +9,7 @@ import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight } fro
 import { Link } from "react-router-dom";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
-type AppRole = "admin" | "control" | "user";
+type AppRole = "admin" | "control" | "manager" | "user";
 
 interface UserRow {
   user_id: string;
@@ -22,6 +22,7 @@ interface UserRow {
 
 const ROLE_META: Record<AppRole, { label: string; icon: typeof Shield; cls: string }> = {
   admin: { label: "أدمن", icon: Shield, cls: "bg-primary/10 text-primary" },
+  manager: { label: "مدير", icon: Shield, cls: "bg-emerald-500/10 text-emerald-600" },
   control: { label: "Control (دعم/صيانة)", icon: Wrench, cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   user: { label: "مستخدم", icon: UserIcon, cls: "bg-secondary text-muted-foreground" },
 };
@@ -188,6 +189,7 @@ const AdminUsers = () => {
                             >
                               <option value="user">مستخدم</option>
                               <option value="control">Control (دعم/صيانة)</option>
+                              <option value="manager">مدير</option>
                               <option value="admin">أدمن</option>
                             </select>
                           )}

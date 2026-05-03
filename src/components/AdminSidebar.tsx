@@ -33,16 +33,18 @@ type LinkItem = {
   controlOnly?: boolean;
 };
 
-const allLinks: (LinkItem & { authOnly?: boolean })[] = [
+type ExtLink = LinkItem & { authOnly?: boolean; managerOnly?: boolean };
+
+const allLinks: ExtLink[] = [
   { to: "/", label: "الرئيسية", Icon: Home },
   { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
   { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
   { to: "/control", label: "لوحة الكنترول", Icon: Wrench, controlOnly: true },
-  { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, adminOnly: true },
+  { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, managerOnly: true },
   { to: "/admin/stats", label: "إحصائيات السيرفر", Icon: Activity, adminOnly: true },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
-  { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, adminOnly: true },
-  { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, adminOnly: true },
+  { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
+  { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
   { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
@@ -50,7 +52,7 @@ const allLinks: (LinkItem & { authOnly?: boolean })[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, isControl, user, loading } = useAuth();
+  const { isAdmin, isControl, isManager, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -89,7 +91,8 @@ export const AdminSidebar = () => {
   const links = allLinks.filter(
     (l) =>
       (!l.adminOnly || isAdmin) &&
-      (!l.controlOnly || isControl || isAdmin) &&
+      (!l.controlOnly || isControl || isAdmin || isManager) &&
+      (!l.managerOnly || isManager || isAdmin) &&
       (!l.authOnly || !!user),
   );
 
@@ -100,9 +103,11 @@ export const AdminSidebar = () => {
 
   const title = isAdmin
     ? "لوحة الأدمن"
-    : isControl
-      ? "لوحة الكنترول"
-      : "القائمة";
+    : isManager
+      ? "لوحة المدير"
+      : isControl
+        ? "لوحة الكنترول"
+        : "القائمة";
 
   return (
     <>
