@@ -8,6 +8,7 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isControl, setIsControl] = useState(false);
+  const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
     const fetchRoles = async (uid: string) => {
@@ -18,6 +19,7 @@ export const useAuth = () => {
       const roles = (data ?? []).map((r) => r.role as string);
       setIsAdmin(roles.includes("admin"));
       setIsControl(roles.includes("control"));
+      setIsManager(roles.includes("manager"));
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
@@ -28,6 +30,7 @@ export const useAuth = () => {
       } else {
         setIsAdmin(false);
         setIsControl(false);
+        setIsManager(false);
       }
     });
 
@@ -43,5 +46,5 @@ export const useAuth = () => {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  return { session, user, loading, isAdmin, isControl };
+  return { session, user, loading, isAdmin, isControl, isManager };
 };
