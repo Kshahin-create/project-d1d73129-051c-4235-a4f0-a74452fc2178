@@ -56,6 +56,57 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          actor_role: string | null
+          after_data: Json | null
+          before_data: Json | null
+          changed_fields: string[] | null
+          context: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_table: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_fields?: string[] | null
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_table: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_fields?: string[] | null
+          context?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_table?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       booking_units: {
         Row: {
           activity: string | null
