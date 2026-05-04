@@ -163,6 +163,7 @@ export type Database = {
           customer_phone: string
           id: string
           notes: string | null
+          offer_image_url: string | null
           status: string
           total_area: number
           total_price: number
@@ -179,6 +180,7 @@ export type Database = {
           customer_phone: string
           id?: string
           notes?: string | null
+          offer_image_url?: string | null
           status?: string
           total_area?: number
           total_price?: number
@@ -195,6 +197,7 @@ export type Database = {
           customer_phone?: string
           id?: string
           notes?: string | null
+          offer_image_url?: string | null
           status?: string
           total_area?: number
           total_price?: number
@@ -481,10 +484,12 @@ export type Database = {
       tenants: {
         Row: {
           activity_type: string | null
+          booking_id: string | null
           business_name: string | null
           created_at: string
           id: string
           notes: string | null
+          offer_image_url: string | null
           phone: string | null
           start_date: string | null
           tenant_name: string
@@ -493,10 +498,12 @@ export type Database = {
         }
         Insert: {
           activity_type?: string | null
+          booking_id?: string | null
           business_name?: string | null
           created_at?: string
           id?: string
           notes?: string | null
+          offer_image_url?: string | null
           phone?: string | null
           start_date?: string | null
           tenant_name: string
@@ -505,10 +512,12 @@ export type Database = {
         }
         Update: {
           activity_type?: string | null
+          booking_id?: string | null
           business_name?: string | null
           created_at?: string
           id?: string
           notes?: string | null
+          offer_image_url?: string | null
           phone?: string | null
           start_date?: string | null
           tenant_name?: string
@@ -673,6 +682,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
+      confirm_booking: { Args: { _booking_id: string }; Returns: undefined }
       create_booking: {
         Args: {
           _business_name: string
