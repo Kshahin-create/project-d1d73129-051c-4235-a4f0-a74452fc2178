@@ -81,6 +81,7 @@ const Profile = () => {
           business_name: row?.business_name ?? "",
           activity_type: row?.activity_type ?? "",
           notes: row?.notes ?? "",
+          avatar_url: (row as any)?.avatar_url ?? null,
         });
         setLoading(false);
       });
