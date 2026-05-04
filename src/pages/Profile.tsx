@@ -338,6 +338,7 @@ const Profile = () => {
 
           {/* أمان الحساب */}
           <div className="mt-6 space-y-6">
+            <PasswordCard hasPassword={hasPassword} />
             <LinkedAccounts />
             <TwoFactorSettings />
           </div>
