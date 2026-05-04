@@ -267,6 +267,123 @@ async function deleteTenant(id: string) {
   return json({ success: true });
 }
 
+// ---------- Units write ----------
+async function updateUnit(id: string, body: any) {
+  const allowed: Record<string, any> = {};
+  for (const k of ["unit_type", "area", "activity", "price", "status", "unit_number", "building_number"]) {
+    if (k in body) allowed[k] = body[k];
+  }
+  if (Object.keys(allowed).length === 0) return err("No valid fields to update", 400);
+  if (allowed.status && !["available", "rented", "reserved"].includes(allowed.status)) {
+    return err("Invalid status. Allowed: available, rented, reserved", 400);
+  }
+  const { data, error } = await admin.from("units").update(allowed).eq("id", id).select().single();
+  if (error) return err(error.message, 400);
+  return json({ data });
+}
+
+async function createUnit(body: any) {
+  if (body?.building_number == null || body?.unit_number == null) {
+    return err("building_number and unit_number are required", 400);
+  }
+  const { data, error } = await admin.from("units").insert({
+    building_number: body.building_number,
+    unit_number: body.unit_number,
+    unit_type: body.unit_type ?? null,
+    area: body.area ?? 0,
+    activity: body.activity ?? null,
+    price: body.price ?? 0,
+    status: body.status ?? "available",
+  }).select().single();
+  if (error) return err(error.message, 400);
+  return json({ data }, 201);
+}
+
+async function deleteUnit(id: string) {
+  const { error } = await admin.from("units").delete().eq("id", id);
+  if (error) return err(error.message, 400);
+  return json({ success: true });
+}
+
+// ---------- Bookings read/update ----------
+async function listBookings(url: URL) {
+  let q = admin.from("bookings").select("*, booking_units(*)").limit(500);
+  const status = url.searchParams.get("status");
+  const userId = url.searchParams.get("user_id");
+  if (status) q = q.eq("status", status);
+  if (userId) q = q.eq("user_id", userId);
+  const { data, error } = await q.order("created_at", { ascending: false });
+  if (error) return err(error.message, 500);
+  return json({ data, count: data?.length ?? 0 });
+}
+
+async function getBooking(id: string) {
+  const { data, error } = await admin
+    .from("bookings")
+    .select("*, booking_units(*)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) return err(error.message, 500);
+  if (!data) return err("Booking not found", 404);
+  return json({ data });
+}
+
+async function updateBooking(id: string, body: any) {
+  const allowed: Record<string, any> = {};
+  for (const k of ["status", "notes", "whatsapp_sent"]) if (k in body) allowed[k] = body[k];
+  if (allowed.status && !["pending", "confirmed", "cancelled"].includes(allowed.status)) {
+    return err("Invalid status. Allowed: pending, confirmed, cancelled", 400);
+  }
+  const { data, error } = await admin.from("bookings").update(allowed).eq("id", id).select().single();
+  if (error) return err(error.message, 400);
+  return json({ data });
+}
+
+// ---------- Customers ----------
+async function listCustomers(url: URL) {
+  let q = admin.from("customer_profiles").select("*").limit(1000);
+  const search = url.searchParams.get("search");
+  if (search) q = q.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%,email.ilike.%${search}%`);
+  const { data, error } = await q.order("created_at", { ascending: false });
+  if (error) return err(error.message, 500);
+  return json({ data, count: data?.length ?? 0 });
+}
+
+async function getCustomer(userId: string) {
+  const { data, error } = await admin
+    .from("customer_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) return err(error.message, 500);
+  if (!data) return err("Customer not found", 404);
+  return json({ data });
+}
+
+// ---------- Users ----------
+async function listUsers() {
+  const { data: profiles, error } = await admin.from("profiles").select("*").limit(1000);
+  if (error) return err(error.message, 500);
+  const { data: roles } = await admin.from("user_roles").select("user_id, role");
+  const result = (profiles ?? []).map((p) => ({
+    ...p,
+    roles: (roles ?? []).filter((r) => r.user_id === p.user_id).map((r) => r.role),
+  }));
+  return json({ data: result, count: result.length });
+}
+
+// ---------- Audit log ----------
+async function listAuditLog(url: URL) {
+  let q = admin.from("audit_log").select("*").limit(500);
+  const table = url.searchParams.get("table");
+  const action = url.searchParams.get("action");
+  if (table) q = q.eq("entity_table", table);
+  if (action) q = q.eq("action", action);
+  const { data, error } = await q.order("created_at", { ascending: false });
+  if (error) return err(error.message, 500);
+  return json({ data, count: data?.length ?? 0 });
+}
+
 async function getStats() {
   const { data: units } = await admin
     .from("units")
@@ -383,11 +500,21 @@ Deno.serve(async (req) => {
         "GET /buildings/:number",
         "GET /units",
         "GET /units/:id",
+        "POST /units",
+        "PATCH /units/:id",
+        "DELETE /units/:id",
         "POST /bookings",
+        "GET /bookings",
+        "GET /bookings/:id",
+        "PATCH /bookings/:id",
         "GET /tenants",
         "POST /tenants",
         "PATCH /tenants/:id",
         "DELETE /tenants/:id",
+        "GET /customers",
+        "GET /customers/:user_id",
+        "GET /users",
+        "GET /audit-log",
         "GET /stats",
         "GET /stats/overview?days=N",
       ],
@@ -425,11 +552,64 @@ Deno.serve(async (req) => {
       const g = requireScope(ctx, "read");
       return g ?? (await getUnit(unitMatch[1]));
     }
+    // POST /units
+    if (path === "/units" && req.method === "POST") {
+      const g = requireScope(ctx, "write");
+      if (g) return g;
+      return await createUnit(await req.json());
+    }
+    // PATCH /units/:id
+    if (unitMatch && req.method === "PATCH") {
+      const g = requireScope(ctx, "write");
+      if (g) return g;
+      return await updateUnit(unitMatch[1], await req.json());
+    }
+    // DELETE /units/:id
+    if (unitMatch && req.method === "DELETE") {
+      const g = requireScope(ctx, "admin");
+      return g ?? (await deleteUnit(unitMatch[1]));
+    }
     // POST /bookings
     if (path === "/bookings" && req.method === "POST") {
       const g = requireScope(ctx, "read"); // bookings allowed for any authed key
       if (g) return g;
       return await createBooking(await req.json());
+    }
+    // GET /bookings
+    if (path === "/bookings" && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await listBookings(url));
+    }
+    // GET/PATCH /bookings/:id
+    const bookingMatch = path.match(/^\/bookings\/([0-9a-f-]{36})$/i);
+    if (bookingMatch && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await getBooking(bookingMatch[1]));
+    }
+    if (bookingMatch && req.method === "PATCH") {
+      const g = requireScope(ctx, "write");
+      if (g) return g;
+      return await updateBooking(bookingMatch[1], await req.json());
+    }
+    // /customers
+    if (path === "/customers" && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await listCustomers(url));
+    }
+    const customerMatch = path.match(/^\/customers\/([0-9a-f-]{36})$/i);
+    if (customerMatch && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await getCustomer(customerMatch[1]));
+    }
+    // /users
+    if (path === "/users" && req.method === "GET") {
+      const g = requireScope(ctx, "admin");
+      return g ?? (await listUsers());
+    }
+    // /audit-log
+    if (path === "/audit-log" && req.method === "GET") {
+      const g = requireScope(ctx, "admin");
+      return g ?? (await listAuditLog(url));
     }
     // /tenants
     if (path === "/tenants" && req.method === "GET") {
