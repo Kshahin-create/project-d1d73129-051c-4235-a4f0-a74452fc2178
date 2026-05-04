@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     const normalized = normalizePhone(phone);
     if (!normalized) {
       return new Response(JSON.stringify({ error: "رقم جوال غير صالح" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
           error: `تم تجاوز عدد المحاولات المسموح بها. حاول مجدداً بعد ${hours} ساعة.`,
         }),
         {
-          status: 429,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "لا يوجد حساب بهذا الرقم" }),
           {
-            status: 404,
+            status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           },
         );
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "تعذر إرسال الرسالة" }),
         {
-          status: 502,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );

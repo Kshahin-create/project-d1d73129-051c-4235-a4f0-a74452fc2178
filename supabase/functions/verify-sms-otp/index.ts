@@ -57,13 +57,13 @@ Deno.serve(async (req) => {
     const normalized = normalizePhone(phone);
     if (!normalized) {
       return new Response(JSON.stringify({ error: "رقم جوال غير صالح" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (!code || typeof code !== "string" || !/^\d{6}$/.test(code)) {
       return new Response(JSON.stringify({ error: "رمز غير صالح" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "كلمة المرور يجب ألا تقل عن 8 أحرف" }),
         {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "لا يوجد رمز نشط، أعد طلب الإرسال" }),
         {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "انتهت صلاحية الرمز، أعد الطلب" }),
         {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "تم تجاوز عدد المحاولات" }),
         {
-          status: 429,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
         .update({ attempts: otp.attempts + 1 })
         .eq("id", otp.id);
       return new Response(JSON.stringify({ error: "رمز غير صحيح" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "هذا الرقم مسجل مسبقاً، استخدم تسجيل الدخول" }),
           {
-            status: 409,
+            status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           },
         );
@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!prof?.user_id) {
       return new Response(JSON.stringify({ error: "لا يوجد حساب بهذا الرقم" }), {
-        status: 404,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
