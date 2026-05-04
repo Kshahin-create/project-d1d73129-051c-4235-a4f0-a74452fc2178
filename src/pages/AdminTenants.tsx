@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Lock, Search, ArrowRight, Phone, Building2, Pencil, Trash2 } from "lucide-react";
+import { Users, Lock, Search, ArrowRight, Phone, Building2, Pencil, Trash2, FileImage } from "lucide-react";
 
 interface TenantRow {
   id: string;
