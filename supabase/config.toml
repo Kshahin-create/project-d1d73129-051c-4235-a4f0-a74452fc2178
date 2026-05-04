@@ -13,6 +13,10 @@ project_id = "wqzseofoerwevfebguse"
     verify_jwt = false
   [functions.verify-otp]
     verify_jwt = false
+  [functions.send-sms-otp]
+    verify_jwt = false
+  [functions.verify-sms-otp]
+    verify_jwt = false
   [functions.send-transactional-email]
     verify_jwt = true
   [functions.preview-transactional-email]
