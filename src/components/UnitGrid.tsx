@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { getPlanLayout } from "@/data/buildingPlans";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UnitGridProps {
   buildingNumber: number;
