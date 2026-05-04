@@ -19,6 +19,8 @@ interface UnitGridProps {
 export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, planImage }: UnitGridProps) => {
   const [zoomed, setZoomed] = useState(false);
   const [hoveredUnit, setHoveredUnit] = useState<number | null>(null);
+  const { isAdmin, isManager, isControl } = useAuth();
+  const canDistinguish = isAdmin || isManager || isControl;
   const layout = getPlanLayout(buildingNumber);
   const unitsByNumber = new Map(units.map((u) => [u.unitNumber, u]));
   const selectedSet = new Set(selectedUnits);
