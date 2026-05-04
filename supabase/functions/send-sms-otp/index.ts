@@ -126,8 +126,10 @@ Deno.serve(async (req) => {
     });
     if (insertErr) throw insertErr;
 
-    // Send via OurSMS
-    const body = `رمز التحقق الخاص بك في MNI City: ${code}\nصالح لمدة ${OTP_TTL_MINUTES} دقائق.`;
+    // Send via OurSMS — must match an approved template exactly
+    const body = purposeVal === "reset"
+      ? `لإعادة تعيين كلمة المرور استخدم الرمز ${code}`
+      : `لتأكيد العملية استخدم الرمز ${code}`;
     const resp = await fetch("https://api.oursms.com/msgs/sms", {
       method: "POST",
       headers: {
