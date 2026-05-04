@@ -138,8 +138,10 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
-        <LegendDot colorClass="bg-blue-500/40 border-2 border-blue-500/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
-        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
+        {canDistinguish && (
+          <LegendDot colorClass="bg-blue-500/40 border-2 border-blue-500/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+        )}
+        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label={canDistinguish ? "مؤجر" : "غير متاح"} icon={<Lock className="h-3 w-3" />} />
       </div>
 
       {/* Units grid (alternative quick selection) */}
