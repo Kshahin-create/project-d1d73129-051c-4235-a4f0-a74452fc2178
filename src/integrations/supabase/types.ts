@@ -235,6 +235,7 @@ export type Database = {
       customer_profiles: {
         Row: {
           activity_type: string | null
+          avatar_url: string | null
           business_name: string | null
           created_at: string
           email: string | null
@@ -247,6 +248,7 @@ export type Database = {
         }
         Insert: {
           activity_type?: string | null
+          avatar_url?: string | null
           business_name?: string | null
           created_at?: string
           email?: string | null
@@ -259,6 +261,7 @@ export type Database = {
         }
         Update: {
           activity_type?: string | null
+          avatar_url?: string | null
           business_name?: string | null
           created_at?: string
           email?: string | null
