@@ -78,10 +78,11 @@ const AdminBookings = () => {
   }, [rows, search, statusFilter]);
 
   const updateStatus = async (id: string, status: "confirmed" | "cancelled") => {
-    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    const rpc = status === "confirmed" ? "confirm_booking" : "cancel_booking";
+    const { error } = await supabase.rpc(rpc, { _booking_id: id });
     if (error) toast.error("فشل التحديث: " + error.message);
     else {
-      toast.success("تم تحديث الحالة");
+      toast.success(status === "confirmed" ? "تم التأكيد ونقل الوحدات للمؤجرين" : "تم الإلغاء وإرجاع الوحدات");
       load();
     }
   };
