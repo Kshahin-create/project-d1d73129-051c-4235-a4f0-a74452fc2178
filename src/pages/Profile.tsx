@@ -58,6 +58,15 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
+  const [hasPassword, setHasPassword] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.auth.getUserIdentities().then(({ data }) => {
+      const ids = data?.identities ?? [];
+      setHasPassword(ids.some((i) => i.provider === "email"));
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!authLoading && !user) {
