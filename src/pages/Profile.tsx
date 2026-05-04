@@ -156,23 +156,48 @@ const Profile = () => {
             <ArrowRight className="h-4 w-4" /> العودة للرئيسية
           </Link>
 
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
-            <div className="mb-6 flex items-center gap-3 border-b border-border pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <UserCircle2 className="h-6 w-6" />
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
+            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-l from-primary/15 via-accent/10 to-transparent" />
+            <div className="relative">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:gap-6">
+                <AvatarUpload
+                  userId={user.id}
+                  avatarUrl={data.avatar_url}
+                  fullName={data.full_name || user.email || ""}
+                  onChange={(url) => setData((d) => ({ ...d, avatar_url: url }))}
+                />
+                <div className="flex-1 text-center sm:text-right">
+                  <h1 className="font-display text-2xl font-extrabold">
+                    {data.full_name || "حسابي"}
+                  </h1>
+                  <div className="mt-1 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
+                    {data.email && (
+                      <span dir="ltr" className="inline-flex items-center gap-1">
+                        <Mail className="h-3 w-3" /> {data.email}
+                      </span>
+                    )}
+                    {data.phone && (
+                      <span dir="ltr" className="inline-flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {data.phone}
+                      </span>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary">
+                      <Sparkles className="h-3 w-3" /> مسؤول
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  خروج
+                </button>
               </div>
-              <div className="flex-1">
-                <h1 className="font-display text-xl font-extrabold">حسابي</h1>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                خروج
-              </button>
             </div>
+            <div className="mt-6 border-t border-border pt-6">
 
             {loading ? (
               <div className="py-10 text-center text-sm text-muted-foreground">
