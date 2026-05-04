@@ -212,7 +212,17 @@ const AdminTenants = () => {
                   {t.notes && (
                     <p className="mt-2 rounded-lg bg-secondary p-2 text-xs text-muted-foreground">{t.notes}</p>
                   )}
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {t.offer_image_url && (
+                      <a
+                        href={t.offer_image_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+                      >
+                        <FileImage className="h-3.5 w-3.5" /> عرض التأجير
+                      </a>
+                    )}
                     <button
                       onClick={() => openEdit(t)}
                       className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-border bg-card py-1.5 text-xs font-semibold hover:bg-secondary"
