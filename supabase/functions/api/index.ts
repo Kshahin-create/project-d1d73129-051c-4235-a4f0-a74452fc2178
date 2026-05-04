@@ -552,11 +552,64 @@ Deno.serve(async (req) => {
       const g = requireScope(ctx, "read");
       return g ?? (await getUnit(unitMatch[1]));
     }
+    // POST /units
+    if (path === "/units" && req.method === "POST") {
+      const g = requireScope(ctx, "write");
+      if (g) return g;
+      return await createUnit(await req.json());
+    }
+    // PATCH /units/:id
+    if (unitMatch && req.method === "PATCH") {
+      const g = requireScope(ctx, "write");
+      if (g) return g;
+      return await updateUnit(unitMatch[1], await req.json());
+    }
+    // DELETE /units/:id
+    if (unitMatch && req.method === "DELETE") {
+      const g = requireScope(ctx, "admin");
+      return g ?? (await deleteUnit(unitMatch[1]));
+    }
     // POST /bookings
     if (path === "/bookings" && req.method === "POST") {
       const g = requireScope(ctx, "read"); // bookings allowed for any authed key
       if (g) return g;
       return await createBooking(await req.json());
+    }
+    // GET /bookings
+    if (path === "/bookings" && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await listBookings(url));
+    }
+    // GET/PATCH /bookings/:id
+    const bookingMatch = path.match(/^\/bookings\/([0-9a-f-]{36})$/i);
+    if (bookingMatch && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await getBooking(bookingMatch[1]));
+    }
+    if (bookingMatch && req.method === "PATCH") {
+      const g = requireScope(ctx, "write");
+      if (g) return g;
+      return await updateBooking(bookingMatch[1], await req.json());
+    }
+    // /customers
+    if (path === "/customers" && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await listCustomers(url));
+    }
+    const customerMatch = path.match(/^\/customers\/([0-9a-f-]{36})$/i);
+    if (customerMatch && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await getCustomer(customerMatch[1]));
+    }
+    // /users
+    if (path === "/users" && req.method === "GET") {
+      const g = requireScope(ctx, "admin");
+      return g ?? (await listUsers());
+    }
+    // /audit-log
+    if (path === "/audit-log" && req.method === "GET") {
+      const g = requireScope(ctx, "admin");
+      return g ?? (await listAuditLog(url));
     }
     // /tenants
     if (path === "/tenants" && req.method === "GET") {
