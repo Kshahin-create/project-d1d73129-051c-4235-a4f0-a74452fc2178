@@ -16,6 +16,7 @@ interface TenantRow {
   phone: string | null;
   start_date: string | null;
   notes: string | null;
+  offer_image_url: string | null;
   created_at: string;
   units?: {
     unit_number: number;
