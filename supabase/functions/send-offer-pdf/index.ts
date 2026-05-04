@@ -279,6 +279,20 @@ Deno.serve(async (req) => {
 
     const tg = await sendToTelegram(imageUrl, caption);
 
+    // حفظ رابط صورة العرض في الحجز ليظهر في لوحة الإدارة
+    if (body.booking_id) {
+      try {
+        const supaUrl = Deno.env.get("SUPABASE_URL");
+        const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (supaUrl && svc) {
+          const admin = createClient(supaUrl, svc);
+          await admin.from("bookings").update({ offer_image_url: imageUrl }).eq("id", body.booking_id);
+        }
+      } catch (e) {
+        console.error("save offer_image_url failed:", e);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: tg.ok, image_url: imageUrl, telegram: tg.results }),
       { status: tg.ok ? 200 : 207, headers: { ...corsHeaders, "Content-Type": "application/json" } },
