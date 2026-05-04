@@ -34,8 +34,8 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
 
       const ringColor = isRented
         ? "hsl(var(--destructive))"
-        : isReserved
-          ? "hsl(38 92% 50%)" // amber-500
+          : isReserved
+            ? "hsl(217 91% 60%)" // blue-500
           : isSelected
             ? "hsl(var(--accent))"
             : "transparent";
@@ -53,7 +53,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
             "absolute box-border flex items-center justify-center border-0 p-0 text-[10px] font-bold transition-colors duration-200 sm:text-xs",
             "focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
             isRented && "cursor-not-allowed bg-destructive/55 text-white",
-            isReserved && "cursor-not-allowed bg-amber-500/55 text-white",
+            isReserved && "cursor-not-allowed bg-blue-500/55 text-white",
             !isLocked && !isSelected &&
               "bg-transparent text-transparent hover:bg-accent/25 hover:text-accent-foreground",
             !isLocked && isSelected && "bg-accent/55 text-accent-foreground",
@@ -133,7 +133,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
-        <LegendDot colorClass="bg-amber-500/40 border-2 border-amber-500/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-blue-500/40 border-2 border-blue-500/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
         <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
       </div>
 
@@ -159,7 +159,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
                   isRented &&
                     "cursor-not-allowed border-destructive/40 bg-destructive/10 opacity-80",
                   isReserved &&
-                    "cursor-not-allowed border-amber-500/40 bg-amber-500/10 opacity-80",
+                    "cursor-not-allowed border-blue-500/40 bg-blue-500/10 opacity-80",
                   !isLocked && !isSelected &&
                     "border-border bg-card hover:border-primary hover:shadow-card",
                   isSelected &&
@@ -182,7 +182,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
                     <Lock className="h-2.5 w-2.5" /> مؤجر
                   </div>
                 ) : isReserved ? (
-                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-amber-600">
+                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-blue-600">
                     <Lock className="h-2.5 w-2.5" /> محجوز
                   </div>
                 ) : isSelected ? (
