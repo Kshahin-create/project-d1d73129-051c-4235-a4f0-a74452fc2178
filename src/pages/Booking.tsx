@@ -211,6 +211,32 @@ const Booking = () => {
         if (tgErr) console.error("telegram notify error:", tgErr);
       });
 
+    // إرسال عرض التأجير (PDF/صورة) للتيليجرام مباشرة عند إنشاء الحجز
+    supabase.functions
+      .invoke("send-offer-pdf", {
+        body: {
+          booking_id: newId,
+          customer: {
+            fullName: customer.fullName,
+            phone: customer.phone,
+            email: customer.email || user.email || undefined,
+            business: customer.business || undefined,
+            notes: customer.notes || undefined,
+          },
+          units: selectedUnits.map((u) => ({
+            buildingNumber: u.buildingNumber,
+            unitNumber: u.unitNumber,
+            unitType: u.unitType,
+            area: u.area,
+            activity: u.activity,
+            price: u.price,
+          })),
+        },
+      })
+      .then(({ error: pdfErr }) => {
+        if (pdfErr) console.error("send-offer-pdf error:", pdfErr);
+      });
+
     // إرسال إيميل تأكيد الحجز للعميل (لا نوقف التدفق لو فشل)
     const recipientEmail = customer.email || user.email;
     if (recipientEmail) {
