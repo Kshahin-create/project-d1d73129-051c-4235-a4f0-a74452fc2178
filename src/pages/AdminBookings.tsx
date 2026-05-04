@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage } from "lucide-react";
 
 interface BookingUnitRow {
   building_number: number;
@@ -28,6 +28,7 @@ interface BookingRow {
   total_price: number;
   units_count: number;
   whatsapp_sent: boolean;
+  offer_image_url: string | null;
   created_at: string;
   booking_units?: BookingUnitRow[];
 }
@@ -77,10 +78,11 @@ const AdminBookings = () => {
   }, [rows, search, statusFilter]);
 
   const updateStatus = async (id: string, status: "confirmed" | "cancelled") => {
-    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    const rpc = status === "confirmed" ? "confirm_booking" : "cancel_booking";
+    const { error } = await supabase.rpc(rpc, { _booking_id: id });
     if (error) toast.error("فشل التحديث: " + error.message);
     else {
-      toast.success("تم تحديث الحالة");
+      toast.success(status === "confirmed" ? "تم التأكيد ونقل الوحدات للمؤجرين" : "تم الإلغاء وإرجاع الوحدات");
       load();
     }
   };
@@ -216,22 +218,34 @@ const AdminBookings = () => {
                     <p className="mt-2 rounded-lg bg-secondary p-2 text-xs text-muted-foreground">{b.notes}</p>
                   )}
 
-                  {b.status === "pending" && (
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => updateStatus(b.id, "confirmed")}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {b.offer_image_url && (
+                      <a
+                        href={b.offer_image_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
                       >
-                        <CheckCircle2 className="h-3 w-3" /> تأكيد
-                      </button>
-                      <button
-                        onClick={() => updateStatus(b.id, "cancelled")}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive/10 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
-                      >
-                        <XCircle className="h-3 w-3" /> إلغاء
-                      </button>
-                    </div>
-                  )}
+                        <FileImage className="h-3.5 w-3.5" /> عرض التأجير
+                      </a>
+                    )}
+                    {b.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => updateStatus(b.id, "confirmed")}
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
+                        >
+                          <CheckCircle2 className="h-3 w-3" /> تأكيد ونقل للمؤجرين
+                        </button>
+                        <button
+                          onClick={() => updateStatus(b.id, "cancelled")}
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive/10 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
+                        >
+                          <XCircle className="h-3 w-3" /> إلغاء
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -1,4 +1,5 @@
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
 interface Unit {
   buildingNumber: number;
@@ -277,6 +278,20 @@ Deno.serve(async (req) => {
     ].filter(Boolean).join("\n");
 
     const tg = await sendToTelegram(imageUrl, caption);
+
+    // حفظ رابط صورة العرض في الحجز ليظهر في لوحة الإدارة
+    if (body.booking_id) {
+      try {
+        const supaUrl = Deno.env.get("SUPABASE_URL");
+        const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (supaUrl && svc) {
+          const admin = createClient(supaUrl, svc);
+          await admin.from("bookings").update({ offer_image_url: imageUrl }).eq("id", body.booking_id);
+        }
+      } catch (e) {
+        console.error("save offer_image_url failed:", e);
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: tg.ok, image_url: imageUrl, telegram: tg.results }),
