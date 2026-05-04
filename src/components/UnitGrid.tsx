@@ -149,9 +149,11 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
         <h4 className="mb-3 font-display font-bold">أو اختر رقم الوحدة من القائمة</h4>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
-            const isRented = u.status === "rented";
-            const isReserved = u.status === "reserved";
-            const isLocked = isRented || isReserved;
+            const rawRented = u.status === "rented";
+            const rawReserved = u.status === "reserved";
+            const isRented = canDistinguish ? rawRented : (rawRented || rawReserved);
+            const isReserved = canDistinguish ? rawReserved : false;
+            const isLocked = rawRented || rawReserved;
             const isSelected = selectedSet.has(u.unitNumber);
             const isCorner = u.unitType === "ركنية";
             return (
@@ -186,7 +188,7 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
                 </div>
                 {isRented ? (
                   <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-destructive">
-                    <Lock className="h-2.5 w-2.5" /> مؤجر
+                    <Lock className="h-2.5 w-2.5" /> {canDistinguish ? "مؤجر" : "غير متاح"}
                   </div>
                 ) : isReserved ? (
                   <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-blue-600">
