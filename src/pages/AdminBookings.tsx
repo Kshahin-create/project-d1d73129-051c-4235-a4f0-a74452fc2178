@@ -28,6 +28,7 @@ interface BookingRow {
   total_price: number;
   units_count: number;
   whatsapp_sent: boolean;
+  offer_image_url: string | null;
   created_at: string;
   booking_units?: BookingUnitRow[];
 }
