@@ -29,9 +29,11 @@ export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, 
     layout?.units.map((area) => {
       const unit = unitsByNumber.get(area.unitNumber);
       if (!unit) return null;
-      const isRented = unit.status === "rented";
-      const isReserved = unit.status === "reserved";
-      const isLocked = isRented || isReserved;
+      const rawRented = unit.status === "rented";
+      const rawReserved = unit.status === "reserved";
+      const isRented = canDistinguish ? rawRented : (rawRented || rawReserved);
+      const isReserved = canDistinguish ? rawReserved : false;
+      const isLocked = rawRented || rawReserved;
       const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
 
