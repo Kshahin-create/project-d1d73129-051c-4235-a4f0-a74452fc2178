@@ -12,7 +12,7 @@ const OURSMS_API_KEY = Deno.env.get("OURSMS_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const SMS_SRC = "MNI City"; // Sender ID — must be approved in OurSMS dashboard
+const SMS_SRC = "RAWZ OTP"; // Sender ID — must be approved in OurSMS dashboard
 const OTP_TTL_MINUTES = 10;
 
 async function sha256Hex(input: string): Promise<string> {
