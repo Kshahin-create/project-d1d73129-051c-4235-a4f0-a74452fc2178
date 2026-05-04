@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Save, UserCircle2, LogOut, Package, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { ArrowRight, Save, LogOut, Package, Calendar, CheckCircle2, Clock, Mail, Phone, Sparkles } from "lucide-react";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PhoneField } from "@/components/PhoneField";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { LinkedAccounts } from "@/components/account/LinkedAccounts";
 import { TwoFactorSettings } from "@/components/account/TwoFactorSettings";
+import { AvatarUpload } from "@/components/account/AvatarUpload";
+import { PasswordCard } from "@/components/account/PasswordCard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +37,7 @@ type ProfileData = {
   business_name: string;
   activity_type: string;
   notes: string;
+  avatar_url: string | null;
 };
 
 const empty: ProfileData = {
@@ -44,6 +47,7 @@ const empty: ProfileData = {
   business_name: "",
   activity_type: "",
   notes: "",
+  avatar_url: null,
 };
 
 const Profile = () => {
