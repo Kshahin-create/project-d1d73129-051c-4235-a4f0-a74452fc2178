@@ -292,14 +292,18 @@ const Auth = () => {
   };
 
   const buildOAuthRedirect = () => {
-    // Final destination inside the web app after OAuth completes
+    // OAuth broker only allows http(s) redirect URIs registered for the project.
+    // We always return to the web /auth page, preserving the deep-link as a
+    // `redirect` query param. The post-login effect will then forward the user
+    // to the native app via ejar:// when appropriate.
     const finalUrl = new URL("/auth", window.location.origin);
-    if (redirectTo) finalUrl.searchParams.set("redirect", redirectTo);
-
-    // On mobile WebView, return to the native app via deep link so the
-    // OAuth round-trip doesn't pop the user out into an external browser.
-    if (isMobileWebView()) {
-      return `ejar://auth?url=${encodeURIComponent(finalUrl.toString())}`;
+    if (redirectTo) {
+      finalUrl.searchParams.set("redirect", redirectTo);
+    } else if (isMobileWebView()) {
+      finalUrl.searchParams.set(
+        "redirect",
+        `ejar://auth?url=${encodeURIComponent(window.location.origin + "/profile")}`,
+      );
     }
     return finalUrl.toString();
   };
