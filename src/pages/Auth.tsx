@@ -528,6 +528,27 @@ const Auth = () => {
                     actionLabel={
                       mode === "signup" ? "تأكيد وإنشاء الحساب" : "تأكيد وتغيير كلمة المرور"
                     }
+                    extraField={
+                      <FieldWithIcon
+                        icon={Lock}
+                        label={mode === "signup" ? "كلمة المرور الجديدة" : "كلمة المرور الجديدة"}
+                        required
+                      >
+                        <input
+                          type="password"
+                          required
+                          minLength={8}
+                          value={mode === "signup" ? password : newPassword}
+                          onChange={(e) =>
+                            mode === "signup"
+                              ? setPassword(e.target.value)
+                              : setNewPassword(e.target.value)
+                          }
+                          className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                          placeholder="٨ أحرف على الأقل"
+                        />
+                      </FieldWithIcon>
+                    }
                   />
                 )}
 
