@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.mnicity.ejar",
+      "sha256_cert_fingerprints": [
+        "c73cc9bd379d22a0fe2722d8d5101a47911b4aa9"
+      ]
+    }
+  }
+]

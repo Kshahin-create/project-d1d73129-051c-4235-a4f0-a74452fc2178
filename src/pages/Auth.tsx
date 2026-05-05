@@ -103,7 +103,14 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && user && !mfaChallenge) {
-      if (redirectTo) navigate(redirectTo);
+      if (redirectTo) {
+        // External / deep-link redirects (e.g. ejar://auth?url=...) must use full navigation
+        if (/^([a-z][a-z0-9+.-]*:)/i.test(redirectTo) && !redirectTo.startsWith("/")) {
+          window.location.href = redirectTo;
+        } else {
+          navigate(redirectTo);
+        }
+      }
       else if (isAdmin) navigate("/admin");
       else if (isControl) navigate("/control");
       else navigate("/profile");
@@ -265,11 +272,18 @@ const Auth = () => {
     }
   };
 
+  const buildOAuthRedirect = () => {
+    // Preserve the `redirect` param so the mobile app deep-link survives the OAuth round-trip
+    const url = new URL("/auth", window.location.origin);
+    if (redirectTo) url.searchParams.set("redirect", redirectTo);
+    return url.toString();
+  };
+
   const handleAppleSignIn = async () => {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("apple", {
-        redirect_uri: window.location.origin,
+        redirect_uri: buildOAuthRedirect(),
       });
       if (result.error) throw result.error;
     } catch (err) {
@@ -283,7 +297,7 @@ const Auth = () => {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: buildOAuthRedirect(),
       });
       if (result.error) throw result.error;
     } catch (err) {
