@@ -602,6 +602,7 @@ const OtpVerifyBox = ({
   cooldown,
   loading,
   actionLabel,
+  extraField,
 }: {
   target: string;
   code: string;
@@ -612,6 +613,7 @@ const OtpVerifyBox = ({
   cooldown: number;
   loading: boolean;
   actionLabel: string;
+  extraField?: React.ReactNode;
 }) => (
   <div className="space-y-4">
     <div className="rounded-xl border border-border bg-secondary/40 p-3 text-center text-sm">
@@ -620,6 +622,7 @@ const OtpVerifyBox = ({
         {target}
       </span>
     </div>
+    {extraField}
     <div>
       <label className="mb-1.5 block text-sm font-medium">رمز التحقق</label>
       <div className="relative">
