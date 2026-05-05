@@ -272,11 +272,36 @@ const Auth = () => {
     }
   };
 
+  const isMobileWebView = () => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    // Capacitor / Cordova injects globals
+    const w = window as unknown as {
+      Capacitor?: unknown;
+      cordova?: unknown;
+    };
+    if (w.Capacitor || w.cordova) return true;
+    // Custom UA flag for our app
+    if (/EjarApp|MniCity/i.test(ua)) return true;
+    // Generic Android WebView detection (no Chrome marker) or iOS WKWebView lacking Safari token
+    const isAndroid = /Android/i.test(ua);
+    const isAndroidWV = isAndroid && /; wv\)/i.test(ua);
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isIOSWV = isIOS && !/Safari/i.test(ua);
+    return isAndroidWV || isIOSWV;
+  };
+
   const buildOAuthRedirect = () => {
-    // Preserve the `redirect` param so the mobile app deep-link survives the OAuth round-trip
-    const url = new URL("/auth", window.location.origin);
-    if (redirectTo) url.searchParams.set("redirect", redirectTo);
-    return url.toString();
+    // Final destination inside the web app after OAuth completes
+    const finalUrl = new URL("/auth", window.location.origin);
+    if (redirectTo) finalUrl.searchParams.set("redirect", redirectTo);
+
+    // On mobile WebView, return to the native app via deep link so the
+    // OAuth round-trip doesn't pop the user out into an external browser.
+    if (isMobileWebView()) {
+      return `ejar://auth?url=${encodeURIComponent(finalUrl.toString())}`;
+    }
+    return finalUrl.toString();
   };
 
   const handleAppleSignIn = async () => {
