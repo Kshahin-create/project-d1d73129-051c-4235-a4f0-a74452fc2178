@@ -103,7 +103,14 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && user && !mfaChallenge) {
-      if (redirectTo) navigate(redirectTo);
+      if (redirectTo) {
+        // External / deep-link redirects (e.g. ejar://auth?url=...) must use full navigation
+        if (/^([a-z][a-z0-9+.-]*:)/i.test(redirectTo) && !redirectTo.startsWith("/")) {
+          window.location.href = redirectTo;
+        } else {
+          navigate(redirectTo);
+        }
+      }
       else if (isAdmin) navigate("/admin");
       else if (isControl) navigate("/control");
       else navigate("/profile");
