@@ -187,12 +187,6 @@ const Auth = () => {
       toast.error("رقم جوال غير صحيح");
       return;
     }
-    if (purpose === "signup") {
-      if (!fullName.trim() || fullName.trim().length < 3) {
-        toast.error("الاسم الكامل مطلوب");
-        return;
-      }
-    }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-sms-otp", {
