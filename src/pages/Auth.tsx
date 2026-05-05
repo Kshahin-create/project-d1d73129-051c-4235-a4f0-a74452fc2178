@@ -187,12 +187,6 @@ const Auth = () => {
       toast.error("رقم جوال غير صحيح");
       return;
     }
-    if (purpose === "signup") {
-      if (!fullName.trim() || fullName.trim().length < 3) {
-        toast.error("الاسم الكامل مطلوب");
-        return;
-      }
-    }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-sms-otp", {
@@ -462,87 +456,16 @@ const Auth = () => {
                 {/* === SIGNUP form === */}
                 {mode === "signup" && step === "form" && (
                   <div className="space-y-3.5">
-                    <FieldWithIcon icon={User} label="الاسم الكامل" required>
-                      <input
-                        type="text"
-                        required
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        maxLength={100}
-                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
-                        placeholder="محمد عبدالله السالم"
-                      />
-                    </FieldWithIcon>
                     <div>
                       <label className="mb-1.5 block text-sm font-medium">
                         رقم الجوال
                         <span className="mr-1 text-destructive">*</span>
                       </label>
                       <PhoneField value={phone} onChange={setPhone} required />
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        سنرسل لك رمز تحقق عبر SMS لإنشاء حسابك. باقي البيانات تُكمل عند الحجز.
+                      </p>
                     </div>
-                    <FieldWithIcon icon={Lock} label="كلمة المرور" required>
-                      <input
-                        type="password"
-                        required
-                        minLength={8}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
-                        placeholder="٨ أحرف على الأقل"
-                      />
-                    </FieldWithIcon>
-                    <FieldWithIcon icon={Mail} label="البريد الإلكتروني (اختياري)">
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        dir="ltr"
-                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 text-right focus:border-primary focus:outline-none"
-                        placeholder="name@example.com"
-                      />
-                    </FieldWithIcon>
-                    <FieldWithIcon
-                      icon={Briefcase}
-                      label="اسم المنشأة / النشاط التجاري"
-                    >
-                      <input
-                        type="text"
-                        value={businessName}
-                        onChange={(e) => setBusinessName(e.target.value)}
-                        maxLength={150}
-                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
-                        placeholder="مركز صيانة سيارات / محل قطع غيار..."
-                      />
-                    </FieldWithIcon>
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium">
-                        نوع النشاط
-                      </label>
-                      <select
-                        value={activityType}
-                        onChange={(e) => setActivityType(e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-3 py-2.5 focus:border-primary focus:outline-none"
-                      >
-                        <option value="">اختر نوع النشاط (اختياري)</option>
-                        <option value="مراكز صيانة سيارات">
-                          مراكز صيانة سيارات
-                        </option>
-                        <option value="محلات قطع غيار وبناشر">
-                          محلات قطع غيار وبناشر
-                        </option>
-                        <option value="أخرى">أخرى</option>
-                      </select>
-                    </div>
-                    <FieldWithIcon icon={FileText} label="ملاحظات (اختياري)">
-                      <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={2}
-                        maxLength={500}
-                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
-                        placeholder="أي تفاصيل إضافية..."
-                      />
-                    </FieldWithIcon>
                     <button
                       type="button"
                       onClick={() => sendSmsOtp("signup")}
@@ -605,6 +528,27 @@ const Auth = () => {
                     actionLabel={
                       mode === "signup" ? "تأكيد وإنشاء الحساب" : "تأكيد وتغيير كلمة المرور"
                     }
+                    extraField={
+                      <FieldWithIcon
+                        icon={Lock}
+                        label={mode === "signup" ? "كلمة المرور الجديدة" : "كلمة المرور الجديدة"}
+                        required
+                      >
+                        <input
+                          type="password"
+                          required
+                          minLength={8}
+                          value={mode === "signup" ? password : newPassword}
+                          onChange={(e) =>
+                            mode === "signup"
+                              ? setPassword(e.target.value)
+                              : setNewPassword(e.target.value)
+                          }
+                          className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                          placeholder="٨ أحرف على الأقل"
+                        />
+                      </FieldWithIcon>
+                    }
                   />
                 )}
 
@@ -658,6 +602,7 @@ const OtpVerifyBox = ({
   cooldown,
   loading,
   actionLabel,
+  extraField,
 }: {
   target: string;
   code: string;
@@ -668,6 +613,7 @@ const OtpVerifyBox = ({
   cooldown: number;
   loading: boolean;
   actionLabel: string;
+  extraField?: React.ReactNode;
 }) => (
   <div className="space-y-4">
     <div className="rounded-xl border border-border bg-secondary/40 p-3 text-center text-sm">
@@ -676,6 +622,7 @@ const OtpVerifyBox = ({
         {target}
       </span>
     </div>
+    {extraField}
     <div>
       <label className="mb-1.5 block text-sm font-medium">رمز التحقق</label>
       <div className="relative">
