@@ -11,6 +11,7 @@ import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import Auth from "./pages/Auth.tsx";
 import AuthMobileCallback from "./pages/AuthMobileCallback.tsx";
+import AuthMobileStart from "./pages/AuthMobileStart.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
 import AdminAudit from "./pages/AdminAudit.tsx";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/terms" element={<Terms />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/mobile-callback" element={<AuthMobileCallback />} />
+          <Route path="/auth/mobile/start" element={<AuthMobileStart />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/audit" element={<AdminAudit />} />

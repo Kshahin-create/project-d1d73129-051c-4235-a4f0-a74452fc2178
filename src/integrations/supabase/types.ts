@@ -397,6 +397,45 @@ export type Database = {
         }
         Relationships: []
       }
+      one_time_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          next_path: string
+          provider: string
+          refresh_token: string
+          token_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          next_path?: string
+          provider: string
+          refresh_token: string
+          token_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          next_path?: string
+          provider?: string
+          refresh_token?: string
+          token_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       phone_otps: {
         Row: {
           attempts: number
