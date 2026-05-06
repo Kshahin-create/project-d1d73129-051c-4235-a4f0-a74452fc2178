@@ -1,10 +1,13 @@
-// Issues a one-time token tied to current user's session, then 302-redirects to mobile app scheme.
+// Issues a one-time token tied to current user's session.
+// - GET (no format): 302 redirect to mobile scheme deeplink (server-side)
+// - POST or ?format=json: returns { token, deeplink } as JSON
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-refresh-token",
+  "Access-Control-Expose-Headers": "Location",
 };
 
 async function sha256(input: string): Promise<string> {
@@ -23,8 +26,9 @@ Deno.serve(async (req) => {
     const next = url.searchParams.get("next") || "/dashboard";
     const redirectUri =
       url.searchParams.get("redirect_uri") || "ejar-auth://auth";
+    const wantJson =
+      req.method === "POST" || url.searchParams.get("format") === "json";
 
-    // Auth: requires bearer token (access_token from Supabase)
     const authHeader = req.headers.get("Authorization") || "";
     const accessToken = authHeader.replace(/^Bearer\s+/i, "");
     if (!accessToken) {
@@ -34,7 +38,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // We need the refresh token too — pass it as ?refresh_token=... or header x-refresh-token
     const refreshToken =
       url.searchParams.get("refresh_token") ||
       req.headers.get("x-refresh-token") ||
@@ -50,7 +53,6 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Validate session
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${accessToken}` } },
     });
@@ -62,8 +64,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate token
-    const rawToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+    const rawToken =
+      crypto.randomUUID().replace(/-/g, "") +
+      crypto.randomUUID().replace(/-/g, "");
     const tokenHash = await sha256(rawToken);
 
     const admin = createClient(supabaseUrl, serviceKey);
@@ -82,14 +85,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 302 to mobile scheme
-    const target = `${redirectUri}?token=${encodeURIComponent(
+    const deeplink = `${redirectUri}?token=${encodeURIComponent(
       rawToken,
     )}&provider=${encodeURIComponent(provider)}&next=${encodeURIComponent(next)}`;
 
+    if (wantJson) {
+      return new Response(JSON.stringify({ token: rawToken, deeplink }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(null, {
       status: 302,
-      headers: { ...corsHeaders, Location: target },
+      headers: { ...corsHeaders, Location: deeplink },
     });
   } catch (e) {
     return new Response(
