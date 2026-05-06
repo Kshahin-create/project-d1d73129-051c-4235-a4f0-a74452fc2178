@@ -544,6 +544,10 @@ const Booking = () => {
                           {" — "} الآن أرسل التفاصيل عبر واتساب
                         </div>
                       )}
+                      <div className="rounded-xl border border-amber-500/40 bg-amber-50 p-3 text-center text-xs font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+                        ⏰ تنبيه: الحجز ساري لمدة <span className="num">48</span> ساعة فقط من وقت إتمامه.
+                        لتأكيد الحجز نهائياً يجب التواصل معنا وسداد المبلغ خلال هذه المدة، وإلا سيتم إلغاء الحجز تلقائياً وإتاحة الوحدات لغيرك.
+                      </div>
                       <WhatsAppButton
                         href={whatsapp?.appUrl ?? "#"}
                         webHref={whatsapp?.webUrl}
