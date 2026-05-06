@@ -25,6 +25,8 @@ interface Payload {
 
 const LOGO_NUKHBAT = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-nukhbat.jpeg";
 const LOGO_MAKKAH = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-makkah.jpeg";
+const SIGNATURE_IMG = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-signature.png";
+const STAMP_IMG = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-stamp.png";
 
 const esc = (s: unknown) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -65,70 +67,111 @@ function buildHtml(p: Payload): string {
 <meta charset="utf-8" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { font-family: 'Tajawal', sans-serif; color: #1a1a1a; background: #fff; }
   .page {
     width: 794px;
     min-height: 1123px;
-    padding: 28px 36px 24px;
+    padding: 24px 32px 90px;
     position: relative;
     background: #fff;
   }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; border-bottom: 2px solid #c9a961; }
-  .offer-num { font-size: 13px; background: #f3f3f3; padding: 6px 14px; border-radius: 4px; }
-  .offer-num strong { color: #1a3a6e; }
-  .logos { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
-  .logos img { height: 78px; object-fit: contain; }
-  .title { text-align: center; margin-top: 28px; }
-  .title h1 { font-size: 36px; color: #1a3a6e; font-weight: 700; display: inline-block; padding-bottom: 6px; border-bottom: 3px solid #c9a961; }
-  .title h2 { font-size: 22px; margin-top: 14px; font-weight: 700; color: #1a3a6e; }
-  .salutation { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 26px; }
-  .salutation .name { font-size: 18px; font-weight: 700; }
-  .salutation .name span { color: #1a3a6e; }
-  .salutation .date { font-size: 13px; color: #444; }
-  .intro { font-size: 13px; margin-top: 8px; color: #333; }
+  .top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 12px; border-bottom: 2px solid #c9a961;
+  }
+  .top-bar .logo-side img { height: 70px; object-fit: contain; }
+  .offer-num-center {
+    text-align: center;
+    font-size: 13px;
+    color: #1a3a6e;
+    font-weight: 700;
+    background: #f6f1e3;
+    border: 1px solid #c9a961;
+    padding: 6px 18px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .offer-num-center strong { color: #1a3a6e; font-size: 14px; }
 
-  table.info { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
-  table.info td { border: 1px solid #d8d8d8; padding: 8px 12px; }
-  table.info td.label { background: #1a3a6e; color: #fff; font-weight: 700; width: 30%; text-align: center; }
+  .title { text-align: center; margin-top: 18px; }
+  .title h1 { font-size: 30px; color: #1a3a6e; font-weight: 800; display: inline-block; padding-bottom: 4px; border-bottom: 3px solid #c9a961; }
+  .title h2 { font-size: 18px; margin-top: 10px; font-weight: 700; color: #1a3a6e; }
+
+  .salutation { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 18px; }
+  .salutation .name { font-size: 15px; font-weight: 700; }
+  .salutation .name span { color: #1a3a6e; }
+  .salutation .date { font-size: 12px; color: #444; }
+  .intro { font-size: 12.5px; margin-top: 6px; color: #333; line-height: 1.6; }
+
+  table.info { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+  table.info td { border: 1px solid #d8d8d8; padding: 6px 10px; }
+  table.info td.label { background: #1a3a6e; color: #fff; font-weight: 700; width: 28%; text-align: center; }
   table.info td.alt { background: #f6f6f6; }
 
-  .units-wrap { margin-top: 20px; border: 1px solid #1a3a6e; }
-  .units-title { background: #1a3a6e; color: #fff; text-align: center; padding: 8px; font-weight: 700; font-size: 15px; }
-  table.units { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.units th { background: #1a3a6e; color: #fff; padding: 8px 6px; font-weight: 600; }
-  table.units td { padding: 7px 6px; text-align: center; border-bottom: 1px solid #eee; }
+  .units-wrap { margin-top: 14px; border: 1px solid #1a3a6e; }
+  .units-title { background: #1a3a6e; color: #fff; text-align: center; padding: 6px; font-weight: 700; font-size: 13px; }
+  table.units { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.units th { background: #1a3a6e; color: #fff; padding: 6px 4px; font-weight: 600; }
+  table.units td { padding: 5px 4px; text-align: center; border-bottom: 1px solid #eee; }
   table.units tr:nth-child(even) td { background: #fafafa; }
-  table.units tfoot td { background: #fff; color: #c9a961; font-weight: 800; font-size: 16px; padding: 12px 6px; border-top: 2px solid #1a3a6e; }
+  table.units tfoot td { background: #fff; color: #c9a961; font-weight: 800; font-size: 14px; padding: 9px 4px; border-top: 2px solid #1a3a6e; }
   table.units tfoot td.lbl { color: #1a3a6e; }
 
-  .ready { margin-top: 22px; }
-  .ready .head { background: #c9a961; color: #fff; text-align: center; padding: 7px; font-weight: 700; font-size: 14px; }
-  .ready ul { padding: 12px 28px 8px; font-size: 12.5px; }
-  .ready li { margin-bottom: 5px; }
+  .ready { margin-top: 14px; }
+  .ready .head { background: #c9a961; color: #fff; text-align: center; padding: 6px; font-weight: 700; font-size: 12.5px; }
+  .ready ul { padding: 8px 26px 6px; font-size: 11.5px; }
+  .ready li { margin-bottom: 3px; }
 
-  .signature { margin-top: 26px; background: #1a3a6e; color: #fff; padding: 10px 16px; font-size: 22px; font-weight: 700; }
-  .sig-rows { margin-top: 14px; font-size: 13px; }
-  .sig-rows .row { display: flex; align-items: center; margin-bottom: 12px; }
-  .sig-rows .dot { width: 6px; height: 6px; background: #1a3a6e; border-radius: 50%; margin-left: 8px; }
-  .sig-rows .lbl { font-weight: 700; min-width: 110px; }
-  .sig-rows .line { flex: 1; border-bottom: 1px solid #999; height: 18px; }
+  .sig-section { margin-top: 16px; }
+  .sig-title { background: #1a3a6e; color: #fff; padding: 7px 14px; font-size: 15px; font-weight: 700; }
+  .sig-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px; margin-top: 12px;
+  }
+  .sig-box {
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    padding: 8px 10px 6px;
+    text-align: center;
+    background: #fafafa;
+    height: 130px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .sig-box .role { font-size: 12px; font-weight: 700; color: #1a3a6e; }
+  .sig-box .visual {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .sig-box .visual img.sig { height: 60px; object-fit: contain; }
+  .sig-box .visual img.stamp { height: 75px; object-fit: contain; opacity: 0.92; }
+  .sig-box .name-line {
+    border-top: 1px solid #888;
+    padding-top: 4px;
+    font-size: 11px;
+    color: #555;
+  }
 
-  .footer { position: absolute; bottom: 18px; right: 36px; left: 36px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; color: #555; border-top: 1px solid #c9a961; padding-top: 8px; }
-  .footer img { height: 50px; }
-  .footer .meta { text-align: left; line-height: 1.7; }
+  .footer {
+    position: absolute; bottom: 0; right: 0; left: 0;
+    padding: 10px 32px 12px;
+    border-top: 1px solid #c9a961;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10.5px; color: #555;
+    background: #fff;
+  }
+  .footer img { height: 42px; }
+  .footer .meta { text-align: left; line-height: 1.6; }
 </style>
 </head>
 <body>
   <div class="page">
-    <div class="header">
-      <div></div>
-      <div class="offer-num">رقم العرض &nbsp; <strong>${esc(offerNumber)}</strong></div>
-    </div>
-
-    <div class="logos">
-      <img src="${LOGO_NUKHBAT}" alt="نخبة تسكين" />
-      <img src="${LOGO_MAKKAH}" alt="المدينة الصناعية بشمال مكة المكرمة" />
+    <div class="top-bar">
+      <div class="logo-side"><img src="${LOGO_NUKHBAT}" alt="نخبة تسكين" /></div>
+      <div class="offer-num-center">رقم العرض &nbsp;<strong>${esc(offerNumber)}</strong></div>
+      <div class="logo-side"><img src="${LOGO_MAKKAH}" alt="المدينة الصناعية" /></div>
     </div>
 
     <div class="title">
@@ -181,22 +224,37 @@ function buildHtml(p: Payload): string {
       <ul>
         <li>يقوم المستأجر بالبدء بتركيب المعدات بالوحدة فور استلامها من تاريخ توقيع محضر الاستلام.</li>
         <li>يلتزم المستأجر بالتخلص ونقل المهملات والمحافظة على نظافة وسلامة الموقع طوال مدة الإيجار.</li>
-        <li>سعر الإيجار ثابت لمدة 3 سنوات إيجارية</li>
+        <li>سعر الإيجار ثابت لمدة 3 سنوات إيجارية.</li>
+        <li>هذا العرض ساري لمدة 48 ساعة فقط من تاريخ إصداره.</li>
       </ul>
     </div>
 
-    <div class="signature">التوقيع:</div>
-    <div class="sig-rows">
-      <div class="row"><span class="dot"></span><span class="lbl">المؤجر:</span><span class="line"></span></div>
-      <div class="row"><span class="dot"></span><span class="lbl">مدير التشغيل:</span><span class="line"></span></div>
-      <div class="row"><span class="dot"></span><span class="lbl">المستأجر:</span><span class="line"></span></div>
+    <div class="sig-section">
+      <div class="sig-title">التوقيعات والاعتماد</div>
+      <div class="sig-grid">
+        <div class="sig-box">
+          <div class="role">المؤجر</div>
+          <div class="visual"><img class="sig" src="${SIGNATURE_IMG}" alt="توقيع" /></div>
+          <div class="name-line">شركة القمة الهادفة الحديثة</div>
+        </div>
+        <div class="sig-box">
+          <div class="role">الختم الرسمي</div>
+          <div class="visual"><img class="stamp" src="${STAMP_IMG}" alt="ختم" /></div>
+          <div class="name-line">C.R : 7052147241</div>
+        </div>
+        <div class="sig-box">
+          <div class="role">المستأجر</div>
+          <div class="visual"></div>
+          <div class="name-line">${esc(p.customer.fullName)}</div>
+        </div>
+      </div>
     </div>
 
     <div class="footer">
       <img src="${LOGO_MAKKAH}" alt="" />
       <div class="meta">
         شركة القمة الهادفة الحديثة - رقم التسجيل الضريبي 31431941430003<br />
-        الجموم - حي النقاية - العلاء الحضرمي - 25354 الرقم الوطني: 7052147241
+        الجموم - حي النقاية - العلاء الحضرمي - 25354 - الرقم الوطني: 7052147241
       </div>
     </div>
   </div>
