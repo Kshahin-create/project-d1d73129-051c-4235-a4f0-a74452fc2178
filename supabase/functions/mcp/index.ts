@@ -1,7 +1,8 @@
-// MCP Server for Mnicejar - exposes platform data/tools to MCP clients
-// Auth: requires `X-API-Key: nkb_...` header (verified via verify_api_key RPC)
+// MCP Server for Mnicejar - exposes platform data/tools to MCP clients.
+// Auth: requires `X-API-Key: nkb_...` header (verified via verify_api_key RPC).
 import { Hono } from "hono";
 import { McpServer, StreamableHttpTransport } from "mcp-lite";
+import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -53,7 +54,9 @@ function text(payload: unknown) {
       {
         type: "text" as const,
         text:
-          typeof payload === "string" ? payload : JSON.stringify(payload, null, 2),
+          typeof payload === "string"
+            ? payload
+            : JSON.stringify(payload, null, 2),
       },
     ],
   };
@@ -62,14 +65,14 @@ function text(payload: unknown) {
 const mcp = new McpServer({
   name: "mnicejar-mcp",
   version: "1.0.0",
+  schemaAdapter: (schema) => z.toJSONSchema(schema as z.ZodType),
 });
 
 // ---------- Tools ----------
 
-mcp.tool({
-  name: "list_buildings",
+mcp.tool("list_buildings", {
   description: "قائمة العمائر مع نوعها ورقمها والإيراد السنوي المتوقع.",
-  inputSchema: { type: "object", properties: {} },
+  inputSchema: z.object({}),
   handler: async () => {
     const { data, error } = await admin
       .from("buildings")
@@ -80,26 +83,15 @@ mcp.tool({
   },
 });
 
-mcp.tool({
-  name: "list_units",
+mcp.tool("list_units", {
   description:
     "قائمة الوحدات. يمكن التصفية بالحالة (available/rented/reserved) أو رقم العمارة.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      status: {
-        type: "string",
-        enum: ["available", "rented", "reserved"],
-      },
-      building_number: { type: "number" },
-      limit: { type: "number", default: 100 },
-    },
-  },
-  handler: async (args: {
-    status?: string;
-    building_number?: number;
-    limit?: number;
-  }) => {
+  inputSchema: z.object({
+    status: z.enum(["available", "rented", "reserved"]).optional(),
+    building_number: z.number().optional(),
+    limit: z.number().optional(),
+  }),
+  handler: async (args) => {
     let q = admin
       .from("units")
       .select(
@@ -116,18 +108,13 @@ mcp.tool({
   },
 });
 
-mcp.tool({
-  name: "get_unit",
+mcp.tool("get_unit", {
   description: "تفاصيل وحدة برقم العمارة ورقم الوحدة.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      building_number: { type: "number" },
-      unit_number: { type: "number" },
-    },
-    required: ["building_number", "unit_number"],
-  },
-  handler: async (args: { building_number: number; unit_number: number }) => {
+  inputSchema: z.object({
+    building_number: z.number(),
+    unit_number: z.number(),
+  }),
+  handler: async (args) => {
     const { data, error } = await admin
       .from("units")
       .select("*")
@@ -139,11 +126,36 @@ mcp.tool({
   },
 });
 
-mcp.tool({
-  name: "stats_overview",
+mcp.tool("search_units", {
   description:
-    "إحصائيات سريعة: عدد الوحدات حسب الحالة وعدد الحجوزات وإجمالي الإيراد المتوقع.",
-  inputSchema: { type: "object", properties: {} },
+    "بحث عن وحدات متاحة بحدّ أعلى للسعر و/أو حدّ أدنى للمساحة و/أو نوع وحدة.",
+  inputSchema: z.object({
+    max_price: z.number().optional(),
+    min_area: z.number().optional(),
+    unit_type: z.string().optional(),
+    limit: z.number().optional(),
+  }),
+  handler: async (args) => {
+    let q = admin
+      .from("units")
+      .select(
+        "id,building_number,unit_number,unit_type,area,activity,price,status",
+      )
+      .eq("status", "available")
+      .limit(args.limit ?? 50);
+    if (args.max_price) q = q.lte("price", args.max_price);
+    if (args.min_area) q = q.gte("area", args.min_area);
+    if (args.unit_type) q = q.eq("unit_type", args.unit_type);
+    const { data, error } = await q.order("price");
+    if (error) return text({ error: error.message });
+    return text(data);
+  },
+});
+
+mcp.tool("stats_overview", {
+  description:
+    "إحصائيات سريعة: عدد الوحدات حسب الحالة، عدد الحجوزات، وإجمالي الإيراد السنوي المتوقع.",
+  inputSchema: z.object({}),
   handler: async () => {
     const [units, bookings, buildings] = await Promise.all([
       admin.from("units").select("status,price,area"),
@@ -170,20 +182,13 @@ mcp.tool({
   },
 });
 
-mcp.tool({
-  name: "list_bookings",
+mcp.tool("list_bookings", {
   description: "آخر الحجوزات. يمكن التصفية بالحالة.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      status: {
-        type: "string",
-        enum: ["pending", "confirmed", "cancelled", "expired"],
-      },
-      limit: { type: "number", default: 50 },
-    },
-  },
-  handler: async (args: { status?: string; limit?: number }) => {
+  inputSchema: z.object({
+    status: z.enum(["pending", "confirmed", "cancelled", "expired"]).optional(),
+    limit: z.number().optional(),
+  }),
+  handler: async (args) => {
     let q = admin
       .from("bookings")
       .select(
@@ -198,15 +203,10 @@ mcp.tool({
   },
 });
 
-mcp.tool({
-  name: "get_booking",
+mcp.tool("get_booking", {
   description: "تفاصيل حجز معيّن مع الوحدات المرتبطة به.",
-  inputSchema: {
-    type: "object",
-    properties: { id: { type: "string" } },
-    required: ["id"],
-  },
-  handler: async (args: { id: string }) => {
+  inputSchema: z.object({ id: z.string() }),
+  handler: async (args) => {
     const { data: booking, error } = await admin
       .from("bookings")
       .select("*")
@@ -222,41 +222,6 @@ mcp.tool({
   },
 });
 
-mcp.tool({
-  name: "search_units",
-  description:
-    "بحث عن وحدات متاحة بحدّ أعلى للسعر و/أو حدّ أدنى للمساحة و/أو نوع وحدة.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      max_price: { type: "number" },
-      min_area: { type: "number" },
-      unit_type: { type: "string" },
-      limit: { type: "number", default: 50 },
-    },
-  },
-  handler: async (args: {
-    max_price?: number;
-    min_area?: number;
-    unit_type?: string;
-    limit?: number;
-  }) => {
-    let q = admin
-      .from("units")
-      .select(
-        "id,building_number,unit_number,unit_type,area,activity,price,status",
-      )
-      .eq("status", "available")
-      .limit(args.limit ?? 50);
-    if (args.max_price) q = q.lte("price", args.max_price);
-    if (args.min_area) q = q.gte("area", args.min_area);
-    if (args.unit_type) q = q.eq("unit_type", args.unit_type);
-    const { data, error } = await q.order("price");
-    if (error) return text({ error: error.message });
-    return text(data);
-  },
-});
-
 // ---------- HTTP transport ----------
 
 const transport = new StreamableHttpTransport();
@@ -264,9 +229,9 @@ const handler = transport.bind(mcp);
 
 const app = new Hono();
 
-app.options("/*", (c) => new Response("ok", { headers: corsHeaders }));
+app.options("/*", () => new Response("ok", { headers: corsHeaders }));
 
-app.get("/mcp/health", (c) =>
+app.get("/mcp/health", () =>
   new Response(
     JSON.stringify({ ok: true, name: "mnicejar-mcp", version: "1.0.0" }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -274,7 +239,6 @@ app.get("/mcp/health", (c) =>
 );
 
 app.all("/*", async (c) => {
-  // Auth gate
   const auth = await verifyApiKey(c.req.raw);
   if (!auth) {
     return new Response(
@@ -289,7 +253,6 @@ app.all("/*", async (c) => {
   }
 
   const res = await handler(c.req.raw);
-  // Merge CORS into MCP response
   const headers = new Headers(res.headers);
   for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
   return new Response(res.body, { status: res.status, headers });
