@@ -143,7 +143,7 @@ const AdminBookings = () => {
             />
           </div>
           <div className="flex gap-1 rounded-xl border border-border bg-card p-1">
-            {(["all", "pending", "confirmed", "cancelled"] as const).map((s) => (
+            {(["all", "pending", "confirmed", "cancelled", "expired"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
