@@ -25,3 +25,7 @@ project_id = "wqzseofoerwevfebguse"
     verify_jwt = false
   [functions.handle-email-suppression]
     verify_jwt = false
+  [functions.mobile-token-issue]
+    verify_jwt = false
+  [functions.mobile-token-exchange]
+    verify_jwt = false
