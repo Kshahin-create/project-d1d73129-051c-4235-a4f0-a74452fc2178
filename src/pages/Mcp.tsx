@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2 } from "lucide-react";
 import {
   Bot,
   KeyRound,
@@ -45,6 +47,17 @@ const TOOLS = [
 ];
 
 const Mcp = () => {
+  const { isAdmin, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  if (!isAdmin) return <Navigate to="/" replace />;
+
   const claudeConfig = `{
   "mcpServers": {
     "mnicejar": {

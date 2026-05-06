@@ -20,6 +20,7 @@ import {
   Code2,
   Wrench,
   Activity,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,7 @@ const allLinks: ExtLink[] = [
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
   { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
   { to: "/api-docs", label: "توثيق الـ API", Icon: Code2, adminOnly: true },
+  { to: "/mcp", label: "خادم MCP", Icon: Bot, adminOnly: true },
 ];
 
 export const AdminSidebar = () => {
