@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, KeyRound, Trash2, QrCode, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, KeyRound, Trash2, QrCode, CheckCircle2, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
