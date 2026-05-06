@@ -1,0 +1,2 @@
+ALTER TABLE public.phone_otps DROP CONSTRAINT IF EXISTS phone_otps_purpose_check;
+ALTER TABLE public.phone_otps ADD CONSTRAINT phone_otps_purpose_check CHECK (purpose = ANY (ARRAY['signup'::text, 'reset'::text, 'mfa_recovery'::text]));

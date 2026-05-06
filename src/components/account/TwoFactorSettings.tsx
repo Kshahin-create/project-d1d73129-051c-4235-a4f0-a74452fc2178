@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, KeyRound, Trash2, QrCode, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, KeyRound, Trash2, QrCode, CheckCircle2, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -113,6 +113,51 @@ export const TwoFactorSettings = () => {
   const [aal2ChallengeId, setAal2ChallengeId] = useState<string | null>(null);
   const [aal2FactorId, setAal2FactorId] = useState<string | null>(null);
   const [aal2Verifying, setAal2Verifying] = useState(false);
+  const [smsMode, setSmsMode] = useState(false);
+  const [smsSending, setSmsSending] = useState(false);
+  const [smsCode, setSmsCode] = useState("");
+  const [smsMasked, setSmsMasked] = useState("");
+  const [smsVerifying, setSmsVerifying] = useState(false);
+
+  const startSmsRecovery = async () => {
+    setSmsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mfa-sms-recovery", {
+        body: { action: "send" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setSmsMasked((data as any)?.phone_masked || "");
+      setSmsMode(true);
+      setSmsCode("");
+      toast.success("تم إرسال رمز عبر SMS");
+    } catch (e: any) {
+      toast.error(e?.message || "تعذر إرسال الرمز");
+    } finally {
+      setSmsSending(false);
+    }
+  };
+
+  const verifySmsRecovery = async () => {
+    if (smsCode.length < 6) return toast.error("أدخل الرمز المكوّن من 6 أرقام");
+    setSmsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mfa-sms-recovery", {
+        body: { action: "verify", code: smsCode.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("تم تعطيل التحقق بخطوتين");
+      setAal2Open(false);
+      setSmsMode(false);
+      setPendingRemoveId(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "رمز غير صحيح");
+    } finally {
+      setSmsVerifying(false);
+    }
+  };
 
   const doUnenroll = async (factorId: string) => {
     const { error } = await supabase.auth.mfa.unenroll({ factorId });
@@ -295,7 +340,7 @@ export const TwoFactorSettings = () => {
       {aal2Open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => !aal2Verifying && setAal2Open(false)}
+          onClick={() => !aal2Verifying && !smsVerifying && setAal2Open(false)}
         >
           <div
             className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-elevated"
@@ -303,44 +348,102 @@ export const TwoFactorSettings = () => {
           >
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <ShieldCheck className="h-5 w-5" />
+                {smsMode ? <Smartphone className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
               </div>
               <div>
-                <h3 className="font-display text-base font-extrabold">تأكيد التعطيل</h3>
+                <h3 className="font-display text-base font-extrabold">
+                  {smsMode ? "استرداد عبر SMS" : "تأكيد التعطيل"}
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  أدخل الرمز من تطبيق المصادقة لتأكيد تعطيل التحقق بخطوتين
+                  {smsMode
+                    ? `أدخل الرمز المُرسل إلى ${smsMasked || "جوالك"}`
+                    : "أدخل الرمز من تطبيق المصادقة لتأكيد تعطيل التحقق بخطوتين"}
                 </p>
               </div>
             </div>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoFocus
-              maxLength={6}
-              value={aal2Code}
-              onChange={(e) => setAal2Code(e.target.value.replace(/\D/g, ""))}
-              placeholder="000000"
-              dir="ltr"
-              className="w-full rounded-xl border border-border bg-background px-3 py-3 text-center text-2xl tracking-[0.4em] focus:border-primary focus:outline-none"
-            />
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setAal2Open(false)}
-                disabled={aal2Verifying}
-                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
-              >
-                إلغاء
-              </button>
-              <button
-                type="button"
-                onClick={verifyAal2AndRemove}
-                disabled={aal2Verifying || aal2Code.length < 6}
-                className="flex-1 rounded-xl bg-gradient-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
-              >
-                {aal2Verifying ? "جاري التحقق..." : "تأكيد التعطيل"}
-              </button>
-            </div>
+
+            {smsMode ? (
+              <>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoFocus
+                  maxLength={6}
+                  value={smsCode}
+                  onChange={(e) => setSmsCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  dir="ltr"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-3 text-center text-2xl tracking-[0.4em] focus:border-primary focus:outline-none"
+                />
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSmsMode(false)}
+                    disabled={smsVerifying}
+                    className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                  >
+                    رجوع
+                  </button>
+                  <button
+                    type="button"
+                    onClick={verifySmsRecovery}
+                    disabled={smsVerifying || smsCode.length < 6}
+                    className="flex-1 rounded-xl bg-gradient-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                  >
+                    {smsVerifying ? "جاري التحقق..." : "تأكيد التعطيل"}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={startSmsRecovery}
+                  disabled={smsSending}
+                  className="mt-3 w-full text-xs text-primary hover:underline disabled:opacity-50"
+                >
+                  {smsSending ? "جاري الإرسال..." : "إعادة إرسال الرمز"}
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoFocus
+                  maxLength={6}
+                  value={aal2Code}
+                  onChange={(e) => setAal2Code(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  dir="ltr"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-3 text-center text-2xl tracking-[0.4em] focus:border-primary focus:outline-none"
+                />
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAal2Open(false)}
+                    disabled={aal2Verifying}
+                    className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="button"
+                    onClick={verifyAal2AndRemove}
+                    disabled={aal2Verifying || aal2Code.length < 6}
+                    className="flex-1 rounded-xl bg-gradient-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                  >
+                    {aal2Verifying ? "جاري التحقق..." : "تأكيد التعطيل"}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={startSmsRecovery}
+                  disabled={smsSending}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 text-xs text-primary hover:underline disabled:opacity-50"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  {smsSending ? "جاري الإرسال..." : "نسيت تطبيق المصادقة؟ استلم رمزًا عبر SMS"}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
