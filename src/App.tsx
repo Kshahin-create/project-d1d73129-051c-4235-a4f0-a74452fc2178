@@ -22,6 +22,7 @@ import Profile from "./pages/Profile.tsx";
 import AdminApiKeys from "./pages/AdminApiKeys.tsx";
 import AdminStats from "./pages/AdminStats.tsx";
 import ApiDocs from "./pages/ApiDocs.tsx";
+import Mcp from "./pages/Mcp.tsx";
 import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
@@ -52,6 +53,7 @@ const App = () => (
           <Route path="/admin/api-keys" element={<AdminApiKeys />} />
           <Route path="/admin/stats" element={<AdminStats />} />
           <Route path="/api-docs" element={<ApiDocs />} />
+          <Route path="/mcp" element={<Mcp />} />
           <Route path="/control" element={<ControlDashboard />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
