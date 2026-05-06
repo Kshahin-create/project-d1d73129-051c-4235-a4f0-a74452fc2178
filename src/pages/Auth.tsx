@@ -103,6 +103,13 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && user && !mfaChallenge) {
+      // If running inside our mobile WebView, route through a callback page
+      // that exposes a user-gesture button to open the native app via intent://
+      if (isMobileWebView()) {
+        const next = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard";
+        navigate(`/auth/mobile-callback?provider=google&next=${encodeURIComponent(next)}`);
+        return;
+      }
       if (redirectTo) {
         // External / deep-link redirects (e.g. ejar://auth?url=...) must use full navigation
         if (/^([a-z][a-z0-9+.-]*:)/i.test(redirectTo) && !redirectTo.startsWith("/")) {
