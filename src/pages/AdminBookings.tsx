@@ -207,6 +207,22 @@ const AdminBookings = () => {
                     </div>
                   </div>
 
+                  {b.status === "pending" && b.expires_at && (
+                    (() => {
+                      const ms = new Date(b.expires_at).getTime() - Date.now();
+                      const expired = ms <= 0;
+                      const hours = Math.max(0, Math.floor(ms / 3600000));
+                      const mins = Math.max(0, Math.floor((ms % 3600000) / 60000));
+                      return (
+                        <div className={`mt-2 rounded-lg p-2 text-center text-xs font-semibold ${expired ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-700"}`}>
+                          {expired
+                            ? "⏰ انتهت صلاحية الحجز (48 ساعة)"
+                            : <>⏰ ينتهي خلال <span className="num">{hours}</span> س <span className="num">{mins}</span> د</>}
+                        </div>
+                      );
+                    })()
+                  )}
+
                   {b.booking_units && b.booking_units.length > 0 && (
                     <div className="mt-3 space-y-1 rounded-lg bg-secondary/50 p-2 text-xs">
                       {b.booking_units.map((u, i) => (
