@@ -48,7 +48,7 @@ const AdminBookings = () => {
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired">("all");
 
   const load = async () => {
     setFetching(true);
