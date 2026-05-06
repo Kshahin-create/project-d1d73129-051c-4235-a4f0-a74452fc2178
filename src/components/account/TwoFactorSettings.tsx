@@ -107,13 +107,63 @@ export const TwoFactorSettings = () => {
     setCode("");
   };
 
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+  const [aal2Open, setAal2Open] = useState(false);
+  const [aal2Code, setAal2Code] = useState("");
+  const [aal2ChallengeId, setAal2ChallengeId] = useState<string | null>(null);
+  const [aal2FactorId, setAal2FactorId] = useState<string | null>(null);
+  const [aal2Verifying, setAal2Verifying] = useState(false);
+
+  const doUnenroll = async (factorId: string) => {
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    if (error) throw error;
+    toast.success("تم التعطيل");
+    load();
+  };
+
   const remove = async (factorId: string) => {
     if (!confirm("تعطيل هذا العامل؟ هتقدر تعيد تفعيله بعدين.")) return;
-    const { error } = await supabase.auth.mfa.unenroll({ factorId });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("تم التعطيل");
-      load();
+    try {
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+        const totp = factors.find((f) => f.factor_type === "totp" && f.status === "verified");
+        if (!totp) {
+          toast.error("لا يوجد عامل تحقق صالح");
+          return;
+        }
+        const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId: totp.id });
+        if (chErr) throw chErr;
+        setAal2FactorId(totp.id);
+        setAal2ChallengeId(ch.id);
+        setAal2Code("");
+        setPendingRemoveId(factorId);
+        setAal2Open(true);
+        return;
+      }
+      await doUnenroll(factorId);
+    } catch (e: any) {
+      toast.error(e?.message || "فشل التعطيل");
+    }
+  };
+
+  const verifyAal2AndRemove = async () => {
+    if (!aal2FactorId || !aal2ChallengeId || !pendingRemoveId) return;
+    if (aal2Code.length < 6) return toast.error("أدخل رمز TOTP المكوّن من 6 أرقام");
+    setAal2Verifying(true);
+    try {
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: aal2FactorId,
+        challengeId: aal2ChallengeId,
+        code: aal2Code.trim(),
+      });
+      if (error) throw error;
+      setAal2Open(false);
+      await doUnenroll(pendingRemoveId);
+      setPendingRemoveId(null);
+    } catch (e: any) {
+      toast.error(e?.message || "رمز غير صحيح");
+    } finally {
+      setAal2Verifying(false);
     }
   };
 
@@ -240,6 +290,59 @@ export const TwoFactorSettings = () => {
             احتياطي عند الحاجة.
           </p>
         </>
+      )}
+
+      {aal2Open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !aal2Verifying && setAal2Open(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-elevated"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-base font-extrabold">تأكيد التعطيل</h3>
+                <p className="text-xs text-muted-foreground">
+                  أدخل الرمز من تطبيق المصادقة لتأكيد تعطيل التحقق بخطوتين
+                </p>
+              </div>
+            </div>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoFocus
+              maxLength={6}
+              value={aal2Code}
+              onChange={(e) => setAal2Code(e.target.value.replace(/\D/g, ""))}
+              placeholder="000000"
+              dir="ltr"
+              className="w-full rounded-xl border border-border bg-background px-3 py-3 text-center text-2xl tracking-[0.4em] focus:border-primary focus:outline-none"
+            />
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAal2Open(false)}
+                disabled={aal2Verifying}
+                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={verifyAal2AndRemove}
+                disabled={aal2Verifying || aal2Code.length < 6}
+                className="flex-1 rounded-xl bg-gradient-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
+              >
+                {aal2Verifying ? "جاري التحقق..." : "تأكيد التعطيل"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
