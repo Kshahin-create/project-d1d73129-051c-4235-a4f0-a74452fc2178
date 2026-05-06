@@ -165,6 +165,7 @@ export type Database = {
           id: string
           notes: string | null
           offer_image_url: string | null
+          offer_number: string | null
           status: string
           total_area: number
           total_price: number
@@ -183,6 +184,7 @@ export type Database = {
           id?: string
           notes?: string | null
           offer_image_url?: string | null
+          offer_number?: string | null
           status?: string
           total_area?: number
           total_price?: number
@@ -201,6 +203,7 @@ export type Database = {
           id?: string
           notes?: string | null
           offer_image_url?: string | null
+          offer_number?: string | null
           status?: string
           total_area?: number
           total_price?: number
@@ -766,6 +769,7 @@ export type Database = {
         }
         Returns: number
       }
+      next_offer_number: { Args: { _booking_id?: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
