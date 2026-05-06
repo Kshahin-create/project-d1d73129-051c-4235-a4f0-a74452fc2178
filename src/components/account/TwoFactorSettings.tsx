@@ -291,6 +291,59 @@ export const TwoFactorSettings = () => {
           </p>
         </>
       )}
+
+      {aal2Open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !aal2Verifying && setAal2Open(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-elevated"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-base font-extrabold">تأكيد التعطيل</h3>
+                <p className="text-xs text-muted-foreground">
+                  أدخل الرمز من تطبيق المصادقة لتأكيد تعطيل التحقق بخطوتين
+                </p>
+              </div>
+            </div>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoFocus
+              maxLength={6}
+              value={aal2Code}
+              onChange={(e) => setAal2Code(e.target.value.replace(/\D/g, ""))}
+              placeholder="000000"
+              dir="ltr"
+              className="w-full rounded-xl border border-border bg-background px-3 py-3 text-center text-2xl tracking-[0.4em] focus:border-primary focus:outline-none"
+            />
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAal2Open(false)}
+                disabled={aal2Verifying}
+                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={verifyAal2AndRemove}
+                disabled={aal2Verifying || aal2Code.length < 6}
+                className="flex-1 rounded-xl bg-gradient-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
+              >
+                {aal2Verifying ? "جاري التحقق..." : "تأكيد التعطيل"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
