@@ -52,6 +52,8 @@ const AdminBookings = () => {
 
   const load = async () => {
     setFetching(true);
+    // قبل التحميل، شغّل تنظيف الحجوزات منتهية الصلاحية (48 ساعة)
+    await supabase.rpc("expire_pending_bookings" as any);
     const { data, error } = await supabase
       .from("bookings")
       .select("*, booking_units(building_number,unit_number,unit_type,area,price)")
