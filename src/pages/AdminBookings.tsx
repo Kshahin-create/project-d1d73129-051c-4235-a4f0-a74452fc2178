@@ -30,6 +30,7 @@ interface BookingRow {
   whatsapp_sent: boolean;
   offer_image_url: string | null;
   created_at: string;
+  expires_at: string;
   booking_units?: BookingUnitRow[];
 }
 
