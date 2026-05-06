@@ -324,6 +324,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // جلب/إصدار رقم العرض التسلسلي
+    try {
+      const supaUrl = Deno.env.get("SUPABASE_URL");
+      const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supaUrl && svc) {
+        const admin = createClient(supaUrl, svc);
+        const { data: oNum, error: oErr } = await admin.rpc("next_offer_number", {
+          _booking_id: body.booking_id ?? null,
+        });
+        if (!oErr && oNum) body.offer_number = String(oNum);
+      }
+    } catch (e) {
+      console.error("next_offer_number failed:", e);
+    }
+
     const html = buildHtml(body);
     const imageUrl = await renderImage(html);
 
