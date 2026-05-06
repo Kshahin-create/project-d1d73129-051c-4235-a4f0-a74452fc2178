@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, MapPin, Wrench, Cog, ZoomIn, X, Navigation, ArrowUpLeft } from "lucide-react";
+import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ZoomIn, X, Navigation } from "lucide-react";
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PROJECT, LOCATION } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.png";
 import heroBg from "@/assets/hero-bg.jpg";
+import overviewBg from "@/assets/overview-city.png";
 import landSpaces from "@/assets/land-spaces.png";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 
@@ -21,256 +22,241 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* ============== HERO — minimal, large typography ============== */}
-      <section className="relative overflow-hidden border-b border-border/60">
-        <div className="container-tight relative grid items-center gap-10 py-16 sm:py-24 lg:grid-cols-12 lg:gap-12 lg:py-32">
-          {/* Left: text */}
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={heroBg} alt="" className="h-full w-full object-cover" width={1920} height={1080} />
+          <div className="absolute inset-0 bg-gradient-to-l from-primary/95 via-primary/90 to-primary/70" />
+        </div>
+
+        <div className="container-tight relative py-16 sm:py-24">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-7"
+            className="max-w-2xl text-primary-foreground"
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              فرصة استثمارية — المرحلة الأولى
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium text-accent backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5" />
+              فرصة استثمارية — احجز وحدتك الآن
             </div>
 
-            <h1 className="mt-6 font-display text-[2.5rem] font-extrabold leading-[1.05] tracking-tight text-foreground text-balance sm:text-6xl lg:text-7xl">
+            <h1 className="mt-5 font-display text-3xl font-extrabold leading-tight text-balance sm:text-5xl">
               {PROJECT.nameAr}
-              <span className="mt-3 block font-display text-base font-medium text-muted-foreground sm:text-lg" dir="ltr">
-                {PROJECT.nameEn}
-              </span>
             </h1>
-
-            <p className="mt-8 max-w-xl text-base leading-loose text-muted-foreground sm:text-lg">
-              مشروع متكامل لمراكز صيانة السيارات ومحلات قطع الغيار والبناشر.
-              احجز وحدتك في دقائق عبر نموذج ذكي يربطك بإدارة المشروع مباشرة.
+            <p className="mt-2 font-display text-lg text-accent sm:text-xl" dir="ltr">
+              {PROJECT.nameEn}
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-3">
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">
+              مشروع متكامل يضمّ <strong className="text-accent">مراكز صيانة سيارات</strong> و
+              <strong className="text-accent"> محلات قطع غيار وبناشر</strong>. احجز وحدتك في دقائق
+              عبر نموذج ذكي يربطك مباشرة بإدارة المشروع.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 to="/booking"
-                className="group inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3.5 text-sm font-bold text-background transition hover:opacity-90"
+                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3.5 font-display text-base font-bold text-accent-foreground shadow-gold transition-transform hover:scale-[1.02]"
               >
-                ابدأ الحجز
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                ابدأ الحجز الآن
+                <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
               </Link>
               <a
                 href="#overview"
-                className="inline-flex items-center gap-2 rounded-full px-5 py-3.5 text-sm font-medium text-foreground transition hover:text-accent"
+                className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 px-6 py-3.5 font-medium text-primary-foreground backdrop-blur-sm transition hover:bg-primary-foreground/15"
               >
                 نظرة على المشروع
-                <ArrowUpLeft className="h-4 w-4" />
               </a>
             </div>
+
+            {/* Stats */}
+            <div className="mt-10 grid max-w-lg grid-cols-3 gap-3 sm:gap-6">
+              <Stat value={10} label="مباني" />
+              <Stat value={totalUnits} label="إجمالي الوحدات" />
+              <Stat value={availableUnits} label="وحدة متاحة" accent />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Overview + Master plan */}
+      <section id="overview" className="relative overflow-hidden py-12 sm:py-20">
+        <div className="absolute inset-0 -z-10">
+          <img src={overviewBg} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-background/92 sm:bg-background/85 backdrop-blur-[3px]" />
+        </div>
+        <div className="container-tight grid items-start gap-8 sm:gap-10 lg:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="rounded-2xl bg-background/70 p-4 backdrop-blur-sm sm:bg-transparent sm:p-0 sm:backdrop-blur-0"
+          >
+            <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-[11px] font-bold text-accent-foreground sm:text-xs">
+              <MapPin className="h-3.5 w-3.5" />
+              شمال مكة المكرمة
+            </div>
+            <h2 className="mt-4 font-display text-2xl font-extrabold leading-tight sm:text-4xl">
+              موقع استراتيجي لأنشطتك التجارية
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground sm:text-base sm:leading-relaxed">
+              تضم <strong className="text-foreground">المرحلة الأولى</strong> للتأجير المبكر من المشروع
+              {" "}<strong className="text-foreground">10 مبانٍ</strong> مصمّمة خصيصاً لقطاع صيانة السيارات
+              وقطع الغيار. كل وحدة <strong className="text-foreground">جاهزة للتشغيل</strong> بمواصفات عالية
+              وتسهيلات تشغيلية، بجوار <strong className="text-foreground">محطة الفحص الفني الدوري</strong>،
+              تشغيل من أول يوم عمل.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <Feature icon={<Wrench className="h-5 w-5" />} title="مراكز صيانة" desc="مباني 1-6 (144 وحدة)" to="/booking?activity=service" />
+              <Feature icon={<Cog className="h-5 w-5" />} title="قطع غيار وبناشر" desc="مباني 7-10 (84 وحدة)" to="/booking?activity=parts" />
+            </div>
           </motion.div>
 
-          {/* Right: hero image card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="relative lg:col-span-5"
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="overflow-hidden rounded-2xl border border-border bg-card shadow-elevated"
           >
-            <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card">
-              <img src={heroBg} alt="" className="aspect-[4/5] w-full object-cover" />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 via-foreground/30 to-transparent p-5 text-background">
-                <div className="text-[11px] font-medium uppercase tracking-widest opacity-80">شمال مكة المكرمة</div>
-                <div className="mt-1 font-display text-lg font-bold">10 مبانٍ • {totalUnits} وحدة</div>
+            <div className="flex items-center justify-between border-b border-border bg-secondary/50 px-5 py-3">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <MapPin className="h-4 w-4 text-accent" />
+                الماستر بلان الشامل
               </div>
+              <button
+                onClick={() => setZoomed(true)}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[10px] font-medium text-primary-foreground transition hover:bg-primary/90"
+              >
+                <ZoomIn className="h-3 w-3" /> تكبير
+              </button>
             </div>
-            <div className="absolute -bottom-4 -right-4 hidden rounded-2xl border border-border bg-background p-4 shadow-elevated sm:block">
-              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">متاح الآن</div>
-              <div className="mt-1 font-display text-3xl font-extrabold text-accent num">{availableUnits}</div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ============== STATS strip ============== */}
-      <section className="border-b border-border/60 bg-card/40">
-        <div className="container-tight grid grid-cols-3 divide-x divide-border/60 [direction:ltr] py-10 sm:py-14">
-          <StatMinimal value={10} label="مبانٍ" />
-          <StatMinimal value={totalUnits} label="إجمالي الوحدات" />
-          <StatMinimal value={availableUnits} label="متاحة للحجز" highlight />
-        </div>
-      </section>
-
-      {/* ============== OVERVIEW ============== */}
-      <section id="overview" className="py-20 sm:py-32">
-        <div className="container-tight">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">المشروع</div>
-            <h2 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-tight text-balance sm:text-5xl">
-              موقع استراتيجي مصمّم لأنشطتك التجارية
-            </h2>
-            <p className="mt-6 text-base leading-loose text-muted-foreground sm:text-lg">
-              تضم المرحلة الأولى <strong className="text-foreground">10 مبانٍ</strong> مصمّمة خصيصاً لقطاع
-              صيانة السيارات وقطع الغيار. كل وحدة جاهزة للتشغيل من أول يوم،
-              بجوار محطة الفحص الفني الدوري.
-            </p>
-          </div>
-
-          <div className="mx-auto mt-14 grid max-w-4xl gap-4 sm:grid-cols-2 sm:gap-6">
-            <FeatureCard
-              icon={<Wrench className="h-5 w-5" />}
-              title="مراكز صيانة"
-              desc="مباني 1-6 • 144 وحدة"
-              to="/booking?activity=service"
-            />
-            <FeatureCard
-              icon={<Cog className="h-5 w-5" />}
-              title="قطع غيار وبناشر"
-              desc="مباني 7-10 • 84 وحدة"
-              to="/booking?activity=parts"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ============== MASTER PLAN ============== */}
-      <section className="border-y border-border/60 bg-card/40 py-20 sm:py-28">
-        <div className="container-tight grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">الماستر بلان</div>
-            <h2 className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              نظرة شاملة على المخطط
-            </h2>
-            <p className="mt-5 text-base leading-loose text-muted-foreground">
-              تخطيط متكامل يجمع ورش السيارات ومحلات قطع الغيار والبناشر في موقع واحد،
-              مع سهولة الحركة والوصول لكل وحدة.
-            </p>
             <button
+              type="button"
               onClick={() => setZoomed(true)}
-              className="mt-7 inline-flex items-center gap-2 rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium transition hover:border-foreground"
+              className="block w-full cursor-zoom-in"
+              aria-label="تكبير الماستر بلان"
             >
-              <ZoomIn className="h-4 w-4" /> عرض المخطط بحجم كامل
+              <img
+                src={masterPlan}
+                alt="الماستر بلان الشامل للمدينة الصناعية بشمال مكة المكرمة"
+                className="w-full bg-secondary object-contain"
+                width={1536}
+                height={2048}
+                loading="lazy"
+              />
             </button>
-          </div>
-          <button
-            type="button"
-            onClick={() => setZoomed(true)}
-            className="group block overflow-hidden rounded-3xl border border-border bg-background shadow-card transition hover:shadow-elevated"
-            aria-label="تكبير الماستر بلان"
-          >
-            <img
-              src={masterPlan}
-              alt="الماستر بلان الشامل"
-              className="w-full object-contain transition-transform duration-700 group-hover:scale-[1.02]"
-              loading="lazy"
-            />
-          </button>
-        </div>
-      </section>
-
-      {/* Lightbox */}
-      <AnimatePresence>
-        {zoomed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setZoomed(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/95 p-4 backdrop-blur-sm"
-          >
-            <button
-              onClick={() => setZoomed(false)}
-              className="absolute left-4 top-4 rounded-full bg-background/10 p-2 text-background hover:bg-background/20"
-              aria-label="إغلاق"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <motion.img
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              src={masterPlan}
-              alt="الماستر بلان الشامل"
-              onClick={(e) => e.stopPropagation()}
-              className="max-h-full max-w-full rounded-xl object-contain"
-            />
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
 
-      {/* ============== LAND SPACES ============== */}
-      <section className="py-20 sm:py-28">
         <div className="container-tight">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">المساحات</div>
-            <h2 className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              مساحات مرنة لأنشطة متعددة
-            </h2>
-          </div>
-          <div className="mt-12 overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+          {/* Lightbox */}
+          <AnimatePresence>
+            {zoomed && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setZoomed(false)}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
+              >
+                <button
+                  onClick={() => setZoomed(false)}
+                  className="absolute left-4 top-4 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
+                  aria-label="إغلاق"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <motion.img
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  src={masterPlan}
+                  alt="الماستر بلان الشامل"
+                  onClick={(e) => e.stopPropagation()}
+                  className="max-h-full max-w-full rounded-xl object-contain shadow-elevated"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Land spaces visual banner — مساحات مرنة */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mt-16 overflow-hidden rounded-2xl border border-border bg-card shadow-elevated"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-secondary/50 px-5 py-3">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <Building2 className="h-4 w-4 text-accent" />
+                مساحات مرنة لأنشطة متعددة
+              </div>
+              <span className="text-xs text-muted-foreground">أرض المشروع</span>
+            </div>
             <img
               src={landSpaces}
-              alt="مساحات مرنة بأرض المشروع"
+              alt="مساحات مرنة بأرض المشروع — ورش سيارات ومحلات قطع غيار ومحطة فحص فني دوري"
               className="w-full object-cover"
               loading="lazy"
             />
-          </div>
-        </div>
-      </section>
+          </motion.div>
 
-      {/* ============== LOCATION ============== */}
-      <section className="border-t border-border/60 bg-card/40 py-20 sm:py-28">
-        <div className="container-tight">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">الموقع</div>
-              <h2 className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-                على الخريطة
-              </h2>
-              <p className="mt-3 max-w-md text-sm leading-loose text-muted-foreground">
-                <span className="font-bold text-foreground">العنوان:</span> {LOCATION.addressAr}
-              </p>
-            </div>
-            <a
-              href={LOCATION.mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-bold text-background transition hover:opacity-90"
-            >
-              <Navigation className="h-4 w-4" /> فتح في خرائط جوجل
-            </a>
-          </div>
-          <div className="mt-10 overflow-hidden rounded-3xl border border-border shadow-card">
-            <div className="aspect-[16/10] w-full sm:aspect-[16/8]">
-              <iframe
-                src={LOCATION.embedUrl}
-                title="موقع المشروع"
-                className="h-full w-full"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============== CTA ============== */}
-      <section className="py-20 sm:py-28">
-        <div className="container-tight">
-          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-foreground px-8 py-16 text-center text-background sm:px-16 sm:py-24">
-            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
-            <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-primary-glow/20 blur-3xl" />
-            <div className="relative">
-              <h3 className="mx-auto max-w-2xl font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-                جاهز لحجز وحدتك؟
-              </h3>
-              <p className="mx-auto mt-5 max-w-md text-sm text-background/70 sm:text-base">
-                أكمل خطوات الحجز بسهولة واستقبل التأكيد عبر واتساب.
-              </p>
-              <Link
-                to="/booking"
-                className="mt-9 inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 font-display text-base font-bold text-accent-foreground transition hover:scale-[1.02]"
+          {/* Project location on map */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-16 overflow-hidden rounded-2xl border border-border bg-card shadow-elevated"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-secondary/50 px-5 py-3">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <MapPin className="h-4 w-4 text-accent" />
+                موقع المشروع على الخريطة
+              </div>
+              <a
+                href={LOCATION.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:bg-primary/90"
               >
-                ابدأ الآن
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
+                <Navigation className="h-3.5 w-3.5" />
+                فتح في خرائط جوجل
+              </a>
             </div>
+            <div className="px-5 pt-4 text-sm text-muted-foreground">
+              <span className="font-bold text-foreground">العنوان:</span> {LOCATION.addressAr}
+            </div>
+            <div className="p-4">
+              <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-border sm:aspect-[16/9]">
+                <iframe
+                  src={LOCATION.embedUrl}
+                  title="موقع المشروع على خرائط جوجل"
+                  className="h-full w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="mt-16 flex flex-col items-center gap-5 rounded-2xl bg-gradient-hero p-8 text-center text-primary-foreground shadow-elevated sm:p-12">
+            <h3 className="font-display text-2xl font-bold sm:text-3xl">جاهز لحجز وحدتك؟</h3>
+            <p className="max-w-xl text-primary-foreground/80">
+              أكمل خطوات الحجز بسهولة واستقبل التأكيد مباشرة عبر واتساب.
+            </p>
+            <Link
+              to="/booking"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3 font-display font-bold text-accent-foreground shadow-gold transition-transform hover:scale-105"
+            >
+              ابدأ الآن
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>
@@ -280,29 +266,46 @@ const Index = () => {
   );
 };
 
-const StatMinimal = ({ value, label, highlight }: { value: number; label: string; highlight?: boolean }) => (
-  <div className="px-4 text-center [direction:rtl]">
-    <div className={`font-display text-4xl font-extrabold tracking-tight num sm:text-5xl ${highlight ? "text-accent" : "text-foreground"}`}>
+const Stat = ({ value, label, accent }: { value: number; label: string; accent?: boolean }) => (
+  <div className={`rounded-xl border p-3 backdrop-blur-sm sm:p-4 ${accent ? "border-accent/40 bg-accent/10" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
+    <div className={`font-display text-2xl font-extrabold num sm:text-3xl ${accent ? "text-accent" : "text-primary-foreground"}`}>
       {value}
     </div>
-    <div className="mt-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
+    <div className="text-[11px] text-primary-foreground/75 sm:text-xs">{label}</div>
   </div>
 );
 
-const FeatureCard = ({ icon, title, desc, to }: { icon: React.ReactNode; title: string; desc: string; to: string }) => (
-  <Link
-    to={to}
-    className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-card"
-  >
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
-      {icon}
-    </div>
-    <div className="flex-1">
-      <div className="font-display text-base font-bold">{title}</div>
-      <div className="mt-0.5 text-xs text-muted-foreground">{desc}</div>
-    </div>
-    <ArrowLeft className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-x-1 group-hover:text-foreground" />
-  </Link>
-);
+const Feature = ({ icon, title, desc, to }: { icon: React.ReactNode; title: string; desc: string; to?: string }) => {
+  const content = (
+    <>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-foreground">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <div className="text-sm font-bold">{title}</div>
+        <div className="text-xs text-muted-foreground">{desc}</div>
+        {to && (
+          <div className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-accent">
+            اختر هذا النشاط
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">{content}</div>;
+};
 
 export default Index;
