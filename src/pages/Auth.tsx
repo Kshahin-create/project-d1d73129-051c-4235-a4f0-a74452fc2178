@@ -103,15 +103,38 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && user && !mfaChallenge) {
-      // If running inside our mobile WebView, route through a callback page
-      // that exposes a user-gesture button to open the native app via intent://
+      // Mobile OAuth bridge: if started from /auth/mobile/start, finish by
+      // issuing a one-time token and deeplinking back to the native app.
+      const isMobileBridge = searchParams.get("mobile") === "1";
+      const bridgeRaw =
+        typeof sessionStorage !== "undefined"
+          ? sessionStorage.getItem("mobile_oauth_bridge")
+          : null;
+      if (isMobileBridge && bridgeRaw) {
+        try {
+          const bridge = JSON.parse(bridgeRaw) as {
+            redirect_uri: string;
+            next: string;
+            provider: string;
+          };
+          sessionStorage.removeItem("mobile_oauth_bridge");
+          import("./AuthMobileStart").then(({ bridgeToMobile }) => {
+            bridgeToMobile(bridge.redirect_uri, bridge.next, bridge.provider).catch(
+              (e) => toast.error(e instanceof Error ? e.message : String(e)),
+            );
+          });
+          return;
+        } catch {
+          // fall through
+        }
+      }
+
       if (isMobileWebView()) {
         const next = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard";
         navigate(`/auth/mobile-callback?provider=google&next=${encodeURIComponent(next)}`);
         return;
       }
       if (redirectTo) {
-        // External / deep-link redirects (e.g. ejar://auth?url=...) must use full navigation
         if (/^([a-z][a-z0-9+.-]*:)/i.test(redirectTo) && !redirectTo.startsWith("/")) {
           window.location.href = redirectTo;
         } else {
@@ -130,6 +153,7 @@ const Auth = () => {
     navigate,
     redirectTo,
     mfaChallenge,
+    searchParams,
   ]);
 
   useEffect(() => {
