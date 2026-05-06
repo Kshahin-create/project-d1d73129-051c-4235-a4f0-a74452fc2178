@@ -37,6 +37,7 @@ const STATUS: Record<string, { label: string; cls: string; Icon: typeof Clock }>
   pending: { label: "قيد المراجعة", cls: "bg-amber-500/10 text-amber-600", Icon: Clock },
   confirmed: { label: "مؤكد", cls: "bg-emerald-500/10 text-emerald-600", Icon: CheckCircle2 },
   cancelled: { label: "ملغي", cls: "bg-destructive/10 text-destructive", Icon: XCircle },
+  expired: { label: "منتهي الصلاحية", cls: "bg-muted text-muted-foreground", Icon: Clock },
 };
 
 const AdminBookings = () => {
