@@ -161,6 +161,7 @@ export type Database = {
           customer_email: string | null
           customer_full_name: string
           customer_phone: string
+          expires_at: string
           id: string
           notes: string | null
           offer_image_url: string | null
@@ -178,6 +179,7 @@ export type Database = {
           customer_email?: string | null
           customer_full_name: string
           customer_phone: string
+          expires_at?: string
           id?: string
           notes?: string | null
           offer_image_url?: string | null
@@ -195,6 +197,7 @@ export type Database = {
           customer_email?: string | null
           customer_full_name?: string
           customer_phone?: string
+          expires_at?: string
           id?: string
           notes?: string | null
           offer_image_url?: string | null
@@ -742,6 +745,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_pending_bookings: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

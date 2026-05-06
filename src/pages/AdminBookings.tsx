@@ -30,6 +30,7 @@ interface BookingRow {
   whatsapp_sent: boolean;
   offer_image_url: string | null;
   created_at: string;
+  expires_at: string;
   booking_units?: BookingUnitRow[];
 }
 
@@ -37,6 +38,7 @@ const STATUS: Record<string, { label: string; cls: string; Icon: typeof Clock }>
   pending: { label: "قيد المراجعة", cls: "bg-amber-500/10 text-amber-600", Icon: Clock },
   confirmed: { label: "مؤكد", cls: "bg-emerald-500/10 text-emerald-600", Icon: CheckCircle2 },
   cancelled: { label: "ملغي", cls: "bg-destructive/10 text-destructive", Icon: XCircle },
+  expired: { label: "منتهي الصلاحية", cls: "bg-muted text-muted-foreground", Icon: Clock },
 };
 
 const AdminBookings = () => {
@@ -46,10 +48,12 @@ const AdminBookings = () => {
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired">("all");
 
   const load = async () => {
     setFetching(true);
+    // قبل التحميل، شغّل تنظيف الحجوزات منتهية الصلاحية (48 ساعة)
+    await supabase.rpc("expire_pending_bookings" as any);
     const { data, error } = await supabase
       .from("bookings")
       .select("*, booking_units(building_number,unit_number,unit_type,area,price)")
@@ -139,7 +143,7 @@ const AdminBookings = () => {
             />
           </div>
           <div className="flex gap-1 rounded-xl border border-border bg-card p-1">
-            {(["all", "pending", "confirmed", "cancelled"] as const).map((s) => (
+            {(["all", "pending", "confirmed", "cancelled", "expired"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
@@ -202,6 +206,22 @@ const AdminBookings = () => {
                       السعر: <span className="num font-semibold text-foreground">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
                     </div>
                   </div>
+
+                  {b.status === "pending" && b.expires_at && (
+                    (() => {
+                      const ms = new Date(b.expires_at).getTime() - Date.now();
+                      const expired = ms <= 0;
+                      const hours = Math.max(0, Math.floor(ms / 3600000));
+                      const mins = Math.max(0, Math.floor((ms % 3600000) / 60000));
+                      return (
+                        <div className={`mt-2 rounded-lg p-2 text-center text-xs font-semibold ${expired ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-700"}`}>
+                          {expired
+                            ? "⏰ انتهت صلاحية الحجز (48 ساعة)"
+                            : <>⏰ ينتهي خلال <span className="num">{hours}</span> س <span className="num">{mins}</span> د</>}
+                        </div>
+                      );
+                    })()
+                  )}
 
                   {b.booking_units && b.booking_units.length > 0 && (
                     <div className="mt-3 space-y-1 rounded-lg bg-secondary/50 p-2 text-xs">

@@ -436,6 +436,9 @@ const Booking = () => {
 
             {step === 4 && selectedUnits.length > 0 && (
               <StepWrap title="بياناتك" desc="أدخل بياناتك لإتمام طلب الحجز.">
+                <div className="mx-auto mb-4 max-w-4xl rounded-xl border border-amber-500/40 bg-amber-50 p-3 text-center text-xs font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+                  ⏰ ملاحظة مهمة: الحجز ساري لمدة <span className="num">48</span> ساعة فقط، ولا يُعتبر مؤكداً إلا بعد التواصل معنا وسداد المبلغ خلال هذه المدة.
+                </div>
                 <div className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-5">
                   <div className="lg:col-span-3 space-y-4">
                     {!user ? (
@@ -544,6 +547,10 @@ const Booking = () => {
                           {" — "} الآن أرسل التفاصيل عبر واتساب
                         </div>
                       )}
+                      <div className="rounded-xl border border-amber-500/40 bg-amber-50 p-3 text-center text-xs font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+                        ⏰ تنبيه: الحجز ساري لمدة <span className="num">48</span> ساعة فقط من وقت إتمامه.
+                        لتأكيد الحجز نهائياً يجب التواصل معنا وسداد المبلغ خلال هذه المدة، وإلا سيتم إلغاء الحجز تلقائياً وإتاحة الوحدات لغيرك.
+                      </div>
                       <WhatsAppButton
                         href={whatsapp?.appUrl ?? "#"}
                         webHref={whatsapp?.webUrl}
