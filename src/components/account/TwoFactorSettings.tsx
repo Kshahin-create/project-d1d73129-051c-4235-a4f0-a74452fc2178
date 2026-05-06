@@ -113,6 +113,51 @@ export const TwoFactorSettings = () => {
   const [aal2ChallengeId, setAal2ChallengeId] = useState<string | null>(null);
   const [aal2FactorId, setAal2FactorId] = useState<string | null>(null);
   const [aal2Verifying, setAal2Verifying] = useState(false);
+  const [smsMode, setSmsMode] = useState(false);
+  const [smsSending, setSmsSending] = useState(false);
+  const [smsCode, setSmsCode] = useState("");
+  const [smsMasked, setSmsMasked] = useState("");
+  const [smsVerifying, setSmsVerifying] = useState(false);
+
+  const startSmsRecovery = async () => {
+    setSmsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mfa-sms-recovery", {
+        body: { action: "send" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setSmsMasked((data as any)?.phone_masked || "");
+      setSmsMode(true);
+      setSmsCode("");
+      toast.success("تم إرسال رمز عبر SMS");
+    } catch (e: any) {
+      toast.error(e?.message || "تعذر إرسال الرمز");
+    } finally {
+      setSmsSending(false);
+    }
+  };
+
+  const verifySmsRecovery = async () => {
+    if (smsCode.length < 6) return toast.error("أدخل الرمز المكوّن من 6 أرقام");
+    setSmsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mfa-sms-recovery", {
+        body: { action: "verify", code: smsCode.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("تم تعطيل التحقق بخطوتين");
+      setAal2Open(false);
+      setSmsMode(false);
+      setPendingRemoveId(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "رمز غير صحيح");
+    } finally {
+      setSmsVerifying(false);
+    }
+  };
 
   const doUnenroll = async (factorId: string) => {
     const { error } = await supabase.auth.mfa.unenroll({ factorId });
