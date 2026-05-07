@@ -68,6 +68,12 @@ const Index = () => {
               >
                 نظرة على المشروع
               </a>
+              <Link
+                to="/how-to-book"
+                className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 px-6 py-3.5 font-medium text-primary-foreground backdrop-blur-sm transition hover:bg-primary-foreground/15"
+              >
+                كيف أحجز؟
+              </Link>
             </div>
 
             {/* Stats */}
