@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
-  ArrowLeft,
-  ArrowRight,
-  UserPlus,
-  KeyRound,
+  MousePointerClick,
+  Smartphone,
   ShieldCheck,
+  KeyRound,
   Building2,
+  LayoutGrid,
+  CheckSquare,
   ClipboardList,
-  CheckCircle2,
-  Home,
-  LogIn,
-  MailCheck,
-  PhoneCall,
+  Send,
+  PartyPopper,
+  ArrowLeft,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -22,139 +21,108 @@ type Slide = {
   step: string;
   title: string;
   desc: string;
-  bullets: string[];
   Icon: React.ComponentType<{ className?: string }>;
+  cta?: { label: string; to: string };
 };
 
 const slides: Slide[] = [
   {
-    step: "مرحبًا بك",
-    title: "دليلك السريع للتسجيل وحجز وحدة",
-    desc: "خطوات بسيطة وواضحة لإنشاء حسابك وحجز وحدتك في المشروع خلال دقائق.",
-    bullets: [
-      "شرح تفصيلي لكل خطوة",
-      "مناسب للحاسب واللابتوب",
-      "يمكنك التنقل بالأسهم في لوحة المفاتيح",
-    ],
-    Icon: Home,
+    step: "01",
+    title: "ابدأ حجز وحدتك الآن",
+    desc: "لبدء عملية الحجز، اضغط على زر «ابدأ الحجز الآن» من الصفحة الرئيسية للموقع.",
+    Icon: MousePointerClick,
   },
   {
-    step: "الخطوة 1",
-    title: "افتح صفحة تسجيل الدخول",
-    desc: "اضغط زر «دخول» من أعلى الصفحة الرئيسية للانتقال إلى صفحة الحساب.",
-    bullets: [
-      "ستجد زر «دخول» في رأس الصفحة",
-      "أو افتح الرابط /auth مباشرة",
-      "تستطيع إنشاء حساب جديد أو الدخول بحساب موجود",
-    ],
-    Icon: LogIn,
+    step: "02",
+    title: "تسجيل الدخول برقم الجوال",
+    desc: "سيتم تحويلك إلى صفحة تسجيل الدخول. أدخل رقم الجوال الخاص بك لاستكمال خطوات الحجز.",
+    Icon: Smartphone,
   },
   {
-    step: "الخطوة 2",
-    title: "أنشئ حسابًا جديدًا",
-    desc: "اختر تبويب «إنشاء حساب» وأدخل بياناتك الأساسية.",
-    bullets: [
-      "الاسم الكامل كما في الهوية",
-      "البريد الإلكتروني (سيُستخدم للتواصل والتأكيد)",
-      "كلمة مرور قوية لا تقل عن 8 أحرف",
-      "رقم جوال سعودي للتفعيل",
-    ],
-    Icon: UserPlus,
-  },
-  {
-    step: "الخطوة 3",
-    title: "تأكيد البريد الإلكتروني",
-    desc: "ستصلك رسالة على بريدك تحتوي على رابط التفعيل، اضغط عليه لتفعيل الحساب.",
-    bullets: [
-      "افحص صندوق الوارد وكذلك مجلد الـ Spam",
-      "الرابط صالح لفترة محدودة",
-      "بعد التفعيل يمكنك تسجيل الدخول مباشرة",
-    ],
-    Icon: MailCheck,
-  },
-  {
-    step: "الخطوة 4",
-    title: "تأمين الحساب (اختياري)",
-    desc: "ننصح بتفعيل التحقق بخطوتين لحماية حسابك من أي وصول غير مصرح به.",
-    bullets: [
-      "افتح صفحة الملف الشخصي /profile",
-      "فعّل التحقق بخطوتين عبر تطبيق Google Authenticator",
-      "احتفظ برقم جوالك محدثًا للاسترداد عبر SMS",
-    ],
+    step: "03",
+    title: "تأكيد رقم الجوال",
+    desc: "سيصلك رمز تحقق عبر رسالة SMS. أدخل الرمز في الخانة المخصصة لتأكيد رقم الجوال.",
     Icon: ShieldCheck,
   },
   {
-    step: "الخطوة 5",
-    title: "تصفح المباني والوحدات",
-    desc: "من الصفحة الرئيسية اضغط «ابدأ الحجز الآن» لاستعراض المباني المتاحة.",
-    bullets: [
-      "كل مبنى يعرض عدد الوحدات المتاحة",
-      "اضغط على الوحدة لعرض تفاصيلها",
-      "تستطيع رؤية المساحة والسعر والمواصفات",
-    ],
-    Icon: Building2,
-  },
-  {
-    step: "الخطوة 6",
-    title: "اختر الوحدة المناسبة",
-    desc: "حدّد الوحدة التي تناسب نشاطك التجاري وتأكد من تفاصيلها قبل المتابعة.",
-    bullets: [
-      "راجع المساحة والموقع داخل المخطط",
-      "تأكد من توفر الخدمات المطلوبة",
-      "اضغط «حجز هذه الوحدة» للمتابعة",
-    ],
+    step: "04",
+    title: "إنشاء كلمة مرور",
+    desc: "بعد تأكيد الرقم، قم بإنشاء كلمة مرور خاصة بحسابك لاستخدامها في تسجيل الدخول لاحقًا.",
     Icon: KeyRound,
   },
   {
-    step: "الخطوة 7",
-    title: "أكمل بيانات الحجز",
-    desc: "املأ نموذج الحجز ببيانات المستأجر ونوع النشاط التجاري.",
-    bullets: [
-      "اسم المستأجر / المنشأة",
-      "رقم السجل التجاري إن وُجد",
-      "نوع النشاط ومدة العقد المطلوبة",
-      "ملاحظات إضافية (اختياري)",
-    ],
+    step: "05",
+    title: "اختيار نوع النشاط والمبنى",
+    desc: "بعد الدخول إلى الحساب، اختر المبنى المناسب حسب نوع النشاط المطلوب، مثل: ورش، قطع غيار، مستودعات، أو أنشطة أخرى متاحة.",
+    Icon: Building2,
+  },
+  {
+    step: "06",
+    title: "استعراض الوحدات المتاحة",
+    desc: "ستظهر لك جميع الوحدات المتوفرة داخل المبنى الذي اخترته. راجع تفاصيل الوحدات واختر الوحدة المناسبة لك.",
+    Icon: LayoutGrid,
+  },
+  {
+    step: "07",
+    title: "اختيار الوحدة والمتابعة",
+    desc: "بعد اختيار الوحدة المناسبة، اضغط على زر «متابعة» للانتقال إلى مرحلة إدخال البيانات.",
+    Icon: CheckSquare,
+  },
+  {
+    step: "08",
+    title: "إدخال البيانات المطلوبة",
+    desc: "قم بتعبئة البيانات المطلوبة بدقة لاستكمال طلب الحجز.",
     Icon: ClipboardList,
   },
   {
-    step: "الخطوة 8",
-    title: "تأكيد الطلب وإرساله",
-    desc: "راجع بياناتك ثم أرسل الطلب ليصل مباشرة إلى مدير التشغيل والتأجير.",
-    bullets: [
-      "ستحصل على رقم مرجعي للحجز",
-      "نسخة من العرض ترسل لبريدك",
-      "يتواصل معك الفريق خلال ساعات العمل",
-    ],
-    Icon: CheckCircle2,
+    step: "09",
+    title: "تأكيد التسجيل",
+    desc: "بعد إدخال البيانات، اضغط على «تسجيل» لإرسال طلب الحجز بنجاح.",
+    Icon: Send,
   },
   {
-    step: "الخطوة 9",
-    title: "المتابعة عبر الواتساب",
-    desc: "بعد إرسال الطلب يمكنك متابعة حجزك مع الفريق مباشرة عبر الواتساب.",
-    bullets: [
-      "يصلك تأكيد عبر واتساب",
-      "اتفاق على موعد التوقيع والمعاينة",
-      "إنهاء العقد واستلام الوحدة",
-    ],
-    Icon: PhoneCall,
+    step: "10",
+    title: "تم إرسال طلبك بنجاح",
+    desc: "سيتم مراجعة بياناتك والتواصل معك لاستكمال إجراءات الحجز. احجز وحدتك الآن في المدينة الصناعية بشمال مكة المكرمة.",
+    Icon: PartyPopper,
+    cta: { label: "ابدأ الحجز الآن", to: "/booking" },
   },
 ];
 
-const HowToBook = () => {
-  const [index, setIndex] = useState(0);
+// In RTL: dragging right (positive x) means going to previous (logical "right"),
+// dragging left (negative x) means going to next.
+const variants = {
+  enter: (dir: number) => ({ x: dir > 0 ? -120 : 120, opacity: 0, scale: 0.96 }),
+  center: { x: 0, opacity: 1, scale: 1 },
+  exit: (dir: number) => ({ x: dir > 0 ? 120 : -120, opacity: 0, scale: 0.96 }),
+};
 
-  const next = () => setIndex((i) => Math.min(slides.length - 1, i + 1));
-  const prev = () => setIndex((i) => Math.max(0, i - 1));
+const HowToBook = () => {
+  const [[index, dir], setState] = useState<[number, number]>([0, 1]);
+
+  const go = (n: number) => {
+    if (n < 0 || n >= slides.length) return;
+    setState(([cur]) => [n, n > cur ? 1 : -1]);
+  };
+  const next = () => go(index + 1);
+  const prev = () => go(index - 1);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // RTL: ArrowLeft moves forward, ArrowRight moves back
       if (e.key === "ArrowLeft") next();
       else if (e.key === "ArrowRight") prev();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [index]);
+
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    const threshold = 80;
+    const power = info.offset.x + info.velocity.x * 0.25;
+    if (power < -threshold) next();
+    else if (power > threshold) prev();
+  };
 
   const slide = slides[index];
   const { Icon } = slide;
@@ -165,34 +133,33 @@ const HowToBook = () => {
       <Header />
 
       <main className="flex-1">
-        <section className="container-tight py-8 sm:py-12">
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-[11px] font-bold text-accent-foreground">
-                دليل تفاعلي
-              </div>
-              <h1 className="mt-3 font-display text-2xl font-extrabold sm:text-4xl">
-                كيف أسجّل وأحجز وحدة؟
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                اضغط الأسهم أو استخدم لوحة المفاتيح للتنقل بين الشرائح.
-              </p>
+        {/* Decorative background */}
+        <div className="pointer-events-none absolute inset-x-0 top-16 -z-0 h-[520px] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-accent/5 to-transparent" />
+          <div className="absolute -top-32 right-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -top-24 left-1/4 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+        </div>
+
+        <section className="container-tight relative py-8 sm:py-12">
+          <div className="mb-6 text-center sm:mb-10">
+            <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-[11px] font-bold text-accent-foreground">
+              دليل تفاعلي
             </div>
-            <Link
-              to="/booking"
-              className="hidden shrink-0 items-center gap-2 rounded-xl bg-gradient-gold px-5 py-3 font-display text-sm font-bold text-accent-foreground shadow-gold transition-transform hover:scale-[1.02] sm:inline-flex"
-            >
-              ابدأ الحجز الآن
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
+            <h1 className="mt-3 font-display text-2xl font-extrabold sm:text-4xl">
+              كيف أحجز وحدة في المدينة الصناعية؟
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+              اسحب الشريحة يمينًا أو يسارًا للتنقل، أو استخدم أسهم لوحة المفاتيح.
+            </p>
           </div>
 
           {/* Progress */}
-          <div className="mb-6 flex items-center gap-3">
+          <div className="mx-auto mb-5 flex max-w-3xl items-center gap-3">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
-                style={{ width: `${progress}%` }}
+              <motion.div
+                className="h-full bg-gradient-to-r from-primary to-accent"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
             <span className="num shrink-0 text-xs font-bold text-muted-foreground">
@@ -200,88 +167,117 @@ const HowToBook = () => {
             </span>
           </div>
 
-          {/* Slide */}
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card to-background shadow-xl">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
-                className="grid min-h-[460px] gap-8 p-6 sm:p-12 lg:grid-cols-[1fr_auto] lg:gap-14"
-              >
-                <div className="flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-accent">
+          {/* Slide deck */}
+          <div className="relative mx-auto max-w-5xl">
+            <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-background shadow-2xl">
+              <AnimatePresence mode="wait" custom={dir}>
+                <motion.div
+                  key={index}
+                  custom={dir}
+                  variants={variants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={onDragEnd}
+                  className="relative grid min-h-[440px] cursor-grab gap-8 p-6 active:cursor-grabbing sm:min-h-[520px] sm:p-12 lg:grid-cols-[1.2fr_1fr] lg:gap-12"
+                >
+                  {/* Watermark step number */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute -left-4 -top-6 select-none font-display text-[10rem] font-black leading-none text-primary/5 sm:text-[16rem]"
+                  >
                     {slide.step}
-                  </span>
-                  <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">
-                    {slide.title}
-                  </h2>
-                  <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    {slide.desc}
-                  </p>
-                  <ul className="mt-6 space-y-3">
-                    {slide.bullets.map((b) => (
-                      <li key={b} className="flex items-start gap-3 text-sm sm:text-base">
-                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                        <span className="text-foreground/90">{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="flex items-center justify-center">
-                  <div className="relative flex h-44 w-44 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-accent/20 sm:h-64 sm:w-64">
-                    <div className="absolute inset-3 rounded-full border border-dashed border-accent/40" />
-                    <Icon className="h-20 w-20 text-primary sm:h-28 sm:w-28" />
                   </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
 
-            {/* Controls */}
-            <div className="flex items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-3 sm:px-6">
-              <button
-                onClick={prev}
-                disabled={index === 0}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <ArrowRight className="h-4 w-4" />
-                السابق
-              </button>
+                  <div className="relative z-10 flex flex-col justify-center">
+                    <motion.span
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
+                    >
+                      <span className="num">الخطوة {slide.step}</span>
+                    </motion.span>
+                    <motion.h2
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15, duration: 0.4 }}
+                      className="mt-4 font-display text-2xl font-extrabold leading-tight sm:text-4xl lg:text-5xl"
+                    >
+                      {slide.title}
+                    </motion.h2>
+                    <motion.p
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.22, duration: 0.4 }}
+                      className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg sm:leading-loose"
+                    >
+                      {slide.desc}
+                    </motion.p>
 
-              <div className="flex items-center gap-1.5">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setIndex(i)}
-                    aria-label={`الشريحة ${i + 1}`}
-                    className={`h-2 rounded-full transition-all ${
-                      i === index ? "w-6 bg-primary" : "w-2 bg-border hover:bg-muted-foreground/40"
-                    }`}
-                  />
-                ))}
-              </div>
+                    {slide.cta && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.32, duration: 0.4 }}
+                        className="mt-7"
+                      >
+                        <Link
+                          to={slide.cta.to}
+                          className="group inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3.5 font-display text-base font-bold text-accent-foreground shadow-gold transition-transform hover:scale-[1.02]"
+                        >
+                          {slide.cta.label}
+                          <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
+                        </Link>
+                      </motion.div>
+                    )}
+                  </div>
 
-              {index < slides.length - 1 ? (
-                <button
-                  onClick={next}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition hover:opacity-90"
-                >
-                  التالي
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-              ) : (
-                <Link
-                  to="/booking"
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-gold px-4 py-2 text-sm font-bold text-accent-foreground shadow-gold transition hover:opacity-95"
-                >
-                  ابدأ الحجز
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              )}
+                  <div className="relative z-10 flex items-center justify-center">
+                    <motion.div
+                      initial={{ scale: 0.7, opacity: 0, rotate: -8 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      transition={{ delay: 0.1, duration: 0.5, type: "spring", stiffness: 120 }}
+                      className="relative flex h-52 w-52 items-center justify-center sm:h-72 sm:w-72"
+                    >
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/15 to-accent/25 blur-2xl" />
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/10 to-accent/20" />
+                      <motion.div
+                        className="absolute inset-3 rounded-full border border-dashed border-accent/40"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
+                      />
+                      <div className="absolute inset-8 rounded-full bg-card shadow-inner" />
+                      <Icon className="relative h-24 w-24 text-primary sm:h-32 sm:w-32" />
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
+
+            {/* Dots */}
+            <div className="mt-6 flex items-center justify-center gap-2">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => go(i)}
+                  aria-label={`الشريحة ${i + 1}`}
+                  className={`h-2 rounded-full transition-all ${
+                    i === index
+                      ? "w-8 bg-primary"
+                      : "w-2 bg-border hover:bg-muted-foreground/40"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              اسحب الشريحة ← أو → للتنقل
+            </p>
           </div>
         </section>
       </main>
