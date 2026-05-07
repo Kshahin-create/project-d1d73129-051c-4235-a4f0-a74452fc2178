@@ -276,10 +276,18 @@ export const TwoFactorSettings = () => {
                 امسح هذا الرمز بتطبيق Google Authenticator أو Authy
               </div>
               <div className="flex justify-center rounded-xl bg-white p-4">
-                <div
-                  className="h-44 w-44"
-                  dangerouslySetInnerHTML={{ __html: enrollData.qr }}
-                />
+                {enrollData.qr?.trim().startsWith("<") ? (
+                  <div
+                    className="h-44 w-44"
+                    dangerouslySetInnerHTML={{ __html: enrollData.qr }}
+                  />
+                ) : (
+                  <img
+                    src={enrollData.qr}
+                    alt="QR Code"
+                    className="h-44 w-44"
+                  />
+                )}
               </div>
               <div className="text-center text-xs text-muted-foreground">
                 أو أدخل الكود يدوياً:
