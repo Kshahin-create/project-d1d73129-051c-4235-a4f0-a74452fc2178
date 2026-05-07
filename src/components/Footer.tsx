@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, CONTACT, PROJECT, SOCIAL } from "@/lib/config";
-import logo from "@/assets/logo-nukhbat.jpeg";
+import logo from "@/assets/logo-nukhbat.png";
 
 /** أيقونة تيك توك (مخصّصة لأنها غير متوفّرة في lucide-react) */
 const TikTokIcon = ({ className }: { className?: string }) => (
