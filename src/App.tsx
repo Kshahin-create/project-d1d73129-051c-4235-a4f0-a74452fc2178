@@ -26,6 +26,7 @@ import Mcp from "./pages/Mcp.tsx";
 import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
+import HowToBook from "./pages/HowToBook.tsx";
 
 const queryClient = new QueryClient();
 
