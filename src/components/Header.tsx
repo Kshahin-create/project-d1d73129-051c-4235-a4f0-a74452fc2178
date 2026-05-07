@@ -2,7 +2,7 @@ import { Phone, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { COMPANY, CONTACT } from "@/lib/config";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/logo-nukhbat.jpeg";
+import logo from "@/assets/logo-nukhbat.png";
 
 export const Header = () => {
   const { user, loading } = useAuth();
