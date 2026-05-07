@@ -120,8 +120,8 @@ const HowToBook = () => {
   const onDragEnd = (_: unknown, info: PanInfo) => {
     const threshold = 80;
     const power = info.offset.x + info.velocity.x * 0.25;
-    if (power < -threshold) next();
-    else if (power > threshold) prev();
+    if (power > threshold) next();
+    else if (power < -threshold) prev();
   };
 
   const slide = slides[index];
