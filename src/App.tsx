@@ -26,6 +26,7 @@ import Mcp from "./pages/Mcp.tsx";
 import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
+import HowToBook from "./pages/HowToBook.tsx";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/mcp" element={<Mcp />} />
           <Route path="/control" element={<ControlDashboard />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
+          <Route path="/how-to-book" element={<HowToBook />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
