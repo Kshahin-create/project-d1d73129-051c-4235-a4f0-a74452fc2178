@@ -233,14 +233,14 @@ function buildHtml(p: Payload): string {
       <div class="sig-title">التوقيعات والاعتماد</div>
       <div class="sig-grid" style="grid-template-columns: 1fr 1fr;">
         <div class="sig-box">
-          <div class="role">المؤجر</div>
+          <div class="role">مدير التشغيل</div>
           <div class="visual"><img class="sig" src="${SIGNATURE_IMG}" alt="توقيع" /></div>
           <div class="name-line">شركة القمة الهادفة الحديثة</div>
         </div>
         <div class="sig-box">
-          <div class="role">مدير التشغيل</div>
+          <div class="role">المؤجر</div>
           <div class="visual"><img class="stamp" src="${STAMP_IMG}" alt="ختم" /></div>
-          <div class="name-line">C.R : 7052147241</div>
+          <div class="name-line"></div>
         </div>
       </div>
     </div>
