@@ -285,7 +285,7 @@ async function sendToTelegram(imageUrl: string, caption: string): Promise<{ ok: 
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
 
   const ids: string[] = [];
-  for (const k of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2"]) {
+  for (const k of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2", "TELEGRAM_CHAT_ID_3"]) {
     const v = Deno.env.get(k)?.trim();
     if (v) ids.push(v);
   }
