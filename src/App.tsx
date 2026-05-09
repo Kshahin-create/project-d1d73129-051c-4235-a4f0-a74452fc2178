@@ -27,6 +27,9 @@ import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
 import HowToBook from "./pages/HowToBook.tsx";
+import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
+import TenantPortal from "./pages/TenantPortal.tsx";
+import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
 
 const queryClient = new QueryClient();
 
