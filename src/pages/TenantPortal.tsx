@@ -115,7 +115,7 @@ export default function TenantPortal() {
           <div className="mt-4 grid grid-cols-3 gap-3 text-center">
             <Stat label="الوحدات" value={units.length} />
             <Stat label="فواتير" value={invoices.length} />
-            <Stat label="غير مدفوع" value={`${unpaidTotal.toLocaleString()} ج.م`} accent="destructive" />
+            <Stat label="غير مدفوع" value={`${unpaidTotal.toLocaleString()} ر.س`} accent="destructive" />
           </div>
         </div>
 
@@ -151,7 +151,7 @@ export default function TenantPortal() {
                     <Row label="النوع" value={u.unit_type || "—"} />
                     <Row label="النشاط" value={u.activity || "—"} />
                     <Row label="المساحة" value={`${u.area} م²`} />
-                    <Row label="السعر السنوي" value={`${Number(u.price).toLocaleString()} ج.م`} />
+                    <Row label="السعر السنوي" value={`${Number(u.price).toLocaleString()} ر.س`} />
                     <Row label="الحالة" value={u.status === "rented" ? "مؤجرة" : u.status} />
                   </dl>
                 </div>
@@ -188,7 +188,7 @@ export default function TenantPortal() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <Receipt className="h-4 w-4 text-primary" />
-                          <span className="font-bold">{Number(inv.amount).toLocaleString()} ج.م</span>
+                          <span className="font-bold">{Number(inv.amount).toLocaleString()} ر.س</span>
                           <span className={`rounded-full px-2 py-0.5 text-xs ${inv.paid ? "bg-emerald-500/20 text-emerald-700" : "bg-amber-500/20 text-amber-700"}`}>
                             {inv.paid ? "مدفوعة" : "غير مدفوعة"}
                           </span>
