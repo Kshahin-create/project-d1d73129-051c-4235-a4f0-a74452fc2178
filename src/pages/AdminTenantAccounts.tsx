@@ -23,16 +23,19 @@ import {
 
 type TenantRow = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   full_name: string;
   phone: string | null;
   email: string | null;
   business_name: string | null;
+  activity_type: string | null;
   notes: string | null;
+  total_price: number;
   created_at: string;
   units_count: number;
   unpaid_invoices: number;
   unpaid_total: number;
+  has_login: boolean;
 };
 
 type Unit = {
