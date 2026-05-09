@@ -163,7 +163,13 @@ async function getUnit(id: string) {
     .select("*")
     .eq("unit_id", id)
     .maybeSingle();
-  return json({ data: { ...data, tenant } });
+  // Consolidated tenant account (if linked)
+  const { data: link } = await admin
+    .from("tenant_account_units")
+    .select("tenant_account_id, tenant_accounts(id, full_name, phone, email, business_name, activity_type, total_price)")
+    .eq("unit_id", id)
+    .maybeSingle();
+  return json({ data: { ...data, tenant, tenant_account: (link as any)?.tenant_accounts ?? null } });
 }
 
 async function createBooking(body: any) {
