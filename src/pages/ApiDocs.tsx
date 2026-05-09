@@ -547,12 +547,129 @@ const endpoints: Endpoint[] = [
       count: 100,
     },
   },
+  {
+    id: "list-tenant-accounts",
+    method: "GET",
+    path: "/tenant-accounts",
+    title: "حسابات المستأجرين (موحّدة)",
+    desc: "يرجع كل حسابات المستأجرين بعد التجميع، مع عدد الوحدات المرتبطة وإجمالي السعر السنوي وملخص الفواتير غير المدفوعة.",
+    scope: "read",
+    response: {
+      data: [
+        {
+          id: "uuid",
+          full_name: "أحمد محمد",
+          phone: "+966500000000",
+          email: "ahmed@example.com",
+          business_name: "مؤسسة النور",
+          activity_type: "محل قطع غيار",
+          total_price: 180000,
+          units_count: 2,
+          units: [
+            { unit_id: "uuid", building_number: 1, unit_number: 101, area: 60, price: 90000, status: "rented" },
+          ],
+          user_id: "uuid",
+          created_at: "2026-05-09T10:00:00Z",
+        },
+      ],
+      count: 19,
+    },
+  },
+  {
+    id: "get-tenant-account",
+    method: "GET",
+    path: "/tenant-accounts/:id",
+    title: "تفاصيل حساب مستأجر",
+    desc: "يرجع كل بيانات الحساب مع وحداته وفواتيره.",
+    scope: "read",
+    pathParams: [
+      { name: "id", type: "uuid", required: true, desc: "معرّف حساب المستأجر", example: "550e8400-e29b-41d4-a716-446655440000" },
+    ],
+    response: {
+      data: {
+        id: "uuid",
+        full_name: "أحمد محمد",
+        phone: "+966500000000",
+        business_name: "مؤسسة النور",
+        total_price: 180000,
+        tenant_account_units: [
+          { unit_id: "uuid", units: { building_number: 1, unit_number: 101, unit_type: "محل", area: 60, price: 90000, activity: "قطع غيار", status: "rented" } },
+        ],
+        invoices: [
+          { id: "uuid", unit_id: "uuid", amount: 15000, paid_amount: 0, paid: false, due_date: "2026-06-01" },
+        ],
+      },
+    },
+  },
+  {
+    id: "link-tenant-units",
+    method: "POST",
+    path: "/tenant-accounts/:id/units",
+    title: "ربط وحدات بحساب مستأجر",
+    desc: "يربط مجموعة وحدات بحساب المستأجر. يعيد حساب `total_price` تلقائياً عبر التريغر.",
+    scope: "write",
+    pathParams: [
+      { name: "id", type: "uuid", required: true, desc: "معرّف حساب المستأجر", example: "550e8400-e29b-41d4-a716-446655440000" },
+    ],
+    bodyParams: [
+      { name: "unit_ids", type: "uuid[]", required: true, desc: "قائمة معرّفات الوحدات لربطها بالحساب" },
+    ],
+    body: { unit_ids: ["660e8400-e29b-41d4-a716-446655440111", "660e8400-e29b-41d4-a716-446655440222"] },
+    response: { ok: true, linked: 2 },
+  },
+  {
+    id: "unlink-tenant-unit",
+    method: "DELETE",
+    path: "/tenant-accounts/:id/units/:unit_id",
+    title: "فصل وحدة من حساب مستأجر",
+    desc: "يفصل وحدة من الحساب. يعيد حساب `total_price` تلقائياً.",
+    scope: "write",
+    pathParams: [
+      { name: "id", type: "uuid", required: true, desc: "معرّف الحساب", example: "550e8400-e29b-41d4-a716-446655440000" },
+      { name: "unit_id", type: "uuid", required: true, desc: "معرّف الوحدة", example: "660e8400-e29b-41d4-a716-446655440111" },
+    ],
+    response: { ok: true },
+  },
+  {
+    id: "list-invoices",
+    method: "GET",
+    path: "/invoices",
+    title: "الفواتير",
+    desc: "يرجع كل الفواتير بإمكانية الفلترة حسب الحساب أو حالة السداد.",
+    scope: "read",
+    queryParams: [
+      { name: "tenant_account_id", type: "uuid", desc: "تصفية بحساب مستأجر معيّن", example: "550e8400-e29b-41d4-a716-446655440000" },
+      { name: "paid", type: "boolean", desc: "true | false", example: "false" },
+    ],
+    response: {
+      data: [
+        {
+          id: "uuid",
+          tenant_account_id: "uuid",
+          unit_id: "uuid",
+          amount: 15000,
+          paid_amount: 0,
+          paid: false,
+          due_date: "2026-06-01",
+          period_start: "2026-06-01",
+          period_end: "2026-08-31",
+          paid_at: null,
+          notes: null,
+          created_at: "2026-05-09T10:00:00Z",
+        },
+      ],
+      count: 42,
+      currency: "SAR",
+    },
+    notes: ["كل المبالغ بالريال السعودي (SAR)."],
+  },
 ];
 
 // ---------- Code generators per language ----------
 function buildUrl(e: Endpoint): string {
   let p = e.path
     .replace(":number", "1")
+    .replace(":unit_id", "660e8400-e29b-41d4-a716-446655440111")
     .replace(":id", "550e8400-e29b-41d4-a716-446655440000");
   if (e.queryParams && e.queryParams.length > 0 && e.method === "GET") {
     const qs = e.queryParams
