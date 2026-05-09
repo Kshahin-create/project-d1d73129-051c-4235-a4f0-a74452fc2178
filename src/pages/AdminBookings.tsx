@@ -81,6 +81,25 @@ const AdminBookings = () => {
     return list;
   }, [rows, search, statusFilter]);
 
+  const extendExpiry = async (id: string) => {
+    const input = window.prompt("كم ساعة تريد إضافتها لمدة الحجز؟", "24");
+    if (!input) return;
+    const hours = parseInt(input, 10);
+    if (!Number.isFinite(hours) || hours <= 0) {
+      toast.error("أدخل عدد ساعات صحيح");
+      return;
+    }
+    const { data, error } = await supabase.rpc("extend_booking_expiry" as any, {
+      _booking_id: id,
+      _hours: hours,
+    });
+    if (error) toast.error("فشل التمديد: " + error.message);
+    else {
+      toast.success(`تم التمديد ${hours} ساعة`);
+      load();
+    }
+  };
+
   const updateStatus = async (id: string, status: "confirmed" | "cancelled") => {
     const rpc = status === "confirmed" ? "confirm_booking" : "cancel_booking";
     const { error } = await supabase.rpc(rpc, { _booking_id: id });
