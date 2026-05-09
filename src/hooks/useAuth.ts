@@ -21,6 +21,7 @@ export const useAuth = () => {
       setIsAdmin(roles.includes("admin"));
       setIsControl(roles.includes("control"));
       setIsManager(roles.includes("manager"));
+      setIsTenant(roles.includes("tenant"));
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
