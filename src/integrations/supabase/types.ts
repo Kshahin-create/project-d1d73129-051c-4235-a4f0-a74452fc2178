@@ -460,6 +460,13 @@ export type Database = {
             referencedRelation: "tenant_accounts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoices_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
         ]
       }
       one_time_tokens: {
@@ -613,6 +620,13 @@ export type Database = {
             columns: ["tenant_account_id"]
             isOneToOne: false
             referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_account_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
