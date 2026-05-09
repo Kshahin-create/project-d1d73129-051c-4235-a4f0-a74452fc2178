@@ -284,6 +284,14 @@ const AdminBookings = () => {
                         </button>
                       </>
                     )}
+                    {(b.status === "pending" || b.status === "expired") && (
+                      <button
+                        onClick={() => extendExpiry(b.id)}
+                        className="flex items-center justify-center gap-1 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20"
+                      >
+                        <TimerReset className="h-3.5 w-3.5" /> تمديد المدة
+                      </button>
+                    )}
                   </div>
                 </div>
               );
