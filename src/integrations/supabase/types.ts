@@ -749,6 +749,10 @@ export type Database = {
         Returns: number
       }
       expire_pending_bookings: { Args: never; Returns: number }
+      extend_booking_expiry: {
+        Args: { _booking_id: string; _hours: number }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
