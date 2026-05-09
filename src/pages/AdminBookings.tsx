@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage } from "lucide-react";
+import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset } from "lucide-react";
 
 interface BookingUnitRow {
   building_number: number;
@@ -80,6 +80,25 @@ const AdminBookings = () => {
     }
     return list;
   }, [rows, search, statusFilter]);
+
+  const extendExpiry = async (id: string) => {
+    const input = window.prompt("كم ساعة تريد إضافتها لمدة الحجز؟", "24");
+    if (!input) return;
+    const hours = parseInt(input, 10);
+    if (!Number.isFinite(hours) || hours <= 0) {
+      toast.error("أدخل عدد ساعات صحيح");
+      return;
+    }
+    const { data, error } = await supabase.rpc("extend_booking_expiry" as any, {
+      _booking_id: id,
+      _hours: hours,
+    });
+    if (error) toast.error("فشل التمديد: " + error.message);
+    else {
+      toast.success(`تم التمديد ${hours} ساعة`);
+      load();
+    }
+  };
 
   const updateStatus = async (id: string, status: "confirmed" | "cancelled") => {
     const rpc = status === "confirmed" ? "confirm_booking" : "cancel_booking";
@@ -264,6 +283,14 @@ const AdminBookings = () => {
                           <XCircle className="h-3 w-3" /> إلغاء
                         </button>
                       </>
+                    )}
+                    {(b.status === "pending" || b.status === "expired") && (
+                      <button
+                        onClick={() => extendExpiry(b.id)}
+                        className="flex items-center justify-center gap-1 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20"
+                      >
+                        <TimerReset className="h-3.5 w-3.5" /> تمديد المدة
+                      </button>
                     )}
                   </div>
                 </div>
