@@ -27,6 +27,9 @@ import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
 import HowToBook from "./pages/HowToBook.tsx";
+import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
+import TenantPortal from "./pages/TenantPortal.tsx";
+import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +61,9 @@ const App = () => (
           <Route path="/control" element={<ControlDashboard />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/how-to-book" element={<HowToBook />} />
+          <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
+          <Route path="/tenant" element={<TenantPortal />} />
+          <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

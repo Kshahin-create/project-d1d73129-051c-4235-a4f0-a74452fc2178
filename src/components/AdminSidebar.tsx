@@ -34,18 +34,20 @@ type LinkItem = {
   controlOnly?: boolean;
 };
 
-type ExtLink = LinkItem & { authOnly?: boolean; managerOnly?: boolean };
+type ExtLink = LinkItem & { authOnly?: boolean; managerOnly?: boolean; tenantOnly?: boolean };
 
 const allLinks: ExtLink[] = [
   { to: "/", label: "الرئيسية", Icon: Home },
   { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
   { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
+  { to: "/tenant", label: "وحداتي وفواتيري", Icon: ClipboardList, tenantOnly: true },
   { to: "/control", label: "لوحة الكنترول", Icon: Wrench, controlOnly: true },
   { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, managerOnly: true },
   { to: "/admin/stats", label: "إحصائيات السيرفر", Icon: Activity, adminOnly: true },
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
   { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
   { to: "/admin/tenants", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
+  { to: "/admin/tenant-accounts", label: "حسابات المستأجرين", Icon: Users, managerOnly: true },
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
   { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
@@ -54,7 +56,7 @@ const allLinks: ExtLink[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, isControl, isManager, user, loading } = useAuth();
+  const { isAdmin, isControl, isManager, isTenant, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -95,6 +97,7 @@ export const AdminSidebar = () => {
       (!l.adminOnly || isAdmin) &&
       (!l.controlOnly || isControl || isAdmin || isManager) &&
       (!l.managerOnly || isManager || isAdmin) &&
+      (!l.tenantOnly || isTenant) &&
       (!l.authOnly || !!user),
   );
 

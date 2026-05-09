@@ -2,3 +2,6 @@ project_id = "wqzseofoerwevfebguse"
 
 [functions.mcp]
 verify_jwt = false
+
+[functions.tenant-magic-login]
+verify_jwt = false

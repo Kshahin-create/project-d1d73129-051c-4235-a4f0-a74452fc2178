@@ -403,6 +403,65 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          paid: boolean
+          paid_amount: number
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          tenant_account_id: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          paid?: boolean
+          paid_amount?: number
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          tenant_account_id: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          paid?: boolean
+          paid_amount?: number
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          tenant_account_id?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       one_time_tokens: {
         Row: {
           access_token: string
@@ -525,6 +584,115 @@ export type Database = {
           reason?: string
         }
         Relationships: []
+      }
+      tenant_account_units: {
+        Row: {
+          created_at: string
+          id: string
+          tenant_account_id: string
+          tenant_id: string | null
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tenant_account_id: string
+          tenant_id?: string | null
+          unit_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tenant_account_id?: string
+          tenant_id?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_account_units_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_accounts: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tenant_login_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          tenant_account_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          tenant_account_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          tenant_account_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_login_links_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenants: {
         Row: {
@@ -705,6 +873,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_link_tenant_units: {
+        Args: { _tenant_account_id: string; _unit_ids: string[] }
+        Returns: undefined
+      }
+      admin_list_tenant_accounts: {
+        Args: never
+        Returns: {
+          business_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          notes: string
+          phone: string
+          units_count: number
+          unpaid_invoices: number
+          unpaid_total: number
+          user_id: string
+        }[]
+      }
       admin_list_users: {
         Args: never
         Returns: {
@@ -725,6 +913,10 @@ export type Database = {
           _new_role: Database["public"]["Enums"]["app_role"]
           _target_user: string
         }
+        Returns: undefined
+      }
+      admin_unlink_tenant_unit: {
+        Args: { _tenant_account_id: string; _unit_id: string }
         Returns: undefined
       }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
@@ -793,7 +985,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "control" | "manager"
+      app_role: "admin" | "user" | "control" | "manager" | "tenant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -921,7 +1113,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "control", "manager"],
+      app_role: ["admin", "user", "control", "manager", "tenant"],
     },
   },
 } as const
