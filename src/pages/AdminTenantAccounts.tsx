@@ -212,12 +212,6 @@ export default function AdminTenantAccounts() {
                 </tbody>
               </table>
             </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           )}
         </div>
       </main>
