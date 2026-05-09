@@ -56,7 +56,7 @@ const allLinks: ExtLink[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, isControl, isManager, user, loading } = useAuth();
+  const { isAdmin, isControl, isManager, isTenant, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
