@@ -49,5 +49,5 @@ export const useAuth = () => {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  return { session, user, loading, isAdmin, isControl, isManager };
+  return { session, user, loading, isAdmin, isControl, isManager, isTenant };
 };
