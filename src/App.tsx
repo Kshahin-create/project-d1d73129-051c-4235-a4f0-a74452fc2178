@@ -61,6 +61,9 @@ const App = () => (
           <Route path="/control" element={<ControlDashboard />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/how-to-book" element={<HowToBook />} />
+          <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
+          <Route path="/tenant" element={<TenantPortal />} />
+          <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
