@@ -33,6 +33,7 @@ export const useAuth = () => {
         setIsAdmin(false);
         setIsControl(false);
         setIsManager(false);
+        setIsTenant(false);
       }
     });
 
