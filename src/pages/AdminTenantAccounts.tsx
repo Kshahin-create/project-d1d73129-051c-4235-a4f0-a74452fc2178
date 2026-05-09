@@ -23,16 +23,19 @@ import {
 
 type TenantRow = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   full_name: string;
   phone: string | null;
   email: string | null;
   business_name: string | null;
+  activity_type: string | null;
   notes: string | null;
+  total_price: number;
   created_at: string;
   units_count: number;
   unpaid_invoices: number;
   unpaid_total: number;
+  has_login: boolean;
 };
 
 type Unit = {
@@ -158,15 +161,16 @@ export default function AdminTenantAccounts() {
             <div className="p-12 text-center text-muted-foreground">لا توجد حسابات</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-sm">
+              <table className="w-full min-w-[860px] text-sm">
                 <thead className="border-b border-border bg-secondary/50 text-xs">
                   <tr>
                     <th className="p-3 text-right">الاسم</th>
                     <th className="p-3 text-right">النشاط</th>
-                    <th className="p-3 text-right">الإيميل</th>
                     <th className="p-3 text-right">الجوال</th>
-                    <th className="p-3 text-right">الوحدات</th>
-                    <th className="p-3 text-right">فواتير غير مدفوعة</th>
+                    <th className="p-3 text-right">وحدات</th>
+                    <th className="p-3 text-right">السعر السنوي</th>
+                    <th className="p-3 text-right">فواتير</th>
+                    <th className="p-3 text-right">دخول</th>
                     <th className="p-3 text-right"></th>
                   </tr>
                 </thead>
@@ -174,17 +178,24 @@ export default function AdminTenantAccounts() {
                   {filtered.map((r) => (
                     <tr key={r.id} className="border-b border-border last:border-0">
                       <td className="p-3 font-medium">{r.full_name}</td>
-                      <td className="p-3 text-muted-foreground">{r.business_name || "—"}</td>
-                      <td className="p-3 text-muted-foreground" dir="ltr">{r.email || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{r.activity_type || r.business_name || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.phone || "—"}</td>
-                      <td className="p-3">{r.units_count}</td>
+                      <td className="p-3 font-bold">{r.units_count}</td>
+                      <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ج.م</td>
                       <td className="p-3">
                         {r.unpaid_invoices > 0 ? (
                           <span className="text-destructive">
-                            {r.unpaid_invoices} ({Number(r.unpaid_total).toLocaleString()} ج.م)
+                            {r.unpaid_invoices} ({Number(r.unpaid_total).toLocaleString()})
                           </span>
                         ) : (
-                          <span className="text-emerald-600">لا يوجد</span>
+                          <span className="text-emerald-600">—</span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {r.has_login ? (
+                          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-700">مفعل</span>
+                        ) : (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">بدون</span>
                         )}
                       </td>
                       <td className="p-3 text-left">

@@ -619,6 +619,7 @@ export type Database = {
       }
       tenant_accounts: {
         Row: {
+          activity_type: string | null
           business_name: string | null
           created_at: string
           created_by: string | null
@@ -627,10 +628,12 @@ export type Database = {
           id: string
           notes: string | null
           phone: string | null
+          total_price: number
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          activity_type?: string | null
           business_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -639,10 +642,12 @@ export type Database = {
           id?: string
           notes?: string | null
           phone?: string | null
+          total_price?: number
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          activity_type?: string | null
           business_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -651,8 +656,9 @@ export type Database = {
           id?: string
           notes?: string | null
           phone?: string | null
+          total_price?: number
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -880,13 +886,16 @@ export type Database = {
       admin_list_tenant_accounts: {
         Args: never
         Returns: {
+          activity_type: string
           business_name: string
           created_at: string
           email: string
           full_name: string
+          has_login: boolean
           id: string
           notes: string
           phone: string
+          total_price: number
           units_count: number
           unpaid_invoices: number
           unpaid_total: number
@@ -921,6 +930,13 @@ export type Database = {
       }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
       confirm_booking: { Args: { _booking_id: string }; Returns: undefined }
+      consolidate_existing_tenants: {
+        Args: never
+        Returns: {
+          created_accounts: number
+          linked_units: number
+        }[]
+      }
       create_booking: {
         Args: {
           _business_name: string
@@ -973,6 +989,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      recalc_tenant_account_total: {
+        Args: { _account_id: string }
+        Returns: undefined
       }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
       verify_api_key: {
