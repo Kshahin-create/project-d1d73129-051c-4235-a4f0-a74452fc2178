@@ -9,6 +9,7 @@ export const useAuth = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isControl, setIsControl] = useState(false);
   const [isManager, setIsManager] = useState(false);
+  const [isTenant, setIsTenant] = useState(false);
 
   useEffect(() => {
     const fetchRoles = async (uid: string) => {
