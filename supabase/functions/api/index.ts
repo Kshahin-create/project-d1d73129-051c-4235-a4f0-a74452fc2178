@@ -711,7 +711,31 @@ Deno.serve(async (req) => {
       const g = requireScope(ctx, "admin");
       return g ?? (await deleteTenant(tenantMatch[1]));
     }
-    // GET /stats
+    // /tenant-accounts (consolidated)
+    if (path === "/tenant-accounts" && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await listTenantAccounts(url));
+    }
+    const taMatch = path.match(/^\/tenant-accounts\/([0-9a-f-]{36})$/i);
+    if (taMatch && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await getTenantAccount(taMatch[1]));
+    }
+    const taLinkMatch = path.match(/^\/tenant-accounts\/([0-9a-f-]{36})\/units$/i);
+    if (taLinkMatch && req.method === "POST") {
+      const g = requireScope(ctx, "write");
+      if (g) return g;
+      return await linkTenantAccountUnits(taLinkMatch[1], await req.json());
+    }
+    const taUnlinkMatch = path.match(/^\/tenant-accounts\/([0-9a-f-]{36})\/units\/([0-9a-f-]{36})$/i);
+    if (taUnlinkMatch && req.method === "DELETE") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await unlinkTenantAccountUnit(taUnlinkMatch[1], taUnlinkMatch[2]));
+    }
+    if (path === "/invoices" && req.method === "GET") {
+      const g = requireScope(ctx, "write");
+      return g ?? (await listInvoices(url));
+    }
     if (path === "/stats" && req.method === "GET") {
       const g = requireScope(ctx, "read");
       return g ?? (await getStats());
