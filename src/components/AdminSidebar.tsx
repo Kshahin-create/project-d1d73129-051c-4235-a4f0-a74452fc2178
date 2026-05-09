@@ -97,6 +97,7 @@ export const AdminSidebar = () => {
       (!l.adminOnly || isAdmin) &&
       (!l.controlOnly || isControl || isAdmin || isManager) &&
       (!l.managerOnly || isManager || isAdmin) &&
+      (!l.tenantOnly || isTenant) &&
       (!l.authOnly || !!user),
   );
 
