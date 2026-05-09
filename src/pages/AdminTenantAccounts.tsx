@@ -181,7 +181,7 @@ export default function AdminTenantAccounts() {
                       <td className="p-3 text-muted-foreground">{r.activity_type || r.business_name || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.phone || "—"}</td>
                       <td className="p-3 font-bold">{r.units_count}</td>
-                      <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ج.م</td>
+                      <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ر.س</td>
                       <td className="p-3">
                         {r.unpaid_invoices > 0 ? (
                           <span className="text-destructive">
@@ -648,7 +648,7 @@ function InvoicesTab({ tenantId, linked, invoices, onChanged }: { tenantId: stri
                 <div className="flex-1">
                   <div className="flex items-center gap-2 text-sm">
                     <Receipt className="h-4 w-4 text-primary" />
-                    <span className="font-bold">{Number(inv.amount).toLocaleString()} ج.م</span>
+                    <span className="font-bold">{Number(inv.amount).toLocaleString()} ر.س</span>
                     {linkedUnit && <span className="text-xs text-muted-foreground">— مبنى {linkedUnit.building_number} وحدة {linkedUnit.unit_number}</span>}
                     <span className={`rounded-full px-2 py-0.5 text-xs ${inv.paid ? "bg-emerald-500/10 text-emerald-700" : "bg-amber-500/10 text-amber-700"}`}>
                       {inv.paid ? "مدفوعة" : "غير مدفوعة"}
