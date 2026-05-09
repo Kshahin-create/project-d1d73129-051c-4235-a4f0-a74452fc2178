@@ -273,7 +273,81 @@ async function deleteTenant(id: string) {
   return json({ success: true });
 }
 
-// ---------- Units write ----------
+// ---------- Tenant Accounts (consolidated) ----------
+async function listTenantAccounts(url: URL) {
+  let q = admin
+    .from("tenant_accounts")
+    .select(
+      "id, full_name, phone, email, business_name, activity_type, notes, total_price, user_id, created_at, tenant_account_units(unit_id, units(building_number, unit_number, area, price, status))"
+    );
+  const search = url.searchParams.get("search");
+  if (search) q = q.ilike("full_name", `%${search}%`);
+  const { data, error } = await q.order("full_name");
+  if (error) return err(error.message, 500);
+  const shaped = (data ?? []).map((r: any) => ({
+    id: r.id,
+    full_name: r.full_name,
+    phone: r.phone,
+    email: r.email,
+    business_name: r.business_name,
+    activity_type: r.activity_type,
+    notes: r.notes,
+    total_price: r.total_price,
+    has_login: !!r.user_id,
+    created_at: r.created_at,
+    units_count: r.tenant_account_units?.length ?? 0,
+    units: (r.tenant_account_units ?? []).map((tau: any) => ({
+      unit_id: tau.unit_id,
+      ...tau.units,
+    })),
+  }));
+  return json({ data: shaped, count: shaped.length });
+}
+
+async function getTenantAccount(id: string) {
+  const { data, error } = await admin
+    .from("tenant_accounts")
+    .select(
+      "*, tenant_account_units(unit_id, units(building_number, unit_number, unit_type, area, price, activity, status)), invoices(id, unit_id, amount, paid_amount, paid, due_date, paid_at, period_start, period_end, notes, created_at)"
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) return err(error.message, 500);
+  if (!data) return err("Tenant account not found", 404);
+  return json({ data });
+}
+
+async function linkTenantAccountUnits(id: string, body: any) {
+  if (!Array.isArray(body?.unit_ids) || body.unit_ids.length === 0) {
+    return err("unit_ids array required", 400);
+  }
+  const rows = body.unit_ids.map((u: string) => ({ tenant_account_id: id, unit_id: u }));
+  const { error } = await admin.from("tenant_account_units").upsert(rows, { onConflict: "tenant_account_id,unit_id" });
+  if (error) return err(error.message, 400);
+  return json({ success: true });
+}
+
+async function unlinkTenantAccountUnit(id: string, unitId: string) {
+  const { error } = await admin
+    .from("tenant_account_units")
+    .delete()
+    .eq("tenant_account_id", id)
+    .eq("unit_id", unitId);
+  if (error) return err(error.message, 400);
+  return json({ success: true });
+}
+
+async function listInvoices(url: URL) {
+  let q = admin.from("invoices").select("*");
+  const acc = url.searchParams.get("tenant_account_id");
+  const paid = url.searchParams.get("paid");
+  if (acc) q = q.eq("tenant_account_id", acc);
+  if (paid === "true" || paid === "false") q = q.eq("paid", paid === "true");
+  const { data, error } = await q.order("created_at", { ascending: false });
+  if (error) return err(error.message, 500);
+  return json({ data, count: data?.length ?? 0 });
+}
+
 async function updateUnit(id: string, body: any) {
   const allowed: Record<string, any> = {};
   for (const k of ["unit_type", "area", "activity", "price", "status", "unit_number", "building_number"]) {
