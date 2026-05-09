@@ -553,6 +553,7 @@ const endpoints: Endpoint[] = [
 function buildUrl(e: Endpoint): string {
   let p = e.path
     .replace(":number", "1")
+    .replace(":unit_id", "660e8400-e29b-41d4-a716-446655440111")
     .replace(":id", "550e8400-e29b-41d4-a716-446655440000");
   if (e.queryParams && e.queryParams.length > 0 && e.method === "GET") {
     const qs = e.queryParams
