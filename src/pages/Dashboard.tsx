@@ -2,10 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Package, FileText, CheckCircle2, Circle, Wallet } from "lucide-react";
+import { Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type TenantRow = {
+  id: string;
+  tenant_name: string;
+  business_name: string | null;
+  activity_type: string | null;
+  phone: string | null;
+  units: { building_number: number; unit_number: number; activity: string | null }[];
+};
 
 const fmt = (n: number) => new Intl.NumberFormat("en-US").format(Math.round(n));
 
@@ -65,6 +74,39 @@ const Dashboard = () => {
 
   const buildings = data?.buildings ?? [];
   const units = data?.units ?? [];
+
+  const { data: tenants = [] } = useQuery<TenantRow[]>({
+    queryKey: ["dashboard-tenants"],
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("tenants")
+        .select("id, tenant_name, business_name, activity_type, phone, unit_id, units:unit_id (building_number, unit_number, activity)")
+        .order("tenant_name", { ascending: true });
+      if (error) throw error;
+      // Group by tenant_name + phone
+      const map = new Map<string, TenantRow>();
+      for (const r of (rows ?? []) as any[]) {
+        const key = `${(r.tenant_name || "").trim()}__${(r.phone || "").trim()}`;
+        const u = r.units;
+        const existing = map.get(key);
+        if (existing) {
+          if (u) existing.units.push({ building_number: u.building_number, unit_number: u.unit_number, activity: u.activity });
+          if (!existing.business_name && r.business_name) existing.business_name = r.business_name;
+          if (!existing.activity_type && r.activity_type) existing.activity_type = r.activity_type;
+        } else {
+          map.set(key, {
+            id: r.id,
+            tenant_name: r.tenant_name,
+            business_name: r.business_name,
+            activity_type: r.activity_type,
+            phone: r.phone,
+            units: u ? [{ building_number: u.building_number, unit_number: u.unit_number, activity: u.activity }] : [],
+          });
+        }
+      }
+      return Array.from(map.values());
+    },
+  });
 
   const stats = useMemo(() => {
     const total = units.length;
@@ -411,6 +453,58 @@ const Dashboard = () => {
             })}
           </div>
         </section>
+
+        {/* Tenants */}
+        {tenants.length > 0 && (
+          <section className="rounded-xl border bg-card p-6 shadow-sm">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
+              <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+                <Users className="h-5 w-5 text-accent" /> المستأجرون والوحدات المؤجرة
+              </h2>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+                {tenants.length} مستأجر
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {tenants.map((t) => (
+                <div
+                  key={t.id}
+                  className="rounded-xl border bg-gradient-to-b from-muted/20 to-card p-4 transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
+                >
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div className="font-display text-sm font-bold text-foreground">
+                      {t.tenant_name}
+                    </div>
+                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-800 num">
+                      {t.units.length} وحدة
+                    </span>
+                  </div>
+                  {(t.business_name || t.activity_type) && (
+                    <div className="mb-2 text-[11px] text-muted-foreground">
+                      {[t.business_name, t.activity_type].filter(Boolean).join(" · ")}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {t.units
+                      .sort((a, b) =>
+                        a.building_number - b.building_number || a.unit_number - b.unit_number,
+                      )
+                      .map((u, i) => (
+                        <span
+                          key={i}
+                          className="rounded-md border border-border bg-background px-2 py-0.5 text-[11px]"
+                          title={u.activity ?? ""}
+                        >
+                          مبنى <span className="num font-semibold">{u.building_number}</span> · وحدة{" "}
+                          <span className="num font-bold">{u.unit_number}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Units table */}
         <section className="rounded-xl border bg-card p-6 shadow-sm">
