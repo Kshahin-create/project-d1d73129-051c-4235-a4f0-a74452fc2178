@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
           email,
           phone: phone || null,
           business_name: business_name || null,
+          cr_number: cr_number || null,
           notes: notes || null,
           created_by: userRes.user.id,
         })
