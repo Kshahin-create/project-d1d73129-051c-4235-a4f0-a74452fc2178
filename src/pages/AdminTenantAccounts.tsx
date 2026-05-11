@@ -436,6 +436,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
   const [email, setEmail] = useState(account.email || "");
   const [phone, setPhone] = useState(account.phone || "");
   const [business_name, setBusiness] = useState(account.business_name || "");
+  const [cr_number, setCrNumber] = useState(account.cr_number || "");
   const [notes, setNotes] = useState(account.notes || "");
   const [busy, setBusy] = useState(false);
 
