@@ -23,8 +23,8 @@ interface Payload {
   units: Unit[];
 }
 
-const LOGO_NUKHBAT = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-nukhbat.jpeg";
-const LOGO_MAKKAH = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-makkah.jpeg";
+const LOGO_NUKHBAT = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-nukhbat-transparent.png";
+const LOGO_MAKKAH = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-makkah-transparent.png";
 const SIGNATURE_IMG = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-signature.png";
 const STAMP_IMG = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-stamp.png";
 
@@ -46,6 +46,8 @@ function buildHtml(p: Payload): string {
     timeZone: "Asia/Riyadh",
   });
   const offerNumber = p.offer_number || (p.booking_id ? p.booking_id.slice(0, 8).toUpperCase() : String(Date.now()).slice(-10));
+  const activities = Array.from(new Set(p.units.map((u) => (u.activity || "").trim()).filter(Boolean)));
+  const propertyType = activities.length > 0 ? activities.join(" / ") : "—";
 
   const rows = p.units
     .map(
@@ -188,7 +190,7 @@ function buildHtml(p: Payload): string {
     <table class="info">
       <tr><td class="label">المستثمر والمؤجر</td><td>شركة القمة الهادفة الحديثة</td></tr>
       <tr><td class="label">مدير التشغيل والتأجير</td><td class="alt">شركة نخبة تسكين العقارية</td></tr>
-      <tr><td class="label">نوع العقار</td><td>ورش صيانة و محلات قطع غيار سيارات</td></tr>
+      <tr><td class="label">نوع العقار</td><td>${esc(propertyType)}</td></tr>
       <tr><td class="label">الوحدات</td><td class="alt">مبنى رقم ${esc(buildingsLabel)} (${esc(unitsList)})</td></tr>
       <tr><td class="label">المستأجر</td><td>${esc(p.customer.fullName)}</td></tr>
       <tr><td class="label">مدة العقد</td><td class="alt">سنوي</td></tr>
@@ -235,12 +237,12 @@ function buildHtml(p: Payload): string {
         <div class="sig-box">
           <div class="role">مدير التشغيل</div>
           <div class="visual"><img class="sig" src="${SIGNATURE_IMG}" alt="توقيع" /></div>
-          <div class="name-line">شركة القمة الهادفة الحديثة</div>
+          <div class="name-line">شركة نخبة تسكين العقارية</div>
         </div>
         <div class="sig-box">
           <div class="role">المؤجر</div>
           <div class="visual"><img class="stamp" src="${STAMP_IMG}" alt="ختم" /></div>
-          <div class="name-line"></div>
+          <div class="name-line">شركة القمة الهادفة الحديثة</div>
         </div>
       </div>
     </div>
