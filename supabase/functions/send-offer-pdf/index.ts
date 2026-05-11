@@ -282,15 +282,28 @@ async function renderImage(html: string): Promise<string> {
   return j.url as string;
 }
 
-function toPdfUrl(imageUrl: string): string {
-  // HCTI: extract image id from "https://(cdn.)hcti.io/v1/image/<id>.<ext>"
-  // and force the canonical hcti.io/v1/image/<id>.pdf URL
-  const m = imageUrl.match(/\/v1\/image\/([^./?]+)/i);
-  if (m && m[1]) return `https://hcti.io/v1/image/${m[1]}.pdf`;
-  return imageUrl.replace(/\.(jpe?g|png|webp)(\?.*)?$/i, ".pdf$2");
+// نحوّل URL صورة HCTI إلى ملف PDF عبر تضمين الصورة في صفحة A4 باستخدام pdf-lib
+async function imageUrlToPdfBytes(imageUrl: string): Promise<Uint8Array> {
+  const { PDFDocument } = await import("https://esm.sh/pdf-lib@1.17.1");
+  const imgRes = await fetch(imageUrl);
+  if (!imgRes.ok) throw new Error(`Failed to fetch HCTI image: ${imgRes.status}`);
+  const imgBytes = new Uint8Array(await imgRes.arrayBuffer());
+  const ct = (imgRes.headers.get("content-type") || "").toLowerCase();
+
+  const pdfDoc = await PDFDocument.create();
+  const img = ct.includes("png") ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
+
+  // A4 portrait: 595.28 x 841.89 pt
+  const A4_W = 595.28, A4_H = 841.89;
+  const page = pdfDoc.addPage([A4_W, A4_H]);
+  const ratio = Math.min(A4_W / img.width, A4_H / img.height);
+  const w = img.width * ratio;
+  const h = img.height * ratio;
+  page.drawImage(img, { x: (A4_W - w) / 2, y: (A4_H - h) / 2, width: w, height: h });
+  return await pdfDoc.save();
 }
 
-async function sendPdfToTelegram(pdfUrl: string, caption: string, fileName: string): Promise<{ ok: boolean; results: any[] }> {
+async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName: string): Promise<{ ok: boolean; results: any[] }> {
   const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
 
@@ -305,10 +318,7 @@ async function sendPdfToTelegram(pdfUrl: string, caption: string, fileName: stri
   }
   if (ids.length === 0) throw new Error("No Telegram chat IDs configured");
 
-  // نحمّل الـ PDF كـ multipart عشان نتحكم في اسم الملف ونتجنب مشاكل CDN
-  const pdfRes = await fetch(pdfUrl);
-  if (!pdfRes.ok) throw new Error(`Failed to fetch PDF from HCTI: ${pdfRes.status}`);
-  const pdfBlob = await pdfRes.blob();
+  const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
 
   const results: any[] = [];
   for (const chat_id of ids) {
@@ -356,7 +366,7 @@ Deno.serve(async (req) => {
 
     const html = buildHtml(body);
     const imageUrl = await renderImage(html);
-    const pdfUrl = toPdfUrl(imageUrl);
+    const pdfBytes = await imageUrlToPdfBytes(imageUrl);
 
     const totalPrice = body.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
     const caption = [
@@ -367,9 +377,8 @@ Deno.serve(async (req) => {
     ].filter(Boolean).join("\n");
 
     const fileName = `offer-${body.offer_number || (body.booking_id ?? "new")}.pdf`;
-    const tg = await sendPdfToTelegram(pdfUrl, caption, fileName);
+    const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
 
-    // حفظ رابط صورة العرض في الحجز ليظهر في لوحة الإدارة
     if (body.booking_id) {
       try {
         const supaUrl = Deno.env.get("SUPABASE_URL");
@@ -384,7 +393,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: tg.ok, image_url: imageUrl, pdf_url: pdfUrl, telegram: tg.results }),
+      JSON.stringify({ success: tg.ok, image_url: imageUrl, telegram: tg.results }),
       { status: tg.ok ? 200 : 207, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
