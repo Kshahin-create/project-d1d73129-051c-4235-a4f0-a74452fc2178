@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
         phone,
         password,
         business_name,
+        cr_number,
         notes,
         unit_ids,
       } = body;
