@@ -157,6 +157,7 @@ export type Database = {
       bookings: {
         Row: {
           business_name: string | null
+          cr_number: string | null
           created_at: string
           customer_email: string | null
           customer_full_name: string
@@ -176,6 +177,7 @@ export type Database = {
         }
         Insert: {
           business_name?: string | null
+          cr_number?: string | null
           created_at?: string
           customer_email?: string | null
           customer_full_name: string
@@ -195,6 +197,7 @@ export type Database = {
         }
         Update: {
           business_name?: string | null
+          cr_number?: string | null
           created_at?: string
           customer_email?: string | null
           customer_full_name?: string
@@ -635,6 +638,7 @@ export type Database = {
         Row: {
           activity_type: string | null
           business_name: string | null
+          cr_number: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -649,6 +653,7 @@ export type Database = {
         Insert: {
           activity_type?: string | null
           business_name?: string | null
+          cr_number?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -663,6 +668,7 @@ export type Database = {
         Update: {
           activity_type?: string | null
           business_name?: string | null
+          cr_number?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -719,6 +725,7 @@ export type Database = {
           activity_type: string | null
           booking_id: string | null
           business_name: string | null
+          cr_number: string | null
           created_at: string
           id: string
           notes: string | null
@@ -733,6 +740,7 @@ export type Database = {
           activity_type?: string | null
           booking_id?: string | null
           business_name?: string | null
+          cr_number?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -747,6 +755,7 @@ export type Database = {
           activity_type?: string | null
           booking_id?: string | null
           business_name?: string | null
+          cr_number?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -902,6 +911,7 @@ export type Database = {
         Returns: {
           activity_type: string
           business_name: string
+          cr_number: string
           created_at: string
           email: string
           full_name: string
@@ -951,17 +961,30 @@ export type Database = {
           linked_units: number
         }[]
       }
-      create_booking: {
-        Args: {
-          _business_name: string
-          _customer_email: string
-          _customer_full_name: string
-          _customer_phone: string
-          _notes: string
-          _unit_ids: string[]
-        }
-        Returns: string
-      }
+      create_booking:
+        | {
+            Args: {
+              _business_name: string
+              _customer_email: string
+              _customer_full_name: string
+              _customer_phone: string
+              _notes: string
+              _unit_ids: string[]
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _business_name: string
+              _cr_number?: string
+              _customer_email: string
+              _customer_full_name: string
+              _customer_phone: string
+              _notes: string
+              _unit_ids: string[]
+            }
+            Returns: string
+          }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
