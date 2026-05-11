@@ -181,6 +181,7 @@ export default function AdminTenantAccounts() {
                     <tr key={r.id} className="border-b border-border last:border-0">
                       <td className="p-3 font-medium">{r.full_name}</td>
                       <td className="p-3 text-muted-foreground">{r.activity_type || r.business_name || "—"}</td>
+                      <td className="p-3 text-muted-foreground" dir="ltr">{r.cr_number || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.phone || "—"}</td>
                       <td className="p-3 font-bold">{r.units_count}</td>
                       <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ر.س</td>
