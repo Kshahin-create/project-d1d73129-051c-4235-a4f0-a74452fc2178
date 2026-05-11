@@ -4,8 +4,23 @@ import { Footer } from "@/components/Footer";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users } from "lucide-react";
+import { Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users, TrendingUp, BarChart3, PieChart as PieIcon, Activity, Layers, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  RadialBarChart,
+  RadialBar,
+} from "recharts";
 
 type TenantRow = {
   id: string;
