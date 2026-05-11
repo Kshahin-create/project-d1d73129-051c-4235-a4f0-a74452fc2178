@@ -68,55 +68,125 @@ function buildHtml(p: Payload): string {
 <head>
 <meta charset="utf-8" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { font-family: 'Tajawal', sans-serif; color: #1a1a1a; background: #fff; }
+
+  :root {
+    --gold: #c9a961;
+    --gold-dark: #b08d3f;
+    --ink: #1f1f1f;
+  }
+
   .page {
     width: 794px; min-height: 1123px;
-    padding: 28px 40px 100px; position: relative; background: #fff;
+    padding: 36px 56px 110px; position: relative; background: #fff;
   }
-  .top-bar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 2px solid #c9a961; }
-  .top-bar img { height: 78px; object-fit: contain; }
 
-  .date-block { text-align: left; margin-top: 14px; font-size: 12.5px; color: #444; line-height: 1.7; }
-  .date-block strong { color: #1a3a6e; }
+  .top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 14px; border-bottom: 3px solid var(--gold);
+  }
+  .top-bar img { height: 92px; object-fit: contain; }
 
-  .title { text-align: center; margin-top: 14px; }
-  .title h1 { font-size: 30px; color: #1a3a6e; font-weight: 800; display: inline-block; padding-bottom: 4px; border-bottom: 3px solid #c9a961; }
+  .date-block {
+    margin-top: 22px;
+    display: flex; justify-content: flex-start;
+    font-size: 14px; color: #222;
+  }
+  .date-block table { border-collapse: collapse; }
+  .date-block td { padding: 3px 8px; font-weight: 700; }
+  .date-block td.lbl { color: #1a1a1a; }
+  .date-block td.val { color: #1a1a1a; font-weight: 500; }
 
-  table.info { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 13px; }
-  table.info td { border: 1px solid #d8d8d8; padding: 8px 12px; }
-  table.info td.label { background: #1a3a6e; color: #fff; font-weight: 700; width: 32%; text-align: center; }
-  table.info td.alt { background: #f6f6f6; }
+  .title { text-align: center; margin: 18px 0 22px; }
+  .title h1 {
+    font-size: 38px; color: #2a2a2a; font-weight: 900;
+    display: inline-block;
+  }
 
-  .pledge { margin-top: 14px; background: #f6f1e3; border: 1px solid #c9a961; border-radius: 6px; padding: 10px 14px; font-size: 12.5px; color: #333; line-height: 1.7; text-align: center; }
+  /* جدول البيانات الأساسية */
+  table.info { width: 100%; border-collapse: collapse; font-size: 16px; }
+  table.info td {
+    border: 2px solid var(--gold);
+    padding: 11px 14px;
+    background: #fff;
+  }
+  table.info td.label {
+    background: var(--gold);
+    color: #fff;
+    font-weight: 800;
+    width: 30%;
+    text-align: center;
+    font-size: 16px;
+  }
 
-  table.amounts { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13.5px; }
-  table.amounts th { background: #1a3a6e; color: #fff; padding: 9px; font-weight: 700; }
-  table.amounts td { padding: 9px 12px; border: 1px solid #ddd; }
-  table.amounts td.lbl { background: #fafafa; font-weight: 600; width: 60%; }
-  table.amounts tr.total td { background: #c9a961; color: #fff; font-weight: 800; font-size: 15px; }
+  /* تعهد */
+  .pledge {
+    margin-top: 10px;
+    background: var(--gold);
+    color: #fff;
+    border: 2px solid var(--gold);
+    padding: 14px 18px;
+    font-size: 16px;
+    line-height: 1.9;
+    text-align: center;
+    font-weight: 600;
+  }
 
-  .pay-title { margin-top: 18px; background: #1a3a6e; color: #fff; padding: 8px 14px; font-size: 14px; font-weight: 700; }
-  table.pay { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.pay td { border: 1px solid #d8d8d8; padding: 8px 12px; }
-  table.pay td.label { background: #f6f6f6; font-weight: 700; width: 32%; }
+  /* جدول المبالغ */
+  table.amounts { width: 100%; border-collapse: collapse; margin-top: 26px; font-size: 16px; }
+  table.amounts th {
+    background: var(--gold); color: #fff; font-weight: 800;
+    padding: 10px; border: 2px solid var(--gold); font-size: 16px;
+  }
+  table.amounts td {
+    padding: 16px 18px; border: 2px solid var(--gold); background: #fff;
+    text-align: center; font-size: 16px;
+  }
+  table.amounts td.amt { font-weight: 700; }
+  table.amounts tr.total td.lbl {
+    font-weight: 900; font-size: 20px;
+  }
 
-  .closing { margin-top: 28px; font-size: 13px; line-height: 1.9; }
-  .closing .greet { color: #555; }
-  .closing .signer { margin-top: 4px; font-weight: 700; color: #1a3a6e; font-size: 14px; }
-  .stamp-wrap { margin-top: 6px; }
-  .stamp-wrap img { height: 95px; object-fit: contain; opacity: 0.95; }
+  /* بيانات الدفع */
+  .pay-wrap { margin-top: 30px; }
+  .pay-title {
+    background: var(--gold); color: #fff; text-align: center;
+    padding: 11px; font-size: 18px; font-weight: 800;
+    border: 2px solid var(--gold);
+  }
+  table.pay { width: 100%; border-collapse: collapse; font-size: 15px; }
+  table.pay td {
+    border: 2px solid var(--gold); padding: 11px 14px; background: #fff;
+  }
+  table.pay td.label {
+    background: var(--gold); color: #fff; font-weight: 800;
+    width: 30%; text-align: center;
+  }
+
+  .closing-title {
+    text-align: center; margin-top: 34px;
+    font-size: 28px; font-weight: 900; color: #2a2a2a;
+  }
+
+  .signer {
+    margin-top: 22px;
+    font-size: 18px; font-weight: 800; color: #1a1a1a;
+  }
+  .sig-img { margin-top: 4px; }
+  .sig-img img { height: 70px; object-fit: contain; }
 
   .footer {
     position: absolute; bottom: 0; right: 0; left: 0;
-    padding: 10px 32px 12px; border-top: 1px solid #c9a961;
+    padding: 14px 56px 18px;
+    border-top: 2px solid var(--gold);
     display: flex; justify-content: space-between; align-items: center;
-    font-size: 10.5px; color: #555; background: #fff;
+    font-size: 12.5px; color: #2a2a2a; background: #fff;
   }
-  .footer img { height: 42px; }
-  .footer .meta { text-align: left; line-height: 1.6; }
+  .footer .stamp img { height: 78px; object-fit: contain; }
+  .footer .meta { text-align: right; line-height: 1.9; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -127,17 +197,19 @@ function buildHtml(p: Payload): string {
     </div>
 
     <div class="date-block">
-      <div><strong>التاريخ :</strong> ${esc(hijriDate())}</div>
-      <div><strong>الموافق :</strong> ${esc(gregDate())}</div>
+      <table>
+        <tr><td class="lbl">التاريخ :</td><td class="val">${esc(hijriDate())}</td></tr>
+        <tr><td class="lbl">الموافق :</td><td class="val">${esc(gregDate())}</td></tr>
+      </table>
     </div>
 
     <div class="title"><h1>مطالبة مالية</h1></div>
 
     <table class="info">
       <tr><td class="label">المستأجر</td><td>${esc(p.customer.business || p.customer.fullName)}</td></tr>
-      <tr><td class="label">نوع النشاط</td><td class="alt">${esc(activityLabel)}</td></tr>
+      <tr><td class="label">نوع النشاط</td><td>${esc(activityLabel)}</td></tr>
       <tr><td class="label">المشروع</td><td>المدينة الصناعية بشمال مكة</td></tr>
-      <tr><td class="label">رقم المبنى و الوحدة</td><td class="alt">${esc(unitsByBuilding)}</td></tr>
+      <tr><td class="label">رقم المبنى والوحدة</td><td>${esc(unitsByBuilding)}</td></tr>
     </table>
 
     <div class="pledge">
@@ -145,32 +217,33 @@ function buildHtml(p: Payload): string {
     </div>
 
     <table class="amounts">
-      <thead><tr><th>البيان</th><th>المبلغ</th></tr></thead>
+      <thead><tr><th style="width:60%;">البيان</th><th>المبلغ</th></tr></thead>
       <tbody>
-        <tr><td class="lbl">قيمة الإيجار السنوي للوحدات</td><td>${fmtNum(annual)} ر.س</td></tr>
-        <tr><td class="lbl">ضريبة القيمة المضافة (15%)</td><td>${fmtNum(vat)} ر.س</td></tr>
-        <tr class="total"><td class="lbl" style="background:#c9a961;color:#fff;">الإجمالي</td><td>${fmtNum(total)} ر.س</td></tr>
+        <tr><td>قيمة الإيجار السنوي للوحدات</td><td class="amt">${fmtNum(annual)} ر.س</td></tr>
+        <tr><td>ضريبة القيمة المضافة (15%)</td><td class="amt">${fmtNum(vat)} ر.س</td></tr>
+        <tr class="total"><td class="lbl">الإجمالي</td><td class="amt" style="font-weight:900;font-size:18px;">${fmtNum(total)} ر.س</td></tr>
       </tbody>
     </table>
 
-    <div class="pay-title">بيانات الدفع</div>
-    <table class="pay">
-      <tr><td class="label">اسم البنك</td><td>مصرف الراجحي</td></tr>
-      <tr><td class="label">اسم المستفيد</td><td>شركة القمة الهادفة الحديثة</td></tr>
-      <tr><td class="label">رقم الـ IBAN</td><td>SA0980000324608010669967</td></tr>
-    </table>
-
-    <div class="closing">
-      <div class="greet">مع أطيب التحيات ،،،</div>
-      <div class="signer">شركة القمة الهادفة الحديثة</div>
-      <div class="stamp-wrap"><img src="${STAMP_IMG}" alt="ختم" /></div>
+    <div class="pay-wrap">
+      <div class="pay-title">بيانات الدفع</div>
+      <table class="pay">
+        <tr><td class="label">اسم البنك</td><td>مصرف الراجحي</td></tr>
+        <tr><td class="label">اسم المستفيد</td><td>شركة القمة الهادفة الحديثة</td></tr>
+        <tr><td class="label">رقم الـ IBAN</td><td>SA0980000324608010669967</td></tr>
+      </table>
     </div>
 
+    <div class="closing-title">مع أطيب التحيات ،،،</div>
+
+    <div class="signer">شركة القمة الهادفة الحديثة</div>
+    <div class="sig-img"><img src="${SIGNATURE_IMG}" alt="توقيع" /></div>
+
     <div class="footer">
-      <img src="${LOGO_MAKKAH}" alt="" />
+      <div class="stamp"><img src="${STAMP_IMG}" alt="ختم" /></div>
       <div class="meta">
         شركة القمة الهادفة الحديثة - رقم التسجيل الضريبي 31431941430003<br />
-        الجموم - حي النقاية - العلاء الحضرمي - 25354 - الرقم الوطني: 7052147241
+        الجموم - حي النقاية - العلاء الحضرمي - 25354 الرقم الوطني: 7052147241
       </div>
     </div>
   </div>
