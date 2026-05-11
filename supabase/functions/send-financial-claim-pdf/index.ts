@@ -179,19 +179,19 @@ function buildHtml(p: Payload): string {
     display: flex; justify-content: space-between; align-items: flex-end;
     gap: 24px;
   }
-  .footer .left { flex: 0 0 auto; text-align: left; }
-  .footer .left .stamp-row {
-    display: flex; align-items: center; gap: 14px; justify-content: flex-start;
-  }
-  .footer .left .stamp-row img.sig { height: 70px; object-fit: contain; }
-  .footer .left .stamp-row img.stamp { height: 105px; object-fit: contain; }
-  .footer .right {
-    flex: 1; text-align: right;
+  .footer .left {
+    flex: 1; text-align: left;
     font-size: 12.5px; color: #2a2a2a; line-height: 1.9; font-weight: 700;
   }
+  .footer .right { flex: 0 0 auto; text-align: center; }
   .footer .right .signer {
     font-size: 16px; font-weight: 900; color: #1a1a1a; margin-bottom: 6px;
   }
+  .footer .right .stamp-row {
+    display: flex; align-items: center; gap: 14px; justify-content: flex-end;
+  }
+  .footer .right .stamp-row img.sig { height: 70px; object-fit: contain; }
+  .footer .right .stamp-row img.stamp { height: 105px; object-fit: contain; }
 </style>
 </head>
 <body>
@@ -243,16 +243,16 @@ function buildHtml(p: Payload): string {
 
     <div class="footer">
       <div class="left">
+        رقم التسجيل الضريبي 31431941430003<br />
+        الجموم - حي النقاية - العلاء الحضرمي - 25354<br />
+        الرقم الوطني: 7052147241
+      </div>
+      <div class="right">
+        <div class="signer">شركة القمة الهادفة الحديثة</div>
         <div class="stamp-row">
           <img class="stamp" src="${STAMP_IMG}" alt="ختم" />
           <img class="sig" src="${SIGNATURE_IMG}" alt="توقيع" />
         </div>
-      </div>
-      <div class="right">
-        <div class="signer">شركة القمة الهادفة الحديثة</div>
-        رقم التسجيل الضريبي 31431941430003<br />
-        الجموم - حي النقاية - العلاء الحضرمي - 25354<br />
-        الرقم الوطني: 7052147241
       </div>
     </div>
   </div>
