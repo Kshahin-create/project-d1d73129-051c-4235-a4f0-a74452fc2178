@@ -282,7 +282,11 @@ async function renderImage(html: string): Promise<string> {
   return j.url as string;
 }
 
-async function sendToTelegram(imageUrl: string, caption: string): Promise<{ ok: boolean; results: any[] }> {
+function toPdfUrl(imageUrl: string): string {
+  return imageUrl.replace(/\.(jpe?g|png|webp)(\?.*)?$/i, ".pdf$2");
+}
+
+async function sendPdfToTelegram(pdfUrl: string, caption: string, fileName: string): Promise<{ ok: boolean; results: any[] }> {
   const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
 
@@ -297,12 +301,22 @@ async function sendToTelegram(imageUrl: string, caption: string): Promise<{ ok: 
   }
   if (ids.length === 0) throw new Error("No Telegram chat IDs configured");
 
+  // نحمّل الـ PDF كـ multipart عشان نتحكم في اسم الملف ونتجنب مشاكل CDN
+  const pdfRes = await fetch(pdfUrl);
+  if (!pdfRes.ok) throw new Error(`Failed to fetch PDF from HCTI: ${pdfRes.status}`);
+  const pdfBlob = await pdfRes.blob();
+
   const results: any[] = [];
   for (const chat_id of ids) {
-    const r = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+    const form = new FormData();
+    form.append("chat_id", chat_id);
+    form.append("caption", caption);
+    form.append("parse_mode", "HTML");
+    form.append("document", new File([pdfBlob], fileName, { type: "application/pdf" }));
+
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, photo: imageUrl, caption, parse_mode: "HTML" }),
+      body: form,
     });
     const j = await r.json().catch(() => ({}));
     results.push({ chat_id, ok: r.ok && j?.ok, status: r.status, response: j });
