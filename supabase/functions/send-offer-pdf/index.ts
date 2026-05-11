@@ -83,7 +83,7 @@ function buildHtml(p: Payload): string {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 12px; border-bottom: 2px solid #c9a961;
   }
-  .top-bar .logo-side img { height: 70px; object-fit: contain; }
+  .top-bar .logo-side img { height: 95px; object-fit: contain; }
   .offer-num-center {
     text-align: center;
     font-size: 13px;
