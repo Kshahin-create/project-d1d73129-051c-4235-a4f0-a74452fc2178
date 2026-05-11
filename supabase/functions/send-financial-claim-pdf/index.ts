@@ -88,7 +88,7 @@ function buildHtml(p: Payload): string {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 14px; border-bottom: 3px solid var(--gold);
   }
-  .top-bar img { height: 120px; object-fit: contain; }
+  .top-bar img { height: 145px; object-fit: contain; }
 
   .date-block {
     margin-top: 22px;
@@ -171,32 +171,34 @@ function buildHtml(p: Payload): string {
     font-size: 28px; font-weight: 900; color: #2a2a2a;
   }
 
-  .signer {
-    margin-top: 22px;
-    font-size: 18px; font-weight: 800; color: #1a1a1a;
-  }
-  .sig-row {
-    margin-top: 6px;
-    display: flex; align-items: center; gap: 18px;
-  }
-  .sig-row .sig img { height: 70px; object-fit: contain; }
-  .sig-row .stamp img { height: 110px; object-fit: contain; }
-
   .footer {
     position: absolute; bottom: 0; right: 0; left: 0;
-    padding: 14px 56px 18px;
+    padding: 18px 56px 22px;
     border-top: 2px solid var(--gold);
-    text-align: right;
-    font-size: 12.5px; color: #2a2a2a; background: #fff;
-    line-height: 1.9; font-weight: 600;
+    background: #fff;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 24px;
+  }
+  .footer .left { flex: 0 0 auto; text-align: left; }
+  .footer .left .stamp-row {
+    display: flex; align-items: center; gap: 14px; justify-content: flex-start;
+  }
+  .footer .left .stamp-row img.sig { height: 70px; object-fit: contain; }
+  .footer .left .stamp-row img.stamp { height: 105px; object-fit: contain; }
+  .footer .right {
+    flex: 1; text-align: right;
+    font-size: 12.5px; color: #2a2a2a; line-height: 1.9; font-weight: 700;
+  }
+  .footer .right .signer {
+    font-size: 16px; font-weight: 900; color: #1a1a1a; margin-bottom: 6px;
   }
 </style>
 </head>
 <body>
   <div class="page">
     <div class="top-bar">
-      <img src="${LOGO_NUKHBAT}" alt="نخبة تسكين" />
       <img src="${LOGO_MAKKAH}" alt="المدينة الصناعية" />
+      <img src="${LOGO_NUKHBAT}" alt="نخبة تسكين" />
     </div>
 
     <div class="date-block">
