@@ -14,6 +14,7 @@ interface Payload {
     fullName: string;
     phone?: string;
     business?: string;
+    crNumber?: string;
   };
   units: Unit[];
 }
@@ -212,6 +213,8 @@ function buildHtml(p: Payload): string {
 
     <table class="info">
       <tr><td class="label">المستأجر</td><td>${esc(p.customer.fullName)}</td></tr>
+      <tr><td class="label">اسم المنشأة</td><td>${esc(p.customer.business || "—")}</td></tr>
+      <tr><td class="label">رقم السجل التجاري</td><td>${esc(p.customer.crNumber || "—")}</td></tr>
       <tr><td class="label">نوع النشاط</td><td>${esc(activityLabel)}</td></tr>
       <tr><td class="label">المشروع</td><td>المدينة الصناعية بشمال مكة</td></tr>
       <tr><td class="label">رقم المبنى والوحدة</td><td>${esc(unitsByBuilding)}</td></tr>

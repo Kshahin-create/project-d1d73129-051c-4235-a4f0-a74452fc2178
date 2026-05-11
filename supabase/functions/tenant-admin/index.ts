@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
         phone,
         password,
         business_name,
+        cr_number,
         notes,
         unit_ids,
       } = body;
@@ -94,6 +95,7 @@ Deno.serve(async (req) => {
           email,
           phone: phone || null,
           business_name: business_name || null,
+          cr_number: cr_number || null,
           notes: notes || null,
           created_by: userRes.user.id,
         })
@@ -126,7 +128,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update_profile") {
-      const { tenant_account_id, full_name, phone, email, business_name, notes } = body;
+      const { tenant_account_id, full_name, phone, email, business_name, cr_number, notes } = body;
       if (!tenant_account_id) return json({ error: "tenant_account_id مطلوب" }, 400);
       const { data: ta } = await admin
         .from("tenant_accounts")
@@ -140,6 +142,7 @@ Deno.serve(async (req) => {
       if (phone !== undefined) updates.phone = phone;
       if (email !== undefined) updates.email = email;
       if (business_name !== undefined) updates.business_name = business_name;
+      if (cr_number !== undefined) updates.cr_number = cr_number;
       if (notes !== undefined) updates.notes = notes;
 
       const { error } = await admin

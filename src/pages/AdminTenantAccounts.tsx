@@ -36,6 +36,7 @@ type TenantRow = {
   unpaid_invoices: number;
   unpaid_total: number;
   has_login: boolean;
+  cr_number: string | null;
 };
 
 type Unit = {
@@ -166,6 +167,7 @@ export default function AdminTenantAccounts() {
                   <tr>
                     <th className="p-3 text-right">الاسم</th>
                     <th className="p-3 text-right">النشاط</th>
+                    <th className="p-3 text-right">السجل التجاري</th>
                     <th className="p-3 text-right">الجوال</th>
                     <th className="p-3 text-right">وحدات</th>
                     <th className="p-3 text-right">السعر السنوي</th>
@@ -179,6 +181,7 @@ export default function AdminTenantAccounts() {
                     <tr key={r.id} className="border-b border-border last:border-0">
                       <td className="p-3 font-medium">{r.full_name}</td>
                       <td className="p-3 text-muted-foreground">{r.activity_type || r.business_name || "—"}</td>
+                      <td className="p-3 text-muted-foreground" dir="ltr">{r.cr_number || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.phone || "—"}</td>
                       <td className="p-3 font-bold">{r.units_count}</td>
                       <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ر.س</td>
@@ -248,6 +251,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [business_name, setBusiness] = useState("");
+  const [cr_number, setCrNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -274,6 +278,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
         phone,
         password,
         business_name,
+        cr_number,
         notes,
         unit_ids: Array.from(selected),
       });
@@ -305,6 +310,9 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
         </Field>
         <Field label="اسم النشاط">
           <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} />
+        </Field>
+        <Field label="رقم السجل التجاري">
+          <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
         </Field>
         <Field label="ملاحظات">
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={2} />
@@ -430,6 +438,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
   const [email, setEmail] = useState(account.email || "");
   const [phone, setPhone] = useState(account.phone || "");
   const [business_name, setBusiness] = useState(account.business_name || "");
+  const [cr_number, setCrNumber] = useState(account.cr_number || "");
   const [notes, setNotes] = useState(account.notes || "");
   const [busy, setBusy] = useState(false);
 
@@ -443,6 +452,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
         email,
         phone,
         business_name,
+        cr_number,
         notes,
       });
       toast.success("تم الحفظ");
@@ -462,6 +472,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
         <Field label="الجوال"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} dir="ltr" /></Field>
       </div>
       <Field label="النشاط"><input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} /></Field>
+      <Field label="رقم السجل التجاري"><input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" /></Field>
       <Field label="ملاحظات"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={3} /></Field>
       <button onClick={save} disabled={busy} className="rounded-xl bg-primary px-4 py-2 font-bold text-primary-foreground disabled:opacity-50">
         {busy ? "..." : "حفظ"}

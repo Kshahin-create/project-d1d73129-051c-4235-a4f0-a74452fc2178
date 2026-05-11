@@ -32,6 +32,12 @@ export const customerSchema = z.object({
     .trim()
     .min(2, "يرجى ذكر النشاط التجاري")
     .max(150),
+  crNumber: z
+    .string()
+    .trim()
+    .max(50, "رقم السجل التجاري طويل جداً")
+    .optional()
+    .or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
@@ -93,6 +99,10 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
 
       <Field label="اسم المنشأة / النشاط التجاري" required error={errors.business?.message}>
         <Input {...register("business")} placeholder="مركز صيانة سيارات / محل قطع غيار..." />
+      </Field>
+
+      <Field label="رقم السجل التجاري (اختياري)" error={errors.crNumber?.message}>
+        <Input {...register("crNumber")} dir="ltr" className="text-left" placeholder="1010xxxxxx" />
       </Field>
 
       <Field label="ملاحظات إضافية (اختياري)" error={errors.notes?.message}>

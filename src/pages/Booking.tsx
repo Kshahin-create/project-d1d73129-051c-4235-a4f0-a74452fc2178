@@ -80,6 +80,7 @@ const Booking = () => {
             phone: data.phone ?? "",
             email: data.email ?? user.email ?? "",
             business: data.business_name ?? "",
+            crNumber: (data as any).cr_number ?? "",
             notes: data.notes ?? "",
           });
         } else {
@@ -175,7 +176,8 @@ const Booking = () => {
       _business_name: customer.business || null,
       _notes: customer.notes || null,
       _unit_ids: selectedUnits.map((u) => u.id).filter(Boolean) as string[],
-    });
+      _cr_number: customer.crNumber || null,
+    } as any);
     setCreatingBooking(false);
     if (error || !newId) {
       toast.error(error?.message || "تعذّر إنشاء الحجز");
@@ -246,6 +248,7 @@ const Booking = () => {
             fullName: customer.fullName,
             phone: customer.phone,
             business: customer.business || undefined,
+            crNumber: customer.crNumber || undefined,
           },
           units: selectedUnits.map((u) => ({
             buildingNumber: u.buildingNumber,
