@@ -306,8 +306,15 @@ async function sendPdfToTelegram(pdfUrl: string, caption: string, fileName: stri
   if (ids.length === 0) throw new Error("No Telegram chat IDs configured");
 
   // نحمّل الـ PDF كـ multipart عشان نتحكم في اسم الملف ونتجنب مشاكل CDN
-  const pdfRes = await fetch(pdfUrl);
-  if (!pdfRes.ok) throw new Error(`Failed to fetch PDF from HCTI: ${pdfRes.status}`);
+  const hctiUser = Deno.env.get("HCTI_USER_ID");
+  const hctiKey = Deno.env.get("HCTI_API_KEY");
+  const pdfRes = await fetch(pdfUrl, {
+    headers: hctiUser && hctiKey ? { Authorization: `Basic ${btoa(`${hctiUser}:${hctiKey}`)}` } : {},
+  });
+  if (!pdfRes.ok) {
+    const t = await pdfRes.text().catch(() => "");
+    throw new Error(`Failed to fetch PDF from HCTI: ${pdfRes.status} ${t.slice(0, 200)}`);
+  }
   const pdfBlob = await pdfRes.blob();
 
   const results: any[] = [];
