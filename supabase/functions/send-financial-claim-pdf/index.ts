@@ -199,13 +199,24 @@ async function renderImage(html: string): Promise<string> {
   return j.url as string;
 }
 
-function toPdfUrl(imageUrl: string): string {
-  const m = imageUrl.match(/\/v1\/image\/([^./?]+)/i);
-  if (m && m[1]) return `https://hcti.io/v1/image/${m[1]}.pdf`;
-  return imageUrl.replace(/\.(jpe?g|png|webp)(\?.*)?$/i, ".pdf$2");
+async function imageUrlToPdfBytes(imageUrl: string): Promise<Uint8Array> {
+  const { PDFDocument } = await import("https://esm.sh/pdf-lib@1.17.1");
+  const imgRes = await fetch(imageUrl);
+  if (!imgRes.ok) throw new Error(`Failed to fetch HCTI image: ${imgRes.status}`);
+  const imgBytes = new Uint8Array(await imgRes.arrayBuffer());
+  const ct = (imgRes.headers.get("content-type") || "").toLowerCase();
+  const pdfDoc = await PDFDocument.create();
+  const img = ct.includes("png") ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
+  const A4_W = 595.28, A4_H = 841.89;
+  const page = pdfDoc.addPage([A4_W, A4_H]);
+  const ratio = Math.min(A4_W / img.width, A4_H / img.height);
+  const w = img.width * ratio;
+  const h = img.height * ratio;
+  page.drawImage(img, { x: (A4_W - w) / 2, y: (A4_H - h) / 2, width: w, height: h });
+  return await pdfDoc.save();
 }
 
-async function sendPdfToTelegram(pdfUrl: string, caption: string, fileName: string) {
+async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName: string) {
   const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
 
@@ -220,17 +231,7 @@ async function sendPdfToTelegram(pdfUrl: string, caption: string, fileName: stri
   }
   if (ids.length === 0) throw new Error("No Telegram chat IDs configured");
 
-  const hctiUser = Deno.env.get("HCTI_USER_ID");
-  const hctiKey = Deno.env.get("HCTI_API_KEY");
-  const pdfRes = await fetch(pdfUrl, {
-    headers: hctiUser && hctiKey ? { Authorization: `Basic ${btoa(`${hctiUser}:${hctiKey}`)}` } : {},
-  });
-  if (!pdfRes.ok) {
-    const t = await pdfRes.text().catch(() => "");
-    throw new Error(`Failed to fetch PDF: ${pdfRes.status} ${t.slice(0, 200)}`);
-  }
-  const pdfBlob = await pdfRes.blob();
-
+  const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
   const results: any[] = [];
   for (const chat_id of ids) {
     const form = new FormData();
