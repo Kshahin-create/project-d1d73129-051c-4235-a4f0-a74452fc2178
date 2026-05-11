@@ -36,6 +36,7 @@ type TenantRow = {
   unpaid_invoices: number;
   unpaid_total: number;
   has_login: boolean;
+  cr_number: string | null;
 };
 
 type Unit = {
