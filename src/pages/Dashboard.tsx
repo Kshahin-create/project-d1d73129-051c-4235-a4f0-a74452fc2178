@@ -75,6 +75,39 @@ const Dashboard = () => {
   const buildings = data?.buildings ?? [];
   const units = data?.units ?? [];
 
+  const { data: tenants = [] } = useQuery<TenantRow[]>({
+    queryKey: ["dashboard-tenants"],
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("tenants")
+        .select("id, tenant_name, business_name, activity_type, phone, unit_id, units:unit_id (building_number, unit_number, activity)")
+        .order("tenant_name", { ascending: true });
+      if (error) throw error;
+      // Group by tenant_name + phone
+      const map = new Map<string, TenantRow>();
+      for (const r of (rows ?? []) as any[]) {
+        const key = `${(r.tenant_name || "").trim()}__${(r.phone || "").trim()}`;
+        const u = r.units;
+        const existing = map.get(key);
+        if (existing) {
+          if (u) existing.units.push({ building_number: u.building_number, unit_number: u.unit_number, activity: u.activity });
+          if (!existing.business_name && r.business_name) existing.business_name = r.business_name;
+          if (!existing.activity_type && r.activity_type) existing.activity_type = r.activity_type;
+        } else {
+          map.set(key, {
+            id: r.id,
+            tenant_name: r.tenant_name,
+            business_name: r.business_name,
+            activity_type: r.activity_type,
+            phone: r.phone,
+            units: u ? [{ building_number: u.building_number, unit_number: u.unit_number, activity: u.activity }] : [],
+          });
+        }
+      }
+      return Array.from(map.values());
+    },
+  });
+
   const stats = useMemo(() => {
     const total = units.length;
     const rented = units.filter((u) => u.status === "rented").length;
