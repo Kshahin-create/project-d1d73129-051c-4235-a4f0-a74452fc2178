@@ -80,6 +80,7 @@ const Booking = () => {
             phone: data.phone ?? "",
             email: data.email ?? user.email ?? "",
             business: data.business_name ?? "",
+            crNumber: (data as any).cr_number ?? "",
             notes: data.notes ?? "",
           });
         } else {
