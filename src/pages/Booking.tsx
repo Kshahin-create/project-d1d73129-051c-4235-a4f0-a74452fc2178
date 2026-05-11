@@ -248,6 +248,7 @@ const Booking = () => {
             fullName: customer.fullName,
             phone: customer.phone,
             business: customer.business || undefined,
+            crNumber: customer.crNumber || undefined,
           },
           units: selectedUnits.map((u) => ({
             buildingNumber: u.buildingNumber,
