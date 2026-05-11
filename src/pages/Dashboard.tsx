@@ -175,6 +175,110 @@ const Dashboard = () => {
     });
   }, [units, filter]);
 
+  // Analytics datasets
+  const analytics = useMemo(() => {
+    const statusData = [
+      { name: "مؤجر", value: stats.rented, color: "hsl(217 91% 50%)" },
+      { name: "محجوز", value: stats.reserved, color: "hsl(38 92% 50%)" },
+      { name: "متاح", value: stats.available, color: "hsl(142 71% 45%)" },
+    ].filter((d) => d.value > 0);
+
+    // Activity classification
+    const activityBuckets: Record<string, { rented: number; total: number; revenue: number; potential: number }> = {
+      "صيانة سيارات": { rented: 0, total: 0, revenue: 0, potential: 0 },
+      "بنشر": { rented: 0, total: 0, revenue: 0, potential: 0 },
+      "قطع غيار": { rented: 0, total: 0, revenue: 0, potential: 0 },
+      "أخرى": { rented: 0, total: 0, revenue: 0, potential: 0 },
+    };
+    for (const u of units) {
+      const a = u.activity ?? "";
+      const key = a.includes("صيانة")
+        ? "صيانة سيارات"
+        : a.includes("بنشر")
+          ? "بنشر"
+          : a.includes("قطع")
+            ? "قطع غيار"
+            : "أخرى";
+      activityBuckets[key].total += 1;
+      activityBuckets[key].potential += Number(u.price) || 0;
+      if (u.status === "rented") {
+        activityBuckets[key].rented += 1;
+        activityBuckets[key].revenue += Number(u.price) || 0;
+      }
+    }
+    const activityData = Object.entries(activityBuckets)
+      .filter(([, v]) => v.total > 0)
+      .map(([name, v]) => ({
+        name,
+        مؤجر: v.rented,
+        متاح: v.total - v.rented,
+        إيراد: Math.round(v.revenue),
+        إمكانية: Math.round(v.potential),
+        إشغال: v.total ? Math.round((v.rented / v.total) * 100) : 0,
+      }));
+
+    // Unit type
+    const cornerCount = units.filter((u) => u.unitType === "ركنية").length;
+    const innerCount = units.filter((u) => u.unitType === "داخلية").length;
+    const unitTypeData = [
+      { name: "ركنية", value: cornerCount, color: "hsl(38 92% 50%)" },
+      { name: "داخلية", value: innerCount, color: "hsl(217 91% 50%)" },
+    ].filter((d) => d.value > 0);
+
+    // Buildings revenue
+    const buildingChart = buildings
+      .map((b) => {
+        const bu = units.filter((u) => u.buildingNumber === b.number);
+        const rented = bu.filter((u) => u.status === "rented").length;
+        const revenue = bu.filter((u) => u.status === "rented").reduce((s, u) => s + Number(u.price), 0);
+        const potential = bu.reduce((s, u) => s + Number(u.price), 0);
+        return {
+          name: `م${b.number}`,
+          إيراد: Math.round(revenue),
+          فجوة: Math.round(potential - revenue),
+          إشغال: bu.length ? Math.round((rented / bu.length) * 100) : 0,
+        };
+      })
+      .sort((a, b) => b["إيراد"] - a["إيراد"]);
+
+    // Averages
+    const rentedUnits = units.filter((u) => u.status === "rented");
+    const avgPrice = rentedUnits.length
+      ? rentedUnits.reduce((s, u) => s + Number(u.price), 0) / rentedUnits.length
+      : 0;
+    const avgArea = units.length
+      ? units.reduce((s, u) => s + Number(u.area), 0) / units.length
+      : 0;
+    const totalRentedArea = rentedUnits.reduce((s, u) => s + Number(u.area), 0);
+    const pricePerSqm = totalRentedArea ? rentedUnits.reduce((s, u) => s + Number(u.price), 0) / totalRentedArea : 0;
+
+    // Occupancy gauge
+    const occupancyGauge = [
+      { name: "إشغال", value: Number(stats.occupancy.toFixed(1)), fill: "hsl(217 91% 50%)" },
+    ];
+
+    // Top tenants by units
+    const topTenants = [...tenants]
+      .sort((a, b) => b.units.length - a.units.length)
+      .slice(0, 8)
+      .map((t) => ({ name: t.tenant_name, وحدات: t.units.length }));
+
+    return {
+      statusData,
+      activityData,
+      unitTypeData,
+      buildingChart,
+      avgPrice,
+      avgArea,
+      pricePerSqm,
+      occupancyGauge,
+      topTenants,
+      cornerCount,
+      innerCount,
+    };
+  }, [units, buildings, tenants, stats]);
+
+
   const targetPct = 40;
   const progressStatus =
     stats.occupancy >= targetPct
