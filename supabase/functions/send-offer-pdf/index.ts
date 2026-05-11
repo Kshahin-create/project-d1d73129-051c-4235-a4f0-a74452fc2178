@@ -376,7 +376,9 @@ Deno.serve(async (req) => {
       `💰 الإجمالي: ${fmtNum(totalPrice)} ر.س`,
     ].filter(Boolean).join("\n");
 
-    const fileName = `offer-${body.offer_number || (body.booking_id ?? "new")}.pdf`;
+    const offerRef = body.offer_number || body.booking_id?.slice(0, 8) || String(Date.now()).slice(-8);
+    const tenantName = (body.customer.fullName || "").replace(/[\\/:*?"<>|]/g, "").trim();
+    const fileName = `عرض تأجير - ${tenantName} - ${offerRef}.pdf`;
     const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
 
     if (body.booking_id) {
