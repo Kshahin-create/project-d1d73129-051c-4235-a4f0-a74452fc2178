@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
 
     const html = buildHtml(body);
     const imageUrl = await renderImage(html);
-    const pdfUrl = toPdfUrl(imageUrl);
+    const pdfBytes = await imageUrlToPdfBytes(imageUrl);
 
     const annual = body.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
     const vat = Math.round(annual * 0.15);
@@ -274,10 +274,10 @@ Deno.serve(async (req) => {
     ].filter(Boolean).join("\n");
 
     const fileName = `claim-${body.claim_number || body.booking_id || Date.now()}.pdf`;
-    const tg = await sendPdfToTelegram(pdfUrl, caption, fileName);
+    const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
 
     return new Response(
-      JSON.stringify({ success: tg.ok, pdf_url: pdfUrl, image_url: imageUrl, telegram: tg.results }),
+      JSON.stringify({ success: tg.ok, image_url: imageUrl, telegram: tg.results }),
       { status: tg.ok ? 200 : 207, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
