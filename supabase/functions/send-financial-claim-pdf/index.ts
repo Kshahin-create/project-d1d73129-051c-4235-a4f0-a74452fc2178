@@ -14,6 +14,7 @@ interface Payload {
     fullName: string;
     phone?: string;
     business?: string;
+    crNumber?: string;
   };
   units: Unit[];
 }
