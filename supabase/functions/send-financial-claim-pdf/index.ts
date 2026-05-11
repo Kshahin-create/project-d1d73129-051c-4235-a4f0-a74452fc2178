@@ -211,7 +211,7 @@ function buildHtml(p: Payload): string {
     <div class="title"><h1>مطالبة مالية</h1></div>
 
     <table class="info">
-      <tr><td class="label">المستأجر</td><td>${esc(p.customer.business || p.customer.fullName)}</td></tr>
+      <tr><td class="label">المستأجر</td><td>${esc(p.customer.fullName)}</td></tr>
       <tr><td class="label">نوع النشاط</td><td>${esc(activityLabel)}</td></tr>
       <tr><td class="label">المشروع</td><td>المدينة الصناعية بشمال مكة</td></tr>
       <tr><td class="label">رقم المبنى والوحدة</td><td>${esc(unitsByBuilding)}</td></tr>
