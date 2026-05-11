@@ -167,6 +167,7 @@ export default function AdminTenantAccounts() {
                   <tr>
                     <th className="p-3 text-right">الاسم</th>
                     <th className="p-3 text-right">النشاط</th>
+                    <th className="p-3 text-right">السجل التجاري</th>
                     <th className="p-3 text-right">الجوال</th>
                     <th className="p-3 text-right">وحدات</th>
                     <th className="p-3 text-right">السعر السنوي</th>
