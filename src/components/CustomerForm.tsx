@@ -35,9 +35,8 @@ export const customerSchema = z.object({
   crNumber: z
     .string()
     .trim()
-    .max(50, "رقم السجل التجاري طويل جداً")
-    .optional()
-    .or(z.literal("")),
+    .min(5, "يرجى إدخال رقم السجل التجاري")
+    .max(50, "رقم السجل التجاري طويل جداً"),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
@@ -101,7 +100,7 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
         <Input {...register("business")} placeholder="مركز صيانة سيارات / محل قطع غيار..." />
       </Field>
 
-      <Field label="رقم السجل التجاري (اختياري)" error={errors.crNumber?.message}>
+      <Field label="رقم السجل التجاري" required error={errors.crNumber?.message}>
         <Input {...register("crNumber")} dir="ltr" className="text-left" placeholder="1010xxxxxx" />
       </Field>
 
