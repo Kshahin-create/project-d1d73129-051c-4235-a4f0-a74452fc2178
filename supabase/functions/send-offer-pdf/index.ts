@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
 
     const html = buildHtml(body);
     const imageUrl = await renderImage(html);
-    const pdfUrl = toPdfUrl(imageUrl);
+    const pdfBytes = await imageUrlToPdfBytes(imageUrl);
 
     const totalPrice = body.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
     const caption = [
@@ -377,9 +377,8 @@ Deno.serve(async (req) => {
     ].filter(Boolean).join("\n");
 
     const fileName = `offer-${body.offer_number || (body.booking_id ?? "new")}.pdf`;
-    const tg = await sendPdfToTelegram(pdfUrl, caption, fileName);
+    const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
 
-    // حفظ رابط صورة العرض في الحجز ليظهر في لوحة الإدارة
     if (body.booking_id) {
       try {
         const supaUrl = Deno.env.get("SUPABASE_URL");
@@ -394,7 +393,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: tg.ok, image_url: imageUrl, pdf_url: pdfUrl, telegram: tg.results }),
+      JSON.stringify({ success: tg.ok, image_url: imageUrl, telegram: tg.results }),
       { status: tg.ok ? 200 : 207, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
