@@ -88,7 +88,7 @@ function buildHtml(p: Payload): string {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 14px; border-bottom: 3px solid var(--gold);
   }
-  .top-bar img { height: 92px; object-fit: contain; }
+  .top-bar img { height: 120px; object-fit: contain; }
 
   .date-block {
     margin-top: 22px;
@@ -175,18 +175,21 @@ function buildHtml(p: Payload): string {
     margin-top: 22px;
     font-size: 18px; font-weight: 800; color: #1a1a1a;
   }
-  .sig-img { margin-top: 4px; }
-  .sig-img img { height: 70px; object-fit: contain; }
+  .sig-row {
+    margin-top: 6px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .sig-row .sig img { height: 70px; object-fit: contain; }
+  .sig-row .stamp img { height: 110px; object-fit: contain; }
 
   .footer {
     position: absolute; bottom: 0; right: 0; left: 0;
     padding: 14px 56px 18px;
     border-top: 2px solid var(--gold);
-    display: flex; justify-content: space-between; align-items: center;
+    text-align: right;
     font-size: 12.5px; color: #2a2a2a; background: #fff;
+    line-height: 1.9; font-weight: 600;
   }
-  .footer .stamp img { height: 78px; object-fit: contain; }
-  .footer .meta { text-align: right; line-height: 1.9; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -237,14 +240,14 @@ function buildHtml(p: Payload): string {
     <div class="closing-title">مع أطيب التحيات ،،،</div>
 
     <div class="signer">شركة القمة الهادفة الحديثة</div>
-    <div class="sig-img"><img src="${SIGNATURE_IMG}" alt="توقيع" /></div>
+    <div class="sig-row">
+      <div class="stamp"><img src="${STAMP_IMG}" alt="ختم" /></div>
+      <div class="sig"><img src="${SIGNATURE_IMG}" alt="توقيع" /></div>
+    </div>
 
     <div class="footer">
-      <div class="stamp"><img src="${STAMP_IMG}" alt="ختم" /></div>
-      <div class="meta">
-        شركة القمة الهادفة الحديثة - رقم التسجيل الضريبي 31431941430003<br />
-        الجموم - حي النقاية - العلاء الحضرمي - 25354 الرقم الوطني: 7052147241
-      </div>
+      شركة القمة الهادفة الحديثة - رقم التسجيل الضريبي 31431941430003<br />
+      الجموم - حي النقاية - العلاء الحضرمي - 25354 الرقم الوطني: 7052147241
     </div>
   </div>
 </body>
@@ -347,7 +350,9 @@ Deno.serve(async (req) => {
       `   • ض.ق.م 15%: ${fmtNum(vat)} ر.س`,
     ].filter(Boolean).join("\n");
 
-    const fileName = `claim-${body.claim_number || body.booking_id || Date.now()}.pdf`;
+    const claimRef = body.claim_number || body.booking_id?.slice(0, 8) || String(Date.now()).slice(-8);
+    const tenantName = (body.customer.business || body.customer.fullName || "").replace(/[\\/:*?"<>|]/g, "").trim();
+    const fileName = `مطالبة مالية - ${tenantName} - ${claimRef}.pdf`;
     const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
 
     return new Response(

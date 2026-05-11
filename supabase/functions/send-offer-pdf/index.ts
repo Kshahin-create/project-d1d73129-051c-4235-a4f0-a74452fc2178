@@ -83,7 +83,7 @@ function buildHtml(p: Payload): string {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 12px; border-bottom: 2px solid #c9a961;
   }
-  .top-bar .logo-side img { height: 70px; object-fit: contain; }
+  .top-bar .logo-side img { height: 95px; object-fit: contain; }
   .offer-num-center {
     text-align: center;
     font-size: 13px;
@@ -376,7 +376,9 @@ Deno.serve(async (req) => {
       `💰 الإجمالي: ${fmtNum(totalPrice)} ر.س`,
     ].filter(Boolean).join("\n");
 
-    const fileName = `offer-${body.offer_number || (body.booking_id ?? "new")}.pdf`;
+    const offerRef = body.offer_number || body.booking_id?.slice(0, 8) || String(Date.now()).slice(-8);
+    const tenantName = (body.customer.fullName || "").replace(/[\\/:*?"<>|]/g, "").trim();
+    const fileName = `عرض تأجير - ${tenantName} - ${offerRef}.pdf`;
     const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
 
     if (body.booking_id) {
