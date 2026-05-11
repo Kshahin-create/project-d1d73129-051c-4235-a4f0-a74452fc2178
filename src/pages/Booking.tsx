@@ -237,6 +237,28 @@ const Booking = () => {
         if (pdfErr) console.error("send-offer-pdf error:", pdfErr);
       });
 
+    // إرسال المطالبة المالية (PDF) للتيليجرام
+    supabase.functions
+      .invoke("send-financial-claim-pdf", {
+        body: {
+          booking_id: newId,
+          customer: {
+            fullName: customer.fullName,
+            phone: customer.phone,
+            business: customer.business || undefined,
+          },
+          units: selectedUnits.map((u) => ({
+            buildingNumber: u.buildingNumber,
+            unitNumber: u.unitNumber,
+            activity: u.activity,
+            price: u.price,
+          })),
+        },
+      })
+      .then(({ error: clmErr }) => {
+        if (clmErr) console.error("send-financial-claim-pdf error:", clmErr);
+      });
+
     // إرسال إيميل تأكيد الحجز للعميل (لا نوقف التدفق لو فشل)
     const recipientEmail = customer.email || user.email;
     if (recipientEmail) {
