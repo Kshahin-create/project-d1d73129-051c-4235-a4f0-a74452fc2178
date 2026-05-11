@@ -450,6 +450,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
         email,
         phone,
         business_name,
+        cr_number,
         notes,
       });
       toast.success("تم الحفظ");
