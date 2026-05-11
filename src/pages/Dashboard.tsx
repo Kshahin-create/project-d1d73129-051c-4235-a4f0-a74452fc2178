@@ -4,8 +4,23 @@ import { Footer } from "@/components/Footer";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users } from "lucide-react";
+import { Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users, TrendingUp, BarChart3, PieChart as PieIcon, Activity, Layers, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  RadialBarChart,
+  RadialBar,
+} from "recharts";
 
 type TenantRow = {
   id: string;
@@ -159,6 +174,110 @@ const Dashboard = () => {
       }
     });
   }, [units, filter]);
+
+  // Analytics datasets
+  const analytics = useMemo(() => {
+    const statusData = [
+      { name: "مؤجر", value: stats.rented, color: "hsl(217 91% 50%)" },
+      { name: "محجوز", value: stats.reserved, color: "hsl(38 92% 50%)" },
+      { name: "متاح", value: stats.available, color: "hsl(142 71% 45%)" },
+    ].filter((d) => d.value > 0);
+
+    // Activity classification
+    const activityBuckets: Record<string, { rented: number; total: number; revenue: number; potential: number }> = {
+      "صيانة سيارات": { rented: 0, total: 0, revenue: 0, potential: 0 },
+      "بنشر": { rented: 0, total: 0, revenue: 0, potential: 0 },
+      "قطع غيار": { rented: 0, total: 0, revenue: 0, potential: 0 },
+      "أخرى": { rented: 0, total: 0, revenue: 0, potential: 0 },
+    };
+    for (const u of units) {
+      const a = u.activity ?? "";
+      const key = a.includes("صيانة")
+        ? "صيانة سيارات"
+        : a.includes("بنشر")
+          ? "بنشر"
+          : a.includes("قطع")
+            ? "قطع غيار"
+            : "أخرى";
+      activityBuckets[key].total += 1;
+      activityBuckets[key].potential += Number(u.price) || 0;
+      if (u.status === "rented") {
+        activityBuckets[key].rented += 1;
+        activityBuckets[key].revenue += Number(u.price) || 0;
+      }
+    }
+    const activityData = Object.entries(activityBuckets)
+      .filter(([, v]) => v.total > 0)
+      .map(([name, v]) => ({
+        name,
+        مؤجر: v.rented,
+        متاح: v.total - v.rented,
+        إيراد: Math.round(v.revenue),
+        إمكانية: Math.round(v.potential),
+        إشغال: v.total ? Math.round((v.rented / v.total) * 100) : 0,
+      }));
+
+    // Unit type
+    const cornerCount = units.filter((u) => u.unitType === "ركنية").length;
+    const innerCount = units.filter((u) => u.unitType === "داخلية").length;
+    const unitTypeData = [
+      { name: "ركنية", value: cornerCount, color: "hsl(38 92% 50%)" },
+      { name: "داخلية", value: innerCount, color: "hsl(217 91% 50%)" },
+    ].filter((d) => d.value > 0);
+
+    // Buildings revenue
+    const buildingChart = buildings
+      .map((b) => {
+        const bu = units.filter((u) => u.buildingNumber === b.number);
+        const rented = bu.filter((u) => u.status === "rented").length;
+        const revenue = bu.filter((u) => u.status === "rented").reduce((s, u) => s + Number(u.price), 0);
+        const potential = bu.reduce((s, u) => s + Number(u.price), 0);
+        return {
+          name: `م${b.number}`,
+          إيراد: Math.round(revenue),
+          فجوة: Math.round(potential - revenue),
+          إشغال: bu.length ? Math.round((rented / bu.length) * 100) : 0,
+        };
+      })
+      .sort((a, b) => b["إيراد"] - a["إيراد"]);
+
+    // Averages
+    const rentedUnits = units.filter((u) => u.status === "rented");
+    const avgPrice = rentedUnits.length
+      ? rentedUnits.reduce((s, u) => s + Number(u.price), 0) / rentedUnits.length
+      : 0;
+    const avgArea = units.length
+      ? units.reduce((s, u) => s + Number(u.area), 0) / units.length
+      : 0;
+    const totalRentedArea = rentedUnits.reduce((s, u) => s + Number(u.area), 0);
+    const pricePerSqm = totalRentedArea ? rentedUnits.reduce((s, u) => s + Number(u.price), 0) / totalRentedArea : 0;
+
+    // Occupancy gauge
+    const occupancyGauge = [
+      { name: "إشغال", value: Number(stats.occupancy.toFixed(1)), fill: "hsl(217 91% 50%)" },
+    ];
+
+    // Top tenants by units
+    const topTenants = [...tenants]
+      .sort((a, b) => b.units.length - a.units.length)
+      .slice(0, 8)
+      .map((t) => ({ name: t.tenant_name, وحدات: t.units.length }));
+
+    return {
+      statusData,
+      activityData,
+      unitTypeData,
+      buildingChart,
+      avgPrice,
+      avgArea,
+      pricePerSqm,
+      occupancyGauge,
+      topTenants,
+      cornerCount,
+      innerCount,
+    };
+  }, [units, buildings, tenants, stats]);
+
 
   const targetPct = 40;
   const progressStatus =
@@ -372,6 +491,185 @@ const Dashboard = () => {
               <div className="text-xs opacity-70">ريال / سنة</div>
             </div>
           </div>
+        </section>
+
+        {/* Detailed Analytics */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+              <BarChart3 className="h-6 w-6 text-accent" /> تحليلات تفصيلية
+            </h2>
+            <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent-foreground">
+              تحديث مباشر
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <TrendingUp className="h-4 w-4 text-blue-600" /> متوسط إيجار الوحدة
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{fmt(analytics.avgPrice)}</div>
+              <div className="text-[11px] text-muted-foreground">ر.س / سنة (للمؤجرة)</div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Layers className="h-4 w-4 text-amber-600" /> متوسط مساحة الوحدة
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{analytics.avgArea.toFixed(1)}</div>
+              <div className="text-[11px] text-muted-foreground">م²</div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Activity className="h-4 w-4 text-green-600" /> سعر المتر السنوي
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{fmt(analytics.pricePerSqm)}</div>
+              <div className="text-[11px] text-muted-foreground">ر.س / م² (محقق)</div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Users className="h-4 w-4 text-primary" /> عدد المستأجرين
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{tenants.length}</div>
+              <div className="text-[11px] text-muted-foreground">
+                {fmt(stats.rented)} وحدة مؤجرة
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-bold">
+                <PieIcon className="h-4 w-4 text-accent" /> توزيع حالة الوحدات
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics.statusData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={85}
+                      innerRadius={50}
+                      label={(e: any) => `${e.name}: ${e.value}`}
+                    >
+                      {analytics.statusData.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-bold">
+                <Target className="h-4 w-4 text-accent" /> مؤشر الإشغال
+              </h3>
+              <div className="relative h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadialBarChart
+                    innerRadius="65%"
+                    outerRadius="100%"
+                    data={analytics.occupancyGauge}
+                    startAngle={210}
+                    endAngle={-30}
+                  >
+                    <RadialBar background dataKey="value" cornerRadius={10} />
+                    <Tooltip />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="num text-4xl font-extrabold text-primary">
+                    {stats.occupancy.toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">المستهدف {targetPct}%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 font-display text-sm font-bold">الإشغال حسب النشاط</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.activityData}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="مؤجر" stackId="a" fill="hsl(217 91% 50%)" />
+                    <Bar dataKey="متاح" stackId="a" fill="hsl(142 71% 45%)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 font-display text-sm font-bold">توزيع نوع الوحدات</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics.unitTypeData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={95}
+                      label={(e: any) => `${e.name}: ${e.value}`}
+                    >
+                      {analytics.unitTypeData.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <h3 className="mb-3 font-display text-sm font-bold">الإيراد المحقق مقابل الفجوة لكل مبنى (ر.س / سنة)</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.buildingChart}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: any) => fmt(Number(v))} />
+                  <Legend />
+                  <Bar dataKey="إيراد" stackId="r" fill="hsl(142 71% 45%)" />
+                  <Bar dataKey="فجوة" stackId="r" fill="hsl(0 72% 60%)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {analytics.topTenants.length > 0 && (
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 font-display text-sm font-bold">أكبر المستأجرين (حسب عدد الوحدات)</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.topTenants} layout="vertical" margin={{ left: 80 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={120} />
+                    <Tooltip />
+                    <Bar dataKey="وحدات" fill="hsl(217 91% 50%)" radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Buildings */}
