@@ -493,6 +493,185 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* Detailed Analytics */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+              <BarChart3 className="h-6 w-6 text-accent" /> تحليلات تفصيلية
+            </h2>
+            <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent-foreground">
+              تحديث مباشر
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <TrendingUp className="h-4 w-4 text-blue-600" /> متوسط إيجار الوحدة
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{fmt(analytics.avgPrice)}</div>
+              <div className="text-[11px] text-muted-foreground">ر.س / سنة (للمؤجرة)</div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Layers className="h-4 w-4 text-amber-600" /> متوسط مساحة الوحدة
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{analytics.avgArea.toFixed(1)}</div>
+              <div className="text-[11px] text-muted-foreground">م²</div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Activity className="h-4 w-4 text-green-600" /> سعر المتر السنوي
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{fmt(analytics.pricePerSqm)}</div>
+              <div className="text-[11px] text-muted-foreground">ر.س / م² (محقق)</div>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Users className="h-4 w-4 text-primary" /> عدد المستأجرين
+              </div>
+              <div className="num mt-2 text-2xl font-extrabold">{tenants.length}</div>
+              <div className="text-[11px] text-muted-foreground">
+                {fmt(stats.rented)} وحدة مؤجرة
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-bold">
+                <PieIcon className="h-4 w-4 text-accent" /> توزيع حالة الوحدات
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics.statusData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={85}
+                      innerRadius={50}
+                      label={(e: any) => `${e.name}: ${e.value}`}
+                    >
+                      {analytics.statusData.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-bold">
+                <Target className="h-4 w-4 text-accent" /> مؤشر الإشغال
+              </h3>
+              <div className="relative h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadialBarChart
+                    innerRadius="65%"
+                    outerRadius="100%"
+                    data={analytics.occupancyGauge}
+                    startAngle={210}
+                    endAngle={-30}
+                  >
+                    <RadialBar background dataKey="value" cornerRadius={10} />
+                    <Tooltip />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="num text-4xl font-extrabold text-primary">
+                    {stats.occupancy.toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">المستهدف {targetPct}%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 font-display text-sm font-bold">الإشغال حسب النشاط</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.activityData}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="مؤجر" stackId="a" fill="hsl(217 91% 50%)" />
+                    <Bar dataKey="متاح" stackId="a" fill="hsl(142 71% 45%)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 font-display text-sm font-bold">توزيع نوع الوحدات</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics.unitTypeData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={95}
+                      label={(e: any) => `${e.name}: ${e.value}`}
+                    >
+                      {analytics.unitTypeData.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-5 shadow-sm">
+            <h3 className="mb-3 font-display text-sm font-bold">الإيراد المحقق مقابل الفجوة لكل مبنى (ر.س / سنة)</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.buildingChart}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: any) => fmt(Number(v))} />
+                  <Legend />
+                  <Bar dataKey="إيراد" stackId="r" fill="hsl(142 71% 45%)" />
+                  <Bar dataKey="فجوة" stackId="r" fill="hsl(0 72% 60%)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {analytics.topTenants.length > 0 && (
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <h3 className="mb-3 font-display text-sm font-bold">أكبر المستأجرين (حسب عدد الوحدات)</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.topTenants} layout="vertical" margin={{ left: 80 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={120} />
+                    <Tooltip />
+                    <Bar dataKey="وحدات" fill="hsl(217 91% 50%)" radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </section>
+
         {/* Buildings */}
         <section className="rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="mb-5 flex items-center gap-2 border-b pb-3 font-display text-lg font-bold">
