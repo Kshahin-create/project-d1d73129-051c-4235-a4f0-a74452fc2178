@@ -243,16 +243,16 @@ function buildHtml(p: Payload): string {
 
     <div class="footer">
       <div class="left">
+        رقم التسجيل الضريبي 31431941430003<br />
+        الجموم - حي النقاية - العلاء الحضرمي - 25354<br />
+        الرقم الوطني: 7052147241
+      </div>
+      <div class="right">
+        <div class="signer">شركة القمة الهادفة الحديثة</div>
         <div class="stamp-row">
           <img class="stamp" src="${STAMP_IMG}" alt="ختم" />
           <img class="sig" src="${SIGNATURE_IMG}" alt="توقيع" />
         </div>
-      </div>
-      <div class="right">
-        <div class="signer">شركة القمة الهادفة الحديثة</div>
-        رقم التسجيل الضريبي 31431941430003<br />
-        الجموم - حي النقاية - العلاء الحضرمي - 25354<br />
-        الرقم الوطني: 7052147241
       </div>
     </div>
   </div>
