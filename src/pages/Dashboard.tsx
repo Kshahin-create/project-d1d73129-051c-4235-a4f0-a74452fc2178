@@ -2,10 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Package, FileText, CheckCircle2, Circle, Wallet } from "lucide-react";
+import { Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type TenantRow = {
+  id: string;
+  tenant_name: string;
+  business_name: string | null;
+  activity_type: string | null;
+  phone: string | null;
+  units: { building_number: number; unit_number: number; activity: string | null }[];
+};
 
 const fmt = (n: number) => new Intl.NumberFormat("en-US").format(Math.round(n));
 
