@@ -153,6 +153,7 @@ const Booking = () => {
             phone: data.phone,
             email: data.email || user.email,
             business_name: data.business,
+            cr_number: data.crNumber || null,
             notes: data.notes || null,
           },
           { onConflict: "user_id" }
