@@ -23,8 +23,8 @@ interface Payload {
   units: Unit[];
 }
 
-const LOGO_NUKHBAT = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-nukhbat-transparent.png";
-const LOGO_MAKKAH = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-logo-makkah-transparent.png";
+const LOGO_NUKHBAT = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/logo-nukhbat-v2.png";
+const LOGO_MAKKAH = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/logo-makkah-v2.png";
 const SIGNATURE_IMG = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-signature.png";
 const STAMP_IMG = "https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/offer-stamp.png";
 
@@ -83,7 +83,7 @@ function buildHtml(p: Payload): string {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 12px; border-bottom: 2px solid #c9a961;
   }
-  .top-bar .logo-side img { height: 95px; object-fit: contain; }
+  .top-bar .logo-side img { height: 130px; object-fit: contain; }
   .offer-num-center {
     text-align: center;
     font-size: 13px;
