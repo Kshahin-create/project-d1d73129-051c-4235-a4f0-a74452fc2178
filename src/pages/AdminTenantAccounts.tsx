@@ -309,6 +309,9 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
         <Field label="اسم النشاط">
           <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} />
         </Field>
+        <Field label="رقم السجل التجاري">
+          <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
+        </Field>
         <Field label="ملاحظات">
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={2} />
         </Field>
