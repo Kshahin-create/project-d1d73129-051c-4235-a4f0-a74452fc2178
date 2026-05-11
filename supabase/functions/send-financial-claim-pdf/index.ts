@@ -200,6 +200,8 @@ async function renderImage(html: string): Promise<string> {
 }
 
 function toPdfUrl(imageUrl: string): string {
+  const m = imageUrl.match(/\/v1\/image\/([^./?]+)/i);
+  if (m && m[1]) return `https://hcti.io/v1/image/${m[1]}.pdf`;
   return imageUrl.replace(/\.(jpe?g|png|webp)(\?.*)?$/i, ".pdf$2");
 }
 
