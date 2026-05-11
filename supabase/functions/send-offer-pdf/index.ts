@@ -165,7 +165,7 @@ function buildHtml(p: Payload): string {
     background: #fff;
   }
   .footer img { height: 42px; }
-  .footer .meta { text-align: left; line-height: 1.6; }
+  .footer .meta { text-align: right; line-height: 1.6; }
 </style>
 </head>
 <body>
