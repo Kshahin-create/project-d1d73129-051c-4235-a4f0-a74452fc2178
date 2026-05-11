@@ -248,11 +248,11 @@ function buildHtml(p: Payload): string {
     </div>
 
     <div class="footer">
-      <img src="${LOGO_MAKKAH}" alt="" />
       <div class="meta">
         شركة القمة الهادفة الحديثة - رقم التسجيل الضريبي 31431941430003<br />
         الجموم - حي النقاية - العلاء الحضرمي - 25354 - الرقم الوطني: 7052147241
       </div>
+      <img src="${LOGO_MAKKAH}" alt="" />
     </div>
   </div>
 </body>
