@@ -176,7 +176,8 @@ const Booking = () => {
       _business_name: customer.business || null,
       _notes: customer.notes || null,
       _unit_ids: selectedUnits.map((u) => u.id).filter(Boolean) as string[],
-    });
+      _cr_number: customer.crNumber || null,
+    } as any);
     setCreatingBooking(false);
     if (error || !newId) {
       toast.error(error?.message || "تعذّر إنشاء الحجز");
