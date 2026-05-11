@@ -32,6 +32,12 @@ export const customerSchema = z.object({
     .trim()
     .min(2, "يرجى ذكر النشاط التجاري")
     .max(150),
+  crNumber: z
+    .string()
+    .trim()
+    .max(50, "رقم السجل التجاري طويل جداً")
+    .optional()
+    .or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
