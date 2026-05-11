@@ -101,6 +101,10 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
         <Input {...register("business")} placeholder="مركز صيانة سيارات / محل قطع غيار..." />
       </Field>
 
+      <Field label="رقم السجل التجاري (اختياري)" error={errors.crNumber?.message}>
+        <Input {...register("crNumber")} dir="ltr" className="text-left" placeholder="1010xxxxxx" />
+      </Field>
+
       <Field label="ملاحظات إضافية (اختياري)" error={errors.notes?.message}>
         <Textarea {...register("notes")} rows={3} placeholder="أي تفاصيل أو متطلبات إضافية..." />
       </Field>
