@@ -276,6 +276,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
         phone,
         password,
         business_name,
+        cr_number,
         notes,
         unit_ids: Array.from(selected),
       });
