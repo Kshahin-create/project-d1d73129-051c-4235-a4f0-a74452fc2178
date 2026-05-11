@@ -249,6 +249,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [business_name, setBusiness] = useState("");
+  const [cr_number, setCrNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [units, setUnits] = useState<Unit[]>([]);
