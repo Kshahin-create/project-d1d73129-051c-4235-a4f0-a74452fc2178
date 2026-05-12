@@ -53,8 +53,17 @@ function gregDate(): string {
 
 function buildHtml(p: Payload): string {
   const annual = p.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
-  const vat = Math.round(annual * 0.15);
-  const total = annual + vat;
+  const plan = p.payment_plan || "full";
+  const planRatio = plan === "70" ? 0.7 : plan === "50" ? 0.5 : 1;
+  const planLabel =
+    plan === "full"
+      ? "نظام سداد 100% من قيمة الإيجار"
+      : plan === "70"
+      ? "نظام سداد 70% من قيمة الإيجار"
+      : "نظام سداد 50% من قيمة الإيجار";
+  const payable = Math.round(annual * planRatio);
+  const vat = Math.round(payable * 0.15);
+  const total = payable + vat;
 
   const buildings = Array.from(new Set(p.units.map((u) => u.buildingNumber))).sort((a, b) => a - b);
   const unitsByBuilding = buildings.map((b) => {
@@ -64,6 +73,24 @@ function buildHtml(p: Payload): string {
 
   const activities = Array.from(new Set(p.units.map((u) => (u.activity || "").trim()).filter(Boolean)));
   const activityLabel = activities.length > 0 ? activities.join(" / ") : "—";
+
+  const pledgeHtml =
+    plan === "full"
+      ? `نتعهد بتطبيق خصم نقدي 15% لكل سنة إيجارية ولمدة ثلاث سنوات يبدأ تطبيقه من السنة الإيجارية الثانية، وذلك عند سداد كامل قيمة الإيجار 100% للسنة الأولى.`
+      : plan === "70"
+      ? `تم اختيار نظام السداد بنسبة 70% من قيمة الإيجار السنوي عند توقيع العقد.`
+      : `تم اختيار نظام السداد بنسبة 50% من قيمة الإيجار السنوي (متاح للمستأجرين بإيجار سنوي يتجاوز 150,000 ريال).`;
+
+  const amountsRows = plan === "full"
+    ? `
+        <tr><td>قيمة الإيجار السنوي للوحدات (100%)</td><td class="amt">${fmtNum(annual)} ر.س</td></tr>
+        <tr><td>ضريبة القيمة المضافة (15%)</td><td class="amt">${fmtNum(vat)} ر.س</td></tr>
+        <tr class="total"><td class="lbl">الإجمالي المستحق</td><td class="amt" style="font-weight:900;font-size:18px;">${fmtNum(total)} ر.س</td></tr>`
+    : `
+        <tr><td>قيمة الإيجار السنوي الإجمالية</td><td class="amt">${fmtNum(annual)} ر.س</td></tr>
+        <tr><td>${planLabel} (${plan}%)</td><td class="amt">${fmtNum(payable)} ر.س</td></tr>
+        <tr><td>ضريبة القيمة المضافة (15%) على المبلغ المستحق</td><td class="amt">${fmtNum(vat)} ر.س</td></tr>
+        <tr class="total"><td class="lbl">الإجمالي المستحق الآن</td><td class="amt" style="font-weight:900;font-size:18px;">${fmtNum(total)} ر.س</td></tr>`;
 
   return `<!doctype html>
 <html lang="ar" dir="rtl">
