@@ -60,6 +60,7 @@ const Booking = () => {
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
   const [savedProfile, setSavedProfile] = useState<Partial<CustomerFormData> | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [paymentPlan, setPaymentPlan] = useState<"full" | "70" | "50">("full");
   const bookingContentRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useBuildingsAndUnits();
@@ -105,6 +106,11 @@ const Booking = () => {
     const price = selectedUnits.reduce((s, u) => s + u.price, 0);
     return { area, price, count: selectedUnits.length };
   }, [selectedUnits]);
+
+  // اعادة الضبط لو خطة 50% لم تعد مؤهلة
+  useEffect(() => {
+    if (paymentPlan === "50" && totals.price < 150000) setPaymentPlan("full");
+  }, [totals.price, paymentPlan]);
 
   const whatsapp = useMemo(() => {
     if (selectedUnits.length === 0 || !customer) return null;
@@ -181,6 +187,7 @@ const Booking = () => {
       _notes: customer.notes || null,
       _unit_ids: selectedUnits.map((u) => u.id).filter(Boolean) as string[],
       _cr_number: customer.crNumber || null,
+      _payment_plan: paymentPlan,
     } as any);
     setCreatingBooking(false);
     if (error || !newId) {
@@ -222,6 +229,7 @@ const Booking = () => {
       .invoke("send-offer-pdf", {
         body: {
           booking_id: newId,
+          payment_plan: paymentPlan,
           customer: {
             fullName: customer.fullName,
             phone: customer.phone,
@@ -248,6 +256,7 @@ const Booking = () => {
       .invoke("send-financial-claim-pdf", {
         body: {
           booking_id: newId,
+          payment_plan: paymentPlan,
           customer: {
             fullName: customer.fullName,
             phone: customer.phone,
@@ -461,7 +470,7 @@ const Booking = () => {
             )}
 
             {step === 3 && selectedUnits.length > 0 && (
-              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات قبل المتابعة.">
+              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات واختر نظام السداد المناسب قبل المتابعة.">
                 <div className="mx-auto max-w-3xl space-y-4">
                   <SelectionTotals totals={totals} />
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -469,6 +478,11 @@ const Booking = () => {
                       <UnitDetailsCard key={`${u.buildingNumber}-${u.unitNumber}`} unit={u} />
                     ))}
                   </div>
+                  <PaymentPlanSelector
+                    value={paymentPlan}
+                    onChange={setPaymentPlan}
+                    annualPrice={totals.price}
+                  />
                   <button
                     onClick={() => setStep(4)}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3.5 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated"
@@ -579,6 +593,16 @@ const Booking = () => {
                           {customer.email && <SummaryRow label="البريد" value={customer.email} ltr />}
                           <SummaryRow label="النشاط" value={customer.business} />
                           {customer.notes && <SummaryRow label="ملاحظات" value={customer.notes} />}
+                          <SummaryRow
+                            label="نظام السداد"
+                            value={
+                              paymentPlan === "full"
+                                ? "100% (مع خصم 15% للسنوات القادمة)"
+                                : paymentPlan === "70"
+                                ? "70% من قيمة الإيجار"
+                                : "50% من قيمة الإيجار"
+                            }
+                          />
                         </dl>
                       </div>
                       {creatingBooking && (
@@ -706,5 +730,99 @@ const SummaryRow = ({ label, value, ltr }: { label: string; value: string; ltr?:
     </dd>
   </div>
 );
+
+const PaymentPlanSelector = ({
+  value,
+  onChange,
+  annualPrice,
+}: {
+  value: "full" | "70" | "50";
+  onChange: (v: "full" | "70" | "50") => void;
+  annualPrice: number;
+}) => {
+  const eligible50 = annualPrice >= 150000;
+  const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
+  const options: { id: "full" | "70" | "50"; title: string; desc: string; payable: number; disabled?: boolean; badge?: string }[] = [
+    {
+      id: "full",
+      title: "سداد 100% من قيمة الإيجار",
+      desc: "نتعهد بخصم خاص 15% من قيمة الإيجار لمدة ثلاث سنوات إيجارية يبدأ تطبيقه من السنة الثانية.",
+      payable: annualPrice,
+      badge: "خصم 15% للسنوات القادمة",
+    },
+    {
+      id: "70",
+      title: "سداد 70% من قيمة الإيجار",
+      desc: "تحويل 70% من قيمة الإيجار السنوي عند توقيع العقد.",
+      payable: annualPrice * 0.7,
+    },
+    {
+      id: "50",
+      title: "سداد 50% من قيمة الإيجار",
+      desc: "متاح لأصحاب مراكز الصيانة الكبيرة والمتوسطة بإيجار سنوي يتجاوز 150,000 ريال.",
+      payable: annualPrice * 0.5,
+      disabled: !eligible50,
+    },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className="mb-3">
+        <h4 className="font-display text-lg font-extrabold">اختر نظام السداد</h4>
+        <p className="mt-1 text-xs text-muted-foreground">
+          المبلغ المطلوب في المطالبة المالية يعتمد على نظام السداد الذي تختاره. القيم غير شاملة ضريبة القيمة المضافة 15%.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {options.map((o) => {
+          const selected = value === o.id;
+          return (
+            <button
+              type="button"
+              key={o.id}
+              disabled={o.disabled}
+              onClick={() => onChange(o.id)}
+              className={`text-right rounded-xl border p-4 transition ${
+                selected
+                  ? "border-primary bg-primary/5 shadow-card"
+                  : "border-border bg-background hover:border-primary/40"
+              } ${o.disabled ? "cursor-not-allowed opacity-50" : ""}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-sm font-bold ${selected ? "text-primary" : "text-foreground"}`}>
+                  {o.title}
+                </span>
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                    selected ? "border-primary bg-primary" : "border-border"
+                  }`}
+                >
+                  {selected && <span className="h-2 w-2 rounded-full bg-primary-foreground" />}
+                </span>
+              </div>
+              <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{o.desc}</p>
+              <div className="mt-3 rounded-lg bg-muted/40 px-2 py-1.5 text-center">
+                <div className="text-[10px] text-muted-foreground">المبلغ المطلوب الآن</div>
+                <div className="num text-sm font-extrabold text-accent">
+                  {fmt(o.payable)} ر.س
+                </div>
+              </div>
+              {o.badge && (
+                <div className="mt-2 inline-block rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
+                  {o.badge}
+                </div>
+              )}
+              {o.disabled && (
+                <div className="mt-2 text-[10px] font-bold text-destructive">
+                  غير متاح — يتطلب إيجار سنوي ≥ 150,000 ريال
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 export default Booking;

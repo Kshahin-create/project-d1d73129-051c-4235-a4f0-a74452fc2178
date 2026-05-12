@@ -10,6 +10,7 @@ interface Unit {
 interface Payload {
   booking_id?: string;
   claim_number?: string;
+  payment_plan?: "full" | "70" | "50";
   customer: {
     fullName: string;
     phone?: string;
@@ -52,8 +53,17 @@ function gregDate(): string {
 
 function buildHtml(p: Payload): string {
   const annual = p.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
-  const vat = Math.round(annual * 0.15);
-  const total = annual + vat;
+  const plan = p.payment_plan || "full";
+  const planRatio = plan === "70" ? 0.7 : plan === "50" ? 0.5 : 1;
+  const planLabel =
+    plan === "full"
+      ? "نظام سداد 100% من قيمة الإيجار"
+      : plan === "70"
+      ? "نظام سداد 70% من قيمة الإيجار"
+      : "نظام سداد 50% من قيمة الإيجار";
+  const payable = Math.round(annual * planRatio);
+  const vat = Math.round(payable * 0.15);
+  const total = payable + vat;
 
   const buildings = Array.from(new Set(p.units.map((u) => u.buildingNumber))).sort((a, b) => a - b);
   const unitsByBuilding = buildings.map((b) => {
@@ -63,6 +73,24 @@ function buildHtml(p: Payload): string {
 
   const activities = Array.from(new Set(p.units.map((u) => (u.activity || "").trim()).filter(Boolean)));
   const activityLabel = activities.length > 0 ? activities.join(" / ") : "—";
+
+  const pledgeHtml =
+    plan === "full"
+      ? `نتعهد بتطبيق خصم نقدي 15% لكل سنة إيجارية ولمدة ثلاث سنوات يبدأ تطبيقه من السنة الإيجارية الثانية، وذلك عند سداد كامل قيمة الإيجار 100% للسنة الأولى.`
+      : plan === "70"
+      ? `تم اختيار نظام السداد بنسبة 70% من قيمة الإيجار السنوي عند توقيع العقد.`
+      : `تم اختيار نظام السداد بنسبة 50% من قيمة الإيجار السنوي (متاح للمستأجرين بإيجار سنوي يتجاوز 150,000 ريال).`;
+
+  const amountsRows = plan === "full"
+    ? `
+        <tr><td>قيمة الإيجار السنوي للوحدات (100%)</td><td class="amt">${fmtNum(annual)} ر.س</td></tr>
+        <tr><td>ضريبة القيمة المضافة (15%)</td><td class="amt">${fmtNum(vat)} ر.س</td></tr>
+        <tr class="total"><td class="lbl">الإجمالي المستحق</td><td class="amt" style="font-weight:900;font-size:18px;">${fmtNum(total)} ر.س</td></tr>`
+    : `
+        <tr><td>قيمة الإيجار السنوي الإجمالية</td><td class="amt">${fmtNum(annual)} ر.س</td></tr>
+        <tr><td>${planLabel} (${plan}%)</td><td class="amt">${fmtNum(payable)} ر.س</td></tr>
+        <tr><td>ضريبة القيمة المضافة (15%) على المبلغ المستحق</td><td class="amt">${fmtNum(vat)} ر.س</td></tr>
+        <tr class="total"><td class="lbl">الإجمالي المستحق الآن</td><td class="amt" style="font-weight:900;font-size:18px;">${fmtNum(total)} ر.س</td></tr>`;
 
   return `<!doctype html>
 <html lang="ar" dir="rtl">
@@ -218,18 +246,16 @@ function buildHtml(p: Payload): string {
       <tr><td class="label">نوع النشاط</td><td>${esc(activityLabel)}</td></tr>
       <tr><td class="label">المشروع</td><td>المدينة الصناعية بشمال مكة</td></tr>
       <tr><td class="label">رقم المبنى والوحدة</td><td>${esc(unitsByBuilding)}</td></tr>
+      <tr><td class="label">نظام السداد</td><td><strong>${esc(planLabel)}</strong></td></tr>
     </table>
 
     <div class="pledge">
-      نتعهد بتطبيق خصم نقدي 15% لكل سنة إيجارية ولمدة ثلاث سنوات عند تحويل كامل قيمة الإيجار 100% للسنة الأولى
+      ${pledgeHtml}
     </div>
 
     <table class="amounts">
       <thead><tr><th style="width:60%;">البيان</th><th>المبلغ</th></tr></thead>
-      <tbody>
-        <tr><td>قيمة الإيجار السنوي للوحدات</td><td class="amt">${fmtNum(annual)} ر.س</td></tr>
-        <tr><td>ضريبة القيمة المضافة (15%)</td><td class="amt">${fmtNum(vat)} ر.س</td></tr>
-        <tr class="total"><td class="lbl">الإجمالي</td><td class="amt" style="font-weight:900;font-size:18px;">${fmtNum(total)} ر.س</td></tr>
+      <tbody>${amountsRows}
       </tbody>
     </table>
 
@@ -347,15 +373,21 @@ Deno.serve(async (req) => {
     const pdfBytes = await imageUrlToPdfBytes(imageUrl);
 
     const annual = body.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
-    const vat = Math.round(annual * 0.15);
-    const total = annual + vat;
+    const plan = body.payment_plan || "full";
+    const planRatio = plan === "70" ? 0.7 : plan === "50" ? 0.5 : 1;
+    const planLabel = plan === "full" ? "100%" : plan === "70" ? "70%" : "50%";
+    const payable = Math.round(annual * planRatio);
+    const vat = Math.round(payable * 0.15);
+    const total = payable + vat;
 
     const caption = [
       "🧾 <b>مطالبة مالية</b>",
       body.booking_id ? `🆔 <code>${esc(body.booking_id)}</code>` : "",
       `👤 ${esc(body.customer.business || body.customer.fullName)}`,
+      `🧮 نظام السداد: ${planLabel}`,
       `💰 الإجمالي شامل الضريبة: ${fmtNum(total)} ر.س`,
-      `   • الإيجار: ${fmtNum(annual)} ر.س`,
+      `   • الإيجار السنوي الكامل: ${fmtNum(annual)} ر.س`,
+      `   • المستحق الآن (${planLabel}): ${fmtNum(payable)} ر.س`,
       `   • ض.ق.م 15%: ${fmtNum(vat)} ر.س`,
     ].filter(Boolean).join("\n");
 

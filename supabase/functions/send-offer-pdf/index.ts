@@ -13,6 +13,7 @@ interface Unit {
 interface Payload {
   booking_id?: string;
   offer_number?: string;
+  payment_plan?: "full" | "70" | "50";
   customer: {
     fullName: string;
     phone?: string;
@@ -36,6 +37,15 @@ const fmtNum = (n: number) => Number(n || 0).toLocaleString("en-US");
 function buildHtml(p: Payload): string {
   const totalArea = p.units.reduce((s, u) => s + (Number(u.area) || 0), 0);
   const totalPrice = p.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
+  const plan = p.payment_plan || "full";
+  const planRatio = plan === "70" ? 0.7 : plan === "50" ? 0.5 : 1;
+  const payable = Math.round(totalPrice * planRatio);
+  const planLabel =
+    plan === "full"
+      ? "سداد 100% من قيمة الإيجار — مع تعهّدنا بخصم 15% من قيمة الإيجار يبدأ تطبيقه من السنة الإيجارية الثانية ولمدة ثلاث سنوات"
+      : plan === "70"
+      ? "سداد 70% من قيمة الإيجار السنوي عند توقيع العقد"
+      : "سداد 50% من قيمة الإيجار السنوي (للمستأجرين بإيجار سنوي يتجاوز 150,000 ريال)";
   const buildings = Array.from(new Set(p.units.map((u) => u.buildingNumber))).sort((a, b) => a - b);
   const buildingsLabel = buildings.join("، ");
   const unitsList = p.units.map((u) => u.unitNumber).join(", ");
@@ -196,6 +206,8 @@ function buildHtml(p: Payload): string {
       <tr><td class="label">مدة العقد</td><td class="alt">سنوي</td></tr>
       <tr><td class="label">المساحة التأجيرية</td><td>مجموع المساحة الإيجارية &nbsp; <strong>${fmtNum(totalArea)}</strong> متر مربع</td></tr>
       <tr><td class="label">القيمة الإيجارية</td><td class="alt"><strong>${fmtNum(totalPrice)}</strong> ر.س &nbsp; غير شاملة ضريبة القيمة المضافة</td></tr>
+      <tr><td class="label">نظام السداد</td><td><strong>${esc(planLabel)}</strong></td></tr>
+      <tr><td class="label">المبلغ المستحق عند التوقيع</td><td class="alt"><strong>${fmtNum(payable)}</strong> ر.س &nbsp; (${plan === "full" ? "100%" : plan + "%"} من قيمة الإيجار، غير شامل ض.ق.م)</td></tr>
       <tr><td class="label">طريقة الدفع</td><td>حوالة بنكية على حسابنا ببنك الراجحي &nbsp; iban: SA0980000324608010669967</td></tr>
       <tr><td class="label">ملاحظات</td><td class="alt">نتعهد بإصدار فاتورة الكترونية عند تحويل كامل المبلغ في حسابنا البنكي</td></tr>
     </table>
