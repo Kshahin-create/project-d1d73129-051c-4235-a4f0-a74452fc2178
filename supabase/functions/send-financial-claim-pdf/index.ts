@@ -390,10 +390,10 @@ Deno.serve(async (req) => {
     const tenantName = (body.customer.fullName || "").replace(/[\\/:*?"<>|]/g, "").trim() || "مستأجر";
     const refId = body.booking_id?.slice(0, 8) || String(Date.now()).slice(-8);
     const fileName = `مطالبة مالية - ${tenantName} - ${refId}.pdf`;
-    const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
+    const tg = await sendPdfToTelegram(pdfBytes, caption, fileName, body.target_chat_id);
 
     return new Response(
-      JSON.stringify({ success: tg.ok, image_url: imageUrl, telegram: tg.results }),
+      JSON.stringify({ success: tg.ok, telegram: tg.results }),
       { status: tg.ok ? 200 : 207, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
