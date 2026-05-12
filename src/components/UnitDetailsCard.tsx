@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Building, Hash, Maximize2, Wallet, Tag } from "lucide-react";
 import type { Unit } from "@/data/types";
+import { fmtNum } from "@/lib/utils";
 
 export const UnitDetailsCard = ({ unit }: { unit: Unit }) => {
   return (
@@ -33,7 +34,7 @@ export const UnitDetailsCard = ({ unit }: { unit: Unit }) => {
           {unit.activity ?? unit.buildingType}
         </Row>
         <Row icon={<Maximize2 className="h-4 w-4" />} label="المساحة">
-          <span className="num font-bold">{unit.area}</span> م²
+          <span className="num font-bold">{fmtNum(unit.area)}</span> م²
         </Row>
         <Row icon={<Wallet className="h-4 w-4" />} label="الإيجار السنوي" highlight>
           <span className="num font-extrabold text-accent">

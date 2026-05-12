@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset } from "lucide-react";
+import { fmtNum } from "@/lib/utils";
 
 interface BookingUnitRow {
   building_number: number;
@@ -219,7 +220,7 @@ const AdminBookings = () => {
                       الوحدات: <span className="num font-semibold text-foreground">{b.units_count}</span>
                     </div>
                     <div className="text-muted-foreground">
-                      المساحة: <span className="num font-semibold text-foreground">{Number(b.total_area)} م²</span>
+                      المساحة: <span className="num font-semibold text-foreground">{fmtNum(b.total_area)} م²</span>
                     </div>
                     <div className="text-muted-foreground">
                       السعر: <span className="num font-semibold text-foreground">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س

@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
+import { fmtNum } from "@/lib/utils";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{svg,png,jpg,jpeg}", {
   eager: true,
@@ -429,17 +430,19 @@ const Booking = () => {
                       </p>
                     ) : (
                       <>
-                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-center">
                           <div className="text-sm font-bold">
                             الوحدات المختارة:{" "}
                             <span className="num text-primary">{totals.count}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            إجمالي المساحة:{" "}
-                            <span className="num font-bold text-foreground">{totals.area}</span> م² —
+                          <div className="text-xs text-muted-foreground sm:text-center">
+                            المساحة:{" "}
+                            <span className="num font-bold text-foreground">{fmtNum(totals.area)}</span> م²
+                          </div>
+                          <div className="text-xs text-muted-foreground sm:text-left">
                             الإيجار السنوي:{" "}
                             <span className="num font-bold text-accent">
-                              {totals.price.toLocaleString("en-US")}
+                              {fmtNum(totals.price, 0)}
                             </span>{" "}
                             ريال
                           </div>
@@ -731,14 +734,14 @@ const SelectionTotals = ({ totals }: { totals: { count: number; area: number; pr
       </div>
       <div>
         <div className="text-[11px] text-muted-foreground">إجمالي المساحة</div>
-        <div className="num mt-1 font-display text-xl font-extrabold">
-          {totals.area} <span className="text-xs font-medium text-muted-foreground">م²</span>
+        <div className="num mt-1 font-display text-lg font-extrabold sm:text-xl">
+          {fmtNum(totals.area)} <span className="text-xs font-medium text-muted-foreground">م²</span>
         </div>
       </div>
       <div>
         <div className="text-[11px] text-muted-foreground">الإيجار السنوي</div>
-        <div className="num mt-1 font-display text-xl font-extrabold text-accent">
-          {totals.price.toLocaleString("en-US")}
+        <div className="num mt-1 font-display text-lg font-extrabold text-accent sm:text-xl">
+          {fmtNum(totals.price, 0)}
         </div>
       </div>
     </div>
