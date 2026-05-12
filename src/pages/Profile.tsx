@@ -12,6 +12,7 @@ import { PasswordCard } from "@/components/account/PasswordCard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { fmtNum } from "@/lib/utils";
 
 type BookingRow = {
   id: string;
