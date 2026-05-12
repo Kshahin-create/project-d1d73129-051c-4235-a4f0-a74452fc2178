@@ -99,7 +99,13 @@ const Booking = () => {
     [selectedBuilding, units]
   );
 
-  const selectedUnitNumbers = useMemo(() => selectedUnits.map((u) => u.unitNumber), [selectedUnits]);
+  const selectedUnitNumbers = useMemo(
+    () =>
+      selectedBuilding
+        ? selectedUnits.filter((u) => u.buildingNumber === selectedBuilding.number).map((u) => u.unitNumber)
+        : [],
+    [selectedUnits, selectedBuilding]
+  );
 
   const totals = useMemo(() => {
     const area = selectedUnits.reduce((s, u) => s + u.area, 0);
@@ -129,8 +135,13 @@ const Booking = () => {
 
   const handleBuildingSelect = (b: Building) => {
     setSelectedBuilding(b);
-    setSelectedUnits([]);
+    // لا نمسح الوحدات السابقة — نسمح بالاختيار من عدة مباني
     setStep(2);
+  };
+
+  const goAddAnotherBuilding = () => {
+    setSelectedBuilding(null);
+    setStep(1);
   };
 
   const handleUnitToggle = (u: Unit) => {
@@ -456,21 +467,30 @@ const Booking = () => {
                         </div>
                       </>
                     )}
-                    <button
-                      onClick={() => setStep(3)}
-                      disabled={selectedUnits.length === 0}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      متابعة ({selectedUnits.length})
-                      <ArrowLeft className="h-4 w-4" />
-                    </button>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <button
+                        onClick={goAddAnotherBuilding}
+                        disabled={selectedUnits.length === 0}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary/40 bg-background py-3 font-display text-sm font-bold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        + إضافة وحدات من مبنى آخر
+                      </button>
+                      <button
+                        onClick={() => setStep(3)}
+                        disabled={selectedUnits.length === 0}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        متابعة ({selectedUnits.length})
+                        <ArrowLeft className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </StepWrap>
             )}
 
             {step === 3 && selectedUnits.length > 0 && (
-              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات واختر نظام السداد المناسب قبل المتابعة.">
+              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات، يمكنك إضافة وحدات من مبنى آخر، ثم اختر نظام السداد.">
                 <div className="mx-auto max-w-3xl space-y-4">
                   <SelectionTotals totals={totals} />
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -478,6 +498,12 @@ const Booking = () => {
                       <UnitDetailsCard key={`${u.buildingNumber}-${u.unitNumber}`} unit={u} />
                     ))}
                   </div>
+                  <button
+                    onClick={goAddAnotherBuilding}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 py-3 font-display text-sm font-bold text-primary transition hover:bg-primary/10"
+                  >
+                    + إضافة وحدات من مبنى آخر
+                  </button>
                   <PaymentPlanSelector
                     value={paymentPlan}
                     onChange={setPaymentPlan}
