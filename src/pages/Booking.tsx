@@ -107,6 +107,11 @@ const Booking = () => {
     return { area, price, count: selectedUnits.length };
   }, [selectedUnits]);
 
+  // اعادة الضبط لو خطة 50% لم تعد مؤهلة
+  useEffect(() => {
+    if (paymentPlan === "50" && totals.price < 150000) setPaymentPlan("full");
+  }, [totals.price, paymentPlan]);
+
   const whatsapp = useMemo(() => {
     if (selectedUnits.length === 0 || !customer) return null;
     const data = {
