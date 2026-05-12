@@ -251,6 +251,7 @@ const Booking = () => {
       .invoke("send-financial-claim-pdf", {
         body: {
           booking_id: newId,
+          payment_plan: paymentPlan,
           customer: {
             fullName: customer.fullName,
             phone: customer.phone,
