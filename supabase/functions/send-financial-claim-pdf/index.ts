@@ -329,7 +329,7 @@ async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName
   if (targetChatId) {
     ids.push(targetChatId);
   } else {
-    for (const k of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2", "TELEGRAM_CHAT_ID_3"]) {
+    for (const k of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2", "TELEGRAM_CHAT_ID_3", "TELEGRAM_CHAT_ID_4"]) {
       const v = Deno.env.get(k)?.trim();
       if (v) ids.push(v);
     }

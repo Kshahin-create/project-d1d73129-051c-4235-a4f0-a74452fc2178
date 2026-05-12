@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     // كل ID في secret منفصل عشان نضمن إن كل رسالة تتبعت لوحدها
     const chatIdEntries: { key: string; value: string }[] = [];
-    for (const key of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2", "TELEGRAM_CHAT_ID_3"]) {
+    for (const key of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2", "TELEGRAM_CHAT_ID_3", "TELEGRAM_CHAT_ID_4"]) {
       const v = Deno.env.get(key)?.trim();
       if (v) chatIdEntries.push({ key, value: v });
     }
