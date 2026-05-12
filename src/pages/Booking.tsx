@@ -60,6 +60,7 @@ const Booking = () => {
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
   const [savedProfile, setSavedProfile] = useState<Partial<CustomerFormData> | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [paymentPlan, setPaymentPlan] = useState<"full" | "70" | "50">("full");
   const bookingContentRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useBuildingsAndUnits();
