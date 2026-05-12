@@ -373,15 +373,21 @@ Deno.serve(async (req) => {
     const pdfBytes = await imageUrlToPdfBytes(imageUrl);
 
     const annual = body.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
-    const vat = Math.round(annual * 0.15);
-    const total = annual + vat;
+    const plan = body.payment_plan || "full";
+    const planRatio = plan === "70" ? 0.7 : plan === "50" ? 0.5 : 1;
+    const planLabel = plan === "full" ? "100%" : plan === "70" ? "70%" : "50%";
+    const payable = Math.round(annual * planRatio);
+    const vat = Math.round(payable * 0.15);
+    const total = payable + vat;
 
     const caption = [
       "🧾 <b>مطالبة مالية</b>",
       body.booking_id ? `🆔 <code>${esc(body.booking_id)}</code>` : "",
       `👤 ${esc(body.customer.business || body.customer.fullName)}`,
+      `🧮 نظام السداد: ${planLabel}`,
       `💰 الإجمالي شامل الضريبة: ${fmtNum(total)} ر.س`,
-      `   • الإيجار: ${fmtNum(annual)} ر.س`,
+      `   • الإيجار السنوي الكامل: ${fmtNum(annual)} ر.س`,
+      `   • المستحق الآن (${planLabel}): ${fmtNum(payable)} ر.س`,
       `   • ض.ق.م 15%: ${fmtNum(vat)} ر.س`,
     ].filter(Boolean).join("\n");
 
