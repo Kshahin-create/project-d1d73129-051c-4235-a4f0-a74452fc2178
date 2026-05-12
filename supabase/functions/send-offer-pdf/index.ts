@@ -206,6 +206,8 @@ function buildHtml(p: Payload): string {
       <tr><td class="label">مدة العقد</td><td class="alt">سنوي</td></tr>
       <tr><td class="label">المساحة التأجيرية</td><td>مجموع المساحة الإيجارية &nbsp; <strong>${fmtNum(totalArea)}</strong> متر مربع</td></tr>
       <tr><td class="label">القيمة الإيجارية</td><td class="alt"><strong>${fmtNum(totalPrice)}</strong> ر.س &nbsp; غير شاملة ضريبة القيمة المضافة</td></tr>
+      <tr><td class="label">نظام السداد</td><td><strong>${esc(planLabel)}</strong></td></tr>
+      <tr><td class="label">المبلغ المستحق عند التوقيع</td><td class="alt"><strong>${fmtNum(payable)}</strong> ر.س &nbsp; (${plan === "full" ? "100%" : plan + "%"} من قيمة الإيجار، غير شامل ض.ق.م)</td></tr>
       <tr><td class="label">طريقة الدفع</td><td>حوالة بنكية على حسابنا ببنك الراجحي &nbsp; iban: SA0980000324608010669967</td></tr>
       <tr><td class="label">ملاحظات</td><td class="alt">نتعهد بإصدار فاتورة الكترونية عند تحويل كامل المبلغ في حسابنا البنكي</td></tr>
     </table>
