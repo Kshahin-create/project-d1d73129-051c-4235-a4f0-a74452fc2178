@@ -58,7 +58,7 @@ export const useBuildingsAndUnits = () => {
           activity: u.activity,
           price: Number(u.price),
           status: u.status as "available" | "rented" | "reserved",
-          tenant: tenantInfo?.name ?? null,
+          tenant: tenantInfo?.name ?? bookingNameByUnitId.get(u.id)?.name ?? null,
         };
       });
 
