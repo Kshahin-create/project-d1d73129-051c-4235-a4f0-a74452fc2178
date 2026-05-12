@@ -429,17 +429,19 @@ const Booking = () => {
                       </p>
                     ) : (
                       <>
-                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-center">
                           <div className="text-sm font-bold">
                             الوحدات المختارة:{" "}
                             <span className="num text-primary">{totals.count}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            إجمالي المساحة:{" "}
-                            <span className="num font-bold text-foreground">{totals.area}</span> م² —
+                          <div className="text-xs text-muted-foreground sm:text-center">
+                            المساحة:{" "}
+                            <span className="num font-bold text-foreground">{fmtNum(totals.area)}</span> م²
+                          </div>
+                          <div className="text-xs text-muted-foreground sm:text-left">
                             الإيجار السنوي:{" "}
                             <span className="num font-bold text-accent">
-                              {totals.price.toLocaleString("en-US")}
+                              {fmtNum(totals.price, 0)}
                             </span>{" "}
                             ريال
                           </div>
