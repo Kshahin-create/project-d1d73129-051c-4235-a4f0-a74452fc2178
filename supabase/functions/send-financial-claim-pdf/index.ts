@@ -10,6 +10,7 @@ interface Unit {
 interface Payload {
   booking_id?: string;
   claim_number?: string;
+  payment_plan?: "full" | "70" | "50";
   customer: {
     fullName: string;
     phone?: string;
