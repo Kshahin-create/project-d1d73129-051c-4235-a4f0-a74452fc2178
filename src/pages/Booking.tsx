@@ -135,8 +135,13 @@ const Booking = () => {
 
   const handleBuildingSelect = (b: Building) => {
     setSelectedBuilding(b);
-    setSelectedUnits([]);
+    // لا نمسح الوحدات السابقة — نسمح بالاختيار من عدة مباني
     setStep(2);
+  };
+
+  const goAddAnotherBuilding = () => {
+    setSelectedBuilding(null);
+    setStep(1);
   };
 
   const handleUnitToggle = (u: Unit) => {
