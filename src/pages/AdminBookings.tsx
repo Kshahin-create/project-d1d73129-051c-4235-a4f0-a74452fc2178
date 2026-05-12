@@ -219,7 +219,7 @@ const AdminBookings = () => {
                       الوحدات: <span className="num font-semibold text-foreground">{b.units_count}</span>
                     </div>
                     <div className="text-muted-foreground">
-                      المساحة: <span className="num font-semibold text-foreground">{Number(b.total_area)} م²</span>
+                      المساحة: <span className="num font-semibold text-foreground">{fmtNum(b.total_area)} م²</span>
                     </div>
                     <div className="text-muted-foreground">
                       السعر: <span className="num font-semibold text-foreground">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
