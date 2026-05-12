@@ -391,7 +391,9 @@ Deno.serve(async (req) => {
       `   • ض.ق.م 15%: ${fmtNum(vat)} ر.س`,
     ].filter(Boolean).join("\n");
 
-    const fileName = `مطالبة مالية المدينة الصناعية بشمال مكة.pdf`;
+    const tenantName = (body.customer.fullName || "").replace(/[\\/:*?"<>|]/g, "").trim() || "مستأجر";
+    const refId = body.booking_id?.slice(0, 8) || String(Date.now()).slice(-8);
+    const fileName = `مطالبة مالية - ${tenantName} - ${refId}.pdf`;
     const tg = await sendPdfToTelegram(pdfBytes, caption, fileName);
 
     return new Response(
