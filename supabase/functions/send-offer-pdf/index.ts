@@ -271,48 +271,37 @@ function buildHtml(p: Payload): string {
 </html>`;
 }
 
-async function renderImage(html: string): Promise<string> {
-  const userId = Deno.env.get("HCTI_USER_ID");
-  const apiKey = Deno.env.get("HCTI_API_KEY");
-  if (!userId || !apiKey) throw new Error("HCTI credentials not configured");
+async function renderPdfWithGotenberg(html: string): Promise<Uint8Array> {
+  const baseUrl = (Deno.env.get("GOTENBERG_URL") || "https://pdf.mnicity.com").replace(/\/+$/, "");
+  const user = Deno.env.get("GOTENBERG_USER");
+  const pass = Deno.env.get("GOTENBERG_PASS");
 
-  const auth = btoa(`${userId}:${apiKey}`);
-  const r = await fetch("https://hcti.io/v1/image", {
+  const form = new FormData();
+  form.append("files", new File([html], "index.html", { type: "text/html" }));
+  // A4 in inches
+  form.append("paperWidth", "8.27");
+  form.append("paperHeight", "11.69");
+  form.append("marginTop", "0");
+  form.append("marginBottom", "0");
+  form.append("marginLeft", "0");
+  form.append("marginRight", "0");
+  form.append("printBackground", "true");
+  form.append("preferCssPageSize", "true");
+  form.append("waitDelay", "1s");
+
+  const headers: Record<string, string> = {};
+  if (user && pass) headers["Authorization"] = `Basic ${btoa(`${user}:${pass}`)}`;
+
+  const r = await fetch(`${baseUrl}/forms/chromium/convert/html`, {
     method: "POST",
-    headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      html,
-      google_fonts: "Tajawal",
-      viewport_width: 794,
-      viewport_height: 1123,
-      device_scale_factor: 2,
-      ms_delay: 800,
-    }),
+    headers,
+    body: form,
   });
-  const j = await r.json();
-  if (!r.ok || !j?.url) throw new Error(`HCTI failed: ${JSON.stringify(j)}`);
-  return j.url as string;
-}
-
-// نحوّل URL صورة HCTI إلى ملف PDF عبر تضمين الصورة في صفحة A4 باستخدام pdf-lib
-async function imageUrlToPdfBytes(imageUrl: string): Promise<Uint8Array> {
-  const { PDFDocument } = await import("https://esm.sh/pdf-lib@1.17.1");
-  const imgRes = await fetch(imageUrl);
-  if (!imgRes.ok) throw new Error(`Failed to fetch HCTI image: ${imgRes.status}`);
-  const imgBytes = new Uint8Array(await imgRes.arrayBuffer());
-  const ct = (imgRes.headers.get("content-type") || "").toLowerCase();
-
-  const pdfDoc = await PDFDocument.create();
-  const img = ct.includes("png") ? await pdfDoc.embedPng(imgBytes) : await pdfDoc.embedJpg(imgBytes);
-
-  // A4 portrait: 595.28 x 841.89 pt
-  const A4_W = 595.28, A4_H = 841.89;
-  const page = pdfDoc.addPage([A4_W, A4_H]);
-  const ratio = Math.min(A4_W / img.width, A4_H / img.height);
-  const w = img.width * ratio;
-  const h = img.height * ratio;
-  page.drawImage(img, { x: (A4_W - w) / 2, y: (A4_H - h) / 2, width: w, height: h });
-  return await pdfDoc.save();
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`Gotenberg failed [${r.status}]: ${text.slice(0, 500)}`);
+  }
+  return new Uint8Array(await r.arrayBuffer());
 }
 
 async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName: string): Promise<{ ok: boolean; results: any[] }> {
