@@ -465,7 +465,7 @@ const Booking = () => {
             )}
 
             {step === 3 && selectedUnits.length > 0 && (
-              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات قبل المتابعة.">
+              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات واختر نظام السداد المناسب قبل المتابعة.">
                 <div className="mx-auto max-w-3xl space-y-4">
                   <SelectionTotals totals={totals} />
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -473,6 +473,11 @@ const Booking = () => {
                       <UnitDetailsCard key={`${u.buildingNumber}-${u.unitNumber}`} unit={u} />
                     ))}
                   </div>
+                  <PaymentPlanSelector
+                    value={paymentPlan}
+                    onChange={setPaymentPlan}
+                    annualPrice={totals.price}
+                  />
                   <button
                     onClick={() => setStep(4)}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3.5 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated"
