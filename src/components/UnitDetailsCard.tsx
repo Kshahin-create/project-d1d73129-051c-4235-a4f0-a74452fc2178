@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Building, Hash, Maximize2, Wallet, Tag } from "lucide-react";
 import type { Unit } from "@/data/types";
+import { fmtNum } from "@/lib/utils";
 
 export const UnitDetailsCard = ({ unit }: { unit: Unit }) => {
   return (
