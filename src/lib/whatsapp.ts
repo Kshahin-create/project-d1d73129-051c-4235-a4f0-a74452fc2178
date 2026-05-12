@@ -1,4 +1,5 @@
 import { WHATSAPP_NUMBER } from "./config";
+import { fmtNum } from "./utils";
 import type { Unit } from "@/data/types";
 
 export interface CustomerData {
