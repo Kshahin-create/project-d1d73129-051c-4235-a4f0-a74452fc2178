@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset } from "lucide-react";
+import { fmtNum } from "@/lib/utils";
 
 interface BookingUnitRow {
   building_number: number;
