@@ -11,6 +11,7 @@ interface Payload {
   booking_id?: string;
   claim_number?: string;
   payment_plan?: "full" | "70" | "50";
+  target_chat_id?: string;
   customer: {
     fullName: string;
     phone?: string;
@@ -320,18 +321,22 @@ async function renderPdfWithGotenberg(html: string): Promise<Uint8Array> {
   return new Uint8Array(await r.arrayBuffer());
 }
 
-async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName: string) {
+async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName: string, targetChatId?: string) {
   const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
 
   const ids: string[] = [];
-  for (const k of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2", "TELEGRAM_CHAT_ID_3"]) {
-    const v = Deno.env.get(k)?.trim();
-    if (v) ids.push(v);
-  }
-  if (ids.length === 0) {
-    const legacy = Deno.env.get("TELEGRAM_CHAT_IDS");
-    if (legacy) legacy.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean).forEach((v) => ids.push(v));
+  if (targetChatId) {
+    ids.push(targetChatId);
+  } else {
+    for (const k of ["TELEGRAM_CHAT_ID_1", "TELEGRAM_CHAT_ID_2", "TELEGRAM_CHAT_ID_3"]) {
+      const v = Deno.env.get(k)?.trim();
+      if (v) ids.push(v);
+    }
+    if (ids.length === 0) {
+      const legacy = Deno.env.get("TELEGRAM_CHAT_IDS");
+      if (legacy) legacy.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean).forEach((v) => ids.push(v));
+    }
   }
   if (ids.length === 0) throw new Error("No Telegram chat IDs configured");
 
