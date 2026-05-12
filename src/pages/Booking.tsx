@@ -9,7 +9,7 @@ import { BuildingSelector } from "@/components/BuildingSelector";
 import { UnitGrid } from "@/components/UnitGrid";
 import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
-import { TenantNotice } from "@/components/TenantNotice";
+import { TenantNoticeScreen } from "@/components/TenantNotice";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
@@ -44,6 +44,9 @@ const Booking = () => {
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [creatingBooking, setCreatingBooking] = useState(false);
+  const [noticeAcknowledged, setNoticeAcknowledged] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem("booking_notice_ack") === "1"
+  );
 
   // إجبار تسجيل الدخول قبل الحجز
   useEffect(() => {
@@ -324,6 +327,23 @@ const Booking = () => {
     setStep((s) => Math.max(1, s - 1));
   };
 
+  if (!noticeAcknowledged) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container-tight py-6 sm:py-10">
+          <TenantNoticeScreen
+            onContinue={() => {
+              sessionStorage.setItem("booking_notice_ack", "1");
+              setNoticeAcknowledged(true);
+            }}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -341,8 +361,6 @@ const Booking = () => {
             <Home className="h-3.5 w-3.5" /> الرئيسية
           </Link>
         </div>
-
-        <TenantNotice />
 
         <div className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
           <ProgressSteps current={step} steps={STEPS} />
