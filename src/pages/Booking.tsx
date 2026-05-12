@@ -99,7 +99,13 @@ const Booking = () => {
     [selectedBuilding, units]
   );
 
-  const selectedUnitNumbers = useMemo(() => selectedUnits.map((u) => u.unitNumber), [selectedUnits]);
+  const selectedUnitNumbers = useMemo(
+    () =>
+      selectedBuilding
+        ? selectedUnits.filter((u) => u.buildingNumber === selectedBuilding.number).map((u) => u.unitNumber)
+        : [],
+    [selectedUnits, selectedBuilding]
+  );
 
   const totals = useMemo(() => {
     const area = selectedUnits.reduce((s, u) => s + u.area, 0);
