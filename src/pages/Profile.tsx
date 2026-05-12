@@ -410,7 +410,7 @@ const BookingCard = ({ booking }: { booking: BookingRow }) => {
         </div>
         <div>
           <div className="text-muted-foreground">المساحة</div>
-          <div className="num mt-0.5 font-bold">{Number(booking.total_area)} م²</div>
+          <div className="num mt-0.5 font-bold">{fmtNum(booking.total_area)} م²</div>
         </div>
         <div>
           <div className="text-muted-foreground">الإيجار</div>
