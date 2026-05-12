@@ -246,18 +246,16 @@ function buildHtml(p: Payload): string {
       <tr><td class="label">نوع النشاط</td><td>${esc(activityLabel)}</td></tr>
       <tr><td class="label">المشروع</td><td>المدينة الصناعية بشمال مكة</td></tr>
       <tr><td class="label">رقم المبنى والوحدة</td><td>${esc(unitsByBuilding)}</td></tr>
+      <tr><td class="label">نظام السداد</td><td><strong>${esc(planLabel)}</strong></td></tr>
     </table>
 
     <div class="pledge">
-      نتعهد بتطبيق خصم نقدي 15% لكل سنة إيجارية ولمدة ثلاث سنوات عند تحويل كامل قيمة الإيجار 100% للسنة الأولى
+      ${pledgeHtml}
     </div>
 
     <table class="amounts">
       <thead><tr><th style="width:60%;">البيان</th><th>المبلغ</th></tr></thead>
-      <tbody>
-        <tr><td>قيمة الإيجار السنوي للوحدات</td><td class="amt">${fmtNum(annual)} ر.س</td></tr>
-        <tr><td>ضريبة القيمة المضافة (15%)</td><td class="amt">${fmtNum(vat)} ر.س</td></tr>
-        <tr class="total"><td class="lbl">الإجمالي</td><td class="amt" style="font-weight:900;font-size:18px;">${fmtNum(total)} ر.س</td></tr>
+      <tbody>${amountsRows}
       </tbody>
     </table>
 
