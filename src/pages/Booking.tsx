@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
+import { fmtNum } from "@/lib/utils";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{svg,png,jpg,jpeg}", {
   eager: true,
