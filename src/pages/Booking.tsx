@@ -593,6 +593,16 @@ const Booking = () => {
                           {customer.email && <SummaryRow label="البريد" value={customer.email} ltr />}
                           <SummaryRow label="النشاط" value={customer.business} />
                           {customer.notes && <SummaryRow label="ملاحظات" value={customer.notes} />}
+                          <SummaryRow
+                            label="نظام السداد"
+                            value={
+                              paymentPlan === "full"
+                                ? "100% (مع خصم 15% للسنوات القادمة)"
+                                : paymentPlan === "70"
+                                ? "70% من قيمة الإيجار"
+                                : "50% من قيمة الإيجار"
+                            }
+                          />
                         </dl>
                       </div>
                       {creatingBooking && (
