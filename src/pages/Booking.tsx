@@ -182,6 +182,7 @@ const Booking = () => {
       _notes: customer.notes || null,
       _unit_ids: selectedUnits.map((u) => u.id).filter(Boolean) as string[],
       _cr_number: customer.crNumber || null,
+      _payment_plan: paymentPlan,
     } as any);
     setCreatingBooking(false);
     if (error || !newId) {
