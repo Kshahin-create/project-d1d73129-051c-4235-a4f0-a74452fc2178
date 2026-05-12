@@ -734,14 +734,14 @@ const SelectionTotals = ({ totals }: { totals: { count: number; area: number; pr
       </div>
       <div>
         <div className="text-[11px] text-muted-foreground">إجمالي المساحة</div>
-        <div className="num mt-1 font-display text-xl font-extrabold">
-          {totals.area} <span className="text-xs font-medium text-muted-foreground">م²</span>
+        <div className="num mt-1 font-display text-lg font-extrabold sm:text-xl">
+          {fmtNum(totals.area)} <span className="text-xs font-medium text-muted-foreground">م²</span>
         </div>
       </div>
       <div>
         <div className="text-[11px] text-muted-foreground">الإيجار السنوي</div>
-        <div className="num mt-1 font-display text-xl font-extrabold text-accent">
-          {totals.price.toLocaleString("en-US")}
+        <div className="num mt-1 font-display text-lg font-extrabold text-accent sm:text-xl">
+          {fmtNum(totals.price, 0)}
         </div>
       </div>
     </div>
