@@ -467,14 +467,23 @@ const Booking = () => {
                         </div>
                       </>
                     )}
-                    <button
-                      onClick={() => setStep(3)}
-                      disabled={selectedUnits.length === 0}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      متابعة ({selectedUnits.length})
-                      <ArrowLeft className="h-4 w-4" />
-                    </button>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <button
+                        onClick={goAddAnotherBuilding}
+                        disabled={selectedUnits.length === 0}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary/40 bg-background py-3 font-display text-sm font-bold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        + إضافة وحدات من مبنى آخر
+                      </button>
+                      <button
+                        onClick={() => setStep(3)}
+                        disabled={selectedUnits.length === 0}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 font-display text-base font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        متابعة ({selectedUnits.length})
+                        <ArrowLeft className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </StepWrap>
