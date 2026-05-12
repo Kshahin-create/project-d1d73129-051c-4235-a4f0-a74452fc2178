@@ -328,18 +328,28 @@ async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName
 
   const results: any[] = [];
   for (const chat_id of ids) {
-    const form = new FormData();
-    form.append("chat_id", chat_id);
-    form.append("caption", caption);
-    form.append("parse_mode", "HTML");
-    form.append("document", new File([pdfBlob], fileName, { type: "application/pdf" }));
-
-    const r = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
-      method: "POST",
-      body: form,
-    });
-    const j = await r.json().catch(() => ({}));
-    results.push({ chat_id, ok: r.ok && j?.ok, status: r.status, response: j });
+    let lastErr: any = null;
+    let success = false;
+    let lastStatus = 0;
+    let lastResp: any = null;
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      try {
+        const form = new FormData();
+        form.append("chat_id", chat_id);
+        form.append("caption", caption);
+        form.append("parse_mode", "HTML");
+        form.append("document", new File([pdfBlob], fileName, { type: "application/pdf" }));
+        const r = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, { method: "POST", body: form });
+        lastStatus = r.status;
+        lastResp = await r.json().catch(() => ({}));
+        if (r.ok && lastResp?.ok) { success = true; break; }
+        lastErr = lastResp?.description || `HTTP ${r.status}`;
+      } catch (e) {
+        lastErr = e instanceof Error ? e.message : String(e);
+      }
+      if (attempt < 4) await new Promise((res) => setTimeout(res, 800 * attempt));
+    }
+    results.push({ chat_id, ok: success, status: lastStatus, response: lastResp, error: success ? undefined : lastErr });
   }
   return { ok: results.every((r) => r.ok), results };
 }
