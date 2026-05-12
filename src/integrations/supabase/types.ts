@@ -167,6 +167,7 @@ export type Database = {
           notes: string | null
           offer_image_url: string | null
           offer_number: string | null
+          payment_plan: string
           status: string
           total_area: number
           total_price: number
@@ -187,6 +188,7 @@ export type Database = {
           notes?: string | null
           offer_image_url?: string | null
           offer_number?: string | null
+          payment_plan?: string
           status?: string
           total_area?: number
           total_price?: number
@@ -207,6 +209,7 @@ export type Database = {
           notes?: string | null
           offer_image_url?: string | null
           offer_number?: string | null
+          payment_plan?: string
           status?: string
           total_area?: number
           total_price?: number
@@ -981,6 +984,19 @@ export type Database = {
               _customer_full_name: string
               _customer_phone: string
               _notes: string
+              _unit_ids: string[]
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _business_name: string
+              _cr_number?: string
+              _customer_email: string
+              _customer_full_name: string
+              _customer_phone: string
+              _notes: string
+              _payment_plan?: string
               _unit_ids: string[]
             }
             Returns: string
