@@ -6,10 +6,14 @@ export const useBuildingsAndUnits = () => {
   return useQuery({
     queryKey: ["buildings-units"],
     queryFn: async (): Promise<{ buildings: Building[]; units: Unit[] }> => {
-      const [bRes, uRes, tRes] = await Promise.all([
+      const [bRes, uRes, tRes, buRes] = await Promise.all([
         supabase.from("buildings").select("*").order("number"),
         supabase.from("units").select("*").order("building_number").order("unit_number").limit(2000),
         supabase.from("tenants").select("*"),
+        supabase
+          .from("booking_units")
+          .select("unit_id, bookings:booking_id(customer_full_name, status, created_at)")
+          .limit(5000),
       ]);
       // buildings may fail for unauthenticated users after RLS change —
       // fall back to deriving building info from public units data.
@@ -19,11 +23,25 @@ export const useBuildingsAndUnits = () => {
       const unitsRaw = uRes.data ?? [];
       const buildingsRaw = bRes.error ? [] : (bRes.data ?? []);
       const tenantsRaw = tRes.data ?? [];
+      const bookingUnitsRaw = (buRes.error ? [] : (buRes.data ?? [])) as any[];
 
       // Map tenants by unit_id for quick lookup
       const tenantByUnitId = new Map<string, { name: string; data: any }>();
       for (const t of tenantsRaw) {
         tenantByUnitId.set(t.unit_id, { name: t.tenant_name, data: t });
+      }
+
+      // Fallback: pick latest active (pending/confirmed) booking customer per unit
+      const bookingNameByUnitId = new Map<string, { name: string; ts: number }>();
+      for (const bu of bookingUnitsRaw) {
+        const b = bu.bookings;
+        if (!b || !bu.unit_id) continue;
+        if (b.status !== "pending" && b.status !== "confirmed") continue;
+        const ts = b.created_at ? new Date(b.created_at).getTime() : 0;
+        const prev = bookingNameByUnitId.get(bu.unit_id);
+        if (!prev || ts > prev.ts) {
+          bookingNameByUnitId.set(bu.unit_id, { name: b.customer_full_name, ts });
+        }
       }
 
       // Build units first so we can derive building stats from them if needed
@@ -40,7 +58,7 @@ export const useBuildingsAndUnits = () => {
           activity: u.activity,
           price: Number(u.price),
           status: u.status as "available" | "rented" | "reserved",
-          tenant: tenantInfo?.name ?? null,
+          tenant: tenantInfo?.name ?? bookingNameByUnitId.get(u.id)?.name ?? null,
         };
       });
 
