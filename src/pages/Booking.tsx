@@ -9,6 +9,7 @@ import { BuildingSelector } from "@/components/BuildingSelector";
 import { UnitGrid } from "@/components/UnitGrid";
 import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
+import { TenantNotice } from "@/components/TenantNotice";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
@@ -340,6 +341,8 @@ const Booking = () => {
             <Home className="h-3.5 w-3.5" /> الرئيسية
           </Link>
         </div>
+
+        <TenantNotice />
 
         <div className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
           <ProgressSteps current={step} steps={STEPS} />
