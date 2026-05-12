@@ -490,7 +490,7 @@ const Booking = () => {
             )}
 
             {step === 3 && selectedUnits.length > 0 && (
-              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات واختر نظام السداد المناسب قبل المتابعة.">
+              <StepWrap title="تفاصيل الوحدات" desc="راجع تفاصيل الوحدات، يمكنك إضافة وحدات من مبنى آخر، ثم اختر نظام السداد.">
                 <div className="mx-auto max-w-3xl space-y-4">
                   <SelectionTotals totals={totals} />
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -498,6 +498,12 @@ const Booking = () => {
                       <UnitDetailsCard key={`${u.buildingNumber}-${u.unitNumber}`} unit={u} />
                     ))}
                   </div>
+                  <button
+                    onClick={goAddAnotherBuilding}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 py-3 font-display text-sm font-bold text-primary transition hover:bg-primary/10"
+                  >
+                    + إضافة وحدات من مبنى آخر
+                  </button>
                   <PaymentPlanSelector
                     value={paymentPlan}
                     onChange={setPaymentPlan}
