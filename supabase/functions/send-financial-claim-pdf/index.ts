@@ -361,8 +361,7 @@ Deno.serve(async (req) => {
     }
 
     const html = buildHtml(body);
-    const imageUrl = await renderImage(html);
-    const pdfBytes = await imageUrlToPdfBytes(imageUrl);
+    const pdfBytes = await renderPdfWithGotenberg(html);
 
     const annual = body.units.reduce((s, u) => s + (Number(u.price) || 0), 0);
     const plan = body.payment_plan || "full";
