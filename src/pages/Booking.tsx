@@ -224,6 +224,7 @@ const Booking = () => {
       .invoke("send-offer-pdf", {
         body: {
           booking_id: newId,
+          payment_plan: paymentPlan,
           customer: {
             fullName: customer.fullName,
             phone: customer.phone,
