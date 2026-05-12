@@ -37,7 +37,7 @@ export function buildWhatsAppMessage(unitOrUnits: Unit | Unit[], customer: Custo
     unitsBlock.push(
       `📍 *المبنى:* رقم ${unit.buildingNumber} - ${unit.buildingType}`,
       `🔢 *رقم الوحدة:* ${unit.unitNumber}${unit.unitType ? ` (${unit.unitType})` : ""}`,
-      `📐 *المساحة:* ${unit.area} م²`,
+      `📐 *المساحة:* ${fmtNum(unit.area)} م²`,
       `💰 *السعر السنوي:* ${unit.price.toLocaleString("en-US")} ريال`,
       ""
     );
@@ -46,7 +46,7 @@ export function buildWhatsAppMessage(unitOrUnits: Unit | Unit[], customer: Custo
   if (units.length > 1) {
     unitsBlock.push(
       "— *الإجمالي* —",
-      `📐 *إجمالي المساحات:* ${totalArea.toLocaleString("en-US")} م²`,
+      `📐 *إجمالي المساحات:* ${fmtNum(totalArea)} م²`,
       `💰 *إجمالي الإيجار السنوي:* ${totalPrice.toLocaleString("en-US")} ريال`,
       ""
     );
