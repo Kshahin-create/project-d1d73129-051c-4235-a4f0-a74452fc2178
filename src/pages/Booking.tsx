@@ -9,7 +9,7 @@ import { BuildingSelector } from "@/components/BuildingSelector";
 import { UnitGrid } from "@/components/UnitGrid";
 import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
-import { TenantNotice } from "@/components/TenantNotice";
+import { TenantNoticeScreen } from "@/components/TenantNotice";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { buildWhatsAppLinks, buildWhatsAppMessage } from "@/lib/whatsapp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
@@ -44,6 +44,9 @@ const Booking = () => {
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [creatingBooking, setCreatingBooking] = useState(false);
+  const [noticeAcknowledged, setNoticeAcknowledged] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem("booking_notice_ack") === "1"
+  );
 
   // إجبار تسجيل الدخول قبل الحجز
   useEffect(() => {
