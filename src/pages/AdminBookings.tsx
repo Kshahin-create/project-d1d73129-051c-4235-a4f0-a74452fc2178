@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset } from "lucide-react";
+import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass } from "lucide-react";
 import { fmtNum } from "@/lib/utils";
 
 interface BookingUnitRow {
@@ -41,6 +41,40 @@ const STATUS: Record<string, { label: string; cls: string; Icon: typeof Clock }>
   cancelled: { label: "ملغي", cls: "bg-destructive/10 text-destructive", Icon: XCircle },
   expired: { label: "منتهي الصلاحية", cls: "bg-muted text-muted-foreground", Icon: Clock },
 };
+
+const TONE_CLS: Record<string, string> = {
+  primary: "bg-primary/10 text-primary",
+  emerald: "bg-emerald-500/10 text-emerald-600",
+  amber: "bg-amber-500/10 text-amber-600",
+  rose: "bg-rose-500/10 text-rose-600",
+};
+
+function StatCard({
+  title,
+  value,
+  hint,
+  Icon,
+  tone = "primary",
+}: {
+  title: string;
+  value: string;
+  hint?: string;
+  Icon: typeof Clock;
+  tone?: "primary" | "emerald" | "amber" | "rose";
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3 shadow-card sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px] font-medium text-muted-foreground sm:text-xs">{title}</div>
+        <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${TONE_CLS[tone]}`}>
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+      </div>
+      <div className="mt-1.5 font-display text-lg font-bold leading-tight sm:text-xl">{value}</div>
+      {hint && <div className="mt-0.5 text-[10px] text-muted-foreground sm:text-[11px]">{hint}</div>}
+    </div>
+  );
+}
 
 const AdminBookings = () => {
   const navigate = useNavigate();
@@ -81,6 +115,37 @@ const AdminBookings = () => {
     }
     return list;
   }, [rows, search, statusFilter]);
+
+  const stats = useMemo(() => {
+    const by = (s: string) => rows.filter((r) => r.status === s);
+    const pending = by("pending");
+    const confirmed = by("confirmed");
+    const cancelled = by("cancelled");
+    const expired = by("expired");
+    const sum = (arr: BookingRow[], k: "total_price" | "units_count" | "total_area") =>
+      arr.reduce((a, b) => a + (Number(b[k]) || 0), 0);
+    const now = Date.now();
+    const expiringSoon = pending.filter((r) => {
+      const t = new Date(r.expires_at).getTime() - now;
+      return t > 0 && t <= 12 * 3600 * 1000;
+    }).length;
+    const total = rows.length;
+    const confirmRate = total ? Math.round((confirmed.length / total) * 100) : 0;
+    return {
+      total,
+      pending: pending.length,
+      confirmed: confirmed.length,
+      cancelled: cancelled.length,
+      expired: expired.length,
+      expiringSoon,
+      confirmRate,
+      confirmedRevenue: sum(confirmed, "total_price"),
+      pendingRevenue: sum(pending, "total_price"),
+      totalUnits: sum(rows, "units_count"),
+      confirmedUnits: sum(confirmed, "units_count"),
+      totalArea: sum(rows, "total_area"),
+    };
+  }, [rows]);
 
   const extendExpiry = async (id: string) => {
     const input = window.prompt("كم ساعة تريد إضافتها لمدة الحجز؟", "24");
@@ -151,6 +216,67 @@ const AdminBookings = () => {
             <ArrowRight className="h-4 w-4" /> رجوع
           </Link>
         </div>
+
+        {!fetching && rows.length > 0 && (
+          <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            <StatCard
+              title="إجمالي الحجوزات"
+              value={fmtNum(stats.total)}
+              hint={`${stats.totalUnits} وحدة • ${fmtNum(Math.round(stats.totalArea))} م²`}
+              Icon={CalendarRange}
+              tone="primary"
+            />
+            <StatCard
+              title="قيد المراجعة"
+              value={fmtNum(stats.pending)}
+              hint={stats.expiringSoon ? `${stats.expiringSoon} ينتهي خلال 12 ساعة` : "لا يوجد على وشك الانتهاء"}
+              Icon={Clock}
+              tone="amber"
+            />
+            <StatCard
+              title="مؤكدة"
+              value={fmtNum(stats.confirmed)}
+              hint={`نسبة التأكيد ${stats.confirmRate}%`}
+              Icon={CheckCircle2}
+              tone="emerald"
+            />
+            <StatCard
+              title="ملغية / منتهية"
+              value={fmtNum(stats.cancelled + stats.expired)}
+              hint={`${stats.cancelled} ملغي • ${stats.expired} منتهي`}
+              Icon={XCircle}
+              tone="rose"
+            />
+            <StatCard
+              title="إيرادات مؤكدة"
+              value={`${fmtNum(stats.confirmedRevenue)} ر.س`}
+              hint={`${stats.confirmedUnits} وحدة مؤجَّرة`}
+              Icon={Wallet}
+              tone="emerald"
+            />
+            <StatCard
+              title="متوقع (قيد المراجعة)"
+              value={`${fmtNum(stats.pendingRevenue)} ر.س`}
+              hint="من الحجوزات المعلّقة"
+              Icon={TrendingUp}
+              tone="primary"
+            />
+            <StatCard
+              title="إجمالي الوحدات"
+              value={fmtNum(stats.totalUnits)}
+              hint={`${fmtNum(Math.round(stats.totalArea))} م² إجمالاً`}
+              Icon={Layers}
+              tone="primary"
+            />
+            <StatCard
+              title="على وشك الانتهاء"
+              value={fmtNum(stats.expiringSoon)}
+              hint="معلّقة خلال 12 ساعة"
+              Icon={Hourglass}
+              tone="amber"
+            />
+          </div>
+        )}
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-border bg-card p-2">
