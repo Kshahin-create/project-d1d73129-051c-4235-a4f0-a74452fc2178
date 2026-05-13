@@ -407,7 +407,19 @@ const AdminBookings = () => {
                     <div className="text-muted-foreground">
                       السعر: <span className="num font-semibold text-foreground">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
                     </div>
+                    <div className="text-muted-foreground">
+                      المدفوع: <span className={`num font-semibold ${Number(b.paid_amount) > 0 ? "text-emerald-600" : "text-foreground"}`}>{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> ر.س
+                    </div>
                   </div>
+
+                  {b.status === "confirmed" && (
+                    <div className="mt-2 rounded-lg bg-emerald-500/10 p-2 text-center text-xs font-semibold text-emerald-700">
+                      ✅ مؤكد • مدفوع <span className="num">{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> من <span className="num">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
+                      {Number(b.total_price) - Number(b.paid_amount || 0) > 0 && (
+                        <> • متبقي <span className="num">{(Number(b.total_price) - Number(b.paid_amount || 0)).toLocaleString("en-US")}</span></>
+                      )}
+                    </div>
+                  )}
 
                   {b.status === "pending" && b.expires_at && (
                     (() => {
