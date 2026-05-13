@@ -110,37 +110,38 @@ function buildHtml(p: Payload): string {
   }
 
   .page {
-    width: 794px; min-height: 1123px;
-    padding: 36px 56px 110px; position: relative; background: #fff;
+    width: 794px; height: 1123px;
+    padding: 22px 44px 90px; position: relative; background: #fff;
+    overflow: hidden;
   }
 
   .top-bar {
     display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 14px; border-bottom: 3px solid var(--gold);
+    padding-bottom: 8px; border-bottom: 3px solid var(--gold);
   }
-  .top-bar img { height: 180px; object-fit: contain; }
+  .top-bar img { height: 110px; object-fit: contain; }
 
   .date-block {
-    margin-top: 22px;
+    margin-top: 12px;
     display: flex; justify-content: flex-start;
-    font-size: 14px; color: #222;
+    font-size: 12px; color: #222;
   }
   .date-block table { border-collapse: collapse; }
-  .date-block td { padding: 3px 8px; font-weight: 700; }
+  .date-block td { padding: 2px 6px; font-weight: 700; }
   .date-block td.lbl { color: #1a1a1a; }
   .date-block td.val { color: #1a1a1a; font-weight: 500; }
 
-  .title { text-align: center; margin: 18px 0 22px; }
+  .title { text-align: center; margin: 10px 0 12px; }
   .title h1 {
-    font-size: 38px; color: #2a2a2a; font-weight: 900;
+    font-size: 28px; color: #2a2a2a; font-weight: 900;
     display: inline-block;
   }
 
   /* جدول البيانات الأساسية */
-  table.info { width: 100%; border-collapse: collapse; font-size: 16px; }
+  table.info { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.info td {
     border: 2px solid var(--gold);
-    padding: 11px 14px;
+    padding: 7px 12px;
     background: #fff;
   }
   table.info td.label {
@@ -149,47 +150,47 @@ function buildHtml(p: Payload): string {
     font-weight: 800;
     width: 30%;
     text-align: center;
-    font-size: 16px;
+    font-size: 13px;
   }
 
   /* تعهد */
   .pledge {
-    margin-top: 10px;
+    margin-top: 8px;
     background: var(--gold);
     color: #fff;
     border: 2px solid var(--gold);
-    padding: 14px 18px;
-    font-size: 16px;
-    line-height: 1.9;
+    padding: 9px 14px;
+    font-size: 13px;
+    line-height: 1.6;
     text-align: center;
     font-weight: 600;
   }
 
   /* جدول المبالغ */
-  table.amounts { width: 100%; border-collapse: collapse; margin-top: 26px; font-size: 16px; }
+  table.amounts { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
   table.amounts th {
     background: var(--gold); color: #fff; font-weight: 800;
-    padding: 10px; border: 2px solid var(--gold); font-size: 16px;
+    padding: 7px; border: 2px solid var(--gold); font-size: 13px;
   }
   table.amounts td {
-    padding: 16px 18px; border: 2px solid var(--gold); background: #fff;
-    text-align: center; font-size: 16px;
+    padding: 9px 14px; border: 2px solid var(--gold); background: #fff;
+    text-align: center; font-size: 13px;
   }
   table.amounts td.amt { font-weight: 700; }
   table.amounts tr.total td.lbl {
-    font-weight: 900; font-size: 20px;
+    font-weight: 900; font-size: 16px;
   }
 
   /* بيانات الدفع */
-  .pay-wrap { margin-top: 30px; }
+  .pay-wrap { margin-top: 14px; }
   .pay-title {
     background: var(--gold); color: #fff; text-align: center;
-    padding: 11px; font-size: 18px; font-weight: 800;
+    padding: 7px; font-size: 14px; font-weight: 800;
     border: 2px solid var(--gold);
   }
-  table.pay { width: 100%; border-collapse: collapse; font-size: 15px; }
+  table.pay { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   table.pay td {
-    border: 2px solid var(--gold); padding: 11px 14px; background: #fff;
+    border: 2px solid var(--gold); padding: 7px 12px; background: #fff;
   }
   table.pay td.label {
     background: var(--gold); color: #fff; font-weight: 800;
@@ -197,31 +198,31 @@ function buildHtml(p: Payload): string {
   }
 
   .closing-title {
-    text-align: center; margin-top: 34px;
-    font-size: 28px; font-weight: 900; color: #2a2a2a;
+    text-align: center; margin-top: 14px;
+    font-size: 20px; font-weight: 900; color: #2a2a2a;
   }
 
   .footer {
     position: absolute; bottom: 0; right: 0; left: 0;
-    padding: 18px 56px 22px;
+    padding: 10px 44px 14px;
     border-top: 2px solid var(--gold);
     background: #fff;
     display: flex; justify-content: space-between; align-items: flex-end;
-    gap: 24px;
+    gap: 18px;
   }
   .footer .left {
     flex: 1; text-align: left;
-    font-size: 12.5px; color: #2a2a2a; line-height: 1.9; font-weight: 700;
+    font-size: 11px; color: #2a2a2a; line-height: 1.7; font-weight: 700;
   }
   .footer .right { flex: 0 0 auto; text-align: center; }
   .footer .right .signer {
-    font-size: 16px; font-weight: 900; color: #1a1a1a; margin-bottom: 6px;
+    font-size: 13px; font-weight: 900; color: #1a1a1a; margin-bottom: 4px;
   }
   .footer .right .stamp-row {
-    display: flex; align-items: center; gap: 14px; justify-content: flex-end;
+    display: flex; align-items: center; gap: 10px; justify-content: flex-end;
   }
-  .footer .right .stamp-row img.sig { height: 70px; object-fit: contain; }
-  .footer .right .stamp-row img.stamp { height: 105px; object-fit: contain; }
+  .footer .right .stamp-row img.sig { height: 50px; object-fit: contain; }
+  .footer .right .stamp-row img.stamp { height: 75px; object-fit: contain; }
 </style>
 </head>
 <body>
@@ -304,6 +305,7 @@ async function renderPdfWithGotenberg(html: string): Promise<Uint8Array> {
   form.append("marginRight", "0");
   form.append("printBackground", "true");
   form.append("preferCssPageSize", "true");
+  form.append("singlePage", "true");
   form.append("waitDelay", "1s");
 
   const headers: Record<string, string> = {};

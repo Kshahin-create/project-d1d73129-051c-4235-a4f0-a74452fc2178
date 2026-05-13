@@ -85,16 +85,17 @@ function buildHtml(p: Payload): string {
   html, body { font-family: 'Tajawal', sans-serif; color: #1a1a1a; background: #fff; }
   .page {
     width: 794px;
-    min-height: 1123px;
-    padding: 24px 32px 90px;
+    height: 1123px;
+    padding: 14px 26px 70px;
     position: relative;
     background: #fff;
+    overflow: hidden;
   }
   .top-bar {
     display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 12px; border-bottom: 2px solid #c9a961;
+    padding-bottom: 6px; border-bottom: 2px solid #c9a961;
   }
-  .top-bar .logo-side img { height: 130px; object-fit: contain; }
+  .top-bar .logo-side img { height: 78px; object-fit: contain; }
   .offer-num-center {
     text-align: center;
     font-size: 13px;
@@ -108,75 +109,75 @@ function buildHtml(p: Payload): string {
   }
   .offer-num-center strong { color: #1a3a6e; font-size: 14px; }
 
-  .title { text-align: center; margin-top: 18px; }
-  .title h1 { font-size: 30px; color: #1a3a6e; font-weight: 800; display: inline-block; padding-bottom: 4px; border-bottom: 3px solid #c9a961; }
-  .title h2 { font-size: 18px; margin-top: 10px; font-weight: 700; color: #1a3a6e; }
+  .title { text-align: center; margin-top: 8px; }
+  .title h1 { font-size: 22px; color: #1a3a6e; font-weight: 800; display: inline-block; padding-bottom: 2px; border-bottom: 2px solid #c9a961; }
+  .title h2 { font-size: 14px; margin-top: 4px; font-weight: 700; color: #1a3a6e; }
 
-  .salutation { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 18px; }
-  .salutation .name { font-size: 15px; font-weight: 700; }
+  .salutation { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; }
+  .salutation .name { font-size: 13px; font-weight: 700; }
   .salutation .name span { color: #1a3a6e; }
-  .salutation .date { font-size: 12px; color: #444; }
-  .intro { font-size: 12.5px; margin-top: 6px; color: #333; line-height: 1.6; }
+  .salutation .date { font-size: 11px; color: #444; }
+  .intro { font-size: 11px; margin-top: 3px; color: #333; line-height: 1.4; }
 
-  table.info { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
-  table.info td { border: 1px solid #d8d8d8; padding: 6px 10px; }
+  table.info { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10.5px; }
+  table.info td { border: 1px solid #d8d8d8; padding: 3px 8px; }
   table.info td.label { background: #1a3a6e; color: #fff; font-weight: 700; width: 28%; text-align: center; }
   table.info td.alt { background: #f6f6f6; }
 
-  .units-wrap { margin-top: 14px; border: 1px solid #1a3a6e; }
-  .units-title { background: #1a3a6e; color: #fff; text-align: center; padding: 6px; font-weight: 700; font-size: 13px; }
-  table.units { width: 100%; border-collapse: collapse; font-size: 12px; }
-  table.units th { background: #1a3a6e; color: #fff; padding: 6px 4px; font-weight: 600; }
-  table.units td { padding: 5px 4px; text-align: center; border-bottom: 1px solid #eee; }
+  .units-wrap { margin-top: 8px; border: 1px solid #1a3a6e; }
+  .units-title { background: #1a3a6e; color: #fff; text-align: center; padding: 4px; font-weight: 700; font-size: 12px; }
+  table.units { width: 100%; border-collapse: collapse; font-size: 11px; }
+  table.units th { background: #1a3a6e; color: #fff; padding: 4px 3px; font-weight: 600; }
+  table.units td { padding: 3px 3px; text-align: center; border-bottom: 1px solid #eee; }
   table.units tr:nth-child(even) td { background: #fafafa; }
-  table.units tfoot td { background: #fff; color: #c9a961; font-weight: 800; font-size: 14px; padding: 9px 4px; border-top: 2px solid #1a3a6e; }
+  table.units tfoot td { background: #fff; color: #c9a961; font-weight: 800; font-size: 12px; padding: 5px 3px; border-top: 2px solid #1a3a6e; }
   table.units tfoot td.lbl { color: #1a3a6e; }
 
-  .ready { margin-top: 14px; }
-  .ready .head { background: #c9a961; color: #fff; text-align: center; padding: 6px; font-weight: 700; font-size: 12.5px; }
-  .ready ul { padding: 8px 26px 6px; font-size: 11.5px; }
-  .ready li { margin-bottom: 3px; }
+  .ready { margin-top: 8px; }
+  .ready .head { background: #c9a961; color: #fff; text-align: center; padding: 4px; font-weight: 700; font-size: 11.5px; }
+  .ready ul { padding: 5px 22px 4px; font-size: 10.5px; }
+  .ready li { margin-bottom: 2px; }
 
-  .sig-section { margin-top: 16px; }
-  .sig-title { background: #1a3a6e; color: #fff; padding: 7px 14px; font-size: 15px; font-weight: 700; }
+  .sig-section { margin-top: 8px; }
+  .sig-title { background: #1a3a6e; color: #fff; padding: 5px 12px; font-size: 13px; font-weight: 700; }
   .sig-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px; margin-top: 12px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-top: 6px;
   }
   .sig-box {
     border: 1px solid #d8d8d8;
     border-radius: 6px;
-    padding: 8px 10px 6px;
+    padding: 5px 8px 4px;
     text-align: center;
     background: #fafafa;
-    height: 130px;
+    height: 95px;
     display: flex; flex-direction: column; justify-content: space-between;
   }
-  .sig-box .role { font-size: 12px; font-weight: 700; color: #1a3a6e; }
+  .sig-box .role { font-size: 11px; font-weight: 700; color: #1a3a6e; }
   .sig-box .visual {
     flex: 1;
     display: flex; align-items: center; justify-content: center;
     position: relative;
   }
-  .sig-box .visual img.sig { height: 60px; object-fit: contain; }
-  .sig-box .visual img.stamp { height: 75px; object-fit: contain; opacity: 0.92; }
+  .sig-box .visual img.sig { height: 45px; object-fit: contain; }
+  .sig-box .visual img.stamp { height: 55px; object-fit: contain; opacity: 0.92; }
   .sig-box .name-line {
     border-top: 1px solid #888;
-    padding-top: 4px;
-    font-size: 11px;
+    padding-top: 2px;
+    font-size: 10px;
     color: #555;
   }
 
   .footer {
     position: absolute; bottom: 0; right: 0; left: 0;
-    padding: 10px 32px 12px;
+    padding: 6px 26px 8px;
     border-top: 1px solid #c9a961;
     display: flex; justify-content: space-between; align-items: center;
-    font-size: 10.5px; color: #555;
+    font-size: 9.5px; color: #555;
     background: #fff;
   }
-  .footer img { height: 42px; }
-  .footer .meta { text-align: right; line-height: 1.6; }
+  .footer img { height: 30px; }
+  .footer .meta { text-align: right; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -288,6 +289,7 @@ async function renderPdfWithGotenberg(html: string): Promise<Uint8Array> {
   form.append("marginRight", "0");
   form.append("printBackground", "true");
   form.append("preferCssPageSize", "true");
+  form.append("singlePage", "true");
   form.append("waitDelay", "1s");
 
   const headers: Record<string, string> = {};
