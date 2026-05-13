@@ -138,33 +138,33 @@ function buildHtml(p: Payload): string {
   .ready ul { padding: 8px 26px 6px; font-size: 11.5px; line-height: 1.55; }
   .ready li { margin-bottom: 3px; }
 
-  .sig-section { margin-top: 14px; }
-  .sig-title { background: #1a3a6e; color: #fff; padding: 7px 14px; font-size: 14px; font-weight: 700; }
+  .sig-section { margin-top: 12px; }
+  .sig-title { background: #1a3a6e; color: #fff; padding: 6px 14px; font-size: 13px; font-weight: 700; }
   .sig-grid {
     display: grid; grid-template-columns: 1fr 1fr;
-    gap: 12px; margin-top: 10px;
+    gap: 12px; margin-top: 8px;
   }
   .sig-box {
     border: 1px solid #d8d8d8;
     border-radius: 6px;
-    padding: 8px 10px 6px;
+    padding: 6px 10px 5px;
     text-align: center;
     background: #fafafa;
-    height: 110px;
+    height: 95px;
     display: flex; flex-direction: column; justify-content: space-between;
   }
-  .sig-box .role { font-size: 12px; font-weight: 700; color: #1a3a6e; }
+  .sig-box .role { font-size: 11.5px; font-weight: 700; color: #1a3a6e; }
   .sig-box .visual {
     flex: 1;
     display: flex; align-items: center; justify-content: center;
     position: relative;
   }
-  .sig-box .visual img.sig { height: 65px; object-fit: contain; }
-  .sig-box .visual img.stamp { height: 80px; object-fit: contain; opacity: 0.92; }
+  .sig-box .visual img.sig { height: 50px; object-fit: contain; }
+  .sig-box .visual img.stamp { height: 62px; object-fit: contain; opacity: 0.92; }
   .sig-box .name-line {
     border-top: 1px solid #888;
-    padding-top: 4px;
-    font-size: 11px;
+    padding-top: 3px;
+    font-size: 10.5px;
     color: #555;
   }
 
