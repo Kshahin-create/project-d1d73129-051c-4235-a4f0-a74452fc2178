@@ -86,7 +86,7 @@ function buildHtml(p: Payload): string {
   .page {
     width: 794px;
     height: 1123px;
-    padding: 22px 36px 80px;
+    padding: 22px 36px 95px;
     position: relative;
     background: #fff;
     overflow: hidden;
