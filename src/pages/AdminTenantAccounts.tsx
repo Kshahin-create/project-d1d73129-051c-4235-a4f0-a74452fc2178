@@ -31,6 +31,7 @@ type TenantRow = {
   activity_type: string | null;
   notes: string | null;
   total_price: number;
+  paid_amount: number;
   created_at: string;
   units_count: number;
   unpaid_invoices: number;
