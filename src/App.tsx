@@ -65,6 +65,7 @@ const App = () => (
           <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
           <Route path="/tenant" element={<TenantPortal />} />
           <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
+          <Route path="/invoice/:id" element={<Invoice />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
