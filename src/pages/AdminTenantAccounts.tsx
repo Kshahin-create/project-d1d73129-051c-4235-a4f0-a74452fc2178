@@ -31,6 +31,7 @@ type TenantRow = {
   activity_type: string | null;
   notes: string | null;
   total_price: number;
+  paid_amount: number;
   created_at: string;
   units_count: number;
   unpaid_invoices: number;
@@ -171,6 +172,7 @@ export default function AdminTenantAccounts() {
                     <th className="p-3 text-right">الجوال</th>
                     <th className="p-3 text-right">وحدات</th>
                     <th className="p-3 text-right">السعر السنوي</th>
+                    <th className="p-3 text-right">المدفوع</th>
                     <th className="p-3 text-right">فواتير</th>
                     <th className="p-3 text-right">دخول</th>
                     <th className="p-3 text-right"></th>
@@ -185,6 +187,37 @@ export default function AdminTenantAccounts() {
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.phone || "—"}</td>
                       <td className="p-3 font-bold">{r.units_count}</td>
                       <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ر.س</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          {Number(r.paid_amount) > 0 ? (
+                            <span className="font-bold text-emerald-600">{Number(r.paid_amount).toLocaleString()} ر.س</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                          <button
+                            onClick={async () => {
+                              const def = String(r.paid_amount || "");
+                              const input = window.prompt(
+                                `المبلغ المدفوع من ${r.full_name} (السعر السنوي: ${Number(r.total_price).toLocaleString()} ر.س)`,
+                                def,
+                              );
+                              if (input === null) return;
+                              const amount = Number(input);
+                              if (!Number.isFinite(amount) || amount < 0) return toast.error("أدخل مبلغًا صحيحًا");
+                              const { error } = await supabase.rpc("set_tenant_account_paid_amount" as any, {
+                                _tenant_account_id: r.id,
+                                _paid_amount: amount,
+                              });
+                              if (error) toast.error(error.message);
+                              else { toast.success("تم الحفظ"); load(); }
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
+                          >
+                            <Plus className="h-3 w-3" />
+                            {Number(r.paid_amount) > 0 ? "تعديل" : "إضافة"}
+                          </button>
+                        </div>
+                      </td>
                       <td className="p-3">
                         {r.unpaid_invoices > 0 ? (
                           <span className="text-destructive">

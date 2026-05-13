@@ -27,6 +27,7 @@ interface BookingRow {
   status: string;
   total_area: number;
   total_price: number;
+  paid_amount: number;
   units_count: number;
   whatsapp_sent: boolean;
   offer_image_url: string | null;
@@ -122,7 +123,7 @@ const AdminBookings = () => {
     const confirmed = by("confirmed");
     const cancelled = by("cancelled");
     const expired = by("expired");
-    const sum = (arr: BookingRow[], k: "total_price" | "units_count" | "total_area") =>
+    const sum = (arr: BookingRow[], k: "total_price" | "units_count" | "total_area" | "paid_amount") =>
       arr.reduce((a, b) => a + (Number(b[k]) || 0), 0);
     const now = Date.now();
     const expiringSoon = pending.filter((r) => {
@@ -131,6 +132,10 @@ const AdminBookings = () => {
     }).length;
     const total = rows.length;
     const confirmRate = total ? Math.round((confirmed.length / total) * 100) : 0;
+    const confirmedRevenue = sum(confirmed, "total_price");
+    const collected = sum(confirmed, "paid_amount");
+    const remaining = Math.max(0, confirmedRevenue - collected);
+    const collectionRate = confirmedRevenue ? Math.round((collected / confirmedRevenue) * 100) : 0;
     return {
       total,
       pending: pending.length,
@@ -139,7 +144,10 @@ const AdminBookings = () => {
       expired: expired.length,
       expiringSoon,
       confirmRate,
-      confirmedRevenue: sum(confirmed, "total_price"),
+      confirmedRevenue,
+      collected,
+      remaining,
+      collectionRate,
       pendingRevenue: sum(pending, "total_price"),
       totalUnits: sum(rows, "units_count"),
       confirmedUnits: sum(confirmed, "units_count"),
@@ -166,12 +174,56 @@ const AdminBookings = () => {
     }
   };
 
-  const updateStatus = async (id: string, status: "confirmed" | "cancelled") => {
-    const rpc = status === "confirmed" ? "confirm_booking" : "cancel_booking";
-    const { error } = await supabase.rpc(rpc, { _booking_id: id });
+  const setPaidAmount = async (b: BookingRow) => {
+    const def = String(b.paid_amount || "");
+    const input = window.prompt(
+      `المبلغ المدفوع من العميل (الإجمالي: ${Number(b.total_price).toLocaleString("en-US")} ر.س)`,
+      def
+    );
+    if (input === null) return;
+    const amount = Number(input);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error("أدخل مبلغًا صحيحًا");
+      return;
+    }
+    const { error } = await supabase.rpc("set_booking_paid_amount" as any, {
+      _booking_id: b.id,
+      _paid_amount: amount,
+    });
+    if (error) toast.error("فشل الحفظ: " + error.message);
+    else {
+      toast.success("تم تحديث المبلغ المدفوع");
+      load();
+    }
+  };
+
+  const confirmBooking = async (b: BookingRow) => {
+    const input = window.prompt(
+      `أدخل المبلغ المدفوع من العميل (الإجمالي: ${Number(b.total_price).toLocaleString("en-US")} ر.س)\nاتركها 0 إذا لم يُدفع شيء بعد`,
+      "0"
+    );
+    if (input === null) return;
+    const amount = Number(input);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error("أدخل مبلغًا صحيحًا");
+      return;
+    }
+    const { error } = await supabase.rpc("confirm_booking" as any, {
+      _booking_id: b.id,
+      _paid_amount: amount,
+    });
+    if (error) toast.error("فشل التأكيد: " + error.message);
+    else {
+      toast.success(`تم التأكيد ونقل الوحدات للمؤجرين${amount > 0 ? ` • مدفوع ${amount.toLocaleString("en-US")} ر.س` : ""}`);
+      load();
+    }
+  };
+
+  const cancelBooking = async (id: string) => {
+    const { error } = await supabase.rpc("cancel_booking", { _booking_id: id });
     if (error) toast.error("فشل التحديث: " + error.message);
     else {
-      toast.success(status === "confirmed" ? "تم التأكيد ونقل الوحدات للمؤجرين" : "تم الإلغاء وإرجاع الوحدات");
+      toast.success("تم الإلغاء وإرجاع الوحدات");
       load();
     }
   };
@@ -253,6 +305,13 @@ const AdminBookings = () => {
               title="إيرادات مؤكدة"
               value={`${fmtNum(stats.confirmedRevenue)} ر.س`}
               hint={`${stats.confirmedUnits} وحدة مؤجَّرة`}
+              Icon={Wallet}
+              tone="emerald"
+            />
+            <StatCard
+              title="المحصَّل فعلياً"
+              value={`${fmtNum(stats.collected)} ر.س`}
+              hint={`${stats.collectionRate}% من المؤكد • متبقي ${fmtNum(stats.remaining)}`}
               Icon={Wallet}
               tone="emerald"
             />
@@ -355,7 +414,19 @@ const AdminBookings = () => {
                     <div className="text-muted-foreground">
                       السعر: <span className="num font-semibold text-foreground">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
                     </div>
+                    <div className="text-muted-foreground">
+                      المدفوع: <span className={`num font-semibold ${Number(b.paid_amount) > 0 ? "text-emerald-600" : "text-foreground"}`}>{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> ر.س
+                    </div>
                   </div>
+
+                  {b.status === "confirmed" && (
+                    <div className="mt-2 rounded-lg bg-emerald-500/10 p-2 text-center text-xs font-semibold text-emerald-700">
+                      ✅ مؤكد • مدفوع <span className="num">{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> من <span className="num">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
+                      {Number(b.total_price) - Number(b.paid_amount || 0) > 0 && (
+                        <> • متبقي <span className="num">{(Number(b.total_price) - Number(b.paid_amount || 0)).toLocaleString("en-US")}</span></>
+                      )}
+                    </div>
+                  )}
 
                   {b.status === "pending" && b.expires_at && (
                     (() => {
@@ -403,18 +474,27 @@ const AdminBookings = () => {
                       {b.status === "pending" && (
                         <>
                           <button
-                            onClick={() => updateStatus(b.id, "confirmed")}
+                            onClick={() => confirmBooking(b)}
                             className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
                           >
                             <CheckCircle2 className="h-3 w-3" /> تأكيد ونقل للمؤجرين
                           </button>
                           <button
-                            onClick={() => updateStatus(b.id, "cancelled")}
+                            onClick={() => cancelBooking(b.id)}
                             className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive/10 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
                           >
                             <XCircle className="h-3 w-3" /> إلغاء
                           </button>
                         </>
+                      )}
+                      {(b.status === "confirmed" || b.status === "pending") && (
+                        <button
+                          onClick={() => setPaidAmount(b)}
+                          className="flex items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+                        >
+                          <Wallet className="h-3.5 w-3.5" />
+                          {Number(b.paid_amount) > 0 ? "تعديل الدفعة" : "إضافة دفعة"}
+                        </button>
                       )}
                       {(b.status === "pending" || b.status === "expired") && (
                         <button
