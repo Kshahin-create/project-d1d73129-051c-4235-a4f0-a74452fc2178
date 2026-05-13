@@ -289,6 +289,7 @@ async function renderPdfWithGotenberg(html: string): Promise<Uint8Array> {
   form.append("marginRight", "0");
   form.append("printBackground", "true");
   form.append("preferCssPageSize", "true");
+  form.append("singlePage", "true");
   form.append("waitDelay", "1s");
 
   const headers: Record<string, string> = {};
