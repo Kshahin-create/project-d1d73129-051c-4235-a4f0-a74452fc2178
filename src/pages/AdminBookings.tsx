@@ -175,26 +175,26 @@ const AdminBookings = () => {
   };
 
   const setPaidAmount = async (b: BookingRow) => {
-    const def = String(b.paid_amount || "");
+    const remaining = Math.max(0, Number(b.total_price || 0) - Number(b.paid_amount || 0));
     const input = window.prompt(
-      `المبلغ المدفوع من العميل (الإجمالي: ${Number(b.total_price).toLocaleString("en-US")} ر.س)`,
-      def
+      `مبلغ الدفعة الجديدة (المتبقي: ${remaining.toLocaleString("en-US")} ر.س)`,
+      "",
     );
     if (input === null) return;
     const amount = Number(input);
-    if (!Number.isFinite(amount) || amount < 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       toast.error("أدخل مبلغًا صحيحًا");
       return;
     }
-    const { error } = await supabase.rpc("set_booking_paid_amount" as any, {
-      _booking_id: b.id,
-      _paid_amount: amount,
+    const method = window.prompt("طريقة الدفع: cash / transfer / card / check", "cash") || "cash";
+    const notes = window.prompt("ملاحظات (اختياري)", "") || null;
+    const { data: invId, error } = await supabase.rpc("record_payment" as any, {
+      _booking_id: b.id, _amount: amount, _method: method, _notes: notes,
     });
-    if (error) toast.error("فشل الحفظ: " + error.message);
-    else {
-      toast.success("تم تحديث المبلغ المدفوع");
-      load();
-    }
+    if (error) return toast.error("فشل الحفظ: " + error.message);
+    toast.success("تم تسجيل الدفعة وإصدار الفاتورة");
+    try { await supabase.functions.invoke("send-invoice-telegram", { body: { invoice_id: invId } }); } catch {}
+    load();
   };
 
   const confirmBooking = async (b: BookingRow) => {
@@ -210,13 +210,21 @@ const AdminBookings = () => {
     }
     const { error } = await supabase.rpc("confirm_booking" as any, {
       _booking_id: b.id,
-      _paid_amount: amount,
+      _paid_amount: 0,
     });
-    if (error) toast.error("فشل التأكيد: " + error.message);
-    else {
-      toast.success(`تم التأكيد ونقل الوحدات للمؤجرين${amount > 0 ? ` • مدفوع ${amount.toLocaleString("en-US")} ر.س` : ""}`);
-      load();
+    if (error) return toast.error("فشل التأكيد: " + error.message);
+    if (amount > 0) {
+      const method = window.prompt("طريقة الدفع: cash / transfer / card / check", "cash") || "cash";
+      const { data: invId, error: e2 } = await supabase.rpc("record_payment" as any, {
+        _booking_id: b.id, _amount: amount, _method: method, _notes: "دفعة عند التأكيد",
+      });
+      if (e2) toast.error("الفاتورة لم تُنشأ: " + e2.message);
+      else {
+        try { await supabase.functions.invoke("send-invoice-telegram", { body: { invoice_id: invId } }); } catch {}
+      }
     }
+    toast.success(`تم التأكيد${amount > 0 ? ` • مدفوع ${amount.toLocaleString("en-US")} ر.س` : ""}`);
+    load();
   };
 
   const cancelBooking = async (id: string) => {
