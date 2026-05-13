@@ -82,6 +82,37 @@ const AdminBookings = () => {
     return list;
   }, [rows, search, statusFilter]);
 
+  const stats = useMemo(() => {
+    const by = (s: string) => rows.filter((r) => r.status === s);
+    const pending = by("pending");
+    const confirmed = by("confirmed");
+    const cancelled = by("cancelled");
+    const expired = by("expired");
+    const sum = (arr: BookingRow[], k: "total_price" | "units_count" | "total_area") =>
+      arr.reduce((a, b) => a + (Number(b[k]) || 0), 0);
+    const now = Date.now();
+    const expiringSoon = pending.filter((r) => {
+      const t = new Date(r.expires_at).getTime() - now;
+      return t > 0 && t <= 12 * 3600 * 1000;
+    }).length;
+    const total = rows.length;
+    const confirmRate = total ? Math.round((confirmed.length / total) * 100) : 0;
+    return {
+      total,
+      pending: pending.length,
+      confirmed: confirmed.length,
+      cancelled: cancelled.length,
+      expired: expired.length,
+      expiringSoon,
+      confirmRate,
+      confirmedRevenue: sum(confirmed, "total_price"),
+      pendingRevenue: sum(pending, "total_price"),
+      totalUnits: sum(rows, "units_count"),
+      confirmedUnits: sum(confirmed, "units_count"),
+      totalArea: sum(rows, "total_area"),
+    };
+  }, [rows]);
+
   const extendExpiry = async (id: string) => {
     const input = window.prompt("كم ساعة تريد إضافتها لمدة الحجز؟", "24");
     if (!input) return;
