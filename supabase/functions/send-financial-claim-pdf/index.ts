@@ -111,37 +111,37 @@ function buildHtml(p: Payload): string {
 
   .page {
     width: 794px; height: 1123px;
-    padding: 22px 44px 90px; position: relative; background: #fff;
+    padding: 28px 50px 100px; position: relative; background: #fff;
     overflow: hidden;
   }
 
   .top-bar {
     display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 8px; border-bottom: 3px solid var(--gold);
+    padding-bottom: 10px; border-bottom: 3px solid var(--gold);
   }
-  .top-bar img { height: 110px; object-fit: contain; }
+  .top-bar img { height: 130px; object-fit: contain; }
 
   .date-block {
-    margin-top: 12px;
+    margin-top: 16px;
     display: flex; justify-content: flex-start;
-    font-size: 12px; color: #222;
+    font-size: 13px; color: #222;
   }
   .date-block table { border-collapse: collapse; }
-  .date-block td { padding: 2px 6px; font-weight: 700; }
+  .date-block td { padding: 3px 8px; font-weight: 700; }
   .date-block td.lbl { color: #1a1a1a; }
   .date-block td.val { color: #1a1a1a; font-weight: 500; }
 
-  .title { text-align: center; margin: 10px 0 12px; }
+  .title { text-align: center; margin: 14px 0 16px; }
   .title h1 {
-    font-size: 28px; color: #2a2a2a; font-weight: 900;
+    font-size: 32px; color: #2a2a2a; font-weight: 900;
     display: inline-block;
   }
 
   /* جدول البيانات الأساسية */
-  table.info { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.info { width: 100%; border-collapse: collapse; font-size: 14px; }
   table.info td {
     border: 2px solid var(--gold);
-    padding: 7px 12px;
+    padding: 9px 14px;
     background: #fff;
   }
   table.info td.label {
@@ -150,47 +150,47 @@ function buildHtml(p: Payload): string {
     font-weight: 800;
     width: 30%;
     text-align: center;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   /* تعهد */
   .pledge {
-    margin-top: 8px;
+    margin-top: 12px;
     background: var(--gold);
     color: #fff;
     border: 2px solid var(--gold);
-    padding: 9px 14px;
-    font-size: 13px;
-    line-height: 1.6;
+    padding: 12px 18px;
+    font-size: 14px;
+    line-height: 1.7;
     text-align: center;
     font-weight: 600;
   }
 
   /* جدول المبالغ */
-  table.amounts { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
+  table.amounts { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 14px; }
   table.amounts th {
     background: var(--gold); color: #fff; font-weight: 800;
-    padding: 7px; border: 2px solid var(--gold); font-size: 13px;
+    padding: 9px; border: 2px solid var(--gold); font-size: 14px;
   }
   table.amounts td {
-    padding: 9px 14px; border: 2px solid var(--gold); background: #fff;
-    text-align: center; font-size: 13px;
+    padding: 12px 16px; border: 2px solid var(--gold); background: #fff;
+    text-align: center; font-size: 14px;
   }
   table.amounts td.amt { font-weight: 700; }
   table.amounts tr.total td.lbl {
-    font-weight: 900; font-size: 16px;
+    font-weight: 900; font-size: 17px;
   }
 
   /* بيانات الدفع */
-  .pay-wrap { margin-top: 14px; }
+  .pay-wrap { margin-top: 18px; }
   .pay-title {
     background: var(--gold); color: #fff; text-align: center;
-    padding: 7px; font-size: 14px; font-weight: 800;
+    padding: 9px; font-size: 15px; font-weight: 800;
     border: 2px solid var(--gold);
   }
-  table.pay { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.pay { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   table.pay td {
-    border: 2px solid var(--gold); padding: 7px 12px; background: #fff;
+    border: 2px solid var(--gold); padding: 9px 14px; background: #fff;
   }
   table.pay td.label {
     background: var(--gold); color: #fff; font-weight: 800;
@@ -198,31 +198,31 @@ function buildHtml(p: Payload): string {
   }
 
   .closing-title {
-    text-align: center; margin-top: 14px;
-    font-size: 20px; font-weight: 900; color: #2a2a2a;
+    text-align: center; margin-top: 22px;
+    font-size: 24px; font-weight: 900; color: #2a2a2a;
   }
 
   .footer {
     position: absolute; bottom: 0; right: 0; left: 0;
-    padding: 10px 44px 14px;
+    padding: 14px 50px 18px;
     border-top: 2px solid var(--gold);
     background: #fff;
     display: flex; justify-content: space-between; align-items: flex-end;
-    gap: 18px;
+    gap: 22px;
   }
   .footer .left {
     flex: 1; text-align: left;
-    font-size: 11px; color: #2a2a2a; line-height: 1.7; font-weight: 700;
+    font-size: 12px; color: #2a2a2a; line-height: 1.8; font-weight: 700;
   }
   .footer .right { flex: 0 0 auto; text-align: center; }
   .footer .right .signer {
-    font-size: 13px; font-weight: 900; color: #1a1a1a; margin-bottom: 4px;
+    font-size: 14px; font-weight: 900; color: #1a1a1a; margin-bottom: 5px;
   }
   .footer .right .stamp-row {
-    display: flex; align-items: center; gap: 10px; justify-content: flex-end;
+    display: flex; align-items: center; gap: 12px; justify-content: flex-end;
   }
-  .footer .right .stamp-row img.sig { height: 50px; object-fit: contain; }
-  .footer .right .stamp-row img.stamp { height: 75px; object-fit: contain; }
+  .footer .right .stamp-row img.sig { height: 58px; object-fit: contain; }
+  .footer .right .stamp-row img.stamp { height: 88px; object-fit: contain; }
 </style>
 </head>
 <body>
