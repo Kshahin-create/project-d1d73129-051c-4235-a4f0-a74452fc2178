@@ -167,6 +167,7 @@ export type Database = {
           notes: string | null
           offer_image_url: string | null
           offer_number: string | null
+          paid_amount: number
           payment_plan: string
           status: string
           total_area: number
@@ -188,6 +189,7 @@ export type Database = {
           notes?: string | null
           offer_image_url?: string | null
           offer_number?: string | null
+          paid_amount?: number
           payment_plan?: string
           status?: string
           total_area?: number
@@ -209,6 +211,7 @@ export type Database = {
           notes?: string | null
           offer_image_url?: string | null
           offer_number?: string | null
+          paid_amount?: number
           payment_plan?: string
           status?: string
           total_area?: number
@@ -648,6 +651,7 @@ export type Database = {
           full_name: string
           id: string
           notes: string | null
+          paid_amount: number
           phone: string | null
           total_price: number
           updated_at: string
@@ -663,6 +667,7 @@ export type Database = {
           full_name: string
           id?: string
           notes?: string | null
+          paid_amount?: number
           phone?: string | null
           total_price?: number
           updated_at?: string
@@ -678,6 +683,7 @@ export type Database = {
           full_name?: string
           id?: string
           notes?: string | null
+          paid_amount?: number
           phone?: string | null
           total_price?: number
           updated_at?: string
@@ -921,6 +927,7 @@ export type Database = {
           has_login: boolean
           id: string
           notes: string
+          paid_amount: number
           phone: string
           total_price: number
           units_count: number
@@ -956,7 +963,12 @@ export type Database = {
         Returns: undefined
       }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
-      confirm_booking: { Args: { _booking_id: string }; Returns: undefined }
+      confirm_booking:
+        | { Args: { _booking_id: string }; Returns: undefined }
+        | {
+            Args: { _booking_id: string; _paid_amount?: number }
+            Returns: undefined
+          }
       consolidate_existing_tenants: {
         Args: never
         Returns: {
@@ -1045,6 +1057,14 @@ export type Database = {
       }
       recalc_tenant_account_total: {
         Args: { _account_id: string }
+        Returns: undefined
+      }
+      set_booking_paid_amount: {
+        Args: { _booking_id: string; _paid_amount: number }
+        Returns: undefined
+      }
+      set_tenant_account_paid_amount: {
+        Args: { _paid_amount: number; _tenant_account_id: string }
         Returns: undefined
       }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
