@@ -170,7 +170,8 @@ function buildHtml(p: Payload): string {
   }
 
   .footer {
-    position: absolute; bottom: 0; right: 0; left: 0;
+    margin-top: 14px;
+    margin-left: -36px; margin-right: -36px;
     padding: 10px 36px 12px;
     border-top: 1px solid #c9a961;
     display: flex; justify-content: space-between; align-items: center;
