@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { fmtNum } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Users,
@@ -19,7 +20,42 @@ import {
   X,
   Loader2,
   Pencil,
+  Wallet,
+  AlertTriangle,
+  CheckCircle2,
+  TrendingUp,
 } from "lucide-react";
+
+const TONE_CLS: Record<string, string> = {
+  primary: "bg-primary/10 text-primary",
+  emerald: "bg-emerald-500/10 text-emerald-600",
+  amber: "bg-amber-500/10 text-amber-600",
+  sky: "bg-sky-500/10 text-sky-600",
+  violet: "bg-violet-500/10 text-violet-600",
+  rose: "bg-rose-500/10 text-rose-600",
+};
+
+function StatCard({
+  title, value, hint, Icon, tone = "primary",
+}: {
+  title: string; value: string; hint?: string; Icon: any;
+  tone?: "primary" | "emerald" | "amber" | "sky" | "violet" | "rose";
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3 shadow-card sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px] font-medium text-muted-foreground sm:text-xs">{title}</div>
+        <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${TONE_CLS[tone]}`}>
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+      </div>
+      <div className="mt-1.5 font-display text-lg font-bold leading-tight sm:text-xl">{value}</div>
+      {hint && <div className="mt-0.5 text-[10px] text-muted-foreground sm:text-[11px]">{hint}</div>}
+    </div>
+  );
+}
+
+type FilterKey = "all" | "with_units" | "no_units" | "unpaid" | "fully_paid" | "has_login" | "no_login";
 
 type TenantRow = {
   id: string;
@@ -77,6 +113,7 @@ export default function AdminTenantAccounts() {
   const [rows, setRows] = useState<TenantRow[]>([]);
   const [search, setSearch] = useState("");
   const [fetching, setFetching] = useState(true);
+  const [filterKey, setFilterKey] = useState<FilterKey>("all");
 
   const [showCreate, setShowCreate] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -92,6 +129,37 @@ export default function AdminTenantAccounts() {
   useEffect(() => {
     if (!loading && (isAdmin || isManager)) load();
   }, [loading, isAdmin, isManager]);
+
+  const matchesFilter = (r: TenantRow, key: FilterKey) => {
+    switch (key) {
+      case "all": return true;
+      case "with_units": return (r.units_count ?? 0) > 0;
+      case "no_units": return (r.units_count ?? 0) === 0;
+      case "unpaid": return Number(r.unpaid_invoices ?? 0) > 0 || Number(r.paid_amount ?? 0) < Number(r.total_price ?? 0);
+      case "fully_paid": return Number(r.total_price ?? 0) > 0 && Number(r.paid_amount ?? 0) >= Number(r.total_price ?? 0);
+      case "has_login": return !!r.has_login;
+      case "no_login": return !r.has_login;
+    }
+  };
+
+  const stats = useMemo(() => {
+    const scoped = rows.filter((r) => matchesFilter(r, filterKey));
+    const totalContracts = scoped.reduce((s, r) => s + Number(r.total_price || 0), 0);
+    const totalPaid = scoped.reduce((s, r) => s + Number(r.paid_amount || 0), 0);
+    const remaining = Math.max(0, totalContracts - totalPaid);
+    const collectionRate = totalContracts > 0 ? Math.round((totalPaid / totalContracts) * 100) : 0;
+    const unpaidCount = scoped.filter((r) => Number(r.unpaid_invoices || 0) > 0).length;
+    const unpaidTotal = scoped.reduce((s, r) => s + Number(r.unpaid_total || 0), 0);
+    const fullyPaid = scoped.filter((r) => Number(r.total_price || 0) > 0 && Number(r.paid_amount || 0) >= Number(r.total_price || 0)).length;
+    const withUnits = scoped.filter((r) => (r.units_count ?? 0) > 0).length;
+    const withLogin = scoped.filter((r) => r.has_login).length;
+    const totalUnits = scoped.reduce((s, r) => s + Number(r.units_count || 0), 0);
+    return {
+      count: scoped.length,
+      totalContracts, totalPaid, remaining, collectionRate,
+      unpaidCount, unpaidTotal, fullyPaid, withUnits, withLogin, totalUnits,
+    };
+  }, [rows, filterKey]);
 
   if (!loading && !user) {
     nav("/auth");
@@ -113,6 +181,7 @@ export default function AdminTenantAccounts() {
   }
 
   const filtered = rows.filter((r) => {
+    if (!matchesFilter(r, filterKey)) return false;
     const q = search.trim().toLowerCase();
     if (!q) return true;
     return (
@@ -123,13 +192,23 @@ export default function AdminTenantAccounts() {
     );
   });
 
+  const filterChips: { id: FilterKey; label: string }[] = [
+    { id: "all", label: "الكل" },
+    { id: "with_units", label: "بوحدات" },
+    { id: "no_units", label: "بدون وحدات" },
+    { id: "unpaid", label: "متأخرات" },
+    { id: "fully_paid", label: "مسددة بالكامل" },
+    { id: "has_login", label: "لديهم دخول" },
+    { id: "no_login", label: "بدون دخول" },
+  ];
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <Header />
       <main className="container-tight py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground shadow-card">
               <Users className="h-5 w-5" />
             </div>
             <div>
@@ -146,14 +225,91 @@ export default function AdminTenantAccounts() {
           </button>
         </div>
 
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-border bg-card p-2">
-          <Search className="mr-2 h-4 w-4 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="ابحث بالاسم، الإيميل، الجوال، النشاط..."
-            className="flex-1 bg-transparent text-sm outline-none"
-          />
+        {/* Stats */}
+        {!fetching && rows.length > 0 && (
+          <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            <StatCard
+              title={filterKey === "all" ? "إجمالي الحسابات" : `الحسابات (${filterChips.find((f) => f.id === filterKey)?.label})`}
+              value={fmtNum(stats.count)}
+              hint={`${stats.totalUnits} وحدة مرتبطة`}
+              Icon={Users}
+              tone="primary"
+            />
+            <StatCard
+              title="قيمة العقود"
+              value={`${fmtNum(stats.totalContracts)} ر.س`}
+              hint="إجمالي السعر السنوي"
+              Icon={Receipt}
+              tone="violet"
+            />
+            <StatCard
+              title="المحصل"
+              value={`${fmtNum(stats.totalPaid)} ر.س`}
+              hint={`نسبة التحصيل ${stats.collectionRate}%`}
+              Icon={Wallet}
+              tone="emerald"
+            />
+            <StatCard
+              title="المتبقي"
+              value={`${fmtNum(stats.remaining)} ر.س`}
+              hint={stats.remaining > 0 ? "غير محصّل" : "تم التحصيل بالكامل"}
+              Icon={TrendingUp}
+              tone="amber"
+            />
+            <StatCard
+              title="فواتير متأخرة"
+              value={fmtNum(stats.unpaidCount)}
+              hint={`${fmtNum(stats.unpaidTotal)} ر.س`}
+              Icon={AlertTriangle}
+              tone="rose"
+            />
+            <StatCard
+              title="مسددة بالكامل"
+              value={fmtNum(stats.fullyPaid)}
+              hint="عقود مغلقة ماليًا"
+              Icon={CheckCircle2}
+              tone="emerald"
+            />
+            <StatCard
+              title="بوحدات مرتبطة"
+              value={fmtNum(stats.withUnits)}
+              hint={`${fmtNum(stats.totalUnits)} وحدة`}
+              Icon={Building2}
+              tone="sky"
+            />
+            <StatCard
+              title="لديهم دخول"
+              value={fmtNum(stats.withLogin)}
+              hint="حسابات مفعّلة"
+              Icon={KeyRound}
+              tone="primary"
+            />
+          </div>
+        )}
+
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="flex flex-1 min-w-[220px] items-center gap-2 rounded-xl border border-border bg-card p-2">
+            <Search className="mr-2 h-4 w-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ابحث بالاسم، الإيميل، الجوال، النشاط..."
+              className="flex-1 bg-transparent text-sm outline-none"
+            />
+          </div>
+          <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
+            {filterChips.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setFilterKey(c.id)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  filterKey === c.id ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
