@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { fmtNum } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Users,
@@ -19,7 +20,42 @@ import {
   X,
   Loader2,
   Pencil,
+  Wallet,
+  AlertTriangle,
+  CheckCircle2,
+  TrendingUp,
 } from "lucide-react";
+
+const TONE_CLS: Record<string, string> = {
+  primary: "bg-primary/10 text-primary",
+  emerald: "bg-emerald-500/10 text-emerald-600",
+  amber: "bg-amber-500/10 text-amber-600",
+  sky: "bg-sky-500/10 text-sky-600",
+  violet: "bg-violet-500/10 text-violet-600",
+  rose: "bg-rose-500/10 text-rose-600",
+};
+
+function StatCard({
+  title, value, hint, Icon, tone = "primary",
+}: {
+  title: string; value: string; hint?: string; Icon: any;
+  tone?: "primary" | "emerald" | "amber" | "sky" | "violet" | "rose";
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3 shadow-card sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px] font-medium text-muted-foreground sm:text-xs">{title}</div>
+        <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${TONE_CLS[tone]}`}>
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+      </div>
+      <div className="mt-1.5 font-display text-lg font-bold leading-tight sm:text-xl">{value}</div>
+      {hint && <div className="mt-0.5 text-[10px] text-muted-foreground sm:text-[11px]">{hint}</div>}
+    </div>
+  );
+}
+
+type FilterKey = "all" | "with_units" | "no_units" | "unpaid" | "fully_paid" | "has_login" | "no_login";
 
 type TenantRow = {
   id: string;
