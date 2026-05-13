@@ -114,10 +114,6 @@ const Booking = () => {
     return { area, price, count: selectedUnits.length };
   }, [selectedUnits]);
 
-  // اعادة الضبط لو خطة 50% لم تعد مؤهلة
-  useEffect(() => {
-    if (paymentPlan === "50" && totals.price < 150000) setPaymentPlan("full");
-  }, [totals.price, paymentPlan]);
 
   const whatsapp = useMemo(() => {
     if (selectedUnits.length === 0 || !customer) return null;
@@ -769,7 +765,6 @@ const PaymentPlanSelector = ({
   onChange: (v: "full" | "70" | "50") => void;
   annualPrice: number;
 }) => {
-  const eligible50 = annualPrice >= 150000;
   const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
   const options: { id: "full" | "70" | "50"; title: string; desc: string; payable: number; disabled?: boolean; badge?: string }[] = [
     {
@@ -788,9 +783,8 @@ const PaymentPlanSelector = ({
     {
       id: "50",
       title: "سداد 50% من قيمة الإيجار",
-      desc: "متاح لأصحاب مراكز الصيانة الكبيرة والمتوسطة بإيجار سنوي يتجاوز 150,000 ريال.",
+      desc: "تحويل 50% من قيمة الإيجار السنوي عند توقيع العقد.",
       payable: annualPrice * 0.5,
-      disabled: !eligible50,
     },
   ];
 
@@ -839,11 +833,6 @@ const PaymentPlanSelector = ({
               {o.badge && (
                 <div className="mt-2 inline-block rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
                   {o.badge}
-                </div>
-              )}
-              {o.disabled && (
-                <div className="mt-2 text-[10px] font-bold text-destructive">
-                  غير متاح — يتطلب إيجار سنوي ≥ 150,000 ريال
                 </div>
               )}
             </button>
