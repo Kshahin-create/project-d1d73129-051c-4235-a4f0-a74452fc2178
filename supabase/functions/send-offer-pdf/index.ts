@@ -85,16 +85,17 @@ function buildHtml(p: Payload): string {
   html, body { font-family: 'Tajawal', sans-serif; color: #1a1a1a; background: #fff; }
   .page {
     width: 794px;
-    min-height: 1123px;
-    padding: 24px 32px 90px;
+    height: 1123px;
+    padding: 14px 26px 70px;
     position: relative;
     background: #fff;
+    overflow: hidden;
   }
   .top-bar {
     display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 12px; border-bottom: 2px solid #c9a961;
+    padding-bottom: 6px; border-bottom: 2px solid #c9a961;
   }
-  .top-bar .logo-side img { height: 130px; object-fit: contain; }
+  .top-bar .logo-side img { height: 78px; object-fit: contain; }
   .offer-num-center {
     text-align: center;
     font-size: 13px;
