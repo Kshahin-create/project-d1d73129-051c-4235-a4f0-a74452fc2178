@@ -86,11 +86,12 @@ const AdminUsers = () => {
   }, [loading, isAdmin]);
 
   const stats = useMemo(() => {
+    const scoped = roleFilter === "all" ? rows : rows.filter((r) => r.role === roleFilter);
     const now = Date.now();
     const day = 24 * 3600 * 1000;
-    const newToday = rows.filter((r) => now - new Date(r.created_at).getTime() <= day).length;
-    const new7 = rows.filter((r) => now - new Date(r.created_at).getTime() <= 7 * day).length;
-    const new30 = rows.filter((r) => now - new Date(r.created_at).getTime() <= 30 * day).length;
+    const newToday = scoped.filter((r) => now - new Date(r.created_at).getTime() <= day).length;
+    const new7 = scoped.filter((r) => now - new Date(r.created_at).getTime() <= 7 * day).length;
+    const new30 = scoped.filter((r) => now - new Date(r.created_at).getTime() <= 30 * day).length;
     const counts = {
       admin: rows.filter((r) => r.role === "admin").length,
       manager: rows.filter((r) => r.role === "manager").length,
@@ -99,8 +100,10 @@ const AdminUsers = () => {
     };
     const staff = counts.admin + counts.manager + counts.control;
     const staffRate = rows.length ? Math.round((staff / rows.length) * 100) : 0;
-    return { total: rows.length, ...counts, staff, staffRate, newToday, new7, new30 };
-  }, [rows]);
+    const scopedCount = scoped.length;
+    const sharePct = rows.length ? Math.round((scopedCount / rows.length) * 100) : 0;
+    return { total: rows.length, ...counts, staff, staffRate, newToday, new7, new30, scopedCount, sharePct };
+  }, [rows, roleFilter]);
 
   const filtered = useMemo(() => {
     let list = rows;
