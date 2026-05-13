@@ -183,6 +183,67 @@ const AdminBookings = () => {
           </Link>
         </div>
 
+        {!fetching && rows.length > 0 && (
+          <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            <StatCard
+              title="إجمالي الحجوزات"
+              value={fmtNum(stats.total)}
+              hint={`${stats.totalUnits} وحدة • ${fmtNum(Math.round(stats.totalArea))} م²`}
+              Icon={CalendarRange}
+              tone="primary"
+            />
+            <StatCard
+              title="قيد المراجعة"
+              value={fmtNum(stats.pending)}
+              hint={stats.expiringSoon ? `${stats.expiringSoon} ينتهي خلال 12 ساعة` : "لا يوجد على وشك الانتهاء"}
+              Icon={Clock}
+              tone="amber"
+            />
+            <StatCard
+              title="مؤكدة"
+              value={fmtNum(stats.confirmed)}
+              hint={`نسبة التأكيد ${stats.confirmRate}%`}
+              Icon={CheckCircle2}
+              tone="emerald"
+            />
+            <StatCard
+              title="ملغية / منتهية"
+              value={fmtNum(stats.cancelled + stats.expired)}
+              hint={`${stats.cancelled} ملغي • ${stats.expired} منتهي`}
+              Icon={XCircle}
+              tone="rose"
+            />
+            <StatCard
+              title="إيرادات مؤكدة"
+              value={`${fmtNum(stats.confirmedRevenue)} ر.س`}
+              hint={`${stats.confirmedUnits} وحدة مؤجَّرة`}
+              Icon={Wallet}
+              tone="emerald"
+            />
+            <StatCard
+              title="متوقع (قيد المراجعة)"
+              value={`${fmtNum(stats.pendingRevenue)} ر.س`}
+              hint="من الحجوزات المعلّقة"
+              Icon={TrendingUp}
+              tone="primary"
+            />
+            <StatCard
+              title="إجمالي الوحدات"
+              value={fmtNum(stats.totalUnits)}
+              hint={`${fmtNum(Math.round(stats.totalArea))} م² إجمالاً`}
+              Icon={Layers}
+              tone="primary"
+            />
+            <StatCard
+              title="على وشك الانتهاء"
+              value={fmtNum(stats.expiringSoon)}
+              hint="معلّقة خلال 12 ساعة"
+              Icon={Hourglass}
+              tone="amber"
+            />
+          </div>
+        )}
+
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-border bg-card p-2">
             <Search className="mr-2 h-4 w-4 text-muted-foreground" />
