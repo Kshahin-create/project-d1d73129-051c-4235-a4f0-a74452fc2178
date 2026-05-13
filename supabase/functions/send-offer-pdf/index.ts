@@ -86,16 +86,16 @@ function buildHtml(p: Payload): string {
   .page {
     width: 794px;
     height: 1123px;
-    padding: 14px 26px 70px;
+    padding: 22px 36px 80px;
     position: relative;
     background: #fff;
     overflow: hidden;
   }
   .top-bar {
     display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 6px; border-bottom: 2px solid #c9a961;
+    padding-bottom: 8px; border-bottom: 2px solid #c9a961;
   }
-  .top-bar .logo-side img { height: 78px; object-fit: contain; }
+  .top-bar .logo-side img { height: 92px; object-fit: contain; }
   .offer-num-center {
     text-align: center;
     font-size: 13px;
