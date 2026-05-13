@@ -263,6 +263,7 @@ function buildHtml(p: Payload): string {
         </div>
       </div>
     </div>
+    </div>
 
     <div class="footer">
       <div class="meta">
