@@ -27,6 +27,7 @@ interface BookingRow {
   status: string;
   total_area: number;
   total_price: number;
+  paid_amount: number;
   units_count: number;
   whatsapp_sent: boolean;
   offer_image_url: string | null;
