@@ -309,6 +309,13 @@ const AdminBookings = () => {
               tone="emerald"
             />
             <StatCard
+              title="المحصَّل فعلياً"
+              value={`${fmtNum(stats.collected)} ر.س`}
+              hint={`${stats.collectionRate}% من المؤكد • متبقي ${fmtNum(stats.remaining)}`}
+              Icon={Wallet}
+              tone="emerald"
+            />
+            <StatCard
               title="متوقع (قيد المراجعة)"
               value={`${fmtNum(stats.pendingRevenue)} ر.س`}
               hint="من الحجوزات المعلّقة"
