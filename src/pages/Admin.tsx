@@ -52,13 +52,14 @@ const Admin = () => {
   }, [selectedBuilding, units, search, statusFilter]);
 
   const stats = useMemo(() => {
-    const total = units.length;
-    const rented = units.filter((u) => u.status === "rented").length;
-    const reserved = units.filter((u) => u.status === "reserved").length;
-    const available = units.filter((u) => u.status === "available").length;
-    const revenue = units.filter((u) => u.status === "rented").reduce((s, u) => s + u.price, 0);
+    const scope = buildingUnits;
+    const total = scope.length;
+    const rented = scope.filter((u) => u.status === "rented").length;
+    const reserved = scope.filter((u) => u.status === "reserved").length;
+    const available = scope.filter((u) => u.status === "available").length;
+    const revenue = scope.filter((u) => u.status === "rented").reduce((s, u) => s + u.price, 0);
     return { total, rented, reserved, available, revenue };
-  }, [units]);
+  }, [buildingUnits]);
 
   // Auth gate (after hooks to keep hook order stable)
   if (!authLoading && !user) {
