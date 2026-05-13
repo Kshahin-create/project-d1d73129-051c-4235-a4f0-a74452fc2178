@@ -209,12 +209,14 @@ const AdminBookings = () => {
               <p className="text-xs text-muted-foreground sm:text-sm">{rows.length} حجز</p>
             </div>
           </div>
-          <Link
-            to="/admin"
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:px-4 sm:text-sm"
-          >
-            <ArrowRight className="h-4 w-4" /> رجوع
-          </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:px-4 sm:text-sm"
+            >
+              <ArrowRight className="h-4 w-4" /> رجوع
+            </Link>
+          )}
         </div>
 
         {!fetching && rows.length > 0 && (
@@ -384,42 +386,44 @@ const AdminBookings = () => {
                     <p className="mt-2 rounded-lg bg-secondary p-2 text-xs text-muted-foreground">{b.notes}</p>
                   )}
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {b.offer_image_url && (
-                      <a
-                        href={b.offer_image_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
-                      >
-                        <FileImage className="h-3.5 w-3.5" /> عرض التأجير
-                      </a>
-                    )}
-                    {b.status === "pending" && (
-                      <>
-                        <button
-                          onClick={() => updateStatus(b.id, "confirmed")}
-                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
+                  {isAdmin && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {b.offer_image_url && (
+                        <a
+                          href={b.offer_image_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
                         >
-                          <CheckCircle2 className="h-3 w-3" /> تأكيد ونقل للمؤجرين
-                        </button>
+                          <FileImage className="h-3.5 w-3.5" /> عرض التأجير
+                        </a>
+                      )}
+                      {b.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => updateStatus(b.id, "confirmed")}
+                            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
+                          >
+                            <CheckCircle2 className="h-3 w-3" /> تأكيد ونقل للمؤجرين
+                          </button>
+                          <button
+                            onClick={() => updateStatus(b.id, "cancelled")}
+                            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive/10 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
+                          >
+                            <XCircle className="h-3 w-3" /> إلغاء
+                          </button>
+                        </>
+                      )}
+                      {(b.status === "pending" || b.status === "expired") && (
                         <button
-                          onClick={() => updateStatus(b.id, "cancelled")}
-                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive/10 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
+                          onClick={() => extendExpiry(b.id)}
+                          className="flex items-center justify-center gap-1 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20"
                         >
-                          <XCircle className="h-3 w-3" /> إلغاء
+                          <TimerReset className="h-3.5 w-3.5" /> تمديد المدة
                         </button>
-                      </>
-                    )}
-                    {(b.status === "pending" || b.status === "expired") && (
-                      <button
-                        onClick={() => extendExpiry(b.id)}
-                        className="flex items-center justify-center gap-1 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20"
-                      >
-                        <TimerReset className="h-3.5 w-3.5" /> تمديد المدة
-                      </button>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
