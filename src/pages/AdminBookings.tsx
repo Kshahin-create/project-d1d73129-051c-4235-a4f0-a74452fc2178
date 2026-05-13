@@ -467,18 +467,27 @@ const AdminBookings = () => {
                       {b.status === "pending" && (
                         <>
                           <button
-                            onClick={() => updateStatus(b.id, "confirmed")}
+                            onClick={() => confirmBooking(b)}
                             className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
                           >
                             <CheckCircle2 className="h-3 w-3" /> تأكيد ونقل للمؤجرين
                           </button>
                           <button
-                            onClick={() => updateStatus(b.id, "cancelled")}
+                            onClick={() => cancelBooking(b.id)}
                             className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-destructive/10 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
                           >
                             <XCircle className="h-3 w-3" /> إلغاء
                           </button>
                         </>
+                      )}
+                      {(b.status === "confirmed" || b.status === "pending") && (
+                        <button
+                          onClick={() => setPaidAmount(b)}
+                          className="flex items-center justify-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+                        >
+                          <Wallet className="h-3.5 w-3.5" />
+                          {Number(b.paid_amount) > 0 ? "تعديل الدفعة" : "إضافة دفعة"}
+                        </button>
                       )}
                       {(b.status === "pending" || b.status === "expired") && (
                         <button
