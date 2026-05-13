@@ -30,6 +30,7 @@ import HowToBook from "./pages/HowToBook.tsx";
 import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
 import TenantPortal from "./pages/TenantPortal.tsx";
 import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
+import Invoice from "./pages/Invoice.tsx";
 
 const queryClient = new QueryClient();
 
