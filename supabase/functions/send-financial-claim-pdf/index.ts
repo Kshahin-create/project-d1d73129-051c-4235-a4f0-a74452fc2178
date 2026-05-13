@@ -111,37 +111,37 @@ function buildHtml(p: Payload): string {
 
   .page {
     width: 794px; height: 1123px;
-    padding: 28px 50px 100px; position: relative; background: #fff;
+    padding: 22px 48px 95px; position: relative; background: #fff;
     overflow: hidden;
   }
 
   .top-bar {
     display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 10px; border-bottom: 3px solid var(--gold);
+    padding-bottom: 8px; border-bottom: 3px solid var(--gold);
   }
-  .top-bar img { height: 130px; object-fit: contain; }
+  .top-bar img { height: 110px; object-fit: contain; }
 
   .date-block {
-    margin-top: 16px;
+    margin-top: 12px;
     display: flex; justify-content: flex-start;
     font-size: 13px; color: #222;
   }
   .date-block table { border-collapse: collapse; }
-  .date-block td { padding: 3px 8px; font-weight: 700; }
+  .date-block td { padding: 2px 8px; font-weight: 700; }
   .date-block td.lbl { color: #1a1a1a; }
   .date-block td.val { color: #1a1a1a; font-weight: 500; }
 
-  .title { text-align: center; margin: 14px 0 16px; }
+  .title { text-align: center; margin: 10px 0 12px; }
   .title h1 {
-    font-size: 32px; color: #2a2a2a; font-weight: 900;
+    font-size: 28px; color: #2a2a2a; font-weight: 900;
     display: inline-block;
   }
 
   /* جدول البيانات الأساسية */
-  table.info { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.info { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   table.info td {
     border: 2px solid var(--gold);
-    padding: 9px 14px;
+    padding: 7px 12px;
     background: #fff;
   }
   table.info td.label {
@@ -150,47 +150,47 @@ function buildHtml(p: Payload): string {
     font-weight: 800;
     width: 30%;
     text-align: center;
-    font-size: 14px;
+    font-size: 13.5px;
   }
 
   /* تعهد */
   .pledge {
-    margin-top: 12px;
+    margin-top: 10px;
     background: var(--gold);
     color: #fff;
     border: 2px solid var(--gold);
-    padding: 12px 18px;
-    font-size: 14px;
-    line-height: 1.7;
+    padding: 10px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
     text-align: center;
     font-weight: 600;
   }
 
   /* جدول المبالغ */
-  table.amounts { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 14px; }
+  table.amounts { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px; }
   table.amounts th {
     background: var(--gold); color: #fff; font-weight: 800;
-    padding: 9px; border: 2px solid var(--gold); font-size: 14px;
+    padding: 8px; border: 2px solid var(--gold); font-size: 13.5px;
   }
   table.amounts td {
-    padding: 12px 16px; border: 2px solid var(--gold); background: #fff;
-    text-align: center; font-size: 14px;
+    padding: 9px 14px; border: 2px solid var(--gold); background: #fff;
+    text-align: center; font-size: 13.5px;
   }
   table.amounts td.amt { font-weight: 700; }
   table.amounts tr.total td.lbl {
-    font-weight: 900; font-size: 17px;
+    font-weight: 900; font-size: 16px;
   }
 
   /* بيانات الدفع */
-  .pay-wrap { margin-top: 18px; }
+  .pay-wrap { margin-top: 12px; }
   .pay-title {
     background: var(--gold); color: #fff; text-align: center;
-    padding: 9px; font-size: 15px; font-weight: 800;
+    padding: 8px; font-size: 14px; font-weight: 800;
     border: 2px solid var(--gold);
   }
-  table.pay { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.pay { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.pay td {
-    border: 2px solid var(--gold); padding: 9px 14px; background: #fff;
+    border: 2px solid var(--gold); padding: 7px 12px; background: #fff;
   }
   table.pay td.label {
     background: var(--gold); color: #fff; font-weight: 800;
@@ -198,8 +198,8 @@ function buildHtml(p: Payload): string {
   }
 
   .closing-title {
-    text-align: center; margin-top: 22px;
-    font-size: 24px; font-weight: 900; color: #2a2a2a;
+    text-align: center; margin-top: 14px;
+    font-size: 22px; font-weight: 900; color: #2a2a2a;
   }
 
   .footer {
