@@ -835,11 +835,6 @@ const PaymentPlanSelector = ({
                   {o.badge}
                 </div>
               )}
-              {o.disabled && (
-                <div className="mt-2 text-[10px] font-bold text-destructive">
-                  غير متاح — يتطلب إيجار سنوي ≥ 150,000 ريال
-                </div>
-              )}
             </button>
           );
         })}
