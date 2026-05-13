@@ -415,49 +415,70 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          booking_id: string | null
+          cr_number: string | null
           created_at: string
           created_by: string | null
+          customer_business: string | null
+          customer_name: string | null
+          customer_phone: string | null
           due_date: string | null
           id: string
+          invoice_number: string | null
           notes: string | null
           paid: boolean
           paid_amount: number
           paid_at: string | null
+          payment_method: string | null
           period_end: string | null
           period_start: string | null
-          tenant_account_id: string
+          tenant_account_id: string | null
           unit_id: string | null
           updated_at: string
         }
         Insert: {
           amount?: number
+          booking_id?: string | null
+          cr_number?: string | null
           created_at?: string
           created_by?: string | null
+          customer_business?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           due_date?: string | null
           id?: string
+          invoice_number?: string | null
           notes?: string | null
           paid?: boolean
           paid_amount?: number
           paid_at?: string | null
+          payment_method?: string | null
           period_end?: string | null
           period_start?: string | null
-          tenant_account_id: string
+          tenant_account_id?: string | null
           unit_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          booking_id?: string | null
+          cr_number?: string | null
           created_at?: string
           created_by?: string | null
+          customer_business?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           due_date?: string | null
           id?: string
+          invoice_number?: string | null
           notes?: string | null
           paid?: boolean
           paid_amount?: number
           paid_at?: string | null
+          payment_method?: string | null
           period_end?: string | null
           period_start?: string | null
-          tenant_account_id?: string
+          tenant_account_id?: string | null
           unit_id?: string | null
           updated_at?: string
         }
@@ -1026,6 +1047,27 @@ export type Database = {
         Args: { _booking_id: string; _hours: number }
         Returns: string
       }
+      get_invoice_for_view: {
+        Args: { _invoice_id: string }
+        Returns: {
+          amount: number
+          booking_id: string
+          cr_number: string
+          created_at: string
+          customer_business: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          invoice_number: string
+          notes: string
+          paid: boolean
+          paid_amount: number
+          paid_at: string
+          payment_method: string
+          tenant_account_id: string
+          unit_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1046,6 +1088,7 @@ export type Database = {
         }
         Returns: number
       }
+      next_invoice_number: { Args: never; Returns: string }
       next_offer_number: { Args: { _booking_id?: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
@@ -1058,6 +1101,16 @@ export type Database = {
       recalc_tenant_account_total: {
         Args: { _account_id: string }
         Returns: undefined
+      }
+      record_payment: {
+        Args: {
+          _amount?: number
+          _booking_id?: string
+          _method?: string
+          _notes?: string
+          _tenant_account_id?: string
+        }
+        Returns: string
       }
       set_booking_paid_amount: {
         Args: { _booking_id: string; _paid_amount: number }
