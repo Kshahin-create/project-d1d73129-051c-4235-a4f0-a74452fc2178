@@ -86,11 +86,12 @@ const AdminUsers = () => {
   }, [loading, isAdmin]);
 
   const stats = useMemo(() => {
+    const scoped = roleFilter === "all" ? rows : rows.filter((r) => r.role === roleFilter);
     const now = Date.now();
     const day = 24 * 3600 * 1000;
-    const newToday = rows.filter((r) => now - new Date(r.created_at).getTime() <= day).length;
-    const new7 = rows.filter((r) => now - new Date(r.created_at).getTime() <= 7 * day).length;
-    const new30 = rows.filter((r) => now - new Date(r.created_at).getTime() <= 30 * day).length;
+    const newToday = scoped.filter((r) => now - new Date(r.created_at).getTime() <= day).length;
+    const new7 = scoped.filter((r) => now - new Date(r.created_at).getTime() <= 7 * day).length;
+    const new30 = scoped.filter((r) => now - new Date(r.created_at).getTime() <= 30 * day).length;
     const counts = {
       admin: rows.filter((r) => r.role === "admin").length,
       manager: rows.filter((r) => r.role === "manager").length,
@@ -99,8 +100,10 @@ const AdminUsers = () => {
     };
     const staff = counts.admin + counts.manager + counts.control;
     const staffRate = rows.length ? Math.round((staff / rows.length) * 100) : 0;
-    return { total: rows.length, ...counts, staff, staffRate, newToday, new7, new30 };
-  }, [rows]);
+    const scopedCount = scoped.length;
+    const sharePct = rows.length ? Math.round((scopedCount / rows.length) * 100) : 0;
+    return { total: rows.length, ...counts, staff, staffRate, newToday, new7, new30, scopedCount, sharePct };
+  }, [rows, roleFilter]);
 
   const filtered = useMemo(() => {
     let list = rows;
@@ -185,14 +188,29 @@ const AdminUsers = () => {
         {/* Stats */}
         {!fetching && rows.length > 0 && (
           <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-            <StatCard title="إجمالي المستخدمين" value={fmtNum(stats.total)} hint={`${stats.staff} ضمن الفريق (${stats.staffRate}%)`} Icon={Users} tone="primary" />
-            <StatCard title="جدد اليوم" value={fmtNum(stats.newToday)} hint={`${stats.new7} خلال 7 أيام`} Icon={UserPlus} tone="emerald" />
-            <StatCard title="جدد آخر 30 يوم" value={fmtNum(stats.new30)} hint="معدل النمو الشهري" Icon={Sparkles} tone="violet" />
-            <StatCard title="أدمن" value={fmtNum(stats.admin)} hint="صلاحيات كاملة" Icon={Shield} tone="primary" />
-            <StatCard title="مديرون" value={fmtNum(stats.manager)} hint="عرض ومتابعة" Icon={Briefcase} tone="emerald" />
-            <StatCard title="Control" value={fmtNum(stats.control)} hint="دعم / صيانة" Icon={Wrench} tone="amber" />
-            <StatCard title="مستخدمون عاديون" value={fmtNum(stats.user)} hint="بدون صلاحيات إدارية" Icon={UserIcon} tone="sky" />
-            <StatCard title="إجمالي الفريق" value={fmtNum(stats.staff)} hint={`${stats.staffRate}% من المسجّلين`} Icon={ShieldCheck} tone="violet" />
+            {roleFilter === "all" ? (
+              <>
+                <StatCard title="إجمالي المستخدمين" value={fmtNum(stats.total)} hint={`${stats.staff} ضمن الفريق (${stats.staffRate}%)`} Icon={Users} tone="primary" />
+                <StatCard title="جدد اليوم" value={fmtNum(stats.newToday)} hint={`${stats.new7} خلال 7 أيام`} Icon={UserPlus} tone="emerald" />
+                <StatCard title="جدد آخر 30 يوم" value={fmtNum(stats.new30)} hint="معدل النمو الشهري" Icon={Sparkles} tone="violet" />
+                <StatCard title="أدمن" value={fmtNum(stats.admin)} hint="صلاحيات كاملة" Icon={Shield} tone="primary" />
+                <StatCard title="مديرون" value={fmtNum(stats.manager)} hint="عرض ومتابعة" Icon={Briefcase} tone="emerald" />
+                <StatCard title="Control" value={fmtNum(stats.control)} hint="دعم / صيانة" Icon={Wrench} tone="amber" />
+                <StatCard title="مستخدمون عاديون" value={fmtNum(stats.user)} hint="بدون صلاحيات إدارية" Icon={UserIcon} tone="sky" />
+                <StatCard title="إجمالي الفريق" value={fmtNum(stats.staff)} hint={`${stats.staffRate}% من المسجّلين`} Icon={ShieldCheck} tone="violet" />
+              </>
+            ) : (() => {
+              const meta = ROLE_META[roleFilter];
+              const tone = roleFilter === "admin" ? "primary" : roleFilter === "manager" ? "emerald" : roleFilter === "control" ? "amber" : "sky";
+              return (
+                <>
+                  <StatCard title={`إجمالي ${meta.label}`} value={fmtNum(stats.scopedCount)} hint={`${stats.sharePct}% من المستخدمين`} Icon={meta.icon} tone={tone as any} />
+                  <StatCard title="جدد اليوم" value={fmtNum(stats.newToday)} hint={`ضمن ${meta.label}`} Icon={UserPlus} tone="emerald" />
+                  <StatCard title="جدد خلال 7 أيام" value={fmtNum(stats.new7)} hint={`ضمن ${meta.label}`} Icon={Sparkles} tone="violet" />
+                  <StatCard title="جدد آخر 30 يوم" value={fmtNum(stats.new30)} hint={`ضمن ${meta.label}`} Icon={Sparkles} tone="primary" />
+                </>
+              );
+            })()}
           </div>
         )}
 
