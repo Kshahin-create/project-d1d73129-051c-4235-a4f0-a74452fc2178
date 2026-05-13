@@ -184,6 +184,7 @@ function buildHtml(p: Payload): string {
 </head>
 <body>
   <div class="page">
+    <div class="body">
     <div class="top-bar">
       <div class="logo-side"><img src="${LOGO_NUKHBAT}" alt="نخبة تسكين" /></div>
       <div class="offer-num-center">رقم العرض &nbsp;<strong>${esc(offerNumber)}</strong></div>
