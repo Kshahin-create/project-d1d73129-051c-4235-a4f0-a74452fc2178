@@ -30,6 +30,7 @@ import HowToBook from "./pages/HowToBook.tsx";
 import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
 import TenantPortal from "./pages/TenantPortal.tsx";
 import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
+import Invoice from "./pages/Invoice.tsx";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const App = () => (
           <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
           <Route path="/tenant" element={<TenantPortal />} />
           <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
+          <Route path="/invoice/:id" element={<Invoice />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

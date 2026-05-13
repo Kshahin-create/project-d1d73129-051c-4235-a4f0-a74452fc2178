@@ -352,25 +352,28 @@ export default function AdminTenantAccounts() {
                           )}
                           <button
                             onClick={async () => {
-                              const def = String(r.paid_amount || "");
+                              const remaining = Math.max(0, Number(r.total_price || 0) - Number(r.paid_amount || 0));
                               const input = window.prompt(
-                                `المبلغ المدفوع من ${r.full_name} (السعر السنوي: ${Number(r.total_price).toLocaleString()} ر.س)`,
-                                def,
+                                `أدخل مبلغ الدفعة من ${r.full_name}\nالمتبقي: ${remaining.toLocaleString()} ر.س`,
+                                "",
                               );
                               if (input === null) return;
                               const amount = Number(input);
-                              if (!Number.isFinite(amount) || amount < 0) return toast.error("أدخل مبلغًا صحيحًا");
-                              const { error } = await supabase.rpc("set_tenant_account_paid_amount" as any, {
-                                _tenant_account_id: r.id,
-                                _paid_amount: amount,
+                              if (!Number.isFinite(amount) || amount <= 0) return toast.error("أدخل مبلغًا صحيحًا");
+                              const method = window.prompt("طريقة الدفع: cash / transfer / card / check", "cash") || "cash";
+                              const notes = window.prompt("ملاحظات (اختياري)", "") || null;
+                              const { data: invId, error } = await supabase.rpc("record_payment" as any, {
+                                _tenant_account_id: r.id, _amount: amount, _method: method, _notes: notes,
                               });
-                              if (error) toast.error(error.message);
-                              else { toast.success("تم الحفظ"); load(); }
+                              if (error) return toast.error(error.message);
+                              toast.success("تم تسجيل الدفعة وإصدار الفاتورة");
+                              try { await supabase.functions.invoke("send-invoice-telegram", { body: { invoice_id: invId } }); } catch {}
+                              load();
                             }}
                             className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
                           >
                             <Plus className="h-3 w-3" />
-                            {Number(r.paid_amount) > 0 ? "تعديل" : "إضافة"}
+                            إضافة دفعة
                           </button>
                         </div>
                       </td>

@@ -193,7 +193,10 @@ export default function TenantPortal() {
                             {inv.paid ? "مدفوعة" : "غير مدفوعة"}
                           </span>
                         </div>
-                        {inv.due_date && <span className="text-xs text-muted-foreground">استحقاق: {inv.due_date}</span>}
+                        <div className="flex items-center gap-2">
+                          {inv.due_date && <span className="text-xs text-muted-foreground">استحقاق: {inv.due_date}</span>}
+                          <a href={`/invoice/${inv.id}`} target="_blank" rel="noreferrer" className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90">عرض الفاتورة</a>
+                        </div>
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground">
                         {u && <>مبنى {u.building_number} وحدة {u.unit_number} · </>}
