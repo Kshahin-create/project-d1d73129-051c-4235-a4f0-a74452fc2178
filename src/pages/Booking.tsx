@@ -765,7 +765,6 @@ const PaymentPlanSelector = ({
   onChange: (v: "full" | "70" | "50") => void;
   annualPrice: number;
 }) => {
-  const eligible50 = annualPrice >= 150000;
   const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
   const options: { id: "full" | "70" | "50"; title: string; desc: string; payable: number; disabled?: boolean; badge?: string }[] = [
     {
@@ -784,9 +783,8 @@ const PaymentPlanSelector = ({
     {
       id: "50",
       title: "سداد 50% من قيمة الإيجار",
-      desc: "متاح لأصحاب مراكز الصيانة الكبيرة والمتوسطة بإيجار سنوي يتجاوز 150,000 ريال.",
+      desc: "تحويل 50% من قيمة الإيجار السنوي عند توقيع العقد.",
       payable: annualPrice * 0.5,
-      disabled: !eligible50,
     },
   ];
 
