@@ -147,7 +147,7 @@ function buildHtml(p: Payload): string {
     padding: 6px 10px 5px;
     text-align: center;
     background: #fafafa;
-    height: 95px;
+    height: 75px;
     display: flex; flex-direction: column; justify-content: space-between;
   }
   .sig-box .role { font-size: 11.5px; font-weight: 700; color: #1a3a6e; }
