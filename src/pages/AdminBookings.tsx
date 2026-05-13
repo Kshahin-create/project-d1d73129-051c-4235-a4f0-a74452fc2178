@@ -123,7 +123,7 @@ const AdminBookings = () => {
     const confirmed = by("confirmed");
     const cancelled = by("cancelled");
     const expired = by("expired");
-    const sum = (arr: BookingRow[], k: "total_price" | "units_count" | "total_area") =>
+    const sum = (arr: BookingRow[], k: "total_price" | "units_count" | "total_area" | "paid_amount") =>
       arr.reduce((a, b) => a + (Number(b[k]) || 0), 0);
     const now = Date.now();
     const expiringSoon = pending.filter((r) => {
@@ -132,6 +132,10 @@ const AdminBookings = () => {
     }).length;
     const total = rows.length;
     const confirmRate = total ? Math.round((confirmed.length / total) * 100) : 0;
+    const confirmedRevenue = sum(confirmed, "total_price");
+    const collected = sum(confirmed, "paid_amount");
+    const remaining = Math.max(0, confirmedRevenue - collected);
+    const collectionRate = confirmedRevenue ? Math.round((collected / confirmedRevenue) * 100) : 0;
     return {
       total,
       pending: pending.length,
@@ -140,7 +144,10 @@ const AdminBookings = () => {
       expired: expired.length,
       expiringSoon,
       confirmRate,
-      confirmedRevenue: sum(confirmed, "total_price"),
+      confirmedRevenue,
+      collected,
+      remaining,
+      collectionRate,
       pendingRevenue: sum(pending, "total_price"),
       totalUnits: sum(rows, "units_count"),
       confirmedUnits: sum(confirmed, "units_count"),
@@ -167,12 +174,56 @@ const AdminBookings = () => {
     }
   };
 
-  const updateStatus = async (id: string, status: "confirmed" | "cancelled") => {
-    const rpc = status === "confirmed" ? "confirm_booking" : "cancel_booking";
-    const { error } = await supabase.rpc(rpc, { _booking_id: id });
+  const setPaidAmount = async (b: BookingRow) => {
+    const def = String(b.paid_amount || "");
+    const input = window.prompt(
+      `المبلغ المدفوع من العميل (الإجمالي: ${Number(b.total_price).toLocaleString("en-US")} ر.س)`,
+      def
+    );
+    if (input === null) return;
+    const amount = Number(input);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error("أدخل مبلغًا صحيحًا");
+      return;
+    }
+    const { error } = await supabase.rpc("set_booking_paid_amount" as any, {
+      _booking_id: b.id,
+      _paid_amount: amount,
+    });
+    if (error) toast.error("فشل الحفظ: " + error.message);
+    else {
+      toast.success("تم تحديث المبلغ المدفوع");
+      load();
+    }
+  };
+
+  const confirmBooking = async (b: BookingRow) => {
+    const input = window.prompt(
+      `أدخل المبلغ المدفوع من العميل (الإجمالي: ${Number(b.total_price).toLocaleString("en-US")} ر.س)\nاتركها 0 إذا لم يُدفع شيء بعد`,
+      "0"
+    );
+    if (input === null) return;
+    const amount = Number(input);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error("أدخل مبلغًا صحيحًا");
+      return;
+    }
+    const { error } = await supabase.rpc("confirm_booking" as any, {
+      _booking_id: b.id,
+      _paid_amount: amount,
+    });
+    if (error) toast.error("فشل التأكيد: " + error.message);
+    else {
+      toast.success(`تم التأكيد ونقل الوحدات للمؤجرين${amount > 0 ? ` • مدفوع ${amount.toLocaleString("en-US")} ر.س` : ""}`);
+      load();
+    }
+  };
+
+  const cancelBooking = async (id: string) => {
+    const { error } = await supabase.rpc("cancel_booking", { _booking_id: id });
     if (error) toast.error("فشل التحديث: " + error.message);
     else {
-      toast.success(status === "confirmed" ? "تم التأكيد ونقل الوحدات للمؤجرين" : "تم الإلغاء وإرجاع الوحدات");
+      toast.success("تم الإلغاء وإرجاع الوحدات");
       load();
     }
   };
