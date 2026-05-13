@@ -280,30 +280,32 @@ const AdminBookings = () => {
           </div>
         )}
 
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-border bg-card p-2">
-            <Search className="mr-2 h-4 w-4 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="ابحث بالاسم، الهاتف، الإيميل، المعرّف..."
-              className="flex-1 bg-transparent text-sm outline-none"
-            />
+        {isAdmin && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-border bg-card p-2">
+              <Search className="mr-2 h-4 w-4 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="ابحث بالاسم، الهاتف، الإيميل، المعرّف..."
+                className="flex-1 bg-transparent text-sm outline-none"
+              />
+            </div>
+            <div className="flex gap-1 rounded-xl border border-border bg-card p-1">
+              {(["all", "pending", "confirmed", "cancelled", "expired"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    statusFilter === s ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                  }`}
+                >
+                  {s === "all" ? "الكل" : STATUS[s].label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-1 rounded-xl border border-border bg-card p-1">
-            {(["all", "pending", "confirmed", "cancelled", "expired"] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                  statusFilter === s ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                }`}
-              >
-                {s === "all" ? "الكل" : STATUS[s].label}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
         {fetching ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">جارِ التحميل...</div>
