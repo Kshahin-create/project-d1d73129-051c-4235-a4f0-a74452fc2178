@@ -85,12 +85,13 @@ function buildHtml(p: Payload): string {
   html, body { font-family: 'Tajawal', sans-serif; color: #1a1a1a; background: #fff; }
   .page {
     width: 794px;
-    height: 1123px;
-    padding: 22px 36px 95px;
+    min-height: 1123px;
+    padding: 22px 36px 0;
     position: relative;
     background: #fff;
-    overflow: hidden;
+    display: flex; flex-direction: column;
   }
+  .body { flex: 1; }
   .top-bar {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 8px; border-bottom: 2px solid #c9a961;
