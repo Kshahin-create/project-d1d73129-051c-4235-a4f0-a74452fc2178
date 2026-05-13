@@ -144,10 +144,10 @@ function buildHtml(p: Payload): string {
   .sig-box {
     border: 1px solid #d8d8d8;
     border-radius: 6px;
-    padding: 6px 10px 5px;
+    padding: 6px 10px 6px;
     text-align: center;
     background: #fafafa;
-    height: 75px;
+    height: 110px;
     display: flex; flex-direction: column; justify-content: space-between;
   }
   .sig-box .role { font-size: 11.5px; font-weight: 700; color: #1a3a6e; }
@@ -155,14 +155,18 @@ function buildHtml(p: Payload): string {
     flex: 1;
     display: flex; align-items: center; justify-content: center;
     position: relative;
+    margin: 2px 0;
+    overflow: hidden;
   }
-  .sig-box .visual img.sig { height: 50px; object-fit: contain; }
-  .sig-box .visual img.stamp { height: 62px; object-fit: contain; opacity: 0.92; }
+  .sig-box .visual img.sig { height: 48px; object-fit: contain; }
+  .sig-box .visual img.stamp { height: 60px; object-fit: contain; opacity: 0.92; }
   .sig-box .name-line {
     border-top: 1px solid #888;
-    padding-top: 3px;
-    font-size: 10.5px;
-    color: #555;
+    padding-top: 4px;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
   }
 
   .footer {
