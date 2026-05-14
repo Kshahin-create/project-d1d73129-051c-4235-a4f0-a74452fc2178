@@ -592,7 +592,8 @@ const Auth = () => {
                       نسيت كلمة المرور؟
                     </button>
                   </form>
-                )}
+                  );
+                })()}
 
                 {/* === SIGNUP form === */}
                 {mode === "signup" && step === "form" && (
