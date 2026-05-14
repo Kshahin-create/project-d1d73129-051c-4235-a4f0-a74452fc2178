@@ -1075,6 +1075,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      lookup_login_email: { Args: { _identifier: string }; Returns: string }
       mark_booking_whatsapp_sent: {
         Args: { _booking_id: string }
         Returns: undefined
