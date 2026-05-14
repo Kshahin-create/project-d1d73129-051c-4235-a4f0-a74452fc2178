@@ -36,6 +36,7 @@ const Auth = () => {
 
   // form fields
   const [phone, setPhone] = useState("");
+  const [loginIdentifier, setLoginIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -183,11 +184,12 @@ const Auth = () => {
     return n;
   };
 
-  // === Login: phone + password ===
+  // === Login: identifier (email/username/phone) + password ===
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || !isValidPhoneNumber(phone)) {
-      toast.error("رقم جوال غير صحيح");
+    const ident = loginIdentifier.trim();
+    if (!ident) {
+      toast.error("أدخل البريد أو اسم المستخدم أو رقم الجوال");
       return;
     }
     if (!password) {
@@ -196,15 +198,47 @@ const Auth = () => {
     }
     setLoading(true);
     try {
-      const normalized = normalizePhone(phone);
-      // Try alias email first
-      const aliasEmail = `${normalized}@phone.mnicity.app`;
-      let { error } = await supabase.auth.signInWithPassword({
-        email: aliasEmail,
-        password,
-      });
-      // If failed, try lookup of stored email by phone via a lightweight RPC (skipped — alias is canonical)
-      if (error) throw error;
+      // Build candidate emails to try
+      const candidates: string[] = [];
+      const digits = ident.replace(/\D/g, "");
+      const looksLikeEmail = ident.includes("@");
+      const looksLikePhone = !looksLikeEmail && digits.length >= 8;
+
+      if (looksLikeEmail) {
+        candidates.push(ident);
+      }
+      if (looksLikePhone) {
+        candidates.push(`${normalizePhone(ident)}@phone.mnicity.app`);
+      }
+
+      // Ask the server to resolve identifier → real email (handles username/display name + phone variations)
+      try {
+        const { data: resolved } = await supabase.rpc("lookup_login_email", {
+          _identifier: ident,
+        });
+        if (resolved && typeof resolved === "string" && !candidates.includes(resolved)) {
+          candidates.unshift(resolved);
+        }
+      } catch {
+        // ignore — fall back to candidates
+      }
+
+      let lastError: unknown = null;
+      let signedIn = false;
+      for (const em of candidates) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: em,
+          password,
+        });
+        if (!error) {
+          signedIn = true;
+          break;
+        }
+        lastError = error;
+      }
+      if (!signedIn) {
+        throw lastError ?? new Error("Invalid credentials");
+      }
       const needsMfa = await checkMfaChallenge();
       if (needsMfa) {
         toast.message("أدخل رمز التحقق بخطوتين");
@@ -213,7 +247,7 @@ const Auth = () => {
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "بيانات الدخول غير صحيحة";
-      toast.error(msg.includes("Invalid") ? "رقم الجوال أو كلمة المرور غير صحيحة" : msg);
+      toast.error(msg.includes("Invalid") ? "بيانات الدخول غير صحيحة" : msg);
     } finally {
       setLoading(false);
     }
@@ -448,7 +482,7 @@ const Auth = () => {
                       ? "سجّل بياناتك مرة واحدة برقم جوالك"
                       : mode === "forgot"
                         ? "سنرسل رمز تحقق لجوالك لتعيين كلمة مرور جديدة"
-                        : "ادخل برقم جوالك وكلمة المرور"}
+                        : "ادخل بالبريد أو اسم المستخدم أو رقم الجوال"}
                   </p>
                 </div>
 
@@ -492,13 +526,18 @@ const Auth = () => {
                 {/* === LOGIN === */}
                 {mode === "login" && (
                   <form onSubmit={handleLogin} className="space-y-3.5">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium">
-                        رقم الجوال
-                        <span className="mr-1 text-destructive">*</span>
-                      </label>
-                      <PhoneField value={phone} onChange={setPhone} required />
-                    </div>
+                    <FieldWithIcon icon={User} label="البريد أو اسم المستخدم أو رقم الجوال" required>
+                      <input
+                        type="text"
+                        required
+                        value={loginIdentifier}
+                        onChange={(e) => setLoginIdentifier(e.target.value)}
+                        autoComplete="username"
+                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                        placeholder="example@mail.com / 9665XXXXXXXX / username"
+                        dir="ltr"
+                      />
+                    </FieldWithIcon>
                     <FieldWithIcon icon={Lock} label="كلمة المرور" required>
                       <input
                         type="password"
