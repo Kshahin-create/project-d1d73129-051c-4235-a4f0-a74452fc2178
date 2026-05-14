@@ -543,29 +543,43 @@ const Auth = () => {
                         : "اسم مستخدم";
                   return (
                   <form onSubmit={handleLogin} className="space-y-3.5">
-                    <FieldWithIcon icon={detectedIcon} label={detectedLabel} required>
-                      <input
-                        type="text"
-                        inputMode={isPhone ? "tel" : isEmail ? "email" : "text"}
-                        required
-                        value={loginIdentifier}
-                        onChange={(e) => {
-                          let v = e.target.value;
-                          // Auto-lowercase emails
-                          if (v.includes("@")) v = v.toLowerCase().replace(/\s+/g, "");
-                          // For phone-like input, keep only digits and leading +
-                          else if (/^[\d+\s\-()]+$/.test(v) && v.replace(/\D/g, "").length >= 4) {
-                            const plus = v.trim().startsWith("+") ? "+" : "";
-                            v = plus + v.replace(/\D/g, "");
-                          }
-                          setLoginIdentifier(v);
-                        }}
-                        autoComplete="username"
-                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
-                        placeholder="example@mail.com / 9665XXXXXXXX / username"
-                        dir="ltr"
-                      />
-                    </FieldWithIcon>
+                    {isPhone ? (
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium">
+                          رقم الجوال
+                          <button
+                            type="button"
+                            onClick={() => setLoginIdentifier("")}
+                            className="mr-2 text-xs text-primary hover:underline"
+                          >
+                            (تغيير النوع)
+                          </button>
+                        </label>
+                        <PhoneField
+                          value={loginIdentifier.startsWith("+") ? loginIdentifier : `+${loginIdentifier.replace(/\D/g, "")}`}
+                          onChange={setLoginIdentifier}
+                          required
+                        />
+                      </div>
+                    ) : (
+                      <FieldWithIcon icon={detectedIcon} label={detectedLabel} required>
+                        <input
+                          type="text"
+                          inputMode={isEmail ? "email" : "text"}
+                          required
+                          value={loginIdentifier}
+                          onChange={(e) => {
+                            let v = e.target.value;
+                            if (v.includes("@")) v = v.toLowerCase().replace(/\s+/g, "");
+                            setLoginIdentifier(v);
+                          }}
+                          autoComplete="username"
+                          className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                          placeholder="example@mail.com / username / 05xxxxxxxx"
+                          dir="ltr"
+                        />
+                      </FieldWithIcon>
+                    )}
                     <FieldWithIcon icon={Lock} label="كلمة المرور" required>
                       <input
                         type="password"
