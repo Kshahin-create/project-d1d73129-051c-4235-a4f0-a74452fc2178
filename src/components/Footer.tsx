@@ -76,6 +76,8 @@ export const Footer = () => {
             <Link to="/privacy" className="transition hover:text-primary">سياسة الخصوصية والأمان</Link>
             <span className="text-border">|</span>
             <Link to="/terms" className="transition hover:text-primary">الشروط والأحكام</Link>
+            <span className="text-border">|</span>
+            <Link to="/delete-account" className="transition hover:text-destructive">حذف الحساب</Link>
           </div>
         </div>
       </div>
