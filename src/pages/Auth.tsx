@@ -36,6 +36,7 @@ const Auth = () => {
 
   // form fields
   const [phone, setPhone] = useState("");
+  const [loginIdentifier, setLoginIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [fullName, setFullName] = useState("");
