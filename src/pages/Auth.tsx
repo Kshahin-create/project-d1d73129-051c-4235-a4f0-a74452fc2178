@@ -526,13 +526,18 @@ const Auth = () => {
                 {/* === LOGIN === */}
                 {mode === "login" && (
                   <form onSubmit={handleLogin} className="space-y-3.5">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium">
-                        رقم الجوال
-                        <span className="mr-1 text-destructive">*</span>
-                      </label>
-                      <PhoneField value={phone} onChange={setPhone} required />
-                    </div>
+                    <FieldWithIcon icon={User} label="البريد أو اسم المستخدم أو رقم الجوال" required>
+                      <input
+                        type="text"
+                        required
+                        value={loginIdentifier}
+                        onChange={(e) => setLoginIdentifier(e.target.value)}
+                        autoComplete="username"
+                        className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
+                        placeholder="example@mail.com / 9665XXXXXXXX / username"
+                        dir="ltr"
+                      />
+                    </FieldWithIcon>
                     <FieldWithIcon icon={Lock} label="كلمة المرور" required>
                       <input
                         type="password"
