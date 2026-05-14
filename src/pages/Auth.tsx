@@ -524,14 +524,42 @@ const Auth = () => {
                 </div>
 
                 {/* === LOGIN === */}
-                {mode === "login" && (
+                {mode === "login" && (() => {
+                  const raw = loginIdentifier.trim();
+                  const digits = raw.replace(/\D/g, "");
+                  const hasAt = raw.includes("@");
+                  const hasLetters = /[a-zA-Z\u0600-\u06FF]/.test(raw);
+                  // Smart detection: phone if mostly digits and no @/letters
+                  const isPhone = !hasAt && !hasLetters && digits.length >= 6;
+                  const isEmail = hasAt;
+                  const isUsername = !!raw && !isPhone && !isEmail;
+                  const detectedIcon = isEmail ? Mail : isPhone ? Phone : User;
+                  const detectedLabel = !raw
+                    ? "البريد أو اسم المستخدم أو رقم الجوال"
+                    : isEmail
+                      ? "بريد إلكتروني"
+                      : isPhone
+                        ? "رقم جوال"
+                        : "اسم مستخدم";
+                  return (
                   <form onSubmit={handleLogin} className="space-y-3.5">
-                    <FieldWithIcon icon={User} label="البريد أو اسم المستخدم أو رقم الجوال" required>
+                    <FieldWithIcon icon={detectedIcon} label={detectedLabel} required>
                       <input
                         type="text"
+                        inputMode={isPhone ? "tel" : isEmail ? "email" : "text"}
                         required
                         value={loginIdentifier}
-                        onChange={(e) => setLoginIdentifier(e.target.value)}
+                        onChange={(e) => {
+                          let v = e.target.value;
+                          // Auto-lowercase emails
+                          if (v.includes("@")) v = v.toLowerCase().replace(/\s+/g, "");
+                          // For phone-like input, keep only digits and leading +
+                          else if (/^[\d+\s\-()]+$/.test(v) && v.replace(/\D/g, "").length >= 4) {
+                            const plus = v.trim().startsWith("+") ? "+" : "";
+                            v = plus + v.replace(/\D/g, "");
+                          }
+                          setLoginIdentifier(v);
+                        }}
                         autoComplete="username"
                         className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 focus:border-primary focus:outline-none"
                         placeholder="example@mail.com / 9665XXXXXXXX / username"
@@ -564,7 +592,8 @@ const Auth = () => {
                       نسيت كلمة المرور؟
                     </button>
                   </form>
-                )}
+                  );
+                })()}
 
                 {/* === SIGNUP form === */}
                 {mode === "signup" && step === "form" && (
