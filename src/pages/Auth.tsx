@@ -184,11 +184,12 @@ const Auth = () => {
     return n;
   };
 
-  // === Login: phone + password ===
+  // === Login: identifier (email/username/phone) + password ===
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || !isValidPhoneNumber(phone)) {
-      toast.error("رقم جوال غير صحيح");
+    const ident = loginIdentifier.trim();
+    if (!ident) {
+      toast.error("أدخل البريد أو اسم المستخدم أو رقم الجوال");
       return;
     }
     if (!password) {
@@ -197,15 +198,47 @@ const Auth = () => {
     }
     setLoading(true);
     try {
-      const normalized = normalizePhone(phone);
-      // Try alias email first
-      const aliasEmail = `${normalized}@phone.mnicity.app`;
-      let { error } = await supabase.auth.signInWithPassword({
-        email: aliasEmail,
-        password,
-      });
-      // If failed, try lookup of stored email by phone via a lightweight RPC (skipped — alias is canonical)
-      if (error) throw error;
+      // Build candidate emails to try
+      const candidates: string[] = [];
+      const digits = ident.replace(/\D/g, "");
+      const looksLikeEmail = ident.includes("@");
+      const looksLikePhone = !looksLikeEmail && digits.length >= 8;
+
+      if (looksLikeEmail) {
+        candidates.push(ident);
+      }
+      if (looksLikePhone) {
+        candidates.push(`${normalizePhone(ident)}@phone.mnicity.app`);
+      }
+
+      // Ask the server to resolve identifier → real email (handles username/display name + phone variations)
+      try {
+        const { data: resolved } = await supabase.rpc("lookup_login_email", {
+          _identifier: ident,
+        });
+        if (resolved && typeof resolved === "string" && !candidates.includes(resolved)) {
+          candidates.unshift(resolved);
+        }
+      } catch {
+        // ignore — fall back to candidates
+      }
+
+      let lastError: unknown = null;
+      let signedIn = false;
+      for (const em of candidates) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: em,
+          password,
+        });
+        if (!error) {
+          signedIn = true;
+          break;
+        }
+        lastError = error;
+      }
+      if (!signedIn) {
+        throw lastError ?? new Error("Invalid credentials");
+      }
       const needsMfa = await checkMfaChallenge();
       if (needsMfa) {
         toast.message("أدخل رمز التحقق بخطوتين");
@@ -214,7 +247,7 @@ const Auth = () => {
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "بيانات الدخول غير صحيحة";
-      toast.error(msg.includes("Invalid") ? "رقم الجوال أو كلمة المرور غير صحيحة" : msg);
+      toast.error(msg.includes("Invalid") ? "بيانات الدخول غير صحيحة" : msg);
     } finally {
       setLoading(false);
     }
