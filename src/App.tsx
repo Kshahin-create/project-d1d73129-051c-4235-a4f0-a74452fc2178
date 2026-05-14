@@ -31,6 +31,7 @@ import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
 import TenantPortal from "./pages/TenantPortal.tsx";
 import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
 import Invoice from "./pages/Invoice.tsx";
+import DeleteAccount from "./pages/DeleteAccount.tsx";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
           <Route path="/tenant" element={<TenantPortal />} />
           <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
           <Route path="/invoice/:id" element={<Invoice />} />
+          <Route path="/delete-account" element={<DeleteAccount />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
