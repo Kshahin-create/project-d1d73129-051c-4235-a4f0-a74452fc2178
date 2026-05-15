@@ -56,6 +56,7 @@ const App = () => (
           <Route path="/admin/bookings" element={<AdminBookings />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/telegram" element={<TelegramSettings />} />
           <Route path="/admin/api-keys" element={<AdminApiKeys />} />
           <Route path="/admin/stats" element={<AdminStats />} />
           <Route path="/api-docs" element={<ApiDocs />} />
