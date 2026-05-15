@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.telegram-audit-alert]
 verify_jwt = false
+
+[functions.telegram-cron]
+verify_jwt = false
