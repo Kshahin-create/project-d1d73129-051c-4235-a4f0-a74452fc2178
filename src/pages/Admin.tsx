@@ -284,6 +284,10 @@ const Admin = () => {
           </div>
         </div>
 
+        <div className="mb-6">
+          <MaintenanceToggle />
+        </div>
+
         {/* Stats */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <StatCard icon={<Building2 />} label="إجمالي الوحدات" value={stats.total} color="text-primary" />
