@@ -541,20 +541,125 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
       payments_total: (inv.data||[]).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
     };
   }
+  if (name === "resolve_booking_id") {
+    const q = String(args.query || "").trim();
+    if (!q) return { error: "query required" };
+    const { data } = await admin.from("bookings")
+      .select("id,customer_full_name,customer_phone,offer_number,status,total_price,created_at")
+      .or(`customer_full_name.ilike.%${q}%,customer_phone.ilike.%${q}%,offer_number.ilike.%${q}%,business_name.ilike.%${q}%`)
+      .order("created_at", { ascending: false }).limit(8);
+    return { results: data || [] };
+  }
+  if (name === "resolve_unit_id") {
+    const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
+      .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number)).limit(5);
+    return { results: data || [] };
+  }
   return { error: "unknown tool" };
 }
 
-async function aiAnswer(admin: any, token: string, chat_id: number, question: string) {
+async function runAIWriteTool(admin: any, userId: string, name: string, args: any): Promise<any> {
+  const allowed = await canWrite(admin, userId);
+  if (!allowed) return { error: "forbidden: تحتاج صلاحية admin أو manager" };
+
+  if (name === "confirm_booking") {
+    const bookingId = String(args.booking_id);
+    const paid = Number(args.paid_amount || 0);
+    const { data: b } = await admin.from("bookings").select("*").eq("id", bookingId).maybeSingle();
+    if (!b) return { error: "booking not found" };
+    await admin.from("bookings").update({ status: "confirmed", paid_amount: paid, updated_at: new Date().toISOString() }).eq("id", bookingId);
+    const { data: bus } = await admin.from("booking_units").select("unit_id,activity").eq("booking_id", bookingId);
+    for (const bu of bus || []) {
+      await admin.from("units").update({ status: "rented", updated_at: new Date().toISOString() }).eq("id", bu.unit_id);
+      const { data: existing } = await admin.from("tenants").select("id").eq("unit_id", bu.unit_id).eq("booking_id", bookingId).maybeSingle();
+      if (!existing) {
+        await admin.from("tenants").insert({
+          unit_id: bu.unit_id, tenant_name: b.customer_full_name, business_name: b.business_name,
+          activity_type: bu.activity, phone: b.customer_phone, notes: b.notes,
+          start_date: new Date().toISOString().slice(0,10), booking_id: bookingId,
+          offer_image_url: b.offer_image_url, cr_number: b.cr_number,
+        });
+      }
+    }
+    return { ok: true, booking_id: bookingId, status: "confirmed", paid_amount: paid };
+  }
+  if (name === "cancel_booking") {
+    const bookingId = String(args.booking_id);
+    await admin.from("bookings").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", bookingId);
+    const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", bookingId);
+    const ids = (bus || []).map((x: any) => x.unit_id);
+    if (ids.length) await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).in("id", ids).eq("status", "reserved");
+    return { ok: true, booking_id: bookingId, status: "cancelled" };
+  }
+  if (name === "extend_booking_expiry") {
+    const bookingId = String(args.booking_id);
+    const hrs = Number(args.hours);
+    if (!hrs) return { error: "hours required" };
+    const { data: b } = await admin.from("bookings").select("expires_at,status").eq("id", bookingId).maybeSingle();
+    if (!b) return { error: "booking not found" };
+    const cur = b.expires_at ? new Date(b.expires_at) : new Date();
+    const base = cur < new Date() ? new Date() : cur;
+    const next = new Date(base.getTime() + hrs * 3600 * 1000).toISOString();
+    const upd: any = { expires_at: next, updated_at: new Date().toISOString() };
+    if (b.status === "expired") upd.status = "pending";
+    await admin.from("bookings").update(upd).eq("id", bookingId);
+    if (b.status === "expired") {
+      const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", bookingId);
+      const ids = (bus || []).map((x: any) => x.unit_id);
+      if (ids.length) await admin.from("units").update({ status: "reserved", updated_at: new Date().toISOString() }).in("id", ids).eq("status", "available");
+    }
+    return { ok: true, booking_id: bookingId, new_expires_at: next };
+  }
+  if (name === "record_payment") {
+    const amt = Number(args.amount);
+    if (!amt || amt <= 0) return { error: "amount must be > 0" };
+    if (!args.booking_id && !args.tenant_account_id) return { error: "booking_id or tenant_account_id required" };
+    const { data, error } = await admin.rpc("record_payment", {
+      _booking_id: args.booking_id || null,
+      _tenant_account_id: args.tenant_account_id || null,
+      _amount: amt,
+      _method: args.method || "cash",
+      _notes: args.notes || null,
+    });
+    if (error) return { error: error.message };
+    return { ok: true, invoice_id: data, amount: amt };
+  }
+  if (name === "set_booking_paid_amount") {
+    const v = Number(args.paid_amount);
+    if (v < 0) return { error: "invalid amount" };
+    await admin.from("bookings").update({ paid_amount: v, updated_at: new Date().toISOString() }).eq("id", args.booking_id);
+    return { ok: true, booking_id: args.booking_id, paid_amount: v };
+  }
+  if (name === "set_unit_status") {
+    if (!["available","reserved","rented"].includes(args.status)) return { error: "invalid status" };
+    await admin.from("units").update({ status: args.status, updated_at: new Date().toISOString() }).eq("id", args.unit_id);
+    return { ok: true, unit_id: args.unit_id, status: args.status };
+  }
+  if (name === "mark_invoice_paid") {
+    const { data: inv } = await admin.from("invoices").select("amount").eq("id", args.invoice_id).maybeSingle();
+    if (!inv) return { error: "invoice not found" };
+    await admin.from("invoices").update({
+      paid_amount: inv.amount, paid: true, paid_at: new Date().toISOString(),
+    }).eq("id", args.invoice_id);
+    return { ok: true, invoice_id: args.invoice_id };
+  }
+  return { error: "unknown write tool" };
+}
+
+const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
+
+async function aiAnswer(admin: any, token: string, chat_id: number, question: string, userId: string | null) {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) return send(token, chat_id, "🤖 الذكاء الاصطناعي غير مفعّل");
 
   const systemPrompt = [
-    "أنت مساعد ذكي ومحترف لإدارة \"المدينة الصناعية شمال مكة\" (تأجير وحدات صناعية).",
-    "تتكلم بالعربي الفصيح البسيط، باختصار وعملي، بدون حشو.",
-    "عندك أدوات فعلية للوصول للبيانات الحية — استخدمها دايماً قبل ما تجاوب على أي سؤال أرقام/إحصائيات.",
-    "لو السؤال محتاج كذا معلومة، استدعِ كذا أداة بالتوازي ثم اجمع الإجابة.",
-    "صياغة الإجابة: استخدم نقاط قصيرة، أرقام بصيغة محلية (1,234 ر.س)، وbold للأرقام المهمة (HTML <b>).",
-    "لا تخترع أرقاماً. لو الأداة رجّعت فاضي، قلها صراحة.",
+    "أنت مساعد ذكي لإدارة \"المدينة الصناعية شمال مكة\" (تأجير وحدات).",
+    "تتكلم عربي بسيط ومختصر.",
+    "عندك أدوات قراءة وأدوات كتابة (تأكيد/إلغاء/تمديد حجز، تسجيل دفعات، تعديل حالة وحدة، تعليم فاتورة مدفوعة).",
+    "قبل أي أداة كتابة: لو المستخدم ذكر اسم/رقم بدل UUID، استخدم resolve_booking_id أو resolve_unit_id أولاً.",
+    "نفّذ مباشرة لو الطلب واضح. لو فيه غموض (أكثر من نتيجة بحث، مبلغ غير محدد، إلخ)، اسأل سؤال توضيحي قصير قبل التنفيذ.",
+    "بعد أي تعديل أكّد بالأرقام النهائية.",
+    "صياغة: نقاط قصيرة، أرقام 1,234 ر.س، Bold للأرقام المهمة (HTML <b>).",
     "تاريخ اليوم: " + new Date().toLocaleDateString("ar-EG-u-nu-latn", { timeZone: "Asia/Riyadh" }),
   ].join("\n");
 
@@ -563,13 +668,12 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     { role: "user", content: question },
   ];
 
-  // Tool-calling loop (max 4 rounds)
-  for (let round = 0; round < 4; round++) {
+  for (let round = 0; round < 6; round++) {
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash-lite",
         messages,
         tools: AI_TOOLS,
         tool_choice: "auto",
@@ -578,12 +682,11 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     if (!r.ok) {
       const t = await r.text();
       if (r.status === 429) return send(token, chat_id, "🤖 الذكاء الاصطناعي مزدحم، جرّب بعد دقيقة");
-      if (r.status === 402) return send(token, chat_id, "🤖 رصيد الذكاء الاصطناعي خلص، أضف رصيد من إعدادات Lovable");
+      if (r.status === 402) return send(token, chat_id, "🤖 رصيد الذكاء الاصطناعي خلص");
       return send(token, chat_id, `🤖 خطأ AI: ${esc(t.slice(0,200))}`);
     }
     const j = await r.json();
-    const choice = j?.choices?.[0];
-    const m = choice?.message;
+    const m = j?.choices?.[0]?.message;
     if (!m) return send(token, chat_id, "🤔 مفيش إجابة");
 
     const toolCalls = m.tool_calls || [];
@@ -596,8 +699,11 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     const results = await Promise.all(toolCalls.map(async (tc: any) => {
       let args: any = {};
       try { args = JSON.parse(tc.function?.arguments || "{}"); } catch {}
+      const fname = tc.function?.name;
       try {
-        const out = await runAITool(admin, tc.function?.name, args);
+        const out = WRITE_TOOLS.has(fname)
+          ? await runAIWriteTool(admin, userId || "", fname, args)
+          : await runAITool(admin, fname, args);
         return { tool_call_id: tc.id, role: "tool", content: JSON.stringify(out).slice(0, 12000) };
       } catch (e) {
         return { tool_call_id: tc.id, role: "tool", content: JSON.stringify({ error: String((e as Error).message) }) };
