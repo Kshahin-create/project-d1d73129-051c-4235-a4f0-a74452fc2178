@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       `• الاسم: ${esc(inv.customer_name)}`,
       inv.customer_phone ? `• الجوال: ${esc(inv.customer_phone)}` : null,
       inv.customer_business ? `• النشاط: ${esc(inv.customer_business)}` : null,
-      inv.cr_number ? `• س.ت: ${esc(inv.cr_number)}` : null,
+      inv.cr_number ? `• الرقم الوطني الموحد: ${esc(inv.cr_number)}` : null,
       "",
       `💰 المبلغ المدفوع: <b>${Number(inv.amount).toLocaleString("en-US")} ر.س</b>`,
       `💳 طريقة الدفع: ${esc(inv.payment_method || "—")}`,

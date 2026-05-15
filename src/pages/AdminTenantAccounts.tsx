@@ -324,7 +324,7 @@ export default function AdminTenantAccounts() {
                   <tr>
                     <th className="p-3 text-right">الاسم</th>
                     <th className="p-3 text-right">النشاط</th>
-                    <th className="p-3 text-right">السجل التجاري</th>
+                    <th className="p-3 text-right">الرقم الوطني الموحد</th>
                     <th className="p-3 text-right">الجوال</th>
                     <th className="p-3 text-right">وحدات</th>
                     <th className="p-3 text-right">السعر السنوي</th>
@@ -503,7 +503,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
         <Field label="اسم النشاط">
           <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} />
         </Field>
-        <Field label="رقم السجل التجاري">
+        <Field label="الرقم الوطني الموحد">
           <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
         </Field>
         <Field label="ملاحظات">
@@ -664,7 +664,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
         <Field label="الجوال"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} dir="ltr" /></Field>
       </div>
       <Field label="النشاط"><input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} /></Field>
-      <Field label="رقم السجل التجاري"><input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" /></Field>
+      <Field label="الرقم الوطني الموحد"><input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" /></Field>
       <Field label="ملاحظات"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={3} /></Field>
       <button onClick={save} disabled={busy} className="rounded-xl bg-primary px-4 py-2 font-bold text-primary-foreground disabled:opacity-50">
         {busy ? "..." : "حفظ"}
