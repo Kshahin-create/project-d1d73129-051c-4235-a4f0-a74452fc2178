@@ -462,6 +462,7 @@ export type Database = {
           payment_method: string | null
           period_end: string | null
           period_start: string | null
+          receipt_image_url: string | null
           tenant_account_id: string | null
           unit_id: string | null
           updated_at: string
@@ -485,6 +486,7 @@ export type Database = {
           payment_method?: string | null
           period_end?: string | null
           period_start?: string | null
+          receipt_image_url?: string | null
           tenant_account_id?: string | null
           unit_id?: string | null
           updated_at?: string
@@ -508,6 +510,7 @@ export type Database = {
           payment_method?: string | null
           period_end?: string | null
           period_start?: string | null
+          receipt_image_url?: string | null
           tenant_account_id?: string | null
           unit_id?: string | null
           updated_at?: string
@@ -652,6 +655,72 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_link_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          token: string
+          used_at: string | null
+          used_by_chat_id: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          token: string
+          used_at?: string | null
+          used_by_chat_id?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          token?: string
+          used_at?: string | null
+          used_by_chat_id?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_subscribers: {
+        Row: {
+          chat_id: number
+          created_at: string
+          display_name: string | null
+          is_admin: boolean
+          last_referenced_booking_id: string | null
+          last_referenced_invoice_id: string | null
+          muted_until: string | null
+          subscriptions: string[]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          display_name?: string | null
+          is_admin?: boolean
+          last_referenced_booking_id?: string | null
+          last_referenced_invoice_id?: string | null
+          muted_until?: string | null
+          subscriptions?: string[]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          display_name?: string | null
+          is_admin?: boolean
+          last_referenced_booking_id?: string | null
+          last_referenced_invoice_id?: string | null
+          muted_until?: string | null
+          subscriptions?: string[]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tenant_account_units: {
         Row: {
           created_at: string
@@ -787,6 +856,7 @@ export type Database = {
           business_name: string | null
           cr_number: string | null
           created_at: string
+          end_date: string | null
           id: string
           notes: string | null
           offer_image_url: string | null
@@ -802,6 +872,7 @@ export type Database = {
           business_name?: string | null
           cr_number?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
           notes?: string | null
           offer_image_url?: string | null
@@ -817,6 +888,7 @@ export type Database = {
           business_name?: string | null
           cr_number?: string | null
           created_at?: string
+          end_date?: string | null
           id?: string
           notes?: string | null
           offer_image_url?: string | null
@@ -1064,6 +1136,7 @@ export type Database = {
             }
             Returns: string
           }
+      create_telegram_link_token: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1104,6 +1177,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_my_telegram_links: {
+        Args: never
+        Returns: {
+          chat_id: number
+          created_at: string
+          display_name: string
+          muted_until: string
+          subscriptions: string[]
+        }[]
       }
       lookup_login_email: { Args: { _identifier: string }; Returns: string }
       mark_booking_whatsapp_sent: {
@@ -1152,6 +1235,7 @@ export type Database = {
         Returns: undefined
       }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
+      unlink_my_telegram: { Args: { _chat_id: number }; Returns: undefined }
       verify_api_key: {
         Args: { _key_hash: string }
         Returns: {
