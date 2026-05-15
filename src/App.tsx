@@ -75,6 +75,7 @@ const App = () => (
         </Routes>
         <FloatingWhatsApp />
         <AdminSidebar />
+        </MaintenanceGate>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
