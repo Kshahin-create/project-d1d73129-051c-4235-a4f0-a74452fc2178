@@ -228,12 +228,19 @@ const AdminBookings = () => {
   };
 
   const cancelBooking = async (id: string) => {
+    if (!confirm("هل أنت متأكد من إلغاء هذا الحجز؟ سيتم تحرير الوحدات.")) return;
+    // تحديث متفائل لواجهة المستخدم
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: "cancelled" } : r)));
     const { error } = await supabase.rpc("cancel_booking", { _booking_id: id });
-    if (error) toast.error("فشل التحديث: " + error.message);
-    else {
-      toast.success("تم الإلغاء وإرجاع الوحدات");
+    if (error) {
+      toast.error("فشل الإلغاء: " + error.message);
+      // تراجع عن التحديث المتفائل بإعادة التحميل
       load();
+      return;
     }
+    toast.success("تم الإلغاء وإرجاع الوحدات");
+    // إعادة التحميل لتحديث الإحصائيات وحالات الوحدات
+    load();
   };
 
   if (!loading && !user) {
