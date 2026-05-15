@@ -32,6 +32,7 @@ import TenantPortal from "./pages/TenantPortal.tsx";
 import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
 import Invoice from "./pages/Invoice.tsx";
 import TelegramSettings from "./pages/TelegramSettings.tsx";
+import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <MaintenanceGate>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/booking" element={<Booking />} />
@@ -73,6 +75,7 @@ const App = () => (
         </Routes>
         <FloatingWhatsApp />
         <AdminSidebar />
+        </MaintenanceGate>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

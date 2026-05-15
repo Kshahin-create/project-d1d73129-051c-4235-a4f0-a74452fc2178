@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { exportUnitsToExcel, exportUnitsToCSV, exportUnitsToPDF } from "@/lib/exportUnits";
+import { MaintenanceToggle } from "@/components/MaintenanceToggle";
 
 interface TenantForm {
   tenant_name: string;
@@ -282,6 +283,10 @@ const Admin = () => {
               <LogOut className="h-4 w-4" /> خروج
             </button>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <MaintenanceToggle />
         </div>
 
         {/* Stats */}
