@@ -647,6 +647,32 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
 }
 
 const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
+const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id"]);
+
+function parseInlineToolArgs(raw: string): Record<string, unknown> {
+  const args: Record<string, unknown> = {};
+  const re = /(\w+)\s*=\s*("([^"]*)"|'([^']*)'|[^,\s)]+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(raw)) !== null) {
+    const key = match[1];
+    const value = match[3] ?? match[4] ?? match[2];
+    if (/^-?\d+(\.\d+)?$/.test(value)) args[key] = Number(value);
+    else if (/^(true|false)$/i.test(value)) args[key] = value.toLowerCase() === "true";
+    else args[key] = value;
+  }
+  return args;
+}
+
+function parseInlineToolCalls(content: string): Array<{ name: string; args: Record<string, unknown> }> {
+  const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  const re = /default_api\.([a-zA-Z_]\w*)\(([^()]*)\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(content)) !== null) {
+    const name = match[1];
+    if (READ_TOOLS.has(name)) calls.push({ name, args: parseInlineToolArgs(match[2]) });
+  }
+  return calls;
+}
 
 async function aiAnswer(admin: any, token: string, chat_id: number, question: string, userId: string | null) {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -657,6 +683,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     "تتكلم عربي بسيط ومختصر.",
     "عندك أدوات قراءة وأدوات كتابة (تأكيد/إلغاء/تمديد حجز، تسجيل دفعات، تعديل حالة وحدة، تعليم فاتورة مدفوعة).",
     "قبل أي أداة كتابة: لو المستخدم ذكر اسم/رقم بدل UUID، استخدم resolve_booking_id أو resolve_unit_id أولاً.",
+    "ممنوع تماماً أن تطبع default_api أو print أو أسماء الأدوات للمستخدم؛ نفّذ الأدوات داخلياً ثم اعرض النتيجة النهائية فقط.",
     "نفّذ مباشرة لو الطلب واضح. لو فيه غموض (أكثر من نتيجة بحث، مبلغ غير محدد، إلخ)، اسأل سؤال توضيحي قصير قبل التنفيذ.",
     "بعد أي تعديل أكّد بالأرقام النهائية.",
     "صياغة: نقاط قصيرة، أرقام 1,234 ر.س، Bold للأرقام المهمة (HTML <b>).",
@@ -692,6 +719,25 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     const toolCalls = m.tool_calls || [];
     if (toolCalls.length === 0) {
       const reply = (m.content || "").trim() || "🤔 مفيش إجابة";
+      const inlineCalls = parseInlineToolCalls(reply);
+      if (inlineCalls.length) {
+        const inlineResults = await Promise.all(inlineCalls.map(async (call) => {
+          try {
+            return { tool: call.name, args: call.args, result: await runAITool(admin, call.name, call.args) };
+          } catch (e) {
+            return { tool: call.name, args: call.args, error: String((e as Error).message) };
+          }
+        }));
+        messages.push({ role: "assistant", content: "" });
+        messages.push({
+          role: "user",
+          content: [
+            "نفّذت الأدوات داخلياً. اكتب للمستخدم النتيجة النهائية بالعربي فقط، بدون أي كود أو أسماء أدوات.",
+            JSON.stringify(inlineResults).slice(0, 12000),
+          ].join("\n"),
+        });
+        continue;
+      }
       return send(token, chat_id, `🤖 ${reply}`);
     }
 
