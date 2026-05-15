@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
   if (booking.customer_phone) lines.push(`• 📞 ${esc(booking.customer_phone)}`);
   if (booking.customer_email) lines.push(`• ✉️ ${esc(booking.customer_email)}`);
   if (booking.business_name) lines.push(`• 🏢 ${esc(booking.business_name)}`);
-  if (booking.cr_number) lines.push(`• س.ت: ${esc(booking.cr_number)}`);
+  if (booking.cr_number) lines.push(`• الرقم الوطني الموحد: ${esc(booking.cr_number)}`);
   lines.push("");
   lines.push(`📦 الوحدات (${units.length}):`);
   units.forEach((u, i) => {

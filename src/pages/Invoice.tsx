@@ -94,7 +94,7 @@ export default function Invoice() {
                 <Field label="الاسم" value={inv.customer_name} />
                 <Field label="الجوال" value={inv.customer_phone} />
                 <Field label="النشاط" value={inv.customer_business} />
-                <Field label="السجل التجاري" value={inv.cr_number} />
+                <Field label="الرقم الوطني الموحد" value={inv.cr_number} />
               </dl>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
