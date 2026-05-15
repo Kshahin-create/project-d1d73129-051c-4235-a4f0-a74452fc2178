@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { exportUnitsToExcel, exportUnitsToCSV, exportUnitsToPDF } from "@/lib/exportUnits";
+import { MaintenanceToggle } from "@/components/MaintenanceToggle";
 
 interface TenantForm {
   tenant_name: string;
