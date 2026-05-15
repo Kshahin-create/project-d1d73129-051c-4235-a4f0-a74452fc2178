@@ -896,7 +896,7 @@ Deno.serve(async (req) => {
           // Legacy: send booking summary via existing logic by reusing cmdBooking
           await cmdBooking(admin, token, chat_id, m[0]);
         } else {
-          await aiAnswer(admin, token, chat_id, text);
+          await aiAnswer(admin, token, chat_id, text, sub.user_id);
         }
         break;
       }
