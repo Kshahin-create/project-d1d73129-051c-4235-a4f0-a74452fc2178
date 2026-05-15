@@ -50,6 +50,43 @@ Deno.serve(async (req) => {
     const entityId: string = p.entity_id ?? "";
     const topic = TABLE_TO_TOPIC[table] ?? "anomaly";
 
+    // 🔇 تقليل الضوضاء: نسكِّت الجداول الفرعية اللي بتتكرر مع كل وحدة
+    // ونسيب بس الأحداث المهمة الفعلية (حجز/فاتورة/تغيير حالة وحدة/مستأجر رئيسي).
+    const NOISY_TABLES = new Set([
+      "booking_units",        // بيتولّد سطر لكل وحدة في الحجز
+      "tenant_account_units", // ربط وحدات بحساب
+      "buildings",
+      "user_roles",
+    ]);
+    if (NOISY_TABLES.has(table)) {
+      return new Response(JSON.stringify({ ok: true, skipped: "noisy_table" }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    // tenants: نسكِّت الإضافة التلقائية عند تأكيد الحجز (بيتعمل سطر لكل وحدة)
+    if (table === "tenants" && action === "INSERT") {
+      return new Response(JSON.stringify({ ok: true, skipped: "tenant_auto_insert" }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    // bookings UPDATE: نبعت بس لو الحالة أو المبلغ المدفوع اتغيّروا
+    if (table === "bookings" && action === "UPDATE") {
+      const meaningful = changed.some((k) => ["status", "paid_amount", "expires_at"].includes(k));
+      if (!meaningful) {
+        return new Response(JSON.stringify({ ok: true, skipped: "trivial_update" }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+    // units UPDATE: نبعت بس لو الحالة اتغيّرت
+    if (table === "units" && action === "UPDATE") {
+      if (!changed.includes("status")) {
+        return new Response(JSON.stringify({ ok: true, skipped: "unit_trivial" }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const tableLbl = TABLE_LABELS[table] ?? table;
     const actLbl = ACTION_LABELS[action] ?? action;
     const data = after ?? before ?? {};
