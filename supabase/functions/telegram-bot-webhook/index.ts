@@ -283,53 +283,239 @@ async function cmdUnlink(admin: any, token: string, chat_id: number) {
   await send(token, chat_id, "👋 تم إلغاء الربط. لإعادة الربط استخدم /start &lt;كود&gt;");
 }
 
-// === AI Q&A ===
+// === AI Q&A with tool calling ===
+const AI_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_overview",
+      description: "إحصائيات شاملة: حجوزات اليوم/الشهر، مدفوعات، فواتير غير مدفوعة، إشغال الوحدات، إيرادات متوقعة.",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_bookings",
+      description: "بحث في الحجوزات بالاسم/الجوال/النشاط أو فلترة بالحالة.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "كلمة بحث (اختياري)" },
+          status: { type: "string", enum: ["pending","confirmed","cancelled","expired"], description: "فلترة بالحالة (اختياري)" },
+          limit: { type: "number", description: "عدد النتائج (1-20)", default: 10 },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_invoices",
+      description: "بحث/فلترة الفواتير: غير مدفوعة، متأخرة، باسم العميل، أو رقم الفاتورة.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "اسم عميل أو رقم فاتورة" },
+          unpaid_only: { type: "boolean" },
+          overdue_only: { type: "boolean" },
+          limit: { type: "number", default: 10 },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_tenants",
+      description: "بحث في المستأجرين بالاسم أو الجوال.",
+      parameters: {
+        type: "object",
+        properties: { query: { type: "string" }, limit: { type: "number", default: 10 } },
+        required: ["query"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "units_breakdown",
+      description: "تفاصيل الوحدات: حسب الحالة، حسب المبنى، أو الوحدات المتاحة فقط.",
+      parameters: {
+        type: "object",
+        properties: {
+          building_number: { type: "number" },
+          status: { type: "string", enum: ["available","reserved","rented"] },
+          limit: { type: "number", default: 30 },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "revenue_report",
+      description: "تقرير مالي بفترة زمنية (اليوم/الأسبوع/الشهر/السنة): إيرادات، مدفوعات، حجوزات.",
+      parameters: {
+        type: "object",
+        properties: { period: { type: "string", enum: ["today","week","month","year"], default: "month" } },
+        additionalProperties: false,
+      },
+    },
+  },
+];
+
+async function runAITool(admin: any, name: string, args: any): Promise<any> {
+  const lim = (n: any, d=10) => Math.max(1, Math.min(50, Number(n) || d));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  if (name === "get_overview") {
+    const [b, inv, units] = await Promise.all([
+      admin.from("bookings").select("status,total_price,paid_amount,created_at"),
+      admin.from("invoices").select("amount,paid_amount,paid,paid_at,due_date"),
+      admin.from("units").select("status,price"),
+    ]);
+    const B = b.data || [], I = inv.data || [], U = units.data || [];
+    return {
+      bookings_today: B.filter((x:any)=>new Date(x.created_at)>=today).length,
+      bookings_today_value: B.filter((x:any)=>new Date(x.created_at)>=today).reduce((s:number,x:any)=>s+Number(x.total_price||0),0),
+      bookings_month: B.filter((x:any)=>new Date(x.created_at)>=monthStart).length,
+      bookings_month_value: B.filter((x:any)=>new Date(x.created_at)>=monthStart).reduce((s:number,x:any)=>s+Number(x.total_price||0),0),
+      bookings_pending: B.filter((x:any)=>x.status==="pending").length,
+      bookings_confirmed: B.filter((x:any)=>x.status==="confirmed").length,
+      payments_today: I.filter((x:any)=>x.paid_at && new Date(x.paid_at)>=today).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
+      payments_month: I.filter((x:any)=>x.paid_at && new Date(x.paid_at)>=monthStart).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
+      unpaid_count: I.filter((x:any)=>!x.paid).length,
+      unpaid_total: I.filter((x:any)=>!x.paid).reduce((s:number,x:any)=>s+(Number(x.amount)-Number(x.paid_amount||0)),0),
+      overdue_count: I.filter((x:any)=>!x.paid && x.due_date && x.due_date<todayStr).length,
+      units_total: U.length,
+      units_rented: U.filter((u:any)=>u.status==="rented").length,
+      units_reserved: U.filter((u:any)=>u.status==="reserved").length,
+      units_available: U.filter((u:any)=>u.status==="available").length,
+      occupancy_rate: U.length ? Math.round(U.filter((u:any)=>u.status==="rented").length/U.length*100) : 0,
+      expected_annual_revenue: U.reduce((s:number,u:any)=>s+Number(u.price||0),0),
+    };
+  }
+  if (name === "search_bookings") {
+    let q = admin.from("bookings").select("id,customer_full_name,customer_phone,business_name,status,total_price,paid_amount,expires_at,created_at").order("created_at",{ascending:false}).limit(lim(args.limit));
+    if (args.status) q = q.eq("status", args.status);
+    if (args.query) q = q.or(`customer_full_name.ilike.%${args.query}%,customer_phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`);
+    const { data } = await q;
+    return { results: data || [] };
+  }
+  if (name === "search_invoices") {
+    let q = admin.from("invoices").select("invoice_number,customer_name,amount,paid_amount,paid,due_date,created_at").order("created_at",{ascending:false}).limit(lim(args.limit));
+    if (args.unpaid_only) q = q.eq("paid", false);
+    if (args.overdue_only) q = q.eq("paid", false).lt("due_date", todayStr);
+    if (args.query) q = q.or(`customer_name.ilike.%${args.query}%,invoice_number.ilike.%${args.query}%`);
+    const { data } = await q;
+    return { results: data || [] };
+  }
+  if (name === "search_tenants") {
+    const { data } = await admin.from("tenant_accounts")
+      .select("full_name,phone,business_name,total_price,paid_amount")
+      .or(`full_name.ilike.%${args.query}%,phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`)
+      .limit(lim(args.limit));
+    return { results: data || [] };
+  }
+  if (name === "units_breakdown") {
+    let q = admin.from("units").select("building_number,unit_number,status,price,area,activity,unit_type").limit(lim(args.limit, 30));
+    if (args.building_number) q = q.eq("building_number", args.building_number);
+    if (args.status) q = q.eq("status", args.status);
+    const { data } = await q;
+    return { results: data || [], count: data?.length || 0 };
+  }
+  if (name === "revenue_report") {
+    const period = args.period || "month";
+    let from = new Date();
+    if (period === "today") from.setHours(0,0,0,0);
+    else if (period === "week") { from.setDate(from.getDate()-7); from.setHours(0,0,0,0); }
+    else if (period === "month") { from.setDate(1); from.setHours(0,0,0,0); }
+    else if (period === "year") { from = new Date(from.getFullYear(),0,1); }
+    const fromIso = from.toISOString();
+    const [bk, inv] = await Promise.all([
+      admin.from("bookings").select("status,total_price,paid_amount,created_at").gte("created_at", fromIso),
+      admin.from("invoices").select("amount,paid_amount,paid,paid_at").gte("paid_at", fromIso).eq("paid", true),
+    ]);
+    return {
+      period, from: fromIso,
+      bookings_count: bk.data?.length || 0,
+      bookings_value: (bk.data||[]).reduce((s:number,x:any)=>s+Number(x.total_price||0),0),
+      bookings_paid: (bk.data||[]).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
+      payments_count: inv.data?.length || 0,
+      payments_total: (inv.data||[]).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
+    };
+  }
+  return { error: "unknown tool" };
+}
+
 async function aiAnswer(admin: any, token: string, chat_id: number, question: string) {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) return send(token, chat_id, "🤖 الذكاء الاصطناعي غير مفعّل");
 
-  // Pre-fetch a compact data snapshot to ground the answer
-  const today = new Date(); today.setHours(0,0,0,0);
-  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-  const [bToday, bMonth, invAll, unitsAll] = await Promise.all([
-    admin.from("bookings").select("status,total_price,paid_amount,created_at").gte("created_at", today.toISOString()),
-    admin.from("bookings").select("status,total_price,paid_amount,created_at").gte("created_at", monthStart.toISOString()),
-    admin.from("invoices").select("amount,paid_amount,paid,paid_at,created_at"),
-    admin.from("units").select("status,price,building_number"),
-  ]);
-  const ctx = {
-    today_bookings: bToday.data?.length || 0,
-    today_bookings_value: (bToday.data || []).reduce((s,b: any)=>s+Number(b.total_price||0),0),
-    month_bookings: bMonth.data?.length || 0,
-    month_bookings_value: (bMonth.data || []).reduce((s,b: any)=>s+Number(b.total_price||0),0),
-    month_payments: (invAll.data || []).filter((i: any)=>i.paid_at && new Date(i.paid_at) >= monthStart).reduce((s,i: any)=>s+Number(i.paid_amount||0),0),
-    today_payments: (invAll.data || []).filter((i: any)=>i.paid_at && new Date(i.paid_at) >= today).reduce((s,i: any)=>s+Number(i.paid_amount||0),0),
-    total_unpaid: (invAll.data || []).filter((i: any)=>!i.paid).reduce((s,i: any)=>s+(Number(i.amount)-Number(i.paid_amount||0)),0),
-    units_total: unitsAll.data?.length || 0,
-    units_rented: (unitsAll.data || []).filter((u: any)=>u.status==="rented").length,
-    units_reserved: (unitsAll.data || []).filter((u: any)=>u.status==="reserved").length,
-    units_available: (unitsAll.data || []).filter((u: any)=>u.status==="available").length,
-    expected_annual_revenue: (unitsAll.data || []).reduce((s,u: any)=>s+Number(u.price||0),0),
-  };
+  const systemPrompt = [
+    "أنت مساعد ذكي ومحترف لإدارة \"المدينة الصناعية شمال مكة\" (تأجير وحدات صناعية).",
+    "تتكلم بالعربي الفصيح البسيط، باختصار وعملي، بدون حشو.",
+    "عندك أدوات فعلية للوصول للبيانات الحية — استخدمها دايماً قبل ما تجاوب على أي سؤال أرقام/إحصائيات.",
+    "لو السؤال محتاج كذا معلومة، استدعِ كذا أداة بالتوازي ثم اجمع الإجابة.",
+    "صياغة الإجابة: استخدم نقاط قصيرة، أرقام بصيغة محلية (1,234 ر.س)، وbold للأرقام المهمة (HTML <b>).",
+    "لا تخترع أرقاماً. لو الأداة رجّعت فاضي، قلها صراحة.",
+    "تاريخ اليوم: " + new Date().toLocaleDateString("ar-EG-u-nu-latn", { timeZone: "Asia/Riyadh" }),
+  ].join("\n");
 
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: "أنت مساعد إداري للمدينة الصناعية شمال مكة. جاوب بالعربي بإيجاز شديد (≤4 أسطر) معتمداً فقط على البيانات المعطاة. لو السؤال خارج النطاق وضّح إنك تعرف فقط الإحصائيات والحجوزات والفواتير والوحدات." },
-        { role: "user", content: `بيانات حالية (JSON):\n${JSON.stringify(ctx)}\n\nالسؤال: ${question}` },
-      ],
-    }),
-  });
-  if (!r.ok) {
-    const t = await r.text();
-    return send(token, chat_id, `🤖 خطأ AI: ${esc(t.slice(0,200))}`);
+  const messages: any[] = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: question },
+  ];
+
+  // Tool-calling loop (max 4 rounds)
+  for (let round = 0; round < 4; round++) {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-pro",
+        messages,
+        tools: AI_TOOLS,
+        tool_choice: "auto",
+      }),
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      if (r.status === 429) return send(token, chat_id, "🤖 الذكاء الاصطناعي مزدحم، جرّب بعد دقيقة");
+      if (r.status === 402) return send(token, chat_id, "🤖 رصيد الذكاء الاصطناعي خلص، أضف رصيد من إعدادات Lovable");
+      return send(token, chat_id, `🤖 خطأ AI: ${esc(t.slice(0,200))}`);
+    }
+    const j = await r.json();
+    const choice = j?.choices?.[0];
+    const m = choice?.message;
+    if (!m) return send(token, chat_id, "🤔 مفيش إجابة");
+
+    const toolCalls = m.tool_calls || [];
+    if (toolCalls.length === 0) {
+      const reply = (m.content || "").trim() || "🤔 مفيش إجابة";
+      return send(token, chat_id, `🤖 ${reply}`);
+    }
+
+    messages.push({ role: "assistant", content: m.content || "", tool_calls: toolCalls });
+    const results = await Promise.all(toolCalls.map(async (tc: any) => {
+      let args: any = {};
+      try { args = JSON.parse(tc.function?.arguments || "{}"); } catch {}
+      try {
+        const out = await runAITool(admin, tc.function?.name, args);
+        return { tool_call_id: tc.id, role: "tool", content: JSON.stringify(out).slice(0, 12000) };
+      } catch (e) {
+        return { tool_call_id: tc.id, role: "tool", content: JSON.stringify({ error: String((e as Error).message) }) };
+      }
+    }));
+    messages.push(...results);
   }
-  const j = await r.json();
-  const reply = j?.choices?.[0]?.message?.content?.trim() || "🤔 مفيش إجابة";
-  await send(token, chat_id, `🤖 ${esc(reply)}`);
+  await send(token, chat_id, "🤖 مفيش إجابة نهائية بعد محاولات متعددة");
 }
 
 // === Photo (receipt) handler ===
