@@ -31,6 +31,7 @@ import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
 import TenantPortal from "./pages/TenantPortal.tsx";
 import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
 import Invoice from "./pages/Invoice.tsx";
+import TelegramSettings from "./pages/TelegramSettings.tsx";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/admin/bookings" element={<AdminBookings />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/telegram" element={<TelegramSettings />} />
           <Route path="/admin/api-keys" element={<AdminApiKeys />} />
           <Route path="/admin/stats" element={<AdminStats />} />
           <Route path="/api-docs" element={<ApiDocs />} />

@@ -348,6 +348,13 @@ const Profile = () => {
 
           {/* أمان الحساب */}
           <div className="mt-6 space-y-6">
+            <Link to="/profile/telegram" className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-card hover:border-primary/40">
+              <div>
+                <div className="font-display font-extrabold">ربط تيليجرام</div>
+                <div className="text-xs text-muted-foreground">استلم الإشعارات وتحكّم في النظام عبر بوت تيليجرام</div>
+              </div>
+              <ArrowRight className="h-4 w-4 rotate-180 text-muted-foreground" />
+            </Link>
             <PasswordCard hasPassword={hasPassword} />
             <LinkedAccounts />
             <TwoFactorSettings />
