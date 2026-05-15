@@ -366,7 +366,97 @@ const AI_TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "resolve_booking_id",
+      description: "ابحث عن UUID حجز عبر اسم العميل/الجوال/رقم العرض. استخدمها لو المستخدم ذكر اسم بدل ID قبل أي إجراء كتابة.",
+      parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "resolve_unit_id",
+      description: "ابحث عن UUID وحدة برقم المبنى ورقم الوحدة.",
+      parameters: { type: "object", properties: { building_number: { type: "number" }, unit_number: { type: "string" } }, required: ["building_number","unit_number"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "confirm_booking",
+      description: "تأكيد حجز معلّق وتحويل وحداته إلى مؤجّرة. يحتاج صلاحية admin/manager.",
+      parameters: { type: "object", properties: { booking_id: { type: "string" }, paid_amount: { type: "number", default: 0 } }, required: ["booking_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "cancel_booking",
+      description: "إلغاء حجز وإرجاع وحداته إلى متاحة.",
+      parameters: { type: "object", properties: { booking_id: { type: "string" } }, required: ["booking_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "extend_booking_expiry",
+      description: "تمديد فترة انتهاء حجز بعدد ساعات (موجب يمدد، سالب يقصّر).",
+      parameters: { type: "object", properties: { booking_id: { type: "string" }, hours: { type: "number" } }, required: ["booking_id","hours"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "record_payment",
+      description: "تسجيل دفعة على حجز أو حساب مستأجر. ينشئ فاتورة آلياً.",
+      parameters: {
+        type: "object",
+        properties: {
+          booking_id: { type: "string" },
+          tenant_account_id: { type: "string" },
+          amount: { type: "number" },
+          method: { type: "string", enum: ["cash","bank","card","transfer"], default: "cash" },
+          notes: { type: "string" },
+        },
+        required: ["amount"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_booking_paid_amount",
+      description: "تعديل المبلغ المدفوع لحجز (استبدال القيمة، ليس إضافة).",
+      parameters: { type: "object", properties: { booking_id: { type: "string" }, paid_amount: { type: "number" } }, required: ["booking_id","paid_amount"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_unit_status",
+      description: "تغيير حالة وحدة (متاحة/محجوزة/مؤجّرة). استخدمها بحذر.",
+      parameters: { type: "object", properties: { unit_id: { type: "string" }, status: { type: "string", enum: ["available","reserved","rented"] } }, required: ["unit_id","status"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "mark_invoice_paid",
+      description: "وضع فاتورة كمدفوعة بالكامل.",
+      parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
+    },
+  },
 ];
+
+// Check if linked user has admin/manager role for write operations
+async function canWrite(admin: any, userId: string | null): Promise<boolean> {
+  if (!userId) return false;
+  const { data } = await admin.from("user_roles").select("role").eq("user_id", userId);
+  const roles = (data || []).map((r: any) => r.role);
+  return roles.includes("admin") || roles.includes("manager");
+}
 
 async function runAITool(admin: any, name: string, args: any): Promise<any> {
   const lim = (n: any, d=10) => Math.max(1, Math.min(50, Number(n) || d));
