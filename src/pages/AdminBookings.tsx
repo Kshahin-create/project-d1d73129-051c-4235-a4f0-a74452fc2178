@@ -591,6 +591,30 @@ const AdminBookings = () => {
                       >
                         💳 نظام السداد: {PLAN_LABEL[b.payment_plan || "full"]}
                       </button>
+                      {b.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => sendWhatsAppTemplate(b, "offer_expiry_12h")}
+                            className="flex items-center justify-center gap-1 rounded-lg bg-[#25D366]/10 px-3 py-1.5 text-xs font-semibold text-[#1eaf56] hover:bg-[#25D366]/20"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" /> تذكير 12س
+                          </button>
+                          <button
+                            onClick={() => sendWhatsAppTemplate(b, "offer_expiry_4h")}
+                            className="flex items-center justify-center gap-1 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" /> تذكير 4س
+                          </button>
+                        </>
+                      )}
+                      {b.status === "confirmed" && (
+                        <button
+                          onClick={() => sendWhatsAppTemplate(b, "booking_confirmed")}
+                          className="flex items-center justify-center gap-1 rounded-lg bg-[#25D366]/10 px-3 py-1.5 text-xs font-semibold text-[#1eaf56] hover:bg-[#25D366]/20"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" /> رسالة التأكيد
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
