@@ -918,35 +918,88 @@ function parseInlineToolCalls(content: string): Array<{ name: string; args: Reco
   return calls;
 }
 
+async function buildPreContext(admin: any, question: string): Promise<string> {
+  const info = extractCustomerInfo(question);
+  const req = extractUnitRequest(question);
+  const out: any = { extracted: { customer: info, unit_request: req, payment_plan: extractPaymentPlan(question) } };
+  try {
+    const hasCustomerSignal = info.fullName || info.business || info.phone || /[\u0600-\u06FF]{3,}/.test(question);
+    if (hasCustomerSignal) {
+      const [tenants, bookings] = await Promise.all([
+        searchTenantAccountsSmart(admin, question, 5),
+        searchBookingsSmart(admin, question, 5),
+      ]);
+      out.tenant_matches = tenants.map((t: any) => ({
+        id: t.id, full_name: t.full_name, business_name: t.business_name,
+        phone: t.phone, email: t.email, total_price: t.total_price, paid_amount: t.paid_amount, score: t.match_score,
+      }));
+      out.booking_matches = bookings.map((b: any) => ({
+        id: b.id, customer_full_name: b.customer_full_name, business_name: b.business_name,
+        customer_phone: b.customer_phone, status: b.status, total_price: b.total_price,
+        paid_amount: b.paid_amount, offer_number: b.offer_number, score: b.match_score,
+      }));
+    }
+    if (req.building_number && req.unit_numbers.length) {
+      const { data: units } = await admin.from("units")
+        .select("id,building_number,unit_number,status,price,activity")
+        .eq("building_number", req.building_number)
+        .in("unit_number", req.unit_numbers);
+      out.units = units || [];
+    }
+  } catch (e) {
+    out.preload_error = String((e as Error).message);
+  }
+  return JSON.stringify(out).slice(0, 6000);
+}
+
 async function aiAnswer(admin: any, token: string, chat_id: number, question: string, userId: string | null) {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) return send(token, chat_id, "🤖 الذكاء الاصطناعي غير مفعّل");
 
+  await typing(token, chat_id);
+  const writeAllowed = await canWrite(admin, userId);
+  const preCtx = await buildPreContext(admin, question);
+  const history = await loadChatMemory(admin, chat_id, 8);
+
   const systemPrompt = [
-    "أنت مساعد ذكي لإدارة \"المدينة الصناعية شمال مكة\" (تأجير وحدات).",
-    "تتكلم عربي بسيط ومختصر.",
-    "عندك أدوات قراءة وأدوات كتابة (تأكيد/إلغاء/تمديد حجز، تسجيل دفعات، تعديل حالة وحدة، تعليم فاتورة مدفوعة).",
-    "قبل أي أداة كتابة: لو المستخدم ذكر اسم/رقم بدل UUID، استخدم resolve_booking_id أو resolve_unit_id أولاً.",
-    "لو المستخدم طلب مطالبة/مطلبة مالية وفي الرسالة بيانات عميل + مبنى + وحدات، استخدم generate_financial_claim مباشرة، ومرّر query كنص رسالة المستخدم كامل حتى تستخرج الاسم والجوال والنشاط.",
-    "لو النص يحتوي قالب بيانات العميل، لا تبحث بالرسالة كلها فقط؛ اعتمد على الاسم والجوال والنشاط المستخرجين من القالب.",
-    "ممنوع تماماً أن تطبع default_api أو print أو أسماء الأدوات للمستخدم؛ نفّذ الأدوات داخلياً ثم اعرض النتيجة النهائية فقط.",
-    "نفّذ مباشرة لو الطلب واضح. لو فيه غموض (أكثر من نتيجة بحث، مبلغ غير محدد، إلخ)، اسأل سؤال توضيحي قصير قبل التنفيذ.",
-    "بعد أي تعديل أكّد بالأرقام النهائية.",
-    "صياغة: نقاط قصيرة، أرقام 1,234 ر.س، Bold للأرقام المهمة (HTML <b>).",
-    "تاريخ اليوم: " + new Date().toLocaleDateString("ar-EG-u-nu-latn", { timeZone: "Asia/Riyadh" }),
+    "أنت مساعد ذكي خبير لإدارة \"المدينة الصناعية شمال مكة\" (تأجير وحدات).",
+    "تتكلم عربي طبيعي مختصر وواضح. ممنوع الإنجليزية إلا للأرقام/الأكواد.",
+    "",
+    "🎯 طريقة عملك:",
+    "1) اقرأ السياق المسبق (PRE_CONTEXT) قبل أي حاجة — فيه استخراج تلقائي للاسم/الجوال/المبنى/الوحدات + أعلى نتائج البحث.",
+    "2) لو السياق المسبق فيه tenant_matches أو booking_matches بدرجة score ≥ 80، استخدم أعلى نتيجة مباشرة (هي العميل المقصود) من غير ما تسأل ولا تبحث تاني.",
+    "3) لو فيه أكثر من نتيجة قريبة في الدرجات (فرق < 15)، اسأل سؤال توضيحي قصير بالأسماء.",
+    "4) لو السياق فيه units بحالاتها وأسعارها، استخدمها على طول من غير ما تنادي resolve_unit_id.",
+    "5) قبل أي أداة كتابة: تأكد من الـ UUID. لو ناقص استخدم resolve_booking_id/resolve_unit_id.",
+    "6) لو الطلب «مطالبة/مطلبة مالية» + فيه عميل + مبنى + وحدات، نادِ generate_financial_claim فوراً ومرّر query = نص رسالة المستخدم كاملاً + tenant_account_id لو متوفر.",
+    "7) نفّذ مباشرة لو الطلب واضح. اسأل سؤال واحد فقط لو فيه غموض حقيقي.",
+    "",
+    "🚫 ممنوعات صارمة:",
+    "- ممنوع تطبع كود مثل print(...) أو default_api.xxx(...) للمستخدم نهائياً.",
+    "- ممنوع تقول «لم أجد العميل» قبل ما تشوف tenant_matches و booking_matches في PRE_CONTEXT.",
+    "- ممنوع تطلب من المستخدم UUID — لازم تستخرجه بنفسك عبر الأدوات.",
+    `- صلاحية الكتابة الحالية للمستخدم: ${writeAllowed ? "مفعّلة" : "غير مفعّلة (للقراءة فقط)"}.`,
+    "",
+    "📝 صياغة الرد:",
+    "- نقاط قصيرة، أرقام بصيغة 1,234 ر.س، تواريخ ميلادية، استخدم <b>…</b> للأرقام المهمة.",
+    "- بعد أي تعديل اكتب الحالة النهائية بالأرقام.",
+    "",
+    "📅 تاريخ اليوم: " + new Date().toLocaleDateString("ar-EG-u-nu-latn", { timeZone: "Asia/Riyadh" }),
   ].join("\n");
 
   const messages: any[] = [
     { role: "system", content: systemPrompt },
-    { role: "user", content: question },
+    ...history,
+    { role: "user", content: `PRE_CONTEXT:\n${preCtx}\n\nالرسالة:\n${question}` },
   ];
 
-  for (let round = 0; round < 6; round++) {
+  let finalReply = "";
+  for (let round = 0; round < 8; round++) {
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-3-flash-preview",
         messages,
         tools: AI_TOOLS,
         tool_choice: "auto",
@@ -964,12 +1017,15 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
 
     const toolCalls = m.tool_calls || [];
     if (toolCalls.length === 0) {
-      const reply = (m.content || "").trim() || "🤔 مفيش إجابة";
-      const inlineCalls = parseInlineToolCalls(reply);
+      let reply = sanitizeAIReply(m.content || "");
+      const inlineCalls = parseInlineToolCalls(m.content || "");
       if (inlineCalls.length) {
         const inlineResults = await Promise.all(inlineCalls.map(async (call) => {
           try {
-            return { tool: call.name, args: call.args, result: await runAITool(admin, call.name, call.args) };
+            const out = WRITE_TOOLS.has(call.name)
+              ? await runAIWriteTool(admin, userId || "", call.name, call.args, chat_id)
+              : await runAITool(admin, call.name, call.args);
+            return { tool: call.name, args: call.args, result: out };
           } catch (e) {
             return { tool: call.name, args: call.args, error: String((e as Error).message) };
           }
@@ -977,14 +1033,14 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
         messages.push({ role: "assistant", content: "" });
         messages.push({
           role: "user",
-          content: [
-            "نفّذت الأدوات داخلياً. اكتب للمستخدم النتيجة النهائية بالعربي فقط، بدون أي كود أو أسماء أدوات.",
-            JSON.stringify(inlineResults).slice(0, 12000),
-          ].join("\n"),
+          content: "نتائج الأدوات (داخلي، اكتب للمستخدم نتيجة نهائية بدون كود):\n" + JSON.stringify(inlineResults).slice(0, 12000),
         });
         continue;
       }
-      return send(token, chat_id, `🤖 ${reply}`);
+      if (!reply) reply = "🤔 مفيش إجابة";
+      finalReply = reply;
+      await send(token, chat_id, reply.startsWith("🤖") ? reply : `🤖 ${reply}`);
+      break;
     }
 
     messages.push({ role: "assistant", content: m.content || "", tool_calls: toolCalls });
@@ -1003,8 +1059,12 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
       }
     }));
     messages.push(...results);
+    await typing(token, chat_id);
   }
-  await send(token, chat_id, "🤖 مفيش إجابة نهائية بعد محاولات متعددة");
+  if (!finalReply) await send(token, chat_id, "🤖 مفيش إجابة نهائية بعد محاولات متعددة");
+  // Save memory
+  await saveChatMemory(admin, chat_id, "user", question);
+  if (finalReply) await saveChatMemory(admin, chat_id, "assistant", finalReply);
 }
 
 // === Photo (receipt) handler ===
