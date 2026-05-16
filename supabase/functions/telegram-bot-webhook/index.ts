@@ -10,6 +10,82 @@ const fmtNum = (n: number) => Number(n || 0).toLocaleString("en-US");
 const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleString("ar-EG-u-nu-latn", { timeZone: "Asia/Riyadh" }) : "—";
 
+const arDigitMap: Record<string, string> = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9","۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9" };
+const normalizeDigits = (s: unknown) => String(s ?? "").replace(/[٠-٩۰-۹]/g, (d) => arDigitMap[d] || d);
+const normalizeArabic = (s: unknown) => normalizeDigits(s)
+  .toLowerCase()
+  .replace(/[\u064B-\u065F\u0670ـ]/g, "")
+  .replace(/[إأآٱ]/g, "ا")
+  .replace(/ؤ/g, "و")
+  .replace(/ئ/g, "ي")
+  .replace(/ى/g, "ي")
+  .replace(/ة/g, "ه")
+  .replace(/[^\p{L}\p{N}]+/gu, " ")
+  .replace(/\s+/g, " ")
+  .trim();
+const digitsOnly = (s: unknown) => normalizeDigits(s).replace(/\D/g, "");
+const STOP_WORDS = new Set("بيانات العميل الاسم الجوال الهاتف البريد النشاط شركة مؤسسة موسسة للتجاره التجارة قطع غيار سيارات اعملي مطلبه مطالبه مالية سداد لوحدات وحدات وحدة رقم مبنى مبني من الي على في عن هذا هذه الخاص به uuid".split(" "));
+function importantTokens(s: unknown) {
+  return normalizeArabic(s).split(" ").filter((w) => w.length > 1 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
+}
+
+function extractLine(text: string, labels: string[]) {
+  for (const label of labels) {
+    const re = new RegExp(`${label}\\s*[:：]\\s*([^\\n]+)`, "iu");
+    const m = text.match(re);
+    if (m?.[1]) return m[1].replace(/👤.*$/u, "").trim();
+  }
+  return "";
+}
+function extractPhone(text: string) {
+  const m = normalizeDigits(text).match(/(?:\+?966|0)?5\d{8}/);
+  if (!m) return "";
+  const d = digitsOnly(m[0]);
+  return d.startsWith("966") ? d : d.startsWith("0") ? `966${d.slice(1)}` : `966${d}`;
+}
+function extractCustomerInfo(text: string) {
+  return {
+    fullName: extractLine(text, ["الاسم", "اسم العميل", "اسم المستأجر"]),
+    phone: extractPhone(text) || extractLine(text, ["الجوال", "الهاتف", "الموبايل"]),
+    email: extractLine(text, ["البريد", "الايميل", "الإيميل"]),
+    business: extractLine(text, ["النشاط", "الشركة", "المؤسسة", "مؤسسة", "اسم النشاط"]),
+  };
+}
+function extractUnitRequest(text: string) {
+  const t = normalizeDigits(text);
+  const building = Number((t.match(/مبن[ىي]\s*رقم?\s*(\d+)/u) || t.match(/building\s*(\d+)/i))?.[1] || 0);
+  const unitNums = new Set<number>();
+  const beforeBuilding = building ? t.split(/مبن[ىي]/u)[0] : t;
+  const unitsSegment = (beforeBuilding.match(/(?:وحدات|الوحدات|وحده|وحدة|لوحدات)\s*(?:رقم)?\s*([\d\s,،و\-]+)/u)?.[1] || beforeBuilding);
+  for (const m of unitsSegment.matchAll(/\d+/g)) {
+    const n = Number(m[0]);
+    if (n > 0 && n < 10000 && n !== building) unitNums.add(n);
+  }
+  for (const m of t.matchAll(/(?:وحده|وحدة)\s*(?:رقم)?\s*(\d+)/gu)) unitNums.add(Number(m[1]));
+  return { building_number: building || undefined, unit_numbers: Array.from(unitNums) };
+}
+function extractPaymentPlan(text: string): "full" | "70" | "50" {
+  const t = normalizeDigits(text);
+  if (/70\s*%|٧٠/.test(t)) return "70";
+  if (/50\s*%|٥٠/.test(t)) return "50";
+  return "full";
+}
+function scoreRow(query: string, row: any, fields: string[]) {
+  const qn = normalizeArabic(query);
+  const qPhone = digitsOnly(query);
+  const blob = fields.map((f) => row[f] ?? "").join(" ");
+  const bn = normalizeArabic(blob);
+  const bPhone = digitsOnly(blob);
+  let score = 0;
+  if (qPhone.length >= 8 && bPhone.includes(qPhone.slice(-9))) score += 120;
+  if (qn && bn.includes(qn)) score += 90;
+  for (const value of fields.map((f) => normalizeArabic(row[f] ?? "")).filter(Boolean)) {
+    if (value && qn.includes(value)) score += 70;
+  }
+  for (const tok of importantTokens(query)) if (bn.includes(tok)) score += 12;
+  return score;
+}
+
 async function tg(token: string, method: string, body: unknown) {
   return await fetch(TG(token, method), {
     method: "POST",
