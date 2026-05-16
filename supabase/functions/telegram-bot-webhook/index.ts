@@ -626,9 +626,9 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     };
   }
   if (name === "search_bookings") {
+    if (args.query) return { results: await searchBookingsSmart(admin, String(args.query), lim(args.limit)) };
     let q = admin.from("bookings").select("id,customer_full_name,customer_phone,business_name,status,total_price,paid_amount,expires_at,created_at").order("created_at",{ascending:false}).limit(lim(args.limit));
     if (args.status) q = q.eq("status", args.status);
-    if (args.query) q = q.or(`customer_full_name.ilike.%${args.query}%,customer_phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`);
     const { data } = await q;
     return { results: data || [] };
   }
@@ -641,11 +641,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     return { results: data || [] };
   }
   if (name === "search_tenants") {
-    const { data } = await admin.from("tenant_accounts")
-      .select("full_name,phone,business_name,total_price,paid_amount")
-      .or(`full_name.ilike.%${args.query}%,phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`)
-      .limit(lim(args.limit));
-    return { results: data || [] };
+    return { results: await searchTenantAccountsSmart(admin, String(args.query || ""), lim(args.limit)) };
   }
   if (name === "units_breakdown") {
     let q = admin.from("units").select("building_number,unit_number,status,price,area,activity,unit_type").limit(lim(args.limit, 30));
@@ -678,11 +674,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
   if (name === "resolve_booking_id") {
     const q = String(args.query || "").trim();
     if (!q) return { error: "query required" };
-    const { data } = await admin.from("bookings")
-      .select("id,customer_full_name,customer_phone,offer_number,status,total_price,created_at")
-      .or(`customer_full_name.ilike.%${q}%,customer_phone.ilike.%${q}%,offer_number.ilike.%${q}%,business_name.ilike.%${q}%`)
-      .order("created_at", { ascending: false }).limit(8);
-    return { results: data || [] };
+    return { results: await searchBookingsSmart(admin, q, 8) };
   }
   if (name === "resolve_unit_id") {
     const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
