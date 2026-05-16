@@ -34,6 +34,7 @@ interface BookingRow {
   payment_plan: string;
   created_at: string;
   expires_at: string;
+  confirmation_sent_at?: string | null;
   booking_units?: BookingUnitRow[];
 }
 
