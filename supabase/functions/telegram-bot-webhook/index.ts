@@ -960,6 +960,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
       let args: any = {};
       try { args = JSON.parse(tc.function?.arguments || "{}"); } catch {}
       const fname = tc.function?.name;
+      if (fname === "generate_financial_claim" && !args.query) args.query = question;
       try {
         const out = WRITE_TOOLS.has(fname)
           ? await runAIWriteTool(admin, userId || "", fname, args, chat_id)
