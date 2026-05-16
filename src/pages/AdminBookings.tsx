@@ -31,10 +31,13 @@ interface BookingRow {
   units_count: number;
   whatsapp_sent: boolean;
   offer_image_url: string | null;
+  payment_plan: string;
   created_at: string;
   expires_at: string;
   booking_units?: BookingUnitRow[];
 }
+
+const PLAN_LABEL: Record<string, string> = { full: "100%", "70": "70%", "50": "50%" };
 
 const STATUS: Record<string, { label: string; cls: string; Icon: typeof Clock }> = {
   pending: { label: "قيد المراجعة", cls: "bg-amber-500/10 text-amber-600", Icon: Clock },
