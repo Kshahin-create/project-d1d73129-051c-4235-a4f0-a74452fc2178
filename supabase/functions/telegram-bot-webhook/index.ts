@@ -496,8 +496,70 @@ async function generateFinancialClaimFromText(admin: any, chat_id: number, text:
     const annual = unitsPayload.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
     const ratio = (existing.payment_plan === "70") ? 0.7 : (existing.payment_plan === "50") ? 0.5 : 1;
     const payable = Math.round(annual * ratio);
-  const total = payable + Math.round(payable * 0.15);
-  return { ok: true, customer, building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan, annual, total_with_vat: total, tenant_account_id: tenant?.id || null };
+    const total = payable + Math.round(payable * 0.15);
+    return {
+      ok: true, mode: "existing_booking", booking_id: existing.id,
+      updated_fields: Object.keys(updates), customer, building_number: building,
+      unit_numbers: unitNumbers, payment_plan: existing.payment_plan || paymentPlan,
+      annual, total_with_vat: total,
+    };
+  }
+
+  // 2) No booking → check what we have / what we need
+  const have: any = {
+    fullName: info.fullName || tenant?.full_name || "",
+    phone: info.phone || tenant?.phone || "",
+    email: info.email || tenant?.email || "",
+    business: info.business || tenant?.business_name || "",
+    crNumber: tenant?.cr_number || "",
+  };
+  const missing: string[] = [];
+  if (!have.fullName) missing.push("الاسم الكامل");
+  if (!have.phone) missing.push("رقم الجوال");
+  const unavailable = (units || []).filter((u: any) => u.status !== "available").map((u: any) => Number(u.unit_number));
+
+  if (missing.length || unavailable.length) {
+    return {
+      ok: false, no_booking: true, needs_info: true,
+      have, missing, unavailable,
+      building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan,
+    };
+  }
+
+  // 3) Create booking then send claim
+  const { data: newBookingId, error: createErr } = await admin.rpc("create_booking", {
+    _customer_full_name: have.fullName,
+    _customer_phone: have.phone,
+    _customer_email: have.email || null,
+    _business_name: have.business || null,
+    _notes: null,
+    _unit_ids: unitIds,
+    _cr_number: have.crNumber || null,
+    _payment_plan: paymentPlan,
+  });
+  if (createErr) return { error: `تعذر إنشاء الحجز: ${createErr.message}` };
+
+  const customer = {
+    fullName: have.fullName, phone: have.phone, email: have.email || undefined,
+    business: have.business || undefined, crNumber: have.crNumber || undefined,
+  };
+  const payload = { booking_id: newBookingId, payment_plan: paymentPlan, target_chat_id: String(chat_id), customer, units: unitsPayload };
+  const r2 = await fetch(`${supaUrl}/functions/v1/send-financial-claim-pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc },
+    body: JSON.stringify(payload),
+  });
+  const out2 = await r2.json().catch(() => ({}));
+  if (!r2.ok && !out2.success) return { error: out2.error || `تم إنشاء الحجز لكن فشل إرسال المطالبة (HTTP ${r2.status})`, booking_id: newBookingId };
+  const annual2 = unitsPayload.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+  const ratio2 = paymentPlan === "70" ? 0.7 : paymentPlan === "50" ? 0.5 : 1;
+  const payable2 = Math.round(annual2 * ratio2);
+  const total2 = payable2 + Math.round(payable2 * 0.15);
+  return {
+    ok: true, mode: "new_booking", booking_id: newBookingId, customer,
+    building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan,
+    annual: annual2, total_with_vat: total2,
+  };
 }
 
 async function cmdExpiring(admin: any, token: string, chat_id: number) {
