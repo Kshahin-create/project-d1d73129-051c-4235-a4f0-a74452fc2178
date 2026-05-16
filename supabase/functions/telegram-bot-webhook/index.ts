@@ -1359,9 +1359,40 @@ Deno.serve(async (req) => {
           if (!(await canWrite(admin, sub.user_id))) {
             await send(token, chat_id, "🚫 تحتاج صلاحية admin أو manager لإنشاء مطالبة مالية");
           } else {
-            const out = await generateFinancialClaimFromText(admin, chat_id, text);
+            const out: any = await generateFinancialClaimFromText(admin, chat_id, text);
             if (out.ok) {
-              await send(token, chat_id, `✅ تم إرسال المطالبة المالية PDF\n👤 ${esc(out.customer.business || out.customer.fullName)}\n🏢 مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>\n🧮 سداد <b>${out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`}</b>\n💰 الإجمالي شامل الضريبة: <b>${fmtNum(out.total_with_vat)}</b> ر.س`);
+              const planLabel = out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`;
+              const modeLine = out.mode === "new_booking"
+                ? `🆕 <b>تم إنشاء حجز جديد</b> — <code>${out.booking_id}</code>`
+                : out.mode === "existing_booking"
+                  ? (out.updated_fields?.length
+                      ? `🔁 <b>تم تحديث الحجز الموجود</b> (${out.updated_fields.join("، ")})`
+                      : `📌 <b>تم استخدام الحجز الموجود</b>`)
+                  : "";
+              await send(token, chat_id, `✅ تم إرسال المطالبة المالية PDF\n${modeLine}\n👤 ${esc(out.customer.business || out.customer.fullName)}\n🏢 مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>\n🧮 سداد <b>${planLabel}</b>\n💰 الإجمالي شامل الضريبة: <b>${fmtNum(out.total_with_vat)}</b> ر.س`);
+            } else if (out.no_booking) {
+              const lines: string[] = ["⚠️ <b>مفيش حجز موجود لهذه الوحدات</b>"];
+              if (out.unavailable?.length) {
+                lines.push(`🚫 الوحدات التالية غير متاحة (محجوزة/مؤجرة): <b>${out.unavailable.join("، ")}</b>`);
+                lines.push("لازم نلغي الحجز القديم أو نختار وحدات تانية.");
+              } else {
+                lines.push("هعمل حجز جديد بعد ما تكمّل البيانات الناقصة 👇");
+              }
+              lines.push("");
+              lines.push("<b>📋 البيانات المتوفرة:</b>");
+              lines.push(`• الاسم: ${esc(out.have.fullName || "—")}`);
+              lines.push(`• الجوال: ${esc(out.have.phone || "—")}`);
+              lines.push(`• البريد: ${esc(out.have.email || "—")}`);
+              lines.push(`• النشاط/الشركة: ${esc(out.have.business || "—")}`);
+              lines.push(`• السجل التجاري: ${esc(out.have.crNumber || "—")}`);
+              lines.push(`• مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>`);
+              lines.push(`• نظام السداد: <b>${out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`}</b>`);
+              if (out.missing?.length) {
+                lines.push("");
+                lines.push(`<b>❓ محتاج منك:</b> ${out.missing.join(" + ")}`);
+                lines.push("ابعتلي البيانات بهذا الشكل:\n<code>الاسم: ...\nالجوال: 05xxxxxxxx\nالنشاط: ...</code>");
+              }
+              await send(token, chat_id, lines.join("\n"));
             } else {
               await send(token, chat_id, `⚠️ ${esc(out.error || "تعذر إنشاء المطالبة")}`);
             }
