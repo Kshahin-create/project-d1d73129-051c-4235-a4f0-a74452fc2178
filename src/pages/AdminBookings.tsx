@@ -548,6 +548,12 @@ const AdminBookings = () => {
                           <TimerReset className="h-3.5 w-3.5" /> تمديد المدة
                         </button>
                       )}
+                      <button
+                        onClick={() => changePaymentPlan(b)}
+                        className="flex items-center justify-center gap-1 rounded-lg bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-500/20"
+                      >
+                        💳 نظام السداد: {PLAN_LABEL[b.payment_plan || "full"]}
+                      </button>
                     </div>
                   )}
                 </div>
