@@ -47,6 +47,11 @@ async function sendTemplate(token: string, phone: string, name: string, params: 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // ⛔ متوقف مؤقتاً بناءً على طلب المستخدم لحين ضبط القوالب
+  return new Response(JSON.stringify({ ok: true, disabled: true, processed: 0 }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
   try {
     const TOKEN = Deno.env.get("RESPOND_IO_API_TOKEN");
     if (!TOKEN) throw new Error("RESPOND_IO_API_TOKEN missing");
