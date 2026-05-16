@@ -561,6 +561,24 @@ const AI_TOOLS = [
   {
     type: "function",
     function: {
+      name: "generate_financial_claim",
+      description: "إنشاء وإرسال مطالبة مالية PDF على تيليجرام من بيانات العميل ورقم المبنى والوحدات. استخدمها عند طلب مطالبة/مطلبة مالية.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "نص الرسالة كامل أو اسم/جوال العميل" },
+          tenant_account_id: { type: "string" },
+          building_number: { type: "number" },
+          unit_numbers: { type: "array", items: { type: "number" } },
+          payment_plan: { type: "string", enum: ["full","70","50"], default: "full" },
+        },
+        required: ["building_number","unit_numbers"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "set_booking_paid_amount",
       description: "تعديل المبلغ المدفوع لحجز (استبدال القيمة، ليس إضافة).",
       parameters: { type: "object", properties: { booking_id: { type: "string" }, paid_amount: { type: "number" } }, required: ["booking_id","paid_amount"], additionalProperties: false },
