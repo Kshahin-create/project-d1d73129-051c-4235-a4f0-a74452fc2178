@@ -1155,6 +1155,17 @@ Deno.serve(async (req) => {
         if (m) {
           // Legacy: send booking summary via existing logic by reusing cmdBooking
           await cmdBooking(admin, token, chat_id, m[0]);
+        } else if (/مطالب[هة]|مطلب[هة]\s+مالي[هة]|financial\s+claim/i.test(normalizeArabic(text)) && extractUnitRequest(text).building_number && extractUnitRequest(text).unit_numbers.length) {
+          if (!(await canWrite(admin, sub.user_id))) {
+            await send(token, chat_id, "🚫 تحتاج صلاحية admin أو manager لإنشاء مطالبة مالية");
+          } else {
+            const out = await generateFinancialClaimFromText(admin, chat_id, text);
+            if (out.ok) {
+              await send(token, chat_id, `✅ تم إرسال المطالبة المالية PDF\n👤 ${esc(out.customer.business || out.customer.fullName)}\n🏢 مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>\n🧮 سداد <b>${out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`}</b>\n💰 الإجمالي شامل الضريبة: <b>${fmtNum(out.total_with_vat)}</b> ر.س`);
+            } else {
+              await send(token, chat_id, `⚠️ ${esc(out.error || "تعذر إنشاء المطالبة")}`);
+            }
+          }
         } else {
           await aiAnswer(admin, token, chat_id, text, sub.user_id);
         }
