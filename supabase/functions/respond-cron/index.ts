@@ -25,13 +25,6 @@ function buildTemplate(name: string, params: string[]) {
   };
   const components: any[] = [body];
   if (name === "offer_expiry_12h") components.push({ type: "footer", text: "شكرا لك." });
-  components.push({
-    type: "buttons",
-    buttons: [
-      { type: "quick_reply", text: "تأكيد" },
-      { type: "quick_reply", text: "إلغاء" },
-    ],
-  });
   return { name, languageCode: "ar", components };
 }
 
