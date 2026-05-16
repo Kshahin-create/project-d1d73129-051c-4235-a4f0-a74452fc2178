@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass } from "lucide-react";
+import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass, MessageCircle } from "lucide-react";
 import { fmtNum } from "@/lib/utils";
 
 interface BookingUnitRow {
@@ -270,6 +270,43 @@ const AdminBookings = () => {
       return;
     }
     toast.success(`تم تغيير نظام السداد إلى ${PLAN_LABEL[next]}`);
+  };
+
+  const sendWhatsAppTemplate = async (
+    b: BookingRow,
+    template: "offer_expiry_12h" | "offer_expiry_4h" | "booking_confirmed",
+  ) => {
+    if (!b.customer_phone) return toast.error("لا يوجد رقم جوال للعميل");
+    const units = (b.booking_units || []).map((u) => String(u.unit_number)).join(", ") || "—";
+    const building = b.booking_units?.[0]?.building_number ?? "—";
+    const total = Number(b.total_price || 0).toLocaleString("en-US");
+    const area = Number(b.total_area || 0).toLocaleString("en-US");
+    const expiry = b.expires_at
+      ? new Date(b.expires_at).toLocaleString("ar-EG-u-nu-latn", { dateStyle: "short", timeStyle: "short" })
+      : "—";
+    const bookingNo = b.id.slice(0, 8);
+    const name = b.customer_full_name || "عميلنا";
+    const params =
+      template === "booking_confirmed"
+        ? [name, bookingNo, String(building), units, area, total]
+        : [name, bookingNo, units, String(building), total, expiry];
+
+    const labels: Record<string, string> = {
+      offer_expiry_12h: "تذكير 12 ساعة",
+      offer_expiry_4h: "تذكير 4 ساعات",
+      booking_confirmed: "تأكيد الحجز",
+    };
+    if (!confirm(`إرسال "${labels[template]}" عبر واتساب إلى ${b.customer_phone}؟`)) return;
+    const t = toast.loading("جارٍ الإرسال عبر واتساب...");
+    const { data, error } = await supabase.functions.invoke("respond-send-template", {
+      body: { template, phone: b.customer_phone, params },
+    });
+    toast.dismiss(t);
+    if (error || (data as any)?.error) {
+      toast.error("فشل الإرسال: " + (error?.message || (data as any)?.error || "خطأ"));
+    } else {
+      toast.success("تم إرسال الرسالة بنجاح");
+    }
   };
 
   if (!loading && !user) {
@@ -554,6 +591,30 @@ const AdminBookings = () => {
                       >
                         💳 نظام السداد: {PLAN_LABEL[b.payment_plan || "full"]}
                       </button>
+                      {b.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => sendWhatsAppTemplate(b, "offer_expiry_12h")}
+                            className="flex items-center justify-center gap-1 rounded-lg bg-[#25D366]/10 px-3 py-1.5 text-xs font-semibold text-[#1eaf56] hover:bg-[#25D366]/20"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" /> تذكير 12س
+                          </button>
+                          <button
+                            onClick={() => sendWhatsAppTemplate(b, "offer_expiry_4h")}
+                            className="flex items-center justify-center gap-1 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" /> تذكير 4س
+                          </button>
+                        </>
+                      )}
+                      {b.status === "confirmed" && (
+                        <button
+                          onClick={() => sendWhatsAppTemplate(b, "booking_confirmed")}
+                          className="flex items-center justify-center gap-1 rounded-lg bg-[#25D366]/10 px-3 py-1.5 text-xs font-semibold text-[#1eaf56] hover:bg-[#25D366]/20"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" /> رسالة التأكيد
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
