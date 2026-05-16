@@ -766,7 +766,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
   return { error: "unknown tool" };
 }
 
-async function runAIWriteTool(admin: any, userId: string, name: string, args: any): Promise<any> {
+async function runAIWriteTool(admin: any, userId: string, name: string, args: any, chat_id?: number): Promise<any> {
   const allowed = await canWrite(admin, userId);
   if (!allowed) return { error: "forbidden: تحتاج صلاحية admin أو manager" };
 
@@ -832,6 +832,10 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     if (error) return { error: error.message };
     return { ok: true, invoice_id: data, amount: amt };
   }
+  if (name === "generate_financial_claim") {
+    if (!chat_id) return { error: "chat_id required" };
+    return await generateFinancialClaimFromText(admin, chat_id, String(args.query || ""), args);
+  }
   if (name === "set_booking_paid_amount") {
     const v = Number(args.paid_amount);
     if (v < 0) return { error: "invalid amount" };
@@ -854,7 +858,7 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
   return { error: "unknown write tool" };
 }
 
-const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
+const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
 const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
