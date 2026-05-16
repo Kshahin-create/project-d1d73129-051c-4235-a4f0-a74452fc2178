@@ -34,16 +34,8 @@ function buildTemplate(name: TemplateName, params: string[]) {
       components: [body, { type: "buttons", buttons: [{ type: "quick_reply", text: "تمام" }] }],
     };
   }
-  // offer_expiry_12h | offer_expiry_4h
   const components: any[] = [body];
   if (name === "offer_expiry_12h") components.push({ type: "footer", text: "شكرا لك." });
-  components.push({
-    type: "buttons",
-    buttons: [
-      { type: "quick_reply", text: "تأكيد" },
-      { type: "quick_reply", text: "إلغاء" },
-    ],
-  });
   return { name, languageCode: "ar", components };
 }
 
