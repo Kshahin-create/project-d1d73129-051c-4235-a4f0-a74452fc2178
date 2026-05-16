@@ -101,6 +101,38 @@ async function send(token: string, chat_id: number | string, text: string, extra
 async function answerCb(token: string, callback_query_id: string, text?: string) {
   return tg(token, "answerCallbackQuery", { callback_query_id, text, show_alert: false });
 }
+async function typing(token: string, chat_id: number | string) {
+  try { await tg(token, "sendChatAction", { chat_id, action: "typing" }); } catch {}
+}
+
+// Sanitize AI output: never leak tool/code syntax to user
+function sanitizeAIReply(s: string): string {
+  return String(s || "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`[^`\n]*`/g, "")
+    .replace(/^\s*(print|console\.log|return)\s*\(.*$/gim, "")
+    .replace(/default_api\.[a-zA-Z_]\w*\([^)]*\)/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function loadChatMemory(admin: any, chat_id: number, limit = 8): Promise<Array<{ role: string; content: string }>> {
+  const { data } = await admin.from("telegram_chat_memory")
+    .select("role,content,created_at").eq("chat_id", chat_id)
+    .order("created_at", { ascending: false }).limit(limit);
+  return ((data || []) as any[]).reverse().map((r) => ({ role: r.role, content: r.content }));
+}
+async function saveChatMemory(admin: any, chat_id: number, role: string, content: string) {
+  try {
+    await admin.from("telegram_chat_memory").insert({ chat_id, role, content: String(content || "").slice(0, 4000) });
+    // Trim: keep latest 16 rows per chat
+    const { data } = await admin.from("telegram_chat_memory")
+      .select("id,created_at").eq("chat_id", chat_id)
+      .order("created_at", { ascending: false }).range(16, 200);
+    const ids = (data || []).map((r: any) => r.id);
+    if (ids.length) await admin.from("telegram_chat_memory").delete().in("id", ids);
+  } catch {}
+}
 async function editText(token: string, chat_id: number, message_id: number, text: string) {
   return tg(token, "editMessageText", { chat_id, message_id, text, parse_mode: "HTML" });
 }
