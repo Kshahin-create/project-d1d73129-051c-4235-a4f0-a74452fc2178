@@ -679,6 +679,30 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_chat_memory: {
+        Row: {
+          chat_id: number
+          content: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          chat_id: number
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          chat_id?: number
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
       telegram_link_tokens: {
         Row: {
           created_at: string
