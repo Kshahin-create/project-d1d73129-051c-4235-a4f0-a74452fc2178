@@ -301,6 +301,64 @@ async function cmdSearch(admin: any, token: string, chat_id: number, q: string) 
   await send(token, chat_id, lines.join("\n"));
 }
 
+async function searchTenantAccountsSmart(admin: any, query: string, limit = 10) {
+  const info = extractCustomerInfo(query);
+  const phone = digitsOnly(info.phone || query);
+  const phrases = [info.fullName, info.business, query].map(normalizeArabic).filter(Boolean);
+  const tokens = Array.from(new Set(importantTokens([info.fullName, info.business, query].join(" ")))).slice(0, 8);
+  const orParts: string[] = [];
+  if (phone.length >= 8) orParts.push(`phone.ilike.%${phone.slice(-9)}%`, `email.ilike.%${phone.slice(-9)}%`);
+  for (const p of phrases) if (p.length >= 3 && p.length <= 80) orParts.push(`full_name.ilike.%${p}%`, `business_name.ilike.%${p}%`);
+  for (const tok of tokens) orParts.push(`full_name.ilike.%${tok}%`, `business_name.ilike.%${tok}%`, `activity_type.ilike.%${tok}%`);
+
+  const rows = new Map<string, any>();
+  if (orParts.length) {
+    const { data } = await admin.from("tenant_accounts")
+      .select("id,user_id,full_name,phone,email,business_name,activity_type,total_price,paid_amount,cr_number")
+      .or(orParts.join(","))
+      .limit(50);
+    for (const r of data || []) rows.set(r.id, r);
+  }
+  if (rows.size === 0) {
+    const { data } = await admin.from("tenant_accounts")
+      .select("id,user_id,full_name,phone,email,business_name,activity_type,total_price,paid_amount,cr_number")
+      .order("created_at", { ascending: false }).limit(200);
+    for (const r of data || []) rows.set(r.id, r);
+  }
+  const scored = Array.from(rows.values())
+    .map((r) => ({ ...r, match_score: scoreRow(query, r, ["full_name","phone","email","business_name","activity_type","cr_number"]) }))
+    .filter((r) => r.match_score > 0)
+    .sort((a, b) => b.match_score - a.match_score)
+    .slice(0, Math.max(1, Math.min(50, Number(limit) || 10)));
+  return scored;
+}
+
+async function searchBookingsSmart(admin: any, query: string, limit = 10) {
+  const info = extractCustomerInfo(query);
+  const phone = digitsOnly(info.phone || query);
+  const tokens = Array.from(new Set(importantTokens([info.fullName, info.business, query].join(" ")))).slice(0, 8);
+  const orParts: string[] = [];
+  if (phone.length >= 8) orParts.push(`customer_phone.ilike.%${phone.slice(-9)}%`, `customer_email.ilike.%${phone.slice(-9)}%`);
+  for (const v of [info.fullName, info.business, query].map(normalizeArabic).filter(Boolean)) {
+    if (v.length >= 3 && v.length <= 80) orParts.push(`customer_full_name.ilike.%${v}%`, `business_name.ilike.%${v}%`, `customer_email.ilike.%${v}%`, `offer_number.ilike.%${v}%`);
+  }
+  for (const tok of tokens) orParts.push(`customer_full_name.ilike.%${tok}%`, `business_name.ilike.%${tok}%`);
+  const rows = new Map<string, any>();
+  if (orParts.length) {
+    const { data } = await admin.from("bookings")
+      .select("id,customer_full_name,customer_phone,customer_email,business_name,offer_number,status,total_price,paid_amount,payment_plan,created_at")
+      .or(orParts.join(","))
+      .order("created_at", { ascending: false }).limit(50);
+    for (const r of data || []) rows.set(r.id, r);
+  }
+  const scored = Array.from(rows.values())
+    .map((r) => ({ ...r, match_score: scoreRow(query, r, ["customer_full_name","customer_phone","customer_email","business_name","offer_number"]) }))
+    .filter((r) => r.match_score > 0)
+    .sort((a, b) => b.match_score - a.match_score)
+    .slice(0, Math.max(1, Math.min(50, Number(limit) || 10)));
+  return scored;
+}
+
 async function cmdExpiring(admin: any, token: string, chat_id: number) {
   const { data } = await admin.from("bookings")
     .select("id,customer_full_name,expires_at,total_price")
