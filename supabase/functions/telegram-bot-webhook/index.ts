@@ -391,8 +391,22 @@ async function searchBookingsSmart(admin: any, query: string, limit = 10) {
   return scored;
 }
 
-async function generateFinancialClaimFromText(admin: any, chat_id: number, text: string, overrides: any = {}) {
-  const info = extractCustomerInfo(text);
+async function generateFinancialClaimFromText(admin: any, chat_id: number, text: string, overrides: any = {}, extraContext = "") {
+  // Merge prior chat memory to recover customer info if the current message lacks it
+  let memoryText = "";
+  try {
+    const mem = await loadChatMemory(admin, chat_id, 10);
+    memoryText = mem.filter((m) => m.role === "user").map((m) => m.content).join("\n");
+  } catch {}
+  const combined = [text, extraContext, memoryText].filter(Boolean).join("\n\n");
+  const infoCurrent = extractCustomerInfo(text);
+  const infoMemory = extractCustomerInfo(combined);
+  const info = {
+    fullName: infoCurrent.fullName || infoMemory.fullName,
+    phone: infoCurrent.phone || infoMemory.phone,
+    email: infoCurrent.email || infoMemory.email,
+    business: infoCurrent.business || infoMemory.business,
+  };
   const req = extractUnitRequest(text);
   const building = Number(overrides.building_number || req.building_number || 0);
   const unitNumbers = (Array.isArray(overrides.unit_numbers) && overrides.unit_numbers.length ? overrides.unit_numbers : req.unit_numbers).map(Number).filter(Boolean);
@@ -418,8 +432,13 @@ async function generateFinancialClaimFromText(admin: any, chat_id: number, text:
     tenant = data;
   }
   if (!tenant && !hasTemplateInfo) {
-    const tenantMatches = await searchTenantAccountsSmart(admin, text, 5);
+    const tenantMatches = await searchTenantAccountsSmart(admin, combined, 5);
     tenant = tenantMatches[0]?.match_score >= 60 ? tenantMatches[0] : null;
+  }
+  // Even when we have template info, try to enrich CR/email/phone from tenant DB
+  if (!tenant && hasTemplateInfo) {
+    const tenantMatches = await searchTenantAccountsSmart(admin, combined, 3);
+    tenant = tenantMatches[0]?.match_score >= 80 ? tenantMatches[0] : null;
   }
   if (!tenant && !hasTemplateInfo) {
     // Generate anyway with a placeholder name so the claim still goes out
