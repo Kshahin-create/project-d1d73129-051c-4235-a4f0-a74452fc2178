@@ -960,7 +960,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
       const fname = tc.function?.name;
       try {
         const out = WRITE_TOOLS.has(fname)
-          ? await runAIWriteTool(admin, userId || "", fname, args)
+          ? await runAIWriteTool(admin, userId || "", fname, args, chat_id)
           : await runAITool(admin, fname, args);
         return { tool_call_id: tc.id, role: "tool", content: JSON.stringify(out).slice(0, 12000) };
       } catch (e) {
