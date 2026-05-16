@@ -391,8 +391,22 @@ async function searchBookingsSmart(admin: any, query: string, limit = 10) {
   return scored;
 }
 
-async function generateFinancialClaimFromText(admin: any, chat_id: number, text: string, overrides: any = {}) {
-  const info = extractCustomerInfo(text);
+async function generateFinancialClaimFromText(admin: any, chat_id: number, text: string, overrides: any = {}, extraContext = "") {
+  // Merge prior chat memory to recover customer info if the current message lacks it
+  let memoryText = "";
+  try {
+    const mem = await loadChatMemory(admin, chat_id, 10);
+    memoryText = mem.filter((m) => m.role === "user").map((m) => m.content).join("\n");
+  } catch {}
+  const combined = [text, extraContext, memoryText].filter(Boolean).join("\n\n");
+  const infoCurrent = extractCustomerInfo(text);
+  const infoMemory = extractCustomerInfo(combined);
+  const info = {
+    fullName: infoCurrent.fullName || infoMemory.fullName,
+    phone: infoCurrent.phone || infoMemory.phone,
+    email: infoCurrent.email || infoMemory.email,
+    business: infoCurrent.business || infoMemory.business,
+  };
   const req = extractUnitRequest(text);
   const building = Number(overrides.building_number || req.building_number || 0);
   const unitNumbers = (Array.isArray(overrides.unit_numbers) && overrides.unit_numbers.length ? overrides.unit_numbers : req.unit_numbers).map(Number).filter(Boolean);
