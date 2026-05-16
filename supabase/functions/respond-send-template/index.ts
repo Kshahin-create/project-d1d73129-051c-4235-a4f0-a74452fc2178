@@ -42,6 +42,12 @@ function buildTemplate(name: TemplateName, params: string[]) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // ⛔ متوقف مؤقتاً: كل رسائل واتساب موقوفة بناءً على طلب المستخدم
+  return new Response(
+    JSON.stringify({ ok: true, disabled: true, message: "WhatsApp sending is temporarily disabled" }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+  );
+
   try {
     const TOKEN = Deno.env.get("RESPOND_IO_API_TOKEN");
     if (!TOKEN) throw new Error("RESPOND_IO_API_TOKEN missing");
