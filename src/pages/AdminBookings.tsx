@@ -246,7 +246,31 @@ const AdminBookings = () => {
     load();
   };
 
-  if (!loading && !user) {
+  const changePaymentPlan = async (b: BookingRow) => {
+    const current = b.payment_plan || "full";
+    const input = window.prompt(
+      `نظام السداد الحالي: ${PLAN_LABEL[current] || current}\nاكتب النظام الجديد: full أو 70 أو 50`,
+      current,
+    );
+    if (!input) return;
+    const next = String(input).trim().toLowerCase();
+    if (!["full", "70", "50"].includes(next)) {
+      toast.error("القيمة يجب أن تكون: full أو 70 أو 50");
+      return;
+    }
+    if (next === current) {
+      toast.info("نفس النظام الحالي");
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === b.id ? { ...r, payment_plan: next } : r)));
+    const { error } = await supabase.from("bookings").update({ payment_plan: next }).eq("id", b.id);
+    if (error) {
+      toast.error("فشل التحديث: " + error.message);
+      load();
+      return;
+    }
+    toast.success(`تم تغيير نظام السداد إلى ${PLAN_LABEL[next]}`);
+  };
     navigate("/auth");
     return null;
   }
