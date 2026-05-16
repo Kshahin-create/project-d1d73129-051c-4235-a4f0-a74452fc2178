@@ -391,8 +391,33 @@ async function searchBookingsSmart(admin: any, query: string, limit = 10) {
   return scored;
 }
 
+async function findExistingBookingForUnits(admin: any, unitIds: string[]) {
+  if (!unitIds.length) return null;
+  const { data: bu } = await admin.from("booking_units")
+    .select("booking_id, unit_id, bookings!inner(id,status,customer_full_name,customer_phone,customer_email,business_name,notes,cr_number,payment_plan,user_id)")
+    .in("unit_id", unitIds);
+  if (!bu?.length) return null;
+  const byBooking = new Map<string, { booking: any; units: Set<string> }>();
+  for (const row of bu as any[]) {
+    const id = row.booking_id;
+    const b = row.bookings;
+    if (!b || !["pending", "confirmed"].includes(b.status)) continue;
+    if (!byBooking.has(id)) byBooking.set(id, { booking: b, units: new Set() });
+    byBooking.get(id)!.units.add(row.unit_id);
+  }
+  const wanted = new Set(unitIds);
+  for (const { booking, units } of byBooking.values()) {
+    if ([...wanted].every((u) => units.has(u))) return booking;
+  }
+  let best: any = null; let bestOverlap = 0;
+  for (const { booking, units } of byBooking.values()) {
+    const overlap = [...wanted].filter((u) => units.has(u)).length;
+    if (overlap > bestOverlap) { bestOverlap = overlap; best = booking; }
+  }
+  return best;
+}
+
 async function generateFinancialClaimFromText(admin: any, chat_id: number, text: string, overrides: any = {}, extraContext = "") {
-  // Merge prior chat memory to recover customer info if the current message lacks it
   let memoryText = "";
   try {
     const mem = await loadChatMemory(admin, chat_id, 10);
@@ -423,58 +448,118 @@ async function generateFinancialClaimFromText(admin: any, chat_id: number, text:
     const missing = unitNumbers.filter((n: number) => !found.has(n));
     return { error: `لم أجد الوحدات: ${missing.join("، ")} في مبنى ${building}` };
   }
+  const unitIds = (units || []).map((u: any) => u.id);
 
-  // Prefer explicit template-extracted info; only fall back to tenant search if message has no customer info at all
-  const hasTemplateInfo = Boolean(info.fullName || info.business || info.phone);
   let tenant: any = null;
   if (overrides.tenant_account_id) {
     const { data } = await admin.from("tenant_accounts").select("*").eq("id", overrides.tenant_account_id).maybeSingle();
     tenant = data;
   }
-  if (!tenant && !hasTemplateInfo) {
-    const tenantMatches = await searchTenantAccountsSmart(admin, combined, 5);
+  if (!tenant) {
+    const tenantMatches = await searchTenantAccountsSmart(admin, combined, 3);
     tenant = tenantMatches[0]?.match_score >= 60 ? tenantMatches[0] : null;
   }
-  // Even when we have template info, try to enrich CR/email/phone from tenant DB
-  if (!tenant && hasTemplateInfo) {
-    const tenantMatches = await searchTenantAccountsSmart(admin, combined, 3);
-    tenant = tenantMatches[0]?.match_score >= 80 ? tenantMatches[0] : null;
-  }
-  if (!tenant && !hasTemplateInfo) {
-    // Generate anyway with a placeholder name so the claim still goes out
-    info.fullName = "عميل";
-  }
 
-  const customer = {
-    fullName: (hasTemplateInfo ? (info.fullName || info.business) : (tenant?.full_name || info.fullName || info.business)) || "عميل",
-    phone: (hasTemplateInfo ? info.phone : (tenant?.phone || info.phone)) || undefined,
-    email: (hasTemplateInfo ? info.email : (tenant?.email || info.email)) || undefined,
-    business: (hasTemplateInfo ? info.business : (tenant?.business_name || info.business)) || undefined,
-    crNumber: tenant?.cr_number || undefined,
-  };
-  const payload = {
-    payment_plan: paymentPlan,
-    target_chat_id: String(chat_id),
-    customer,
-    units: (units || []).sort((a: any, b: any) => Number(a.unit_number) - Number(b.unit_number)).map((u: any) => ({
-      buildingNumber: Number(u.building_number), unitNumber: Number(u.unit_number),
-      activity: u.activity, price: Number(u.price || 0),
-    })),
-  };
   const supaUrl = Deno.env.get("SUPABASE_URL")!;
   const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const r = await fetch(`${supaUrl}/functions/v1/send-financial-claim-pdf`, {
+  const unitsPayload = (units || []).sort((a: any, b: any) => Number(a.unit_number) - Number(b.unit_number)).map((u: any) => ({
+    buildingNumber: Number(u.building_number), unitNumber: Number(u.unit_number),
+    activity: u.activity, price: Number(u.price || 0),
+  }));
+
+  // 1) Existing booking?
+  const existing = await findExistingBookingForUnits(admin, unitIds);
+  if (existing) {
+    const updates: any = {};
+    if (info.fullName && info.fullName !== existing.customer_full_name) updates.customer_full_name = info.fullName;
+    if (info.phone && info.phone !== existing.customer_phone) updates.customer_phone = info.phone;
+    if (info.email && info.email !== existing.customer_email) updates.customer_email = info.email;
+    if (info.business && info.business !== existing.business_name) updates.business_name = info.business;
+    if (paymentPlan && paymentPlan !== existing.payment_plan) updates.payment_plan = paymentPlan;
+    if (Object.keys(updates).length) {
+      await admin.from("bookings").update({ ...updates, updated_at: new Date().toISOString() }).eq("id", existing.id);
+      Object.assign(existing, updates);
+    }
+    const customer = {
+      fullName: existing.customer_full_name, phone: existing.customer_phone,
+      email: existing.customer_email, business: existing.business_name,
+      notes: existing.notes, crNumber: existing.cr_number || tenant?.cr_number || undefined,
+    };
+    const payload = { booking_id: existing.id, payment_plan: existing.payment_plan || paymentPlan, target_chat_id: String(chat_id), customer, units: unitsPayload };
+    const r = await fetch(`${supaUrl}/functions/v1/send-financial-claim-pdf`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc },
+      body: JSON.stringify(payload),
+    });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok && !out.success) return { error: out.error || `فشل إرسال المطالبة (HTTP ${r.status})` };
+    const annual = unitsPayload.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+    const ratio = (existing.payment_plan === "70") ? 0.7 : (existing.payment_plan === "50") ? 0.5 : 1;
+    const payable = Math.round(annual * ratio);
+    const total = payable + Math.round(payable * 0.15);
+    return {
+      ok: true, mode: "existing_booking", booking_id: existing.id,
+      updated_fields: Object.keys(updates), customer, building_number: building,
+      unit_numbers: unitNumbers, payment_plan: existing.payment_plan || paymentPlan,
+      annual, total_with_vat: total,
+    };
+  }
+
+  // 2) No booking → check what we have / what we need
+  const have: any = {
+    fullName: info.fullName || tenant?.full_name || "",
+    phone: info.phone || tenant?.phone || "",
+    email: info.email || tenant?.email || "",
+    business: info.business || tenant?.business_name || "",
+    crNumber: tenant?.cr_number || "",
+  };
+  const missing: string[] = [];
+  if (!have.fullName) missing.push("الاسم الكامل");
+  if (!have.phone) missing.push("رقم الجوال");
+  const unavailable = (units || []).filter((u: any) => u.status !== "available").map((u: any) => Number(u.unit_number));
+
+  if (missing.length || unavailable.length) {
+    return {
+      ok: false, no_booking: true, needs_info: true,
+      have, missing, unavailable,
+      building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan,
+    };
+  }
+
+  // 3) Create booking then send claim
+  const { data: newBookingId, error: createErr } = await admin.rpc("create_booking", {
+    _customer_full_name: have.fullName,
+    _customer_phone: have.phone,
+    _customer_email: have.email || null,
+    _business_name: have.business || null,
+    _notes: null,
+    _unit_ids: unitIds,
+    _cr_number: have.crNumber || null,
+    _payment_plan: paymentPlan,
+  });
+  if (createErr) return { error: `تعذر إنشاء الحجز: ${createErr.message}` };
+
+  const customer = {
+    fullName: have.fullName, phone: have.phone, email: have.email || undefined,
+    business: have.business || undefined, crNumber: have.crNumber || undefined,
+  };
+  const payload = { booking_id: newBookingId, payment_plan: paymentPlan, target_chat_id: String(chat_id), customer, units: unitsPayload };
+  const r2 = await fetch(`${supaUrl}/functions/v1/send-financial-claim-pdf`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc },
     body: JSON.stringify(payload),
   });
-  const out = await r.json().catch(() => ({}));
-  if (!r.ok && !out.success) return { error: out.error || `فشل إرسال المطالبة (HTTP ${r.status})` };
-  const annual = payload.units.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
-  const ratio = paymentPlan === "70" ? 0.7 : paymentPlan === "50" ? 0.5 : 1;
-  const payable = Math.round(annual * ratio);
-  const total = payable + Math.round(payable * 0.15);
-  return { ok: true, customer, building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan, annual, total_with_vat: total, tenant_account_id: tenant?.id || null };
+  const out2 = await r2.json().catch(() => ({}));
+  if (!r2.ok && !out2.success) return { error: out2.error || `تم إنشاء الحجز لكن فشل إرسال المطالبة (HTTP ${r2.status})`, booking_id: newBookingId };
+  const annual2 = unitsPayload.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+  const ratio2 = paymentPlan === "70" ? 0.7 : paymentPlan === "50" ? 0.5 : 1;
+  const payable2 = Math.round(annual2 * ratio2);
+  const total2 = payable2 + Math.round(payable2 * 0.15);
+  return {
+    ok: true, mode: "new_booking", booking_id: newBookingId, customer,
+    building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan,
+    annual: annual2, total_with_vat: total2,
+  };
 }
 
 async function cmdExpiring(admin: any, token: string, chat_id: number) {
@@ -1274,9 +1359,40 @@ Deno.serve(async (req) => {
           if (!(await canWrite(admin, sub.user_id))) {
             await send(token, chat_id, "🚫 تحتاج صلاحية admin أو manager لإنشاء مطالبة مالية");
           } else {
-            const out = await generateFinancialClaimFromText(admin, chat_id, text);
+            const out: any = await generateFinancialClaimFromText(admin, chat_id, text);
             if (out.ok) {
-              await send(token, chat_id, `✅ تم إرسال المطالبة المالية PDF\n👤 ${esc(out.customer.business || out.customer.fullName)}\n🏢 مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>\n🧮 سداد <b>${out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`}</b>\n💰 الإجمالي شامل الضريبة: <b>${fmtNum(out.total_with_vat)}</b> ر.س`);
+              const planLabel = out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`;
+              const modeLine = out.mode === "new_booking"
+                ? `🆕 <b>تم إنشاء حجز جديد</b> — <code>${out.booking_id}</code>`
+                : out.mode === "existing_booking"
+                  ? (out.updated_fields?.length
+                      ? `🔁 <b>تم تحديث الحجز الموجود</b> (${out.updated_fields.join("، ")})`
+                      : `📌 <b>تم استخدام الحجز الموجود</b>`)
+                  : "";
+              await send(token, chat_id, `✅ تم إرسال المطالبة المالية PDF\n${modeLine}\n👤 ${esc(out.customer.business || out.customer.fullName)}\n🏢 مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>\n🧮 سداد <b>${planLabel}</b>\n💰 الإجمالي شامل الضريبة: <b>${fmtNum(out.total_with_vat)}</b> ر.س`);
+            } else if (out.no_booking) {
+              const lines: string[] = ["⚠️ <b>مفيش حجز موجود لهذه الوحدات</b>"];
+              if (out.unavailable?.length) {
+                lines.push(`🚫 الوحدات التالية غير متاحة (محجوزة/مؤجرة): <b>${out.unavailable.join("، ")}</b>`);
+                lines.push("لازم نلغي الحجز القديم أو نختار وحدات تانية.");
+              } else {
+                lines.push("هعمل حجز جديد بعد ما تكمّل البيانات الناقصة 👇");
+              }
+              lines.push("");
+              lines.push("<b>📋 البيانات المتوفرة:</b>");
+              lines.push(`• الاسم: ${esc(out.have.fullName || "—")}`);
+              lines.push(`• الجوال: ${esc(out.have.phone || "—")}`);
+              lines.push(`• البريد: ${esc(out.have.email || "—")}`);
+              lines.push(`• النشاط/الشركة: ${esc(out.have.business || "—")}`);
+              lines.push(`• السجل التجاري: ${esc(out.have.crNumber || "—")}`);
+              lines.push(`• مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>`);
+              lines.push(`• نظام السداد: <b>${out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`}</b>`);
+              if (out.missing?.length) {
+                lines.push("");
+                lines.push(`<b>❓ محتاج منك:</b> ${out.missing.join(" + ")}`);
+                lines.push("ابعتلي البيانات بهذا الشكل:\n<code>الاسم: ...\nالجوال: 05xxxxxxxx\nالنشاط: ...</code>");
+              }
+              await send(token, chat_id, lines.join("\n"));
             } else {
               await send(token, chat_id, `⚠️ ${esc(out.error || "تعذر إنشاء المطالبة")}`);
             }
