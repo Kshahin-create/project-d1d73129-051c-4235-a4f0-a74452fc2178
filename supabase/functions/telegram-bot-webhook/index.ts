@@ -10,6 +10,82 @@ const fmtNum = (n: number) => Number(n || 0).toLocaleString("en-US");
 const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleString("ar-EG-u-nu-latn", { timeZone: "Asia/Riyadh" }) : "—";
 
+const arDigitMap: Record<string, string> = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9","۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9" };
+const normalizeDigits = (s: unknown) => String(s ?? "").replace(/[٠-٩۰-۹]/g, (d) => arDigitMap[d] || d);
+const normalizeArabic = (s: unknown) => normalizeDigits(s)
+  .toLowerCase()
+  .replace(/[\u064B-\u065F\u0670ـ]/g, "")
+  .replace(/[إأآٱ]/g, "ا")
+  .replace(/ؤ/g, "و")
+  .replace(/ئ/g, "ي")
+  .replace(/ى/g, "ي")
+  .replace(/ة/g, "ه")
+  .replace(/[^\p{L}\p{N}]+/gu, " ")
+  .replace(/\s+/g, " ")
+  .trim();
+const digitsOnly = (s: unknown) => normalizeDigits(s).replace(/\D/g, "");
+const STOP_WORDS = new Set("بيانات العميل الاسم الجوال الهاتف البريد النشاط شركة مؤسسة موسسة للتجاره التجارة قطع غيار سيارات اعملي مطلبه مطالبه مالية سداد لوحدات وحدات وحدة رقم مبنى مبني من الي على في عن هذا هذه الخاص به uuid".split(" "));
+function importantTokens(s: unknown) {
+  return normalizeArabic(s).split(" ").filter((w) => w.length > 1 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
+}
+
+function extractLine(text: string, labels: string[]) {
+  for (const label of labels) {
+    const re = new RegExp(`${label}\\s*[:：]\\s*([^\\n]+)`, "iu");
+    const m = text.match(re);
+    if (m?.[1]) return m[1].replace(/👤.*$/u, "").trim();
+  }
+  return "";
+}
+function extractPhone(text: string) {
+  const m = normalizeDigits(text).match(/(?:\+?966|0)?5\d{8}/);
+  if (!m) return "";
+  const d = digitsOnly(m[0]);
+  return d.startsWith("966") ? d : d.startsWith("0") ? `966${d.slice(1)}` : `966${d}`;
+}
+function extractCustomerInfo(text: string) {
+  return {
+    fullName: extractLine(text, ["الاسم", "اسم العميل", "اسم المستأجر"]),
+    phone: extractPhone(text) || extractLine(text, ["الجوال", "الهاتف", "الموبايل"]),
+    email: extractLine(text, ["البريد", "الايميل", "الإيميل"]),
+    business: extractLine(text, ["النشاط", "الشركة", "المؤسسة", "مؤسسة", "اسم النشاط"]),
+  };
+}
+function extractUnitRequest(text: string) {
+  const t = normalizeDigits(text);
+  const building = Number((t.match(/مبن[ىي]\s*رقم?\s*(\d+)/u) || t.match(/building\s*(\d+)/i))?.[1] || 0);
+  const unitNums = new Set<number>();
+  const beforeBuilding = building ? t.split(/مبن[ىي]/u)[0] : t;
+  const unitsSegment = (beforeBuilding.match(/(?:وحدات|الوحدات|وحده|وحدة|لوحدات)\s*(?:رقم)?\s*([\d\s,،و\-]+)/u)?.[1] || beforeBuilding);
+  for (const m of unitsSegment.matchAll(/\d+/g)) {
+    const n = Number(m[0]);
+    if (n > 0 && n < 10000 && n !== building) unitNums.add(n);
+  }
+  for (const m of t.matchAll(/(?:وحده|وحدة)\s*(?:رقم)?\s*(\d+)/gu)) unitNums.add(Number(m[1]));
+  return { building_number: building || undefined, unit_numbers: Array.from(unitNums) };
+}
+function extractPaymentPlan(text: string): "full" | "70" | "50" {
+  const t = normalizeDigits(text);
+  if (/70\s*%|٧٠/.test(t)) return "70";
+  if (/50\s*%|٥٠/.test(t)) return "50";
+  return "full";
+}
+function scoreRow(query: string, row: any, fields: string[]) {
+  const qn = normalizeArabic(query);
+  const qPhone = digitsOnly(query);
+  const blob = fields.map((f) => row[f] ?? "").join(" ");
+  const bn = normalizeArabic(blob);
+  const bPhone = digitsOnly(blob);
+  let score = 0;
+  if (qPhone.length >= 8 && bPhone.includes(qPhone.slice(-9))) score += 120;
+  if (qn && bn.includes(qn)) score += 90;
+  for (const value of fields.map((f) => normalizeArabic(row[f] ?? "")).filter(Boolean)) {
+    if (value && qn.includes(value)) score += 70;
+  }
+  for (const tok of importantTokens(query)) if (bn.includes(tok)) score += 12;
+  return score;
+}
+
 async function tg(token: string, method: string, body: unknown) {
   return await fetch(TG(token, method), {
     method: "POST",
@@ -225,6 +301,128 @@ async function cmdSearch(admin: any, token: string, chat_id: number, q: string) 
   await send(token, chat_id, lines.join("\n"));
 }
 
+async function searchTenantAccountsSmart(admin: any, query: string, limit = 10) {
+  const info = extractCustomerInfo(query);
+  const phone = digitsOnly(info.phone || query);
+  const phrases = [info.fullName, info.business, query].map(normalizeArabic).filter(Boolean);
+  const tokens = Array.from(new Set(importantTokens([info.fullName, info.business, query].join(" ")))).slice(0, 8);
+  const orParts: string[] = [];
+  if (phone.length >= 8) orParts.push(`phone.ilike.%${phone.slice(-9)}%`, `email.ilike.%${phone.slice(-9)}%`);
+  for (const p of phrases) if (p.length >= 3 && p.length <= 80) orParts.push(`full_name.ilike.%${p}%`, `business_name.ilike.%${p}%`);
+  for (const tok of tokens) orParts.push(`full_name.ilike.%${tok}%`, `business_name.ilike.%${tok}%`, `activity_type.ilike.%${tok}%`);
+
+  const rows = new Map<string, any>();
+  if (orParts.length) {
+    const { data } = await admin.from("tenant_accounts")
+      .select("id,user_id,full_name,phone,email,business_name,activity_type,total_price,paid_amount,cr_number")
+      .or(orParts.join(","))
+      .limit(50);
+    for (const r of data || []) rows.set(r.id, r);
+  }
+  if (rows.size === 0) {
+    const { data } = await admin.from("tenant_accounts")
+      .select("id,user_id,full_name,phone,email,business_name,activity_type,total_price,paid_amount,cr_number")
+      .order("created_at", { ascending: false }).limit(200);
+    for (const r of data || []) rows.set(r.id, r);
+  }
+  const scored = Array.from(rows.values())
+    .map((r) => ({ ...r, match_score: scoreRow(query, r, ["full_name","phone","email","business_name","activity_type","cr_number"]) }))
+    .filter((r) => r.match_score > 0)
+    .sort((a, b) => b.match_score - a.match_score)
+    .slice(0, Math.max(1, Math.min(50, Number(limit) || 10)));
+  return scored;
+}
+
+async function searchBookingsSmart(admin: any, query: string, limit = 10) {
+  const info = extractCustomerInfo(query);
+  const phone = digitsOnly(info.phone || query);
+  const tokens = Array.from(new Set(importantTokens([info.fullName, info.business, query].join(" ")))).slice(0, 8);
+  const orParts: string[] = [];
+  if (phone.length >= 8) orParts.push(`customer_phone.ilike.%${phone.slice(-9)}%`, `customer_email.ilike.%${phone.slice(-9)}%`);
+  for (const v of [info.fullName, info.business, query].map(normalizeArabic).filter(Boolean)) {
+    if (v.length >= 3 && v.length <= 80) orParts.push(`customer_full_name.ilike.%${v}%`, `business_name.ilike.%${v}%`, `customer_email.ilike.%${v}%`, `offer_number.ilike.%${v}%`);
+  }
+  for (const tok of tokens) orParts.push(`customer_full_name.ilike.%${tok}%`, `business_name.ilike.%${tok}%`);
+  const rows = new Map<string, any>();
+  if (orParts.length) {
+    const { data } = await admin.from("bookings")
+      .select("id,customer_full_name,customer_phone,customer_email,business_name,offer_number,status,total_price,paid_amount,payment_plan,created_at")
+      .or(orParts.join(","))
+      .order("created_at", { ascending: false }).limit(50);
+    for (const r of data || []) rows.set(r.id, r);
+  }
+  const scored = Array.from(rows.values())
+    .map((r) => ({ ...r, match_score: scoreRow(query, r, ["customer_full_name","customer_phone","customer_email","business_name","offer_number"]) }))
+    .filter((r) => r.match_score > 0)
+    .sort((a, b) => b.match_score - a.match_score)
+    .slice(0, Math.max(1, Math.min(50, Number(limit) || 10)));
+  return scored;
+}
+
+async function generateFinancialClaimFromText(admin: any, chat_id: number, text: string, overrides: any = {}) {
+  const info = extractCustomerInfo(text);
+  const req = extractUnitRequest(text);
+  const building = Number(overrides.building_number || req.building_number || 0);
+  const unitNumbers = (Array.isArray(overrides.unit_numbers) && overrides.unit_numbers.length ? overrides.unit_numbers : req.unit_numbers).map(Number).filter(Boolean);
+  const paymentPlan = (overrides.payment_plan || extractPaymentPlan(text)) as "full" | "70" | "50";
+  if (!building || unitNumbers.length === 0) return { error: "محتاج رقم المبنى وأرقام الوحدات" };
+
+  const { data: units, error: unitErr } = await admin.from("units")
+    .select("id,building_number,unit_number,activity,price,status")
+    .eq("building_number", building)
+    .in("unit_number", unitNumbers);
+  if (unitErr) return { error: unitErr.message };
+  if ((units || []).length !== unitNumbers.length) {
+    const found = new Set((units || []).map((u: any) => Number(u.unit_number)));
+    const missing = unitNumbers.filter((n: number) => !found.has(n));
+    return { error: `لم أجد الوحدات: ${missing.join("، ")} في مبنى ${building}` };
+  }
+
+  let tenant: any = null;
+  if (overrides.tenant_account_id) {
+    const { data } = await admin.from("tenant_accounts").select("*").eq("id", overrides.tenant_account_id).maybeSingle();
+    tenant = data;
+  }
+  if (!tenant) {
+    const tenantMatches = await searchTenantAccountsSmart(admin, text, 5);
+    tenant = tenantMatches[0]?.match_score >= 35 ? tenantMatches[0] : null;
+  }
+  if (!tenant && !info.fullName && !info.business && !info.phone) {
+    return { error: "لم أجد بيانات العميل في الرسالة" };
+  }
+
+  const customer = {
+    fullName: tenant?.full_name || info.fullName || info.business || "عميل",
+    phone: tenant?.phone || info.phone || undefined,
+    email: tenant?.email || info.email || undefined,
+    business: tenant?.business_name || info.business || undefined,
+    crNumber: tenant?.cr_number || undefined,
+  };
+  const payload = {
+    payment_plan: paymentPlan,
+    target_chat_id: String(chat_id),
+    customer,
+    units: (units || []).sort((a: any, b: any) => Number(a.unit_number) - Number(b.unit_number)).map((u: any) => ({
+      buildingNumber: Number(u.building_number), unitNumber: Number(u.unit_number),
+      activity: u.activity, price: Number(u.price || 0),
+    })),
+  };
+  const supaUrl = Deno.env.get("SUPABASE_URL")!;
+  const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const r = await fetch(`${supaUrl}/functions/v1/send-financial-claim-pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc },
+    body: JSON.stringify(payload),
+  });
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok && !out.success) return { error: out.error || `فشل إرسال المطالبة (HTTP ${r.status})` };
+  const annual = payload.units.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+  const ratio = paymentPlan === "70" ? 0.7 : paymentPlan === "50" ? 0.5 : 1;
+  const payable = Math.round(annual * ratio);
+  const total = payable + Math.round(payable * 0.15);
+  return { ok: true, customer, building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan, annual, total_with_vat: total, tenant_account_id: tenant?.id || null };
+}
+
 async function cmdExpiring(admin: any, token: string, chat_id: number) {
   const { data } = await admin.from("bookings")
     .select("id,customer_full_name,expires_at,total_price")
@@ -427,6 +625,24 @@ const AI_TOOLS = [
   {
     type: "function",
     function: {
+      name: "generate_financial_claim",
+      description: "إنشاء وإرسال مطالبة مالية PDF على تيليجرام من بيانات العميل ورقم المبنى والوحدات. استخدمها عند طلب مطالبة/مطلبة مالية.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "نص الرسالة كامل أو اسم/جوال العميل" },
+          tenant_account_id: { type: "string" },
+          building_number: { type: "number" },
+          unit_numbers: { type: "array", items: { type: "number" } },
+          payment_plan: { type: "string", enum: ["full","70","50"], default: "full" },
+        },
+        required: ["building_number","unit_numbers"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "set_booking_paid_amount",
       description: "تعديل المبلغ المدفوع لحجز (استبدال القيمة، ليس إضافة).",
       parameters: { type: "object", properties: { booking_id: { type: "string" }, paid_amount: { type: "number" } }, required: ["booking_id","paid_amount"], additionalProperties: false },
@@ -492,9 +708,9 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     };
   }
   if (name === "search_bookings") {
+    if (args.query) return { results: await searchBookingsSmart(admin, String(args.query), lim(args.limit)) };
     let q = admin.from("bookings").select("id,customer_full_name,customer_phone,business_name,status,total_price,paid_amount,expires_at,created_at").order("created_at",{ascending:false}).limit(lim(args.limit));
     if (args.status) q = q.eq("status", args.status);
-    if (args.query) q = q.or(`customer_full_name.ilike.%${args.query}%,customer_phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`);
     const { data } = await q;
     return { results: data || [] };
   }
@@ -507,11 +723,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     return { results: data || [] };
   }
   if (name === "search_tenants") {
-    const { data } = await admin.from("tenant_accounts")
-      .select("full_name,phone,business_name,total_price,paid_amount")
-      .or(`full_name.ilike.%${args.query}%,phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`)
-      .limit(lim(args.limit));
-    return { results: data || [] };
+    return { results: await searchTenantAccountsSmart(admin, String(args.query || ""), lim(args.limit)) };
   }
   if (name === "units_breakdown") {
     let q = admin.from("units").select("building_number,unit_number,status,price,area,activity,unit_type").limit(lim(args.limit, 30));
@@ -544,11 +756,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
   if (name === "resolve_booking_id") {
     const q = String(args.query || "").trim();
     if (!q) return { error: "query required" };
-    const { data } = await admin.from("bookings")
-      .select("id,customer_full_name,customer_phone,offer_number,status,total_price,created_at")
-      .or(`customer_full_name.ilike.%${q}%,customer_phone.ilike.%${q}%,offer_number.ilike.%${q}%,business_name.ilike.%${q}%`)
-      .order("created_at", { ascending: false }).limit(8);
-    return { results: data || [] };
+    return { results: await searchBookingsSmart(admin, q, 8) };
   }
   if (name === "resolve_unit_id") {
     const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
@@ -558,7 +766,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
   return { error: "unknown tool" };
 }
 
-async function runAIWriteTool(admin: any, userId: string, name: string, args: any): Promise<any> {
+async function runAIWriteTool(admin: any, userId: string, name: string, args: any, chat_id?: number): Promise<any> {
   const allowed = await canWrite(admin, userId);
   if (!allowed) return { error: "forbidden: تحتاج صلاحية admin أو manager" };
 
@@ -624,6 +832,10 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     if (error) return { error: error.message };
     return { ok: true, invoice_id: data, amount: amt };
   }
+  if (name === "generate_financial_claim") {
+    if (!chat_id) return { error: "chat_id required" };
+    return await generateFinancialClaimFromText(admin, chat_id, String(args.query || ""), args);
+  }
   if (name === "set_booking_paid_amount") {
     const v = Number(args.paid_amount);
     if (v < 0) return { error: "invalid amount" };
@@ -646,7 +858,7 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
   return { error: "unknown write tool" };
 }
 
-const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
+const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
 const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
@@ -683,6 +895,8 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     "تتكلم عربي بسيط ومختصر.",
     "عندك أدوات قراءة وأدوات كتابة (تأكيد/إلغاء/تمديد حجز، تسجيل دفعات، تعديل حالة وحدة، تعليم فاتورة مدفوعة).",
     "قبل أي أداة كتابة: لو المستخدم ذكر اسم/رقم بدل UUID، استخدم resolve_booking_id أو resolve_unit_id أولاً.",
+    "لو المستخدم طلب مطالبة/مطلبة مالية وفي الرسالة بيانات عميل + مبنى + وحدات، استخدم generate_financial_claim مباشرة، ومرّر query كنص رسالة المستخدم كامل حتى تستخرج الاسم والجوال والنشاط.",
+    "لو النص يحتوي قالب بيانات العميل، لا تبحث بالرسالة كلها فقط؛ اعتمد على الاسم والجوال والنشاط المستخرجين من القالب.",
     "ممنوع تماماً أن تطبع default_api أو print أو أسماء الأدوات للمستخدم؛ نفّذ الأدوات داخلياً ثم اعرض النتيجة النهائية فقط.",
     "نفّذ مباشرة لو الطلب واضح. لو فيه غموض (أكثر من نتيجة بحث، مبلغ غير محدد، إلخ)، اسأل سؤال توضيحي قصير قبل التنفيذ.",
     "بعد أي تعديل أكّد بالأرقام النهائية.",
@@ -746,9 +960,10 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
       let args: any = {};
       try { args = JSON.parse(tc.function?.arguments || "{}"); } catch {}
       const fname = tc.function?.name;
+      if (fname === "generate_financial_claim" && !args.query) args.query = question;
       try {
         const out = WRITE_TOOLS.has(fname)
-          ? await runAIWriteTool(admin, userId || "", fname, args)
+          ? await runAIWriteTool(admin, userId || "", fname, args, chat_id)
           : await runAITool(admin, fname, args);
         return { tool_call_id: tc.id, role: "tool", content: JSON.stringify(out).slice(0, 12000) };
       } catch (e) {
@@ -941,6 +1156,17 @@ Deno.serve(async (req) => {
         if (m) {
           // Legacy: send booking summary via existing logic by reusing cmdBooking
           await cmdBooking(admin, token, chat_id, m[0]);
+        } else if (/مطالب[هة]|مطلب[هة]\s+مالي[هة]|financial\s+claim/i.test(normalizeArabic(text)) && extractUnitRequest(text).building_number && extractUnitRequest(text).unit_numbers.length) {
+          if (!(await canWrite(admin, sub.user_id))) {
+            await send(token, chat_id, "🚫 تحتاج صلاحية admin أو manager لإنشاء مطالبة مالية");
+          } else {
+            const out = await generateFinancialClaimFromText(admin, chat_id, text);
+            if (out.ok) {
+              await send(token, chat_id, `✅ تم إرسال المطالبة المالية PDF\n👤 ${esc(out.customer.business || out.customer.fullName)}\n🏢 مبنى <b>${out.building_number}</b> — وحدات <b>${out.unit_numbers.join("، ")}</b>\n🧮 سداد <b>${out.payment_plan === "full" ? "100%" : `${out.payment_plan}%`}</b>\n💰 الإجمالي شامل الضريبة: <b>${fmtNum(out.total_with_vat)}</b> ر.س`);
+            } else {
+              await send(token, chat_id, `⚠️ ${esc(out.error || "تعذر إنشاء المطالبة")}`);
+            }
+          }
         } else {
           await aiAnswer(admin, token, chat_id, text, sub.user_id);
         }
