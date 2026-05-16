@@ -211,6 +211,7 @@ export type Database = {
       bookings: {
         Row: {
           business_name: string | null
+          confirmation_sent_at: string | null
           cr_number: string | null
           created_at: string
           customer_email: string | null
@@ -223,6 +224,8 @@ export type Database = {
           offer_number: string | null
           paid_amount: number
           payment_plan: string
+          reminder_12h_sent_at: string | null
+          reminder_4h_sent_at: string | null
           status: string
           total_area: number
           total_price: number
@@ -233,6 +236,7 @@ export type Database = {
         }
         Insert: {
           business_name?: string | null
+          confirmation_sent_at?: string | null
           cr_number?: string | null
           created_at?: string
           customer_email?: string | null
@@ -245,6 +249,8 @@ export type Database = {
           offer_number?: string | null
           paid_amount?: number
           payment_plan?: string
+          reminder_12h_sent_at?: string | null
+          reminder_4h_sent_at?: string | null
           status?: string
           total_area?: number
           total_price?: number
@@ -255,6 +261,7 @@ export type Database = {
         }
         Update: {
           business_name?: string | null
+          confirmation_sent_at?: string | null
           cr_number?: string | null
           created_at?: string
           customer_email?: string | null
@@ -267,6 +274,8 @@ export type Database = {
           offer_number?: string | null
           paid_amount?: number
           payment_plan?: string
+          reminder_12h_sent_at?: string | null
+          reminder_4h_sent_at?: string | null
           status?: string
           total_area?: number
           total_price?: number
