@@ -31,10 +31,13 @@ interface BookingRow {
   units_count: number;
   whatsapp_sent: boolean;
   offer_image_url: string | null;
+  payment_plan: string;
   created_at: string;
   expires_at: string;
   booking_units?: BookingUnitRow[];
 }
+
+const PLAN_LABEL: Record<string, string> = { full: "100%", "70": "70%", "50": "50%" };
 
 const STATUS: Record<string, { label: string; cls: string; Icon: typeof Clock }> = {
   pending: { label: "قيد المراجعة", cls: "bg-amber-500/10 text-amber-600", Icon: Clock },
@@ -241,6 +244,32 @@ const AdminBookings = () => {
     toast.success("تم الإلغاء وإرجاع الوحدات");
     // إعادة التحميل لتحديث الإحصائيات وحالات الوحدات
     load();
+  };
+
+  const changePaymentPlan = async (b: BookingRow) => {
+    const current = b.payment_plan || "full";
+    const input = window.prompt(
+      `نظام السداد الحالي: ${PLAN_LABEL[current] || current}\nاكتب النظام الجديد: full أو 70 أو 50`,
+      current,
+    );
+    if (!input) return;
+    const next = String(input).trim().toLowerCase();
+    if (!["full", "70", "50"].includes(next)) {
+      toast.error("القيمة يجب أن تكون: full أو 70 أو 50");
+      return;
+    }
+    if (next === current) {
+      toast.info("نفس النظام الحالي");
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === b.id ? { ...r, payment_plan: next } : r)));
+    const { error } = await supabase.from("bookings").update({ payment_plan: next }).eq("id", b.id);
+    if (error) {
+      toast.error("فشل التحديث: " + error.message);
+      load();
+      return;
+    }
+    toast.success(`تم تغيير نظام السداد إلى ${PLAN_LABEL[next]}`);
   };
 
   if (!loading && !user) {
@@ -519,6 +548,12 @@ const AdminBookings = () => {
                           <TimerReset className="h-3.5 w-3.5" /> تمديد المدة
                         </button>
                       )}
+                      <button
+                        onClick={() => changePaymentPlan(b)}
+                        className="flex items-center justify-center gap-1 rounded-lg bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-500/20"
+                      >
+                        💳 نظام السداد: {PLAN_LABEL[b.payment_plan || "full"]}
+                      </button>
                     </div>
                   )}
                 </div>
