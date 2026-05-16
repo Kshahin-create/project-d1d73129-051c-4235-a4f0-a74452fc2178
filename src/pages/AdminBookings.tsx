@@ -227,6 +227,28 @@ const AdminBookings = () => {
       }
     }
     toast.success(`تم التأكيد${amount > 0 ? ` • مدفوع ${amount.toLocaleString("en-US")} ر.س` : ""}`);
+    // إرسال رسالة واتساب التأكيد تلقائياً
+    if (!b.confirmation_sent_at && b.customer_phone) {
+      try {
+        const units = (b.booking_units || []).map((u) => String(u.unit_number)).join(", ") || "—";
+        const building = b.booking_units?.[0]?.building_number ?? "—";
+        await supabase.functions.invoke("respond-send-template", {
+          body: {
+            template: "booking_confirmed",
+            phone: b.customer_phone,
+            params: [
+              b.customer_full_name || "عميلنا",
+              b.id.slice(0, 8),
+              String(building),
+              units,
+              Number(b.total_area || 0).toLocaleString("en-US"),
+              Number(b.total_price || 0).toLocaleString("en-US"),
+            ],
+          },
+        });
+        await supabase.from("bookings").update({ confirmation_sent_at: new Date().toISOString() }).eq("id", b.id);
+      } catch (e) { console.warn("whatsapp confirm send failed", e); }
+    }
     load();
   };
 
