@@ -427,10 +427,10 @@ async function generateFinancialClaimFromText(admin: any, chat_id: number, text:
   }
 
   const customer = {
-    fullName: tenant?.full_name || info.fullName || info.business || "عميل",
-    phone: tenant?.phone || info.phone || undefined,
-    email: tenant?.email || info.email || undefined,
-    business: tenant?.business_name || info.business || undefined,
+    fullName: (hasTemplateInfo ? (info.fullName || info.business) : (tenant?.full_name || info.fullName || info.business)) || "عميل",
+    phone: (hasTemplateInfo ? info.phone : (tenant?.phone || info.phone)) || undefined,
+    email: (hasTemplateInfo ? info.email : (tenant?.email || info.email)) || undefined,
+    business: (hasTemplateInfo ? info.business : (tenant?.business_name || info.business)) || undefined,
     crNumber: tenant?.cr_number || undefined,
   };
   const payload = {
