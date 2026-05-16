@@ -410,17 +410,20 @@ async function generateFinancialClaimFromText(admin: any, chat_id: number, text:
     return { error: `لم أجد الوحدات: ${missing.join("، ")} في مبنى ${building}` };
   }
 
+  // Prefer explicit template-extracted info; only fall back to tenant search if message has no customer info at all
+  const hasTemplateInfo = Boolean(info.fullName || info.business || info.phone);
   let tenant: any = null;
   if (overrides.tenant_account_id) {
     const { data } = await admin.from("tenant_accounts").select("*").eq("id", overrides.tenant_account_id).maybeSingle();
     tenant = data;
   }
-  if (!tenant) {
+  if (!tenant && !hasTemplateInfo) {
     const tenantMatches = await searchTenantAccountsSmart(admin, text, 5);
-    tenant = tenantMatches[0]?.match_score >= 35 ? tenantMatches[0] : null;
+    tenant = tenantMatches[0]?.match_score >= 60 ? tenantMatches[0] : null;
   }
-  if (!tenant && !info.fullName && !info.business && !info.phone) {
-    return { error: "لم أجد بيانات العميل في الرسالة" };
+  if (!tenant && !hasTemplateInfo) {
+    // Generate anyway with a placeholder name so the claim still goes out
+    info.fullName = "عميل";
   }
 
   const customer = {
