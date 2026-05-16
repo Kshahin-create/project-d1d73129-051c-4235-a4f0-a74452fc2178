@@ -272,6 +272,43 @@ const AdminBookings = () => {
     toast.success(`تم تغيير نظام السداد إلى ${PLAN_LABEL[next]}`);
   };
 
+  const sendWhatsAppTemplate = async (
+    b: BookingRow,
+    template: "offer_expiry_12h" | "offer_expiry_4h" | "booking_confirmed",
+  ) => {
+    if (!b.customer_phone) return toast.error("لا يوجد رقم جوال للعميل");
+    const units = (b.booking_units || []).map((u) => String(u.unit_number)).join(", ") || "—";
+    const building = b.booking_units?.[0]?.building_number ?? "—";
+    const total = Number(b.total_price || 0).toLocaleString("en-US");
+    const area = Number(b.total_area || 0).toLocaleString("en-US");
+    const expiry = b.expires_at
+      ? new Date(b.expires_at).toLocaleString("ar-EG-u-nu-latn", { dateStyle: "short", timeStyle: "short" })
+      : "—";
+    const bookingNo = b.id.slice(0, 8);
+    const name = b.customer_full_name || "عميلنا";
+    const params =
+      template === "booking_confirmed"
+        ? [name, bookingNo, String(building), units, area, total]
+        : [name, bookingNo, units, String(building), total, expiry];
+
+    const labels: Record<string, string> = {
+      offer_expiry_12h: "تذكير 12 ساعة",
+      offer_expiry_4h: "تذكير 4 ساعات",
+      booking_confirmed: "تأكيد الحجز",
+    };
+    if (!confirm(`إرسال "${labels[template]}" عبر واتساب إلى ${b.customer_phone}؟`)) return;
+    const t = toast.loading("جارٍ الإرسال عبر واتساب...");
+    const { data, error } = await supabase.functions.invoke("respond-send-template", {
+      body: { template, phone: b.customer_phone, params },
+    });
+    toast.dismiss(t);
+    if (error || (data as any)?.error) {
+      toast.error("فشل الإرسال: " + (error?.message || (data as any)?.error || "خطأ"));
+    } else {
+      toast.success("تم إرسال الرسالة بنجاح");
+    }
+  };
+
   if (!loading && !user) {
     navigate("/auth");
     return null;
