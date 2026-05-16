@@ -432,8 +432,13 @@ async function generateFinancialClaimFromText(admin: any, chat_id: number, text:
     tenant = data;
   }
   if (!tenant && !hasTemplateInfo) {
-    const tenantMatches = await searchTenantAccountsSmart(admin, text, 5);
+    const tenantMatches = await searchTenantAccountsSmart(admin, combined, 5);
     tenant = tenantMatches[0]?.match_score >= 60 ? tenantMatches[0] : null;
+  }
+  // Even when we have template info, try to enrich CR/email/phone from tenant DB
+  if (!tenant && hasTemplateInfo) {
+    const tenantMatches = await searchTenantAccountsSmart(admin, combined, 3);
+    tenant = tenantMatches[0]?.match_score >= 80 ? tenantMatches[0] : null;
   }
   if (!tenant && !hasTemplateInfo) {
     // Generate anyway with a placeholder name so the claim still goes out
