@@ -271,6 +271,8 @@ const AdminBookings = () => {
     }
     toast.success(`تم تغيير نظام السداد إلى ${PLAN_LABEL[next]}`);
   };
+
+  if (!loading && !user) {
     navigate("/auth");
     return null;
   }
