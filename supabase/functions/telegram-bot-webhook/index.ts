@@ -359,6 +359,70 @@ async function searchBookingsSmart(admin: any, query: string, limit = 10) {
   return scored;
 }
 
+async function generateFinancialClaimFromText(admin: any, chat_id: number, text: string, overrides: any = {}) {
+  const info = extractCustomerInfo(text);
+  const req = extractUnitRequest(text);
+  const building = Number(overrides.building_number || req.building_number || 0);
+  const unitNumbers = (Array.isArray(overrides.unit_numbers) && overrides.unit_numbers.length ? overrides.unit_numbers : req.unit_numbers).map(Number).filter(Boolean);
+  const paymentPlan = (overrides.payment_plan || extractPaymentPlan(text)) as "full" | "70" | "50";
+  if (!building || unitNumbers.length === 0) return { error: "محتاج رقم المبنى وأرقام الوحدات" };
+
+  const { data: units, error: unitErr } = await admin.from("units")
+    .select("id,building_number,unit_number,activity,price,status")
+    .eq("building_number", building)
+    .in("unit_number", unitNumbers);
+  if (unitErr) return { error: unitErr.message };
+  if ((units || []).length !== unitNumbers.length) {
+    const found = new Set((units || []).map((u: any) => Number(u.unit_number)));
+    const missing = unitNumbers.filter((n: number) => !found.has(n));
+    return { error: `لم أجد الوحدات: ${missing.join("، ")} في مبنى ${building}` };
+  }
+
+  let tenant: any = null;
+  if (overrides.tenant_account_id) {
+    const { data } = await admin.from("tenant_accounts").select("*").eq("id", overrides.tenant_account_id).maybeSingle();
+    tenant = data;
+  }
+  if (!tenant) {
+    const tenantMatches = await searchTenantAccountsSmart(admin, text, 5);
+    tenant = tenantMatches[0]?.match_score >= 35 ? tenantMatches[0] : null;
+  }
+  if (!tenant && !info.fullName && !info.business && !info.phone) {
+    return { error: "لم أجد بيانات العميل في الرسالة" };
+  }
+
+  const customer = {
+    fullName: tenant?.full_name || info.fullName || info.business || "عميل",
+    phone: tenant?.phone || info.phone || undefined,
+    email: tenant?.email || info.email || undefined,
+    business: tenant?.business_name || info.business || undefined,
+    crNumber: tenant?.cr_number || undefined,
+  };
+  const payload = {
+    payment_plan: paymentPlan,
+    target_chat_id: String(chat_id),
+    customer,
+    units: (units || []).sort((a: any, b: any) => Number(a.unit_number) - Number(b.unit_number)).map((u: any) => ({
+      buildingNumber: Number(u.building_number), unitNumber: Number(u.unit_number),
+      activity: u.activity, price: Number(u.price || 0),
+    })),
+  };
+  const supaUrl = Deno.env.get("SUPABASE_URL")!;
+  const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const r = await fetch(`${supaUrl}/functions/v1/send-financial-claim-pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc },
+    body: JSON.stringify(payload),
+  });
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok && !out.success) return { error: out.error || `فشل إرسال المطالبة (HTTP ${r.status})` };
+  const annual = payload.units.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+  const ratio = paymentPlan === "70" ? 0.7 : paymentPlan === "50" ? 0.5 : 1;
+  const payable = Math.round(annual * ratio);
+  const total = payable + Math.round(payable * 0.15);
+  return { ok: true, customer, building_number: building, unit_numbers: unitNumbers, payment_plan: paymentPlan, annual, total_with_vat: total, tenant_account_id: tenant?.id || null };
+}
+
 async function cmdExpiring(admin: any, token: string, chat_id: number) {
   const { data } = await admin.from("bookings")
     .select("id,customer_full_name,expires_at,total_price")
