@@ -35,6 +35,7 @@ interface BookingRow {
   created_at: string;
   expires_at: string;
   confirmation_sent_at?: string | null;
+  offer_number?: string | null;
   booking_units?: BookingUnitRow[];
 }
 
@@ -239,7 +240,7 @@ const AdminBookings = () => {
             phone: b.customer_phone,
             params: [
               b.customer_full_name || "عميلنا",
-              b.id.slice(0, 8),
+              b.offer_number || b.id.slice(0, 8),
               String(building),
               units,
               Number(b.total_area || 0).toLocaleString("en-US"),
@@ -307,7 +308,7 @@ const AdminBookings = () => {
     const expiry = b.expires_at
       ? new Date(b.expires_at).toLocaleString("ar-EG-u-nu-latn", { dateStyle: "short", timeStyle: "short" })
       : "—";
-    const bookingNo = b.id.slice(0, 8);
+    const bookingNo = b.offer_number || b.id.slice(0, 8);
     const name = b.customer_full_name || "عميلنا";
     const params =
       template === "booking_confirmed"

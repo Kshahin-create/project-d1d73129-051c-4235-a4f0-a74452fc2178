@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const horizon = new Date(now + 13 * 3600 * 1000).toISOString();
     const { data: rows, error } = await supabase
       .from("bookings")
-      .select("id, customer_full_name, customer_phone, total_price, expires_at, reminder_12h_sent_at, reminder_4h_sent_at, booking_units(building_number,unit_number)")
+      .select("id, offer_number, customer_full_name, customer_phone, total_price, expires_at, reminder_12h_sent_at, reminder_4h_sent_at, booking_units(building_number,unit_number)")
       .eq("status", "pending")
       .lte("expires_at", horizon)
       .gt("expires_at", new Date(now).toISOString());
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       });
       const params = [
         b.customer_full_name || "عميلنا",
-        b.id.slice(0, 8),
+        b.offer_number || b.id.slice(0, 8),
         units,
         String(building),
         total,
