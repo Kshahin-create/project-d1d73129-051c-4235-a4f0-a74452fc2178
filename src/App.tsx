@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import Index from "./pages/Index.tsx";
 import Booking from "./pages/Booking.tsx";
 import Privacy from "./pages/Privacy.tsx";
@@ -77,6 +78,7 @@ const App = () => (
         </Routes>
         <FloatingWhatsApp />
         <AdminSidebar />
+        <InstallPrompt />
         </MaintenanceGate>
       </BrowserRouter>
     </TooltipProvider>
