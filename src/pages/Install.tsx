@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Smartphone, Share, Plus, Download, Apple, Check, MoreVertical } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -84,16 +83,12 @@ const Install = () => {
     }
   };
 
+  useEffect(() => {
+    document.title = "تثبيت التطبيق على هاتفك | نخبة تسكين العقارية";
+  }, []);
+
   return (
     <>
-      <Helmet>
-        <title>تثبيت التطبيق على هاتفك | نخبة تسكين العقارية</title>
-        <meta
-          name="description"
-          content="نزّل موقع نخبة تسكين العقارية كتطبيق على هاتفك الآيفون أو الأندرويد بضغطة واحدة."
-        />
-        <link rel="canonical" href="https://mnicejar.com/install" />
-      </Helmet>
 
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
