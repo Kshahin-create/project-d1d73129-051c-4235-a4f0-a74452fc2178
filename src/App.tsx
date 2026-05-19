@@ -32,6 +32,7 @@ import TenantPortal from "./pages/TenantPortal.tsx";
 import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
 import Invoice from "./pages/Invoice.tsx";
 import TelegramSettings from "./pages/TelegramSettings.tsx";
+import Install from "./pages/Install.tsx";
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const App = () => (
           <Route path="/tenant" element={<TenantPortal />} />
           <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
           <Route path="/invoice/:id" element={<Invoice />} />
+          <Route path="/install" element={<Install />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
