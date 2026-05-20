@@ -10,6 +10,7 @@ import {
   Users,
   Lock,
   Plus,
+  Minus,
   Search,
   KeyRound,
   Link2,
@@ -374,6 +375,31 @@ export default function AdminTenantAccounts() {
                           >
                             <Plus className="h-3 w-3" />
                             إضافة دفعة
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const paid = Number(r.paid_amount || 0);
+                              if (paid <= 0) return toast.error("لا يوجد مدفوع لخصمه");
+                              const input = window.prompt(
+                                `أدخل المبلغ المراد خصمه من ${r.full_name}\nالمدفوع حاليًا: ${paid.toLocaleString()} ر.س`,
+                                "",
+                              );
+                              if (input === null) return;
+                              const amount = Number(input);
+                              if (!Number.isFinite(amount) || amount <= 0) return toast.error("أدخل مبلغًا صحيحًا");
+                              const notes = window.prompt("سبب الخصم (اختياري)", "تصحيح مبلغ زائد") || null;
+                              if (!window.confirm(`تأكيد خصم ${amount.toLocaleString()} ر.س من المدفوع؟`)) return;
+                              const { error } = await supabase.rpc("adjust_payment" as any, {
+                                _tenant_account_id: r.id, _amount: -Math.abs(amount), _notes: notes,
+                              });
+                              if (error) return toast.error(error.message);
+                              toast.success("تم خصم المبلغ");
+                              load();
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+                          >
+                            <Minus className="h-3 w-3" />
+                            خصم
                           </button>
                         </div>
                       </td>
