@@ -1091,6 +1091,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_payment: {
+        Args: { _amount: number; _notes?: string; _tenant_account_id: string }
+        Returns: string
+      }
       admin_link_tenant_units: {
         Args: { _tenant_account_id: string; _unit_ids: string[] }
         Returns: undefined
