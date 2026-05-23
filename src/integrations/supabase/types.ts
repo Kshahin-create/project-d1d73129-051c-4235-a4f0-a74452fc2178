@@ -1206,6 +1206,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      ensure_tenant_account_for_tenant: {
+        Args: { _tenant_id: string }
+        Returns: string
+      }
       expire_pending_bookings: { Args: never; Returns: number }
       extend_booking_expiry: {
         Args: { _booking_id: string; _hours: number }
@@ -1295,6 +1299,7 @@ export type Database = {
         Args: { _paid_amount: number; _tenant_account_id: string }
         Returns: undefined
       }
+      sync_all_rented_units_to_accounts: { Args: never; Returns: number }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
       unlink_my_telegram: { Args: { _chat_id: number }; Returns: undefined }
       verify_api_key: {
