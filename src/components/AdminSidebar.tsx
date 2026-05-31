@@ -21,6 +21,7 @@ import {
   Wrench,
   Activity,
   Bot,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,7 @@ const allLinks: ExtLink[] = [
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
   { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
   { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
+  { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, managerOnly: true },
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
   { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },

@@ -565,6 +565,45 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          full_name: string
+          id: string
+          last_message_at: string | null
+          last_message_text: string | null
+          notes: string | null
+          phone: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          full_name: string
+          id?: string
+          last_message_at?: string | null
+          last_message_text?: string | null
+          notes?: string | null
+          phone: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          full_name?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_text?: string | null
+          notes?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       one_time_tokens: {
         Row: {
           access_token: string
@@ -1243,6 +1282,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_leads: { Args: { _rows: Json }; Returns: number }
       list_my_telegram_links: {
         Args: never
         Returns: {
