@@ -88,6 +88,9 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          buildings_sheet_id: string | null
+          buildings_sheet_last_direction: string | null
+          buildings_sheet_last_sync_at: string | null
           id: number
           leads_sheet_id: string | null
           leads_sheet_last_sync_at: string | null
@@ -98,6 +101,9 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          buildings_sheet_id?: string | null
+          buildings_sheet_last_direction?: string | null
+          buildings_sheet_last_sync_at?: string | null
           id?: number
           leads_sheet_id?: string | null
           leads_sheet_last_sync_at?: string | null
@@ -108,6 +114,9 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          buildings_sheet_id?: string | null
+          buildings_sheet_last_direction?: string | null
+          buildings_sheet_last_sync_at?: string | null
           id?: number
           leads_sheet_id?: string | null
           leads_sheet_last_sync_at?: string | null
