@@ -44,17 +44,74 @@ async function gw(path: string, init: RequestInit = {}) {
 }
 
 function tabName(b: number) { return `مبنى ${b}`; }
+const DASHBOARD_TAB = "داشبورد";
 
 async function ensureTabs(sheetId: string, buildings: number[]) {
   const meta = await gw(`/${sheetId}`);
   const existing = new Set<string>((meta.sheets||[]).map((s:any)=>s.properties?.title));
-  const requests = buildings
-    .map(b => tabName(b))
+  const titles = [...buildings.map(b => tabName(b)), DASHBOARD_TAB];
+  const requests = titles
     .filter(t => !existing.has(t))
     .map(title => ({ addSheet: { properties: { title } } }));
   if (requests.length) {
     await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests }) });
   }
+}
+
+type BStat = { b: number; total: number; available: number; reserved: number; rented: number; priceTotal: number; priceRented: number; priceReserved: number; paid: number };
+
+async function writeDashboard(sheetId: string, perBuilding: BStat[]) {
+  const sum = (k: keyof BStat) => perBuilding.reduce((a, x) => a + (x[k] as number), 0);
+  const totalUnits = sum("total");
+  const available = sum("available");
+  const reserved = sum("reserved");
+  const rented = sum("rented");
+  const priceTotal = sum("priceTotal");
+  const priceRented = sum("priceRented");
+  const priceReserved = sum("priceReserved");
+  const paid = sum("paid");
+  const expectedAnnual = priceRented + priceReserved;
+  const remaining = expectedAnnual - paid;
+  const occupancy = totalUnits ? ((rented + reserved) / totalUnits) * 100 : 0;
+  const rentedPct = totalUnits ? (rented / totalUnits) * 100 : 0;
+  const fmtMoney = (n: number) => Math.round(n).toLocaleString("en-US") + " ر.س";
+  const fmtPct = (n: number) => n.toFixed(1) + "%";
+
+  const rows: (string | number)[][] = [
+    ["لوحة المعلومات — مدينة المعجار", "", "", "", ""],
+    [`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""],
+    ["", "", "", "", ""],
+    ["ملخص عام", "", "", "", ""],
+    ["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال (محجوز+مؤجر)", fmtPct(occupancy)],
+    ["متاحة", available, "", "نسبة المؤجر فقط", fmtPct(rentedPct)],
+    ["محجوزة", reserved, "", "", ""],
+    ["مؤجرة", rented, "", "", ""],
+    ["", "", "", "", ""],
+    ["الإيرادات السنوية", "", "", "", ""],
+    ["إجمالي قيمة الوحدات (لو كله مؤجر)", fmtMoney(priceTotal), "", "", ""],
+    ["قيمة الوحدات المؤجرة", fmtMoney(priceRented), "", "", ""],
+    ["قيمة الوحدات المحجوزة", fmtMoney(priceReserved), "", "", ""],
+    ["الإيراد المتوقع (مؤجر + محجوز)", fmtMoney(expectedAnnual), "", "", ""],
+    ["المحصّل فعلياً", fmtMoney(paid), "", "", ""],
+    ["المتبقي من الإيراد المتوقع", fmtMoney(remaining), "", "", ""],
+    ["نسبة التحصيل من المتوقع", fmtPct(expectedAnnual ? (paid / expectedAnnual) * 100 : 0), "", "", ""],
+    ["", "", "", "", ""],
+    ["تفصيل لكل مبنى — العدد", "", "", "", ""],
+    ["المبنى", "إجمالي الوحدات", "متاحة", "محجوزة", "مؤجرة"],
+  ];
+  for (const r of perBuilding) rows.push([`مبنى ${r.b}`, r.total, r.available, r.reserved, r.rented]);
+  rows.push(["", "", "", "", ""]);
+  rows.push(["تفصيل لكل مبنى — المالي", "", "", "", ""]);
+  rows.push(["المبنى", "قيمة المؤجر", "قيمة المحجوز", "إجمالي متوقع", "نسبة الإشغال"]);
+  for (const r of perBuilding) {
+    const occ = r.total ? ((r.rented + r.reserved) / r.total) * 100 : 0;
+    rows.push([`مبنى ${r.b}`, fmtMoney(r.priceRented), fmtMoney(r.priceReserved), fmtMoney(r.priceRented + r.priceReserved), fmtPct(occ)]);
+  }
+
+  await gw(`/${sheetId}/values/${DASHBOARD_TAB}!A:Z:clear`, { method: "POST", body: "{}" });
+  await gw(`/${sheetId}/values/${DASHBOARD_TAB}!A1?valueInputOption=RAW`, {
+    method: "PUT", body: JSON.stringify({ values: rows }),
+  });
 }
 
 Deno.serve(async (req) => {
