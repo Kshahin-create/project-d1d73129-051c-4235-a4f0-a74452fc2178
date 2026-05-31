@@ -32,18 +32,27 @@ const BOOKING_STATUS_AR: Record<string,string> = {
 
 async function gw(path: string, init: RequestInit = {}) {
   if (!LOVABLE_API_KEY || !SHEETS_API_KEY) throw new Error("Google Sheets connector not configured");
-  const res = await fetch(`${GATEWAY}${path}`, {
-    ...init,
-    headers: {
-      ...(init.headers||{}),
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": SHEETS_API_KEY,
-      "Content-Type": "application/json",
-    },
-  });
-  const t = await res.text();
-  if (!res.ok) throw new Error(`Sheets API ${res.status}: ${t.slice(0,400)}`);
-  return t ? JSON.parse(t) : {};
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const res = await fetch(`${GATEWAY}${path}`, {
+      ...init,
+      headers: {
+        ...(init.headers||{}),
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": SHEETS_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+    const t = await res.text();
+    if (res.status === 429) {
+      const wait = 8000 + attempt * 6000;
+      console.warn(`Sheets 429, waiting ${wait}ms (attempt ${attempt+1})`);
+      await new Promise(r => setTimeout(r, wait));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Sheets API ${res.status}: ${t.slice(0,400)}`);
+    return t ? JSON.parse(t) : {};
+  }
+  throw new Error("Sheets API 429: exceeded retry attempts");
 }
 
 function tabName(b: number) { return `مبنى ${b}`; }
@@ -83,66 +92,177 @@ async function writeTab(sheetId: string, tab: string, rows: (string|number)[][])
   });
 }
 
-async function formatDataTabs(sheetId: string, tabSheetIds: number[], cols: number) {
-  const requests: any[] = [];
-  for (const sid of tabSheetIds) {
-    requests.push(
-      // RTL
-      { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true }, fields: "rightToLeft" }},
-      // Freeze header
-      { updateSheetProperties: { properties: { sheetId: sid, gridProperties: { frozenRowCount: 1 } }, fields: "gridProperties.frozenRowCount" }},
-      // Header formatting
-      { repeatCell: {
-        range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols },
-        cell: { userEnteredFormat: {
-          backgroundColor: { red: 0.13, green: 0.30, blue: 0.55 },
-          textFormat: { foregroundColor: { red: 1, green: 1, blue: 1 }, bold: true, fontSize: 11 },
-          horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
-        }},
-        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
-      }},
-      // Auto resize
-      { autoResizeDimensions: { dimensions: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: cols } }},
-      // Row banding (alternating colors)
-      { addBanding: { bandedRange: {
-        range: { sheetId: sid, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: cols },
-        rowProperties: {
-          headerColor: { red: 0.13, green: 0.30, blue: 0.55 },
-          firstBandColor: { red: 1, green: 1, blue: 1 },
-          secondBandColor: { red: 0.96, green: 0.97, blue: 0.99 },
-        },
-      }}},
-    );
-  }
-  // banding may fail if already exists — split into safe + risky
-  const safe = requests.filter(r => !r.addBanding);
-  try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests: safe }) }); } catch (e) { console.error("format failed", e); }
-  for (const r of requests.filter(r => r.addBanding)) {
-    try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests: [r] }) }); } catch {}
+// Pending writes accumulator → flushed in one batchClear + one values:batchUpdate
+type PendingWrite = { tab: string; rows: (string|number)[][] };
+async function flushWrites(sheetId: string, writes: PendingWrite[]) {
+  if (!writes.length) return;
+  // Clear all ranges in one call
+  await gw(`/${sheetId}/values:batchClear`, {
+    method: "POST",
+    body: JSON.stringify({ ranges: writes.map(w => `${w.tab}!A:Z`) }),
+  });
+  // Write all values in one call
+  await gw(`/${sheetId}/values:batchUpdate`, {
+    method: "POST",
+    body: JSON.stringify({
+      valueInputOption: "RAW",
+      data: writes.map(w => ({ range: `${w.tab}!A1`, values: w.rows })),
+    }),
+  });
+}
+
+const SOLID = "SOLID";
+const BORDER = { style: SOLID, color: { red: 0.78, green: 0.82, blue: 0.88 } };
+const HEADER_BG = { red: 0.10, green: 0.27, blue: 0.50 };
+const HEADER_FG = { red: 1, green: 1, blue: 1 };
+
+async function safeBatch(sheetId: string, requests: any[]) {
+  if (!requests.length) return;
+  try {
+    await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests }) });
+  } catch (e) {
+    // banding fails when it already exists — strip banding and retry once
+    const filtered = requests.filter(r => !r.addBanding);
+    if (filtered.length && filtered.length !== requests.length) {
+      try { await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests: filtered }) }); } catch (e2) { console.error("safeBatch retry failed", e2); }
+    } else {
+      console.error("safeBatch failed", e);
+    }
   }
 }
 
-async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
-  const requests: any[] = [
-    { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true }, fields: "rightToLeft" }},
-    { updateSheetProperties: { properties: { sheetId: sid, gridProperties: { frozenRowCount: 0 } }, fields: "gridProperties.frozenRowCount" }},
-    // Title row merge + style
-    { mergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 5 }, mergeType: "MERGE_ALL" }},
-    { repeatCell: {
-      range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 5 },
+// money columns per tab (0-based)
+function moneyCols(tab: string): number[] {
+  if (tab.startsWith("مبنى")) return [4, 5, 6]; // price/paid/remaining
+  if (tab === BOOKINGS_TAB) return [9, 10, 11];
+  if (tab === ACCOUNTS_TAB) return [6, 7, 8];
+  if (tab === INVOICES_TAB) return [5, 6, 7];
+  return [];
+}
+
+function buildDataTabRequests(sid: number, tab: string, cols: number, rowCount: number): any[] {
+  const requests: any[] = [];
+  requests.push({ updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true, gridProperties: { frozenRowCount: 1 } }, fields: "rightToLeft,gridProperties.frozenRowCount" }});
+  requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: cols }, properties: { pixelSize: 150 }, fields: "pixelSize" }});
+  if (rowCount > 0) {
+    requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 32 }, fields: "pixelSize" }});
+  }
+  requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 40 }, fields: "pixelSize" }});
+  requests.push({ repeatCell: {
+    range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols },
+    cell: { userEnteredFormat: {
+      backgroundColor: HEADER_BG,
+      textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 12, fontFamily: "Cairo" },
+      horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE", wrapStrategy: "WRAP",
+    }},
+    fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
+  }});
+  if (rowCount > 1) {
+    requests.push({ repeatCell: {
+      range: { sheetId: sid, startRowIndex: 1, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
       cell: { userEnteredFormat: {
-        backgroundColor: { red: 0.10, green: 0.25, blue: 0.50 },
-        textFormat: { foregroundColor: { red: 1, green: 1, blue: 1 }, bold: true, fontSize: 16 },
+        textFormat: { fontSize: 11, fontFamily: "Cairo" },
+        horizontalAlignment: "RIGHT", verticalAlignment: "MIDDLE", wrapStrategy: "WRAP",
+      }},
+      fields: "userEnteredFormat(textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
+    }});
+    for (const c of moneyCols(tab)) {
+      requests.push({ repeatCell: {
+        range: { sheetId: sid, startRowIndex: 1, endRowIndex: rowCount, startColumnIndex: c, endColumnIndex: c + 1 },
+        cell: { userEnteredFormat: {
+          numberFormat: { type: "NUMBER", pattern: "#,##0\" ر.س\"" },
+          horizontalAlignment: "CENTER",
+        }},
+        fields: "userEnteredFormat(numberFormat,horizontalAlignment)",
+      }});
+    }
+  }
+  requests.push({ updateBorders: {
+    range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
+    top: BORDER, bottom: BORDER, left: BORDER, right: BORDER, innerHorizontal: BORDER, innerVertical: BORDER,
+  }});
+  requests.push({ addBanding: { bandedRange: {
+    range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
+    rowProperties: {
+      headerColor: HEADER_BG,
+      firstBandColor: { red: 1, green: 1, blue: 1 },
+      secondBandColor: { red: 0.96, green: 0.97, blue: 0.99 },
+    },
+  }}});
+  return requests;
+}
+
+function buildDashboardRequests(sid: number, rowCount: number, sectionRows: number[], tableHeaderRows: number[]): any[] {
+  const COLS = 5;
+  const requests: any[] = [
+    { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true, gridProperties: { frozenRowCount: 0 } }, fields: "rightToLeft,gridProperties.frozenRowCount" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 300 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 1, endIndex: 2 }, properties: { pixelSize: 200 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 2, endIndex: 3 }, properties: { pixelSize: 40 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 3, endIndex: 4 }, properties: { pixelSize: 240 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 4, endIndex: 5 }, properties: { pixelSize: 200 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 34 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 60 }, fields: "pixelSize" }},
+    { mergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
+    { repeatCell: {
+      range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: COLS },
+      cell: { userEnteredFormat: {
+        backgroundColor: HEADER_BG,
+        textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 20, fontFamily: "Cairo" },
         horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
       }},
       fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
     }},
-    // Section labels: bold large for "ملخص عام" / "الإيرادات السنوية" / تفصيل
-    { autoResizeDimensions: { dimensions: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: 5 } }},
-    // Default row height
-    { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 28 }, fields: "pixelSize" }},
+    { mergeCells: { range: { sheetId: sid, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
+    { repeatCell: {
+      range: { sheetId: sid, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: COLS },
+      cell: { userEnteredFormat: {
+        backgroundColor: { red: 0.93, green: 0.95, blue: 0.98 },
+        textFormat: { foregroundColor: { red: 0.30, green: 0.34, blue: 0.40 }, italic: true, fontSize: 10, fontFamily: "Cairo" },
+        horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+      }},
+      fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+    }},
+    { repeatCell: {
+      range: { sheetId: sid, startRowIndex: 2, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: COLS },
+      cell: { userEnteredFormat: {
+        textFormat: { fontSize: 12, fontFamily: "Cairo" },
+        verticalAlignment: "MIDDLE", horizontalAlignment: "RIGHT",
+      }},
+      fields: "userEnteredFormat(textFormat,verticalAlignment,horizontalAlignment)",
+    }},
+    { updateBorders: {
+      range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: COLS },
+      top: BORDER, bottom: BORDER, left: BORDER, right: BORDER, innerHorizontal: BORDER, innerVertical: BORDER,
+    }},
   ];
-  try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests }) }); } catch (e) { console.error("dash format failed", e); }
+  for (const r of sectionRows) {
+    requests.push(
+      { mergeCells: { range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
+      { repeatCell: {
+        range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: COLS },
+        cell: { userEnteredFormat: {
+          backgroundColor: { red: 0.20, green: 0.40, blue: 0.65 },
+          textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 14, fontFamily: "Cairo" },
+          horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+        }},
+        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+      }},
+      { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: r, endIndex: r + 1 }, properties: { pixelSize: 44 }, fields: "pixelSize" }},
+    );
+  }
+  for (const r of tableHeaderRows) {
+    requests.push({ repeatCell: {
+      range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: COLS },
+      cell: { userEnteredFormat: {
+        backgroundColor: { red: 0.85, green: 0.89, blue: 0.95 },
+        textFormat: { bold: true, fontSize: 11, fontFamily: "Cairo" },
+        horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+      }},
+      fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+    }});
+  }
+  return requests;
 }
 
 type BStat = { b: number; total: number; available: number; reserved: number; rented: number; priceTotal: number; priceRented: number; priceReserved: number; paid: number };
@@ -156,7 +276,7 @@ function fmtPhone(raw: string) {
   return s;
 }
 
-function buildDashboardRows(perBuilding: BStat[]): (string|number)[][] {
+function buildDashboardRows(perBuilding: BStat[]): { rows: (string|number)[][]; sectionRows: number[]; tableHeaderRows: number[] } {
   const sum = (k: keyof BStat) => perBuilding.reduce((a, x) => a + (x[k] as number), 0);
   const totalUnits = sum("total");
   const available = sum("available");
@@ -173,37 +293,49 @@ function buildDashboardRows(perBuilding: BStat[]): (string|number)[][] {
   const fmtMoney = (n: number) => Math.round(n).toLocaleString("en-US") + " ر.س";
   const fmtPct = (n: number) => n.toFixed(1) + "%";
 
-  const rows: (string | number)[][] = [
-    ["لوحة المعلومات — مدينة المعجار", "", "", "", ""],
-    [`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""],
-    ["", "", "", "", ""],
-    ["ملخص عام", "", "", "", ""],
-    ["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال", fmtPct(occupancy)],
-    ["متاحة", available, "", "نسبة المؤجر", fmtPct(rentedPct)],
-    ["محجوزة", reserved, "", "", ""],
-    ["مؤجرة", rented, "", "", ""],
-    ["", "", "", "", ""],
-    ["الإيرادات السنوية", "", "", "", ""],
-    ["إجمالي قيمة الوحدات (لو كله مؤجر)", fmtMoney(priceTotal), "", "", ""],
-    ["قيمة الوحدات المؤجرة", fmtMoney(priceRented), "", "", ""],
-    ["قيمة الوحدات المحجوزة", fmtMoney(priceReserved), "", "", ""],
-    ["الإيراد المتوقع (مؤجر + محجوز)", fmtMoney(expectedAnnual), "", "", ""],
-    ["المحصّل فعلياً", fmtMoney(paid), "", "", ""],
-    ["المتبقي من الإيراد المتوقع", fmtMoney(remaining), "", "", ""],
-    ["نسبة التحصيل من المتوقع", fmtPct(expectedAnnual ? (paid / expectedAnnual) * 100 : 0), "", "", ""],
-    ["", "", "", "", ""],
-    ["تفصيل لكل مبنى — العدد", "", "", "", ""],
-    ["المبنى", "إجمالي الوحدات", "متاحة", "محجوزة", "مؤجرة"],
-  ];
+  const rows: (string | number)[][] = [];
+  const sectionRows: number[] = [];
+  const tableHeaderRows: number[] = [];
+
+  rows.push(["لوحة المعلومات — مدينة المعجار", "", "", "", ""]);
+  rows.push([`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""]);
+  rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
+  rows.push(["ملخص عام", "", "", "", ""]);
+  rows.push(["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال", fmtPct(occupancy)]);
+  rows.push(["متاحة", available, "", "نسبة المؤجر", fmtPct(rentedPct)]);
+  rows.push(["محجوزة", reserved, "", "", ""]);
+  rows.push(["مؤجرة", rented, "", "", ""]);
+  rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
+  rows.push(["الإيرادات السنوية", "", "", "", ""]);
+  rows.push(["إجمالي قيمة الوحدات (لو كله مؤجر)", fmtMoney(priceTotal), "", "", ""]);
+  rows.push(["قيمة الوحدات المؤجرة", fmtMoney(priceRented), "", "", ""]);
+  rows.push(["قيمة الوحدات المحجوزة", fmtMoney(priceReserved), "", "", ""]);
+  rows.push(["الإيراد المتوقع (مؤجر + محجوز)", fmtMoney(expectedAnnual), "", "", ""]);
+  rows.push(["المحصّل فعلياً", fmtMoney(paid), "", "", ""]);
+  rows.push(["المتبقي من الإيراد المتوقع", fmtMoney(remaining), "", "", ""]);
+  rows.push(["نسبة التحصيل من المتوقع", fmtPct(expectedAnnual ? (paid / expectedAnnual) * 100 : 0), "", "", ""]);
+  rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
+  rows.push(["تفصيل لكل مبنى — العدد", "", "", "", ""]);
+  tableHeaderRows.push(rows.length);
+  rows.push(["المبنى", "إجمالي الوحدات", "متاحة", "محجوزة", "مؤجرة"]);
   for (const r of perBuilding) rows.push([`مبنى ${r.b}`, r.total, r.available, r.reserved, r.rented]);
   rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
   rows.push(["تفصيل لكل مبنى — المالي", "", "", "", ""]);
+  tableHeaderRows.push(rows.length);
   rows.push(["المبنى", "قيمة المؤجر", "قيمة المحجوز", "إجمالي متوقع", "نسبة الإشغال"]);
   for (const r of perBuilding) {
     const occ = r.total ? ((r.rented + r.reserved) / r.total) * 100 : 0;
     rows.push([`مبنى ${r.b}`, fmtMoney(r.priceRented), fmtMoney(r.priceReserved), fmtMoney(r.priceRented + r.priceReserved), fmtPct(occ)]);
   }
-  return rows;
+  return { rows, sectionRows, tableHeaderRows };
 }
 
 Deno.serve(async (req) => {
@@ -290,8 +422,9 @@ Deno.serve(async (req) => {
       });
 
       // === Building tabs ===
+      const pendingWrites: PendingWrite[] = [];
       const perBuilding: BStat[] = [];
-      const buildingTabSheetIds: number[] = [];
+      const buildingTabInfos: { sid: number; name: string; rowCount: number }[] = [];
       for (const b of buildings) {
         const rows: (string|number)[][] = [UNIT_HEADER];
         const buUnits = (units||[]).filter((u:any) => u.building_number === b);
@@ -317,8 +450,8 @@ Deno.serve(async (req) => {
         }
         perBuilding.push(stat);
         const name = tabName(b);
-        await writeTab(sheetId, name, rows);
-        const sid = tabIds.get(name); if (sid !== undefined) buildingTabSheetIds.push(sid);
+        pendingWrites.push({ tab: name, rows });
+        const sid = tabIds.get(name); if (sid !== undefined) buildingTabInfos.push({ sid, name, rowCount: rows.length });
         pushed += rows.length - 1;
       }
 
@@ -340,7 +473,7 @@ Deno.serve(async (req) => {
           bk.expires_at ? new Date(bk.expires_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, BOOKINGS_TAB, bookingsRows);
+      pendingWrites.push({ tab: BOOKINGS_TAB, rows: bookingsRows });
       const bookingsSid = tabIds.get(BOOKINGS_TAB);
 
       // === Tenants tab ===
@@ -365,7 +498,7 @@ Deno.serve(async (req) => {
           t.created_at ? new Date(t.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, TENANTS_TAB, tenantsRows);
+      pendingWrites.push({ tab: TENANTS_TAB, rows: tenantsRows });
       const tenantsSid = tabIds.get(TENANTS_TAB);
 
       // === Tenant accounts tab ===
@@ -380,7 +513,7 @@ Deno.serve(async (req) => {
           a.created_at ? new Date(a.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, ACCOUNTS_TAB, accountsRows);
+      pendingWrites.push({ tab: ACCOUNTS_TAB, rows: accountsRows });
       const accountsSid = tabIds.get(ACCOUNTS_TAB);
 
       // === Invoices tab ===
@@ -398,7 +531,7 @@ Deno.serve(async (req) => {
           i.created_at ? new Date(i.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, INVOICES_TAB, invoicesRows);
+      pendingWrites.push({ tab: INVOICES_TAB, rows: invoicesRows });
       const invoicesSid = tabIds.get(INVOICES_TAB);
 
       // === Leads tab ===
@@ -411,24 +544,29 @@ Deno.serve(async (req) => {
           l.created_at ? new Date(l.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, LEADS_TAB, leadsRows);
+      pendingWrites.push({ tab: LEADS_TAB, rows: leadsRows });
       const leadsSid = tabIds.get(LEADS_TAB);
 
       // === Dashboard ===
-      const dashRows = buildDashboardRows(perBuilding);
-      await writeTab(sheetId, DASHBOARD_TAB, dashRows);
+      const dash = buildDashboardRows(perBuilding);
+      pendingWrites.push({ tab: DASHBOARD_TAB, rows: dash.rows });
       const dashSid = tabIds.get(DASHBOARD_TAB);
 
-      // === Apply formatting ===
-      try {
-        await formatDataTabs(sheetId, buildingTabSheetIds, UNIT_HEADER.length);
-        if (bookingsSid !== undefined) await formatDataTabs(sheetId, [bookingsSid], bookingsHeader.length);
-        if (tenantsSid !== undefined) await formatDataTabs(sheetId, [tenantsSid], tenantsHeader.length);
-        if (accountsSid !== undefined) await formatDataTabs(sheetId, [accountsSid], accountsHeader.length);
-        if (invoicesSid !== undefined) await formatDataTabs(sheetId, [invoicesSid], invoicesHeader.length);
-        if (leadsSid !== undefined) await formatDataTabs(sheetId, [leadsSid], leadsHeader.length);
-        if (dashSid !== undefined) await formatDashboard(sheetId, dashSid, dashRows.length);
-      } catch (e) { console.error("formatting error", e); }
+      // Flush all writes in 2 calls (batchClear + batchUpdate)
+      await flushWrites(sheetId, pendingWrites);
+
+      // Accumulate all formatting requests across all tabs into one batch
+      const formatReqs: any[] = [];
+      for (const info of buildingTabInfos) {
+        formatReqs.push(...buildDataTabRequests(info.sid, info.name, UNIT_HEADER.length, info.rowCount));
+      }
+      if (bookingsSid !== undefined) formatReqs.push(...buildDataTabRequests(bookingsSid, BOOKINGS_TAB, bookingsHeader.length, bookingsRows.length));
+      if (tenantsSid !== undefined) formatReqs.push(...buildDataTabRequests(tenantsSid, TENANTS_TAB, tenantsHeader.length, tenantsRows.length));
+      if (accountsSid !== undefined) formatReqs.push(...buildDataTabRequests(accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length));
+      if (invoicesSid !== undefined) formatReqs.push(...buildDataTabRequests(invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length));
+      if (leadsSid !== undefined) formatReqs.push(...buildDataTabRequests(leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length));
+      if (dashSid !== undefined) formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
+      await safeBatch(sheetId, formatReqs);
     }
 
     if (action === "pull") {
