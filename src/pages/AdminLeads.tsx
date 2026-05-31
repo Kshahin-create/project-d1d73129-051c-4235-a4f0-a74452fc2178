@@ -78,9 +78,9 @@ function normalizePhone(raw: string) {
 
 function renderTemplate(tpl: string, lead: Lead) {
   return tpl
-    .replaceAll("{name}", lead.full_name || "")
-    .replaceAll("{phone}", lead.phone || "")
-    .replaceAll("{notes}", lead.notes || "");
+    .split("{name}").join(lead.full_name || "")
+    .split("{phone}").join(lead.phone || "")
+    .split("{notes}").join(lead.notes || "");
 }
 
 const AdminLeads = () => {
