@@ -410,6 +410,7 @@ Deno.serve(async (req) => {
       });
 
       // === Building tabs ===
+      const pendingWrites: PendingWrite[] = [];
       const perBuilding: BStat[] = [];
       const buildingTabInfos: { sid: number; name: string; rowCount: number }[] = [];
       for (const b of buildings) {
