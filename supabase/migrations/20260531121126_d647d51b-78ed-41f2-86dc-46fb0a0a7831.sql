@@ -1,0 +1,1 @@
+UPDATE public.app_settings SET buildings_sheet_id = '1MqVP44GX9uHgxJSDYCtJ2fKndvIQVABRqdi0_hpVgVQ' WHERE id = 1;
