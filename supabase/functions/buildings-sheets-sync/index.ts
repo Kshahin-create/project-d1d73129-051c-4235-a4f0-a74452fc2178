@@ -83,66 +83,189 @@ async function writeTab(sheetId: string, tab: string, rows: (string|number)[][])
   });
 }
 
-async function formatDataTabs(sheetId: string, tabSheetIds: number[], cols: number) {
-  const requests: any[] = [];
-  for (const sid of tabSheetIds) {
-    requests.push(
-      // RTL
-      { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true }, fields: "rightToLeft" }},
-      // Freeze header
-      { updateSheetProperties: { properties: { sheetId: sid, gridProperties: { frozenRowCount: 1 } }, fields: "gridProperties.frozenRowCount" }},
-      // Header formatting
-      { repeatCell: {
-        range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols },
-        cell: { userEnteredFormat: {
-          backgroundColor: { red: 0.13, green: 0.30, blue: 0.55 },
-          textFormat: { foregroundColor: { red: 1, green: 1, blue: 1 }, bold: true, fontSize: 11 },
-          horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
-        }},
-        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
-      }},
-      // Auto resize
-      { autoResizeDimensions: { dimensions: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: cols } }},
-      // Row banding (alternating colors)
-      { addBanding: { bandedRange: {
-        range: { sheetId: sid, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: cols },
-        rowProperties: {
-          headerColor: { red: 0.13, green: 0.30, blue: 0.55 },
-          firstBandColor: { red: 1, green: 1, blue: 1 },
-          secondBandColor: { red: 0.96, green: 0.97, blue: 0.99 },
-        },
-      }}},
-    );
-  }
-  // banding may fail if already exists — split into safe + risky
-  const safe = requests.filter(r => !r.addBanding);
-  try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests: safe }) }); } catch (e) { console.error("format failed", e); }
-  for (const r of requests.filter(r => r.addBanding)) {
-    try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests: [r] }) }); } catch {}
+const SOLID = "SOLID";
+const BORDER = { style: SOLID, color: { red: 0.78, green: 0.82, blue: 0.88 } };
+const HEADER_BG = { red: 0.10, green: 0.27, blue: 0.50 };
+const HEADER_FG = { red: 1, green: 1, blue: 1 };
+
+async function safeBatch(sheetId: string, requests: any[]) {
+  if (!requests.length) return;
+  try {
+    await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests }) });
+  } catch (e) {
+    // try one-by-one to skip the failing one
+    for (const r of requests) {
+      try { await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests: [r] }) }); } catch {}
+    }
   }
 }
 
-async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
-  const requests: any[] = [
-    { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true }, fields: "rightToLeft" }},
-    { updateSheetProperties: { properties: { sheetId: sid, gridProperties: { frozenRowCount: 0 } }, fields: "gridProperties.frozenRowCount" }},
-    // Title row merge + style
-    { mergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 5 }, mergeType: "MERGE_ALL" }},
-    { repeatCell: {
-      range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 5 },
+// money columns per tab (0-based)
+function moneyCols(tab: string): number[] {
+  if (tab.startsWith("مبنى")) return [4, 5, 6]; // price/paid/remaining
+  if (tab === BOOKINGS_TAB) return [9, 10, 11];
+  if (tab === ACCOUNTS_TAB) return [6, 7, 8];
+  if (tab === INVOICES_TAB) return [5, 6, 7];
+  return [];
+}
+
+async function formatDataTab(sheetId: string, sid: number, tab: string, cols: number, rowCount: number) {
+  const requests: any[] = [];
+
+  // RTL + freeze header
+  requests.push({ updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true, gridProperties: { frozenRowCount: 1 } }, fields: "rightToLeft,gridProperties.frozenRowCount" }});
+
+  // Wider default column width (Arabic needs space)
+  requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: cols }, properties: { pixelSize: 150 }, fields: "pixelSize" }});
+
+  // Taller rows
+  if (rowCount > 0) {
+    requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 32 }, fields: "pixelSize" }});
+  }
+  // Header height
+  requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 40 }, fields: "pixelSize" }});
+
+  // Header style
+  requests.push({ repeatCell: {
+    range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols },
+    cell: { userEnteredFormat: {
+      backgroundColor: HEADER_BG,
+      textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 12, fontFamily: "Cairo" },
+      horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+      wrapStrategy: "WRAP",
+    }},
+    fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
+  }});
+
+  // Body style: right align, middle, wrap, font
+  if (rowCount > 1) {
+    requests.push({ repeatCell: {
+      range: { sheetId: sid, startRowIndex: 1, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
       cell: { userEnteredFormat: {
-        backgroundColor: { red: 0.10, green: 0.25, blue: 0.50 },
-        textFormat: { foregroundColor: { red: 1, green: 1, blue: 1 }, bold: true, fontSize: 16 },
+        textFormat: { fontSize: 11, fontFamily: "Cairo" },
+        horizontalAlignment: "RIGHT", verticalAlignment: "MIDDLE",
+        wrapStrategy: "WRAP",
+      }},
+      fields: "userEnteredFormat(textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
+    }});
+
+    // Money columns: number format + center
+    for (const c of moneyCols(tab)) {
+      requests.push({ repeatCell: {
+        range: { sheetId: sid, startRowIndex: 1, endRowIndex: rowCount, startColumnIndex: c, endColumnIndex: c + 1 },
+        cell: { userEnteredFormat: {
+          numberFormat: { type: "NUMBER", pattern: "#,##0\" ر.س\"" },
+          horizontalAlignment: "CENTER",
+        }},
+        fields: "userEnteredFormat(numberFormat,horizontalAlignment)",
+      }});
+    }
+  }
+
+  // Borders all around
+  requests.push({ updateBorders: {
+    range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
+    top: BORDER, bottom: BORDER, left: BORDER, right: BORDER, innerHorizontal: BORDER, innerVertical: BORDER,
+  }});
+
+  // Banded rows
+  requests.push({ addBanding: { bandedRange: {
+    range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
+    rowProperties: {
+      headerColor: HEADER_BG,
+      firstBandColor: { red: 1, green: 1, blue: 1 },
+      secondBandColor: { red: 0.96, green: 0.97, blue: 0.99 },
+    },
+  }}});
+
+  await safeBatch(sheetId, requests);
+}
+
+async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
+  const COLS = 5;
+  const requests: any[] = [
+    { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true, gridProperties: { frozenRowCount: 0 } }, fields: "rightToLeft,gridProperties.frozenRowCount" }},
+    // Column widths
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 280 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 1, endIndex: 2 }, properties: { pixelSize: 180 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 2, endIndex: 3 }, properties: { pixelSize: 40 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 3, endIndex: 4 }, properties: { pixelSize: 220 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 4, endIndex: 5 }, properties: { pixelSize: 180 }, fields: "pixelSize" }},
+    // All rows
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 34 }, fields: "pixelSize" }},
+    // Title row
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 60 }, fields: "pixelSize" }},
+    { mergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
+    { repeatCell: {
+      range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: COLS },
+      cell: { userEnteredFormat: {
+        backgroundColor: HEADER_BG,
+        textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 20, fontFamily: "Cairo" },
         horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
       }},
       fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
     }},
-    // Section labels: bold large for "ملخص عام" / "الإيرادات السنوية" / تفصيل
-    { autoResizeDimensions: { dimensions: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: 5 } }},
-    // Default row height
-    { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 28 }, fields: "pixelSize" }},
+    // Last update row (row 2)
+    { mergeCells: { range: { sheetId: sid, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
+    { repeatCell: {
+      range: { sheetId: sid, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: COLS },
+      cell: { userEnteredFormat: {
+        backgroundColor: { red: 0.93, green: 0.95, blue: 0.98 },
+        textFormat: { foregroundColor: { red: 0.30, green: 0.34, blue: 0.40 }, italic: true, fontSize: 10, fontFamily: "Cairo" },
+        horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+      }},
+      fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+    }},
+    // Body style for all data
+    { repeatCell: {
+      range: { sheetId: sid, startRowIndex: 2, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: COLS },
+      cell: { userEnteredFormat: {
+        textFormat: { fontSize: 12, fontFamily: "Cairo" },
+        verticalAlignment: "MIDDLE", horizontalAlignment: "RIGHT",
+      }},
+      fields: "userEnteredFormat(textFormat,verticalAlignment,horizontalAlignment)",
+    }},
+    // Borders
+    { updateBorders: {
+      range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: COLS },
+      top: BORDER, bottom: BORDER, left: BORDER, right: BORDER, innerHorizontal: BORDER, innerVertical: BORDER,
+    }},
   ];
-  try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests }) }); } catch (e) { console.error("dash format failed", e); }
+
+  // Section headers: rows where col A has a label and cols B-E empty (we know from buildDashboardRows)
+  // Section labels are at known indices: 3 (ملخص عام), 9 (الإيرادات), 18 (تفصيل العدد), 19 (header row), and another section after building rows
+  await safeBatch(sheetId, requests);
+}
+
+async function formatDashboardSections(sheetId: string, sid: number, sectionRows: number[], tableHeaderRows: number[]) {
+  const requests: any[] = [];
+  for (const r of sectionRows) {
+    requests.push(
+      { mergeCells: { range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: 5 }, mergeType: "MERGE_ALL" }},
+      { repeatCell: {
+        range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: 5 },
+        cell: { userEnteredFormat: {
+          backgroundColor: { red: 0.20, green: 0.40, blue: 0.65 },
+          textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 14, fontFamily: "Cairo" },
+          horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+        }},
+        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+      }},
+      { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: r, endIndex: r + 1 }, properties: { pixelSize: 44 }, fields: "pixelSize" }},
+    );
+  }
+  for (const r of tableHeaderRows) {
+    requests.push({ repeatCell: {
+      range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: 5 },
+      cell: { userEnteredFormat: {
+        backgroundColor: { red: 0.85, green: 0.89, blue: 0.95 },
+        textFormat: { bold: true, fontSize: 11, fontFamily: "Cairo" },
+        horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+      }},
+      fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+    }});
+  }
+  await safeBatch(sheetId, requests);
 }
 
 type BStat = { b: number; total: number; available: number; reserved: number; rented: number; priceTotal: number; priceRented: number; priceReserved: number; paid: number };
