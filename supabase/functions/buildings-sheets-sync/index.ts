@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
         perBuilding.push(stat);
         const name = tabName(b);
         await writeTab(sheetId, name, rows);
-        const sid = tabIds.get(name); if (sid !== undefined) buildingTabSheetIds.push(sid);
+        const sid = tabIds.get(name); if (sid !== undefined) buildingTabInfos.push({ sid, name, rowCount: rows.length });
         pushed += rows.length - 1;
       }
 
