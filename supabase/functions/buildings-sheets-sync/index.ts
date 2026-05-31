@@ -1,4 +1,4 @@
-// Sync buildings (1-10) units + tenants with Google Sheets via connector gateway
+// Sync buildings (1-10) + full system backup with Google Sheets via connector gateway
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -14,7 +14,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("VITE_SUPABAS
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
 
-const HEADER = [
+const UNIT_HEADER = [
   "رقم الوحدة","النوع","المساحة","النشاط","السعر","المدفوع","المتبقي","الحالة",
   "اسم المستأجر","الجوال","الاسم التجاري","السجل التجاري",
   "تاريخ البداية","تاريخ النهاية","ملاحظات",
@@ -25,6 +25,9 @@ const AR_STATUS: Record<string,string> = {
   "متاحة":"available","متاح":"available","شاغرة":"available","شاغر":"available",
   "محجوزة":"reserved","محجوز":"reserved",
   "مؤجرة":"rented","مؤجر":"rented","مستأجرة":"rented","مستأجر":"rented",
+};
+const BOOKING_STATUS_AR: Record<string,string> = {
+  pending:"قيد الانتظار", confirmed:"مؤكد", cancelled:"ملغي", expired:"منتهي",
 };
 
 async function gw(path: string, init: RequestInit = {}) {
@@ -45,22 +48,115 @@ async function gw(path: string, init: RequestInit = {}) {
 
 function tabName(b: number) { return `مبنى ${b}`; }
 const DASHBOARD_TAB = "الداشبورد";
+const BOOKINGS_TAB = "الحجوزات";
+const TENANTS_TAB = "المستأجرين";
+const ACCOUNTS_TAB = "حسابات المستأجرين";
+const INVOICES_TAB = "الفواتير";
+const LEADS_TAB = "العملاء المحتملين";
 
-async function ensureTabs(sheetId: string, buildings: number[]) {
+async function getOrCreateTabs(sheetId: string, titles: string[]): Promise<Map<string, number>> {
   const meta = await gw(`/${sheetId}`);
-  const existing = new Set<string>((meta.sheets||[]).map((s:any)=>s.properties?.title));
-  const titles = [...buildings.map(b => tabName(b)), DASHBOARD_TAB];
-  const requests = titles
-    .filter(t => !existing.has(t))
-    .map(title => ({ addSheet: { properties: { title } } }));
-  if (requests.length) {
-    await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests }) });
+  const map = new Map<string, number>();
+  for (const s of (meta.sheets||[])) {
+    map.set(s.properties?.title, s.properties?.sheetId);
   }
+  const toCreate = titles.filter(t => !map.has(t));
+  if (toCreate.length) {
+    const res = await gw(`/${sheetId}:batchUpdate`, {
+      method: "POST",
+      body: JSON.stringify({
+        requests: toCreate.map(title => ({ addSheet: { properties: { title, rightToLeft: true } } })),
+      }),
+    });
+    for (const r of (res.replies||[])) {
+      const p = r.addSheet?.properties;
+      if (p) map.set(p.title, p.sheetId);
+    }
+  }
+  return map;
+}
+
+async function writeTab(sheetId: string, tab: string, rows: (string|number)[][]) {
+  await gw(`/${sheetId}/values/${encodeURIComponent(tab)}!A:Z:clear`, { method: "POST", body: "{}" });
+  await gw(`/${sheetId}/values/${encodeURIComponent(tab)}!A1?valueInputOption=RAW`, {
+    method: "PUT", body: JSON.stringify({ values: rows }),
+  });
+}
+
+async function formatDataTabs(sheetId: string, tabSheetIds: number[], cols: number) {
+  const requests: any[] = [];
+  for (const sid of tabSheetIds) {
+    requests.push(
+      // RTL
+      { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true }, fields: "rightToLeft" }},
+      // Freeze header
+      { updateSheetProperties: { properties: { sheetId: sid, gridProperties: { frozenRowCount: 1 } }, fields: "gridProperties.frozenRowCount" }},
+      // Header formatting
+      { repeatCell: {
+        range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols },
+        cell: { userEnteredFormat: {
+          backgroundColor: { red: 0.13, green: 0.30, blue: 0.55 },
+          textFormat: { foregroundColor: { red: 1, green: 1, blue: 1 }, bold: true, fontSize: 11 },
+          horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+        }},
+        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+      }},
+      // Auto resize
+      { autoResizeDimensions: { dimensions: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: cols } }},
+      // Row banding (alternating colors)
+      { addBanding: { bandedRange: {
+        range: { sheetId: sid, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: cols },
+        rowProperties: {
+          headerColor: { red: 0.13, green: 0.30, blue: 0.55 },
+          firstBandColor: { red: 1, green: 1, blue: 1 },
+          secondBandColor: { red: 0.96, green: 0.97, blue: 0.99 },
+        },
+      }}},
+    );
+  }
+  // banding may fail if already exists — split into safe + risky
+  const safe = requests.filter(r => !r.addBanding);
+  try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests: safe }) }); } catch (e) { console.error("format failed", e); }
+  for (const r of requests.filter(r => r.addBanding)) {
+    try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests: [r] }) }); } catch {}
+  }
+}
+
+async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
+  const requests: any[] = [
+    { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true }, fields: "rightToLeft" }},
+    { updateSheetProperties: { properties: { sheetId: sid, gridProperties: { frozenRowCount: 0 } }, fields: "gridProperties.frozenRowCount" }},
+    // Title row merge + style
+    { mergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 5 }, mergeType: "MERGE_ALL" }},
+    { repeatCell: {
+      range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 5 },
+      cell: { userEnteredFormat: {
+        backgroundColor: { red: 0.10, green: 0.25, blue: 0.50 },
+        textFormat: { foregroundColor: { red: 1, green: 1, blue: 1 }, bold: true, fontSize: 16 },
+        horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
+      }},
+      fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
+    }},
+    // Section labels: bold large for "ملخص عام" / "الإيرادات السنوية" / تفصيل
+    { autoResizeDimensions: { dimensions: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: 5 } }},
+    // Default row height
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 28 }, fields: "pixelSize" }},
+  ];
+  try { await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests }) }); } catch (e) { console.error("dash format failed", e); }
 }
 
 type BStat = { b: number; total: number; available: number; reserved: number; rented: number; priceTotal: number; priceRented: number; priceReserved: number; paid: number };
 
-async function writeDashboard(sheetId: string, perBuilding: BStat[]) {
+function fmtPhone(raw: string) {
+  if (!raw) return "";
+  const s = String(raw).trim();
+  const d = s.replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("966")) return `+966 ${d.slice(3,5)} ${d.slice(5,8)} ${d.slice(8)}`;
+  if (d.length === 10 && d.startsWith("05")) return `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
+  return s;
+}
+
+function buildDashboardRows(perBuilding: BStat[]): (string|number)[][] {
   const sum = (k: keyof BStat) => perBuilding.reduce((a, x) => a + (x[k] as number), 0);
   const totalUnits = sum("total");
   const available = sum("available");
@@ -82,8 +178,8 @@ async function writeDashboard(sheetId: string, perBuilding: BStat[]) {
     [`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""],
     ["", "", "", "", ""],
     ["ملخص عام", "", "", "", ""],
-    ["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال (محجوز+مؤجر)", fmtPct(occupancy)],
-    ["متاحة", available, "", "نسبة المؤجر فقط", fmtPct(rentedPct)],
+    ["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال", fmtPct(occupancy)],
+    ["متاحة", available, "", "نسبة المؤجر", fmtPct(rentedPct)],
     ["محجوزة", reserved, "", "", ""],
     ["مؤجرة", rented, "", "", ""],
     ["", "", "", "", ""],
@@ -107,11 +203,7 @@ async function writeDashboard(sheetId: string, perBuilding: BStat[]) {
     const occ = r.total ? ((r.rented + r.reserved) / r.total) * 100 : 0;
     rows.push([`مبنى ${r.b}`, fmtMoney(r.priceRented), fmtMoney(r.priceReserved), fmtMoney(r.priceRented + r.priceReserved), fmtPct(occ)]);
   }
-
-  await gw(`/${sheetId}/values/${DASHBOARD_TAB}!A:Z:clear`, { method: "POST", body: "{}" });
-  await gw(`/${sheetId}/values/${DASHBOARD_TAB}!A1?valueInputOption=RAW`, {
-    method: "PUT", body: JSON.stringify({ values: rows }),
-  });
+  return rows;
 }
 
 Deno.serve(async (req) => {
@@ -134,114 +226,216 @@ Deno.serve(async (req) => {
     const buildings: number[] = Array.isArray(body.buildings) && body.buildings.length
       ? body.buildings : [1,2,3,4,5,6,7,8,9,10];
 
+    const { data: settings } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
+    const sheetId = settings?.buildings_sheet_id;
+    if (!sheetId) throw new Error("لم يتم إعداد معرّف الشييت بعد");
+
     if (action === "meta") {
-      const { data: s } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
-      const m = await gw(`/${s?.buildings_sheet_id}`);
+      const m = await gw(`/${sheetId}`);
       const sheets = (m.sheets||[]).map((x:any)=>({ title: x.properties?.title, sheetId: x.properties?.sheetId }));
       if (body.delete_title) {
         const target = sheets.find((x:any)=>x.title===body.delete_title);
         if (target) {
-          await gw(`/${s?.buildings_sheet_id}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests:[{ deleteSheet:{ sheetId: target.sheetId }}]})});
+          await gw(`/${sheetId}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests:[{ deleteSheet:{ sheetId: target.sheetId }}]})});
         }
       }
       return new Response(JSON.stringify({ sheets }), { headers: { ...corsHeaders, "Content-Type":"application/json" }});
     }
 
-    const { data: settings } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
-    const sheetId = settings?.buildings_sheet_id;
-    if (!sheetId) throw new Error("لم يتم إعداد معرّف الشييت بعد");
-
-    await ensureTabs(sheetId, buildings);
-
     let pushed = 0, pulled = 0, updated = 0;
 
     if (action === "push") {
-      const { data: units } = await admin.from("units")
-        .select("id, building_number, unit_number, unit_type, area, activity, price, status")
-        .in("building_number", buildings)
-        .order("building_number").order("unit_number");
-      const { data: tenants } = await admin.from("tenants")
-        .select("unit_id, tenant_name, phone, business_name, cr_number, start_date, end_date, notes");
-      const tenantMap = new Map<string, any>();
-      (tenants||[]).forEach(t => { if (t.unit_id) tenantMap.set(t.unit_id, t); });
+      const titles = [
+        ...buildings.map(b => tabName(b)),
+        DASHBOARD_TAB, BOOKINGS_TAB, TENANTS_TAB, ACCOUNTS_TAB, INVOICES_TAB, LEADS_TAB,
+      ];
+      const tabIds = await getOrCreateTabs(sheetId, titles);
 
-      // Map unit_id -> paid_amount via tenant_accounts (sum if multiple)
-      const { data: tau } = await admin.from("tenant_account_units")
-        .select("unit_id, tenant_account_id");
-      const { data: accs } = await admin.from("tenant_accounts")
-        .select("id, paid_amount");
+      // Fetch all data once
+      const [
+        { data: units },
+        { data: tenants },
+        { data: tau },
+        { data: accs },
+        { data: bookings },
+        { data: bookingUnits },
+        { data: invoices },
+        { data: leads },
+      ] = await Promise.all([
+        admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").in("building_number", buildings).order("building_number").order("unit_number"),
+        admin.from("tenants").select("id, unit_id, tenant_name, phone, business_name, activity_type, cr_number, start_date, end_date, notes, created_at"),
+        admin.from("tenant_account_units").select("unit_id, tenant_account_id"),
+        admin.from("tenant_accounts").select("id, full_name, phone, email, business_name, activity_type, cr_number, total_price, paid_amount, notes, created_at"),
+        admin.from("bookings").select("id, customer_full_name, customer_phone, customer_email, business_name, cr_number, total_area, total_price, paid_amount, units_count, status, payment_plan, offer_number, notes, created_at, expires_at"),
+        admin.from("booking_units").select("booking_id, building_number, unit_number, unit_type, area, price, activity"),
+        admin.from("invoices").select("invoice_number, customer_name, customer_phone, customer_business, cr_number, amount, paid_amount, paid, paid_at, payment_method, notes, created_at"),
+        admin.from("leads").select("full_name, phone, status, notes, last_message_at, created_at"),
+      ]);
+
+      const tenantMap = new Map<string, any>();
+      (tenants||[]).forEach((t:any) => { if (t.unit_id) tenantMap.set(t.unit_id, t); });
       const accPaid = new Map<string, number>();
-      (accs||[]).forEach(a => accPaid.set(a.id, Number(a.paid_amount) || 0));
+      (accs||[]).forEach((a:any) => accPaid.set(a.id, Number(a.paid_amount) || 0));
       const unitPaid = new Map<string, number>();
-      (tau||[]).forEach(l => {
+      (tau||[]).forEach((l:any) => {
         if (!l.unit_id) return;
         const p = accPaid.get(l.tenant_account_id) || 0;
         unitPaid.set(l.unit_id, (unitPaid.get(l.unit_id) || 0) + p);
       });
+      const buMap = new Map<string, any[]>();
+      (bookingUnits||[]).forEach((bu:any) => {
+        const arr = buMap.get(bu.booking_id) || [];
+        arr.push(bu);
+        buMap.set(bu.booking_id, arr);
+      });
 
-      const fmtPhone = (raw: string) => {
-        if (!raw) return "";
-        const s = String(raw).trim();
-        const d = s.replace(/\D/g, "");
-        let pretty = s;
-        if (d.length === 12 && d.startsWith("966")) {
-          pretty = `+966 ${d.slice(3,5)} ${d.slice(5,8)} ${d.slice(8)}`;
-        } else if (d.length === 10 && d.startsWith("05")) {
-          pretty = `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
-        }
-        return pretty;
-      };
-
+      // === Building tabs ===
       const perBuilding: BStat[] = [];
+      const buildingTabSheetIds: number[] = [];
       for (const b of buildings) {
-        const rows: (string|number)[][] = [HEADER];
-        const buUnits = (units||[]).filter(u => u.building_number === b);
+        const rows: (string|number)[][] = [UNIT_HEADER];
+        const buUnits = (units||[]).filter((u:any) => u.building_number === b);
         const stat: BStat = { b, total: 0, available: 0, reserved: 0, rented: 0, priceTotal: 0, priceRented: 0, priceReserved: 0, paid: 0 };
         for (const u of buUnits) {
           const t = tenantMap.get(u.id) || {};
           const price = Number(u.price) || 0;
           const paid = unitPaid.get(u.id) || 0;
           const remaining = price - paid;
-          stat.total++;
-          stat.priceTotal += price;
-          stat.paid += paid;
+          stat.total++; stat.priceTotal += price; stat.paid += paid;
           if (u.status === "available") stat.available++;
           else if (u.status === "reserved") { stat.reserved++; stat.priceReserved += price; }
           else if (u.status === "rented") { stat.rented++; stat.priceRented += price; }
           rows.push([
             Number(u.unit_number) || "",
-            u.unit_type || "",
-            Number(u.area) || 0,
-            u.activity || "",
-            price,
-            paid,
-            remaining,
+            u.unit_type || "", Number(u.area) || 0, u.activity || "",
+            price, paid, remaining,
             STATUS_AR[u.status] || u.status || "",
-            t.tenant_name || "",
-            fmtPhone(t.phone || ""),
-            t.business_name || "",
+            t.tenant_name || "", fmtPhone(t.phone || ""), t.business_name || "",
             t.cr_number ? "'" + t.cr_number : "",
-            t.start_date || "",
-            t.end_date || "",
-            t.notes || "",
+            t.start_date || "", t.end_date || "", t.notes || "",
           ]);
         }
         perBuilding.push(stat);
         const name = tabName(b);
-        await gw(`/${sheetId}/values/${name}!A:Z:clear`, { method:"POST", body:"{}" });
-        await gw(`/${sheetId}/values/${name}!A1?valueInputOption=RAW`, {
-          method:"PUT", body: JSON.stringify({ values: rows }),
-        });
+        await writeTab(sheetId, name, rows);
+        const sid = tabIds.get(name); if (sid !== undefined) buildingTabSheetIds.push(sid);
         pushed += rows.length - 1;
       }
-      try { await writeDashboard(sheetId, perBuilding); } catch (e) { console.error("dashboard write failed", e); }
+
+      // === Bookings tab ===
+      const bookingsHeader = ["رقم العرض","العميل","الجوال","البريد","الاسم التجاري","السجل التجاري","عدد الوحدات","الوحدات","المساحة الكلية","السعر الكلي","المدفوع","المتبقي","خطة الدفع","الحالة","ملاحظات","تاريخ الإنشاء","تاريخ الانتهاء"];
+      const bookingsRows: (string|number)[][] = [bookingsHeader];
+      for (const bk of (bookings||[])) {
+        const us = (buMap.get(bk.id) || []).map((u:any)=>`م${u.building_number}-${u.unit_number}`).join(", ");
+        const paid = Number(bk.paid_amount)||0;
+        const total = Number(bk.total_price)||0;
+        bookingsRows.push([
+          bk.offer_number || "", bk.customer_full_name || "", fmtPhone(bk.customer_phone||""),
+          bk.customer_email || "", bk.business_name || "", bk.cr_number ? "'"+bk.cr_number : "",
+          Number(bk.units_count)||0, us, Number(bk.total_area)||0, total, paid, total - paid,
+          bk.payment_plan === "full" ? "كامل" : bk.payment_plan === "70" ? "70%" : bk.payment_plan === "50" ? "50%" : (bk.payment_plan||""),
+          BOOKING_STATUS_AR[bk.status] || bk.status || "",
+          bk.notes || "",
+          bk.created_at ? new Date(bk.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          bk.expires_at ? new Date(bk.expires_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+        ]);
+      }
+      await writeTab(sheetId, BOOKINGS_TAB, bookingsRows);
+      const bookingsSid = tabIds.get(BOOKINGS_TAB);
+
+      // === Tenants tab ===
+      const tenantsHeader = ["المبنى","الوحدة","اسم المستأجر","الجوال","الاسم التجاري","النشاط","السجل التجاري","تاريخ البداية","تاريخ النهاية","ملاحظات","تاريخ الإضافة"];
+      const tenantsRows: (string|number)[][] = [tenantsHeader];
+      const unitById = new Map<string, any>();
+      (units||[]).forEach((u:any) => unitById.set(u.id, u));
+      // also fetch units for tenants not in selected buildings
+      const tenantUnitIds = (tenants||[]).map((t:any)=>t.unit_id).filter(Boolean);
+      const missing = tenantUnitIds.filter((id:string)=>!unitById.has(id));
+      if (missing.length) {
+        const { data: extra } = await admin.from("units").select("id, building_number, unit_number").in("id", missing);
+        (extra||[]).forEach((u:any)=>unitById.set(u.id, u));
+      }
+      for (const t of (tenants||[])) {
+        const u = unitById.get(t.unit_id) || {};
+        tenantsRows.push([
+          u.building_number || "", u.unit_number || "",
+          t.tenant_name || "", fmtPhone(t.phone || ""), t.business_name || "",
+          t.activity_type || "", t.cr_number ? "'"+t.cr_number : "",
+          t.start_date || "", t.end_date || "", t.notes || "",
+          t.created_at ? new Date(t.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+        ]);
+      }
+      await writeTab(sheetId, TENANTS_TAB, tenantsRows);
+      const tenantsSid = tabIds.get(TENANTS_TAB);
+
+      // === Tenant accounts tab ===
+      const accountsHeader = ["الاسم","الجوال","البريد","الاسم التجاري","النشاط","السجل التجاري","إجمالي العقود","المدفوع","المتبقي","ملاحظات","تاريخ الإنشاء"];
+      const accountsRows: (string|number)[][] = [accountsHeader];
+      for (const a of (accs||[])) {
+        const total = Number(a.total_price)||0; const paid = Number(a.paid_amount)||0;
+        accountsRows.push([
+          a.full_name || "", fmtPhone(a.phone||""), a.email || "", a.business_name || "",
+          a.activity_type || "", a.cr_number ? "'"+a.cr_number : "",
+          total, paid, total - paid, a.notes || "",
+          a.created_at ? new Date(a.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+        ]);
+      }
+      await writeTab(sheetId, ACCOUNTS_TAB, accountsRows);
+      const accountsSid = tabIds.get(ACCOUNTS_TAB);
+
+      // === Invoices tab ===
+      const invoicesHeader = ["رقم الفاتورة","العميل","الجوال","الاسم التجاري","السجل التجاري","المبلغ","المدفوع","المتبقي","الحالة","طريقة الدفع","تاريخ الدفع","ملاحظات","تاريخ الإنشاء"];
+      const invoicesRows: (string|number)[][] = [invoicesHeader];
+      for (const i of (invoices||[])) {
+        const amt = Number(i.amount)||0; const pd = Number(i.paid_amount)||0;
+        invoicesRows.push([
+          i.invoice_number || "", i.customer_name || "", fmtPhone(i.customer_phone||""),
+          i.customer_business || "", i.cr_number ? "'"+i.cr_number : "",
+          amt, pd, amt - pd, i.paid ? "مدفوعة" : "غير مدفوعة",
+          i.payment_method || "",
+          i.paid_at ? new Date(i.paid_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          i.notes || "",
+          i.created_at ? new Date(i.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+        ]);
+      }
+      await writeTab(sheetId, INVOICES_TAB, invoicesRows);
+      const invoicesSid = tabIds.get(INVOICES_TAB);
+
+      // === Leads tab ===
+      const leadsHeader = ["الاسم","الجوال","الحالة","ملاحظات","آخر تواصل","تاريخ الإضافة"];
+      const leadsRows: (string|number)[][] = [leadsHeader];
+      for (const l of (leads||[])) {
+        leadsRows.push([
+          l.full_name || "", fmtPhone(l.phone||""), l.status || "", l.notes || "",
+          l.last_message_at ? new Date(l.last_message_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          l.created_at ? new Date(l.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+        ]);
+      }
+      await writeTab(sheetId, LEADS_TAB, leadsRows);
+      const leadsSid = tabIds.get(LEADS_TAB);
+
+      // === Dashboard ===
+      const dashRows = buildDashboardRows(perBuilding);
+      await writeTab(sheetId, DASHBOARD_TAB, dashRows);
+      const dashSid = tabIds.get(DASHBOARD_TAB);
+
+      // === Apply formatting ===
+      try {
+        await formatDataTabs(sheetId, buildingTabSheetIds, UNIT_HEADER.length);
+        if (bookingsSid !== undefined) await formatDataTabs(sheetId, [bookingsSid], bookingsHeader.length);
+        if (tenantsSid !== undefined) await formatDataTabs(sheetId, [tenantsSid], tenantsHeader.length);
+        if (accountsSid !== undefined) await formatDataTabs(sheetId, [accountsSid], accountsHeader.length);
+        if (invoicesSid !== undefined) await formatDataTabs(sheetId, [invoicesSid], invoicesHeader.length);
+        if (leadsSid !== undefined) await formatDataTabs(sheetId, [leadsSid], leadsHeader.length);
+        if (dashSid !== undefined) await formatDashboard(sheetId, dashSid, dashRows.length);
+      } catch (e) { console.error("formatting error", e); }
     }
 
     if (action === "pull") {
       for (const b of buildings) {
         const name = tabName(b);
         let result: any;
-        try { result = await gw(`/${sheetId}/values/${name}!A2:O`); } catch { continue; }
+        try { result = await gw(`/${sheetId}/values/${encodeURIComponent(name)}!A2:O`); } catch { continue; }
         const values: string[][] = result.values || [];
         for (const row of values) {
           const unitNum = parseInt((row[0]||"").trim(), 10);
