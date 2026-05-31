@@ -179,14 +179,22 @@ Deno.serve(async (req) => {
         return pretty;
       };
 
+      const perBuilding: BStat[] = [];
       for (const b of buildings) {
         const rows: (string|number)[][] = [HEADER];
         const buUnits = (units||[]).filter(u => u.building_number === b);
+        const stat: BStat = { b, total: 0, available: 0, reserved: 0, rented: 0, priceTotal: 0, priceRented: 0, priceReserved: 0, paid: 0 };
         for (const u of buUnits) {
           const t = tenantMap.get(u.id) || {};
           const price = Number(u.price) || 0;
           const paid = unitPaid.get(u.id) || 0;
           const remaining = price - paid;
+          stat.total++;
+          stat.priceTotal += price;
+          stat.paid += paid;
+          if (u.status === "available") stat.available++;
+          else if (u.status === "reserved") { stat.reserved++; stat.priceReserved += price; }
+          else if (u.status === "rented") { stat.rented++; stat.priceRented += price; }
           rows.push([
             Number(u.unit_number) || "",
             u.unit_type || "",
@@ -205,6 +213,7 @@ Deno.serve(async (req) => {
             t.notes || "",
           ]);
         }
+        perBuilding.push(stat);
         const name = tabName(b);
         await gw(`/${sheetId}/values/${name}!A:Z:clear`, { method:"POST", body:"{}" });
         await gw(`/${sheetId}/values/${name}!A1?valueInputOption=RAW`, {
@@ -212,6 +221,7 @@ Deno.serve(async (req) => {
         });
         pushed += rows.length - 1;
       }
+      try { await writeDashboard(sheetId, perBuilding); } catch (e) { console.error("dashboard write failed", e); }
     }
 
     if (action === "pull") {
