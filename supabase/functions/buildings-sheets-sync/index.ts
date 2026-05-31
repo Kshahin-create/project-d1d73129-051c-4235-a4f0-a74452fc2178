@@ -83,6 +83,25 @@ async function writeTab(sheetId: string, tab: string, rows: (string|number)[][])
   });
 }
 
+// Pending writes accumulator → flushed in one batchClear + one values:batchUpdate
+type PendingWrite = { tab: string; rows: (string|number)[][] };
+async function flushWrites(sheetId: string, writes: PendingWrite[]) {
+  if (!writes.length) return;
+  // Clear all ranges in one call
+  await gw(`/${sheetId}/values:batchClear`, {
+    method: "POST",
+    body: JSON.stringify({ ranges: writes.map(w => `${w.tab}!A:Z`) }),
+  });
+  // Write all values in one call
+  await gw(`/${sheetId}/values:batchUpdate`, {
+    method: "POST",
+    body: JSON.stringify({
+      valueInputOption: "RAW",
+      data: writes.map(w => ({ range: `${w.tab}!A1`, values: w.rows })),
+    }),
+  });
+}
+
 const SOLID = "SOLID";
 const BORDER = { style: SOLID, color: { red: 0.78, green: 0.82, blue: 0.88 } };
 const HEADER_BG = { red: 0.10, green: 0.27, blue: 0.50 };
