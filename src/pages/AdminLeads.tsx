@@ -12,6 +12,10 @@ import {
   MessageCircle,
   Search,
   FileSpreadsheet,
+  RefreshCw,
+  CloudUpload,
+  CloudDownload,
+  ExternalLink,
 } from "lucide-react";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { supabase } from "@/integrations/supabase/client";
