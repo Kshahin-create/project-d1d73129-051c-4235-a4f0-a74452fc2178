@@ -128,47 +128,32 @@ function moneyCols(tab: string): number[] {
   return [];
 }
 
-async function formatDataTab(sheetId: string, sid: number, tab: string, cols: number, rowCount: number) {
+function buildDataTabRequests(sid: number, tab: string, cols: number, rowCount: number): any[] {
   const requests: any[] = [];
-
-  // RTL + freeze header
   requests.push({ updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true, gridProperties: { frozenRowCount: 1 } }, fields: "rightToLeft,gridProperties.frozenRowCount" }});
-
-  // Wider default column width (Arabic needs space)
   requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: cols }, properties: { pixelSize: 150 }, fields: "pixelSize" }});
-
-  // Taller rows
   if (rowCount > 0) {
     requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 32 }, fields: "pixelSize" }});
   }
-  // Header height
   requests.push({ updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 40 }, fields: "pixelSize" }});
-
-  // Header style
   requests.push({ repeatCell: {
     range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols },
     cell: { userEnteredFormat: {
       backgroundColor: HEADER_BG,
       textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 12, fontFamily: "Cairo" },
-      horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE",
-      wrapStrategy: "WRAP",
+      horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE", wrapStrategy: "WRAP",
     }},
     fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
   }});
-
-  // Body style: right align, middle, wrap, font
   if (rowCount > 1) {
     requests.push({ repeatCell: {
       range: { sheetId: sid, startRowIndex: 1, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
       cell: { userEnteredFormat: {
         textFormat: { fontSize: 11, fontFamily: "Cairo" },
-        horizontalAlignment: "RIGHT", verticalAlignment: "MIDDLE",
-        wrapStrategy: "WRAP",
+        horizontalAlignment: "RIGHT", verticalAlignment: "MIDDLE", wrapStrategy: "WRAP",
       }},
       fields: "userEnteredFormat(textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
     }});
-
-    // Money columns: number format + center
     for (const c of moneyCols(tab)) {
       requests.push({ repeatCell: {
         range: { sheetId: sid, startRowIndex: 1, endRowIndex: rowCount, startColumnIndex: c, endColumnIndex: c + 1 },
@@ -180,14 +165,10 @@ async function formatDataTab(sheetId: string, sid: number, tab: string, cols: nu
       }});
     }
   }
-
-  // Borders all around
   requests.push({ updateBorders: {
     range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
     top: BORDER, bottom: BORDER, left: BORDER, right: BORDER, innerHorizontal: BORDER, innerVertical: BORDER,
   }});
-
-  // Banded rows
   requests.push({ addBanding: { bandedRange: {
     range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: cols },
     rowProperties: {
@@ -196,8 +177,7 @@ async function formatDataTab(sheetId: string, sid: number, tab: string, cols: nu
       secondBandColor: { red: 0.96, green: 0.97, blue: 0.99 },
     },
   }}});
-
-  await safeBatch(sheetId, requests);
+  return requests;
 }
 
 async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
