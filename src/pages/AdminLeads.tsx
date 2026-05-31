@@ -361,6 +361,84 @@ const AdminLeads = () => {
         </p>
       </div>
 
+      {/* Google Sheets sync */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+        <div className="mb-3 flex items-center gap-2">
+          <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+          <h2 className="text-base font-bold">ربط Google Sheets</h2>
+          {lastSync && (
+            <span className="ms-auto text-xs text-muted-foreground">
+              آخر مزامنة: {new Date(lastSync).toLocaleString("ar-SA-u-nu-latn", { dateStyle: "short", timeStyle: "short" })}
+            </span>
+          )}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_180px_auto]">
+          <div className="space-y-1.5">
+            <Label className="text-xs">رابط الشييت أو الـ ID</Label>
+            <Input
+              dir="ltr"
+              value={sheetId}
+              onChange={(e) => setSheetId(e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">اسم التبويب</Label>
+            <Input
+              dir="ltr"
+              value={sheetName}
+              onChange={(e) => setSheetName(e.target.value)}
+              placeholder="Leads"
+            />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleSaveSheet} disabled={syncing === "save"} className="w-full sm:w-auto">
+              حفظ
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => runSync("push")}
+            disabled={!!syncing || !sheetId}
+            className="gap-2"
+          >
+            <CloudUpload className="h-4 w-4" /> رفع البيانات للشييت
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => runSync("pull")}
+            disabled={!!syncing || !sheetId}
+            className="gap-2"
+          >
+            <CloudDownload className="h-4 w-4" /> تحميل من الشييت
+          </Button>
+          <Button
+            onClick={() => runSync("sync")}
+            disabled={!!syncing || !sheetId}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing === "sync" ? "جاري المزامنة..." : "مزامنة الآن"}
+          </Button>
+          {sheetId && (
+            <a
+              href={`https://docs.google.com/spreadsheets/d/${extractSheetId(sheetId)}/edit`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ms-auto inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              فتح الشييت <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          تأكد إن حساب جوجل المربوط بالسيستم يقدر يعدّل على الشييت (شاركه مع الإيميل اللي ربطته).
+          الأعمدة: الاسم · رقم الجوال · ملاحظات · الحالة · آخر تواصل · ID
+        </p>
+      </div>
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={() => setEditing({ status: "new" })} className="gap-2">
