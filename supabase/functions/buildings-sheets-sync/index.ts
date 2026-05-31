@@ -130,9 +130,16 @@ Deno.serve(async (req) => {
     if (!ok) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type":"application/json" }});
 
     const body = await req.json().catch(()=>({}));
-    const action: "push" | "pull" = body.action || "push";
+    const action: "push" | "pull" | "meta" = body.action || "push";
     const buildings: number[] = Array.isArray(body.buildings) && body.buildings.length
       ? body.buildings : [1,2,3,4,5,6,7,8,9,10];
+
+    if (action === "meta") {
+      const { data: s } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
+      const m = await gw(`/${s?.buildings_sheet_id}`);
+      const tabs = (m.sheets||[]).map((x:any)=>x.properties?.title);
+      return new Response(JSON.stringify({ tabs }), { headers: { ...corsHeaders, "Content-Type":"application/json" }});
+    }
 
     const { data: settings } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
     const sheetId = settings?.buildings_sheet_id;
