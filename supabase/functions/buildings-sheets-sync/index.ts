@@ -95,6 +95,19 @@ Deno.serve(async (req) => {
       const tenantMap = new Map<string, any>();
       (tenants||[]).forEach(t => { if (t.unit_id) tenantMap.set(t.unit_id, t); });
 
+      const fmtPhone = (raw: string) => {
+        if (!raw) return "";
+        const s = String(raw).trim();
+        const d = s.replace(/\D/g, "");
+        let pretty = s;
+        if (d.length === 12 && d.startsWith("966")) {
+          pretty = `+966 ${d.slice(3,5)} ${d.slice(5,8)} ${d.slice(8)}`;
+        } else if (d.length === 10 && d.startsWith("05")) {
+          pretty = `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
+        }
+        return "'" + pretty; // leading apostrophe -> force text in Sheets
+      };
+
       for (const b of buildings) {
         const rows = [HEADER];
         const buUnits = (units||[]).filter(u => u.building_number === b);
@@ -108,9 +121,9 @@ Deno.serve(async (req) => {
             String(u.price ?? ""),
             STATUS_AR[u.status] || u.status || "",
             t.tenant_name || "",
-            t.phone || "",
+            fmtPhone(t.phone || ""),
             t.business_name || "",
-            t.cr_number || "",
+            t.cr_number ? "'" + t.cr_number : "",
             t.start_date || "",
             t.end_date || "",
             t.notes || "",
@@ -118,7 +131,7 @@ Deno.serve(async (req) => {
         }
         const name = tabName(b);
         await gw(`/${sheetId}/values/${name}!A:M:clear`, { method:"POST", body:"{}" });
-        await gw(`/${sheetId}/values/${name}!A1?valueInputOption=RAW`, {
+        await gw(`/${sheetId}/values/${name}!A1?valueInputOption=USER_ENTERED`, {
           method:"PUT", body: JSON.stringify({ values: rows }),
         });
         pushed += rows.length - 1;
