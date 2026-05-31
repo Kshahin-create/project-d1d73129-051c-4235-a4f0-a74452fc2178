@@ -175,7 +175,10 @@ const AdminLeads = () => {
   };
 
   useEffect(() => {
-    if (!loading && (isAdmin || isManager)) fetchLeads();
+    if (!loading && (isAdmin || isManager)) {
+      fetchLeads();
+      loadSettings();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, isAdmin, isManager]);
 
