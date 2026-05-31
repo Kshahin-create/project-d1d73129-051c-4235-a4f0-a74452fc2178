@@ -44,7 +44,7 @@ async function gw(path: string, init: RequestInit = {}) {
 }
 
 function tabName(b: number) { return `مبنى ${b}`; }
-const DASHBOARD_TAB = "داشبورد";
+const DASHBOARD_TAB = "الداشبورد";
 
 async function ensureTabs(sheetId: string, buildings: number[]) {
   const meta = await gw(`/${sheetId}`);
@@ -130,9 +130,22 @@ Deno.serve(async (req) => {
     if (!ok) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type":"application/json" }});
 
     const body = await req.json().catch(()=>({}));
-    const action: "push" | "pull" = body.action || "push";
+    const action: "push" | "pull" | "meta" = body.action || "push";
     const buildings: number[] = Array.isArray(body.buildings) && body.buildings.length
       ? body.buildings : [1,2,3,4,5,6,7,8,9,10];
+
+    if (action === "meta") {
+      const { data: s } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
+      const m = await gw(`/${s?.buildings_sheet_id}`);
+      const sheets = (m.sheets||[]).map((x:any)=>({ title: x.properties?.title, sheetId: x.properties?.sheetId }));
+      if (body.delete_title) {
+        const target = sheets.find((x:any)=>x.title===body.delete_title);
+        if (target) {
+          await gw(`/${s?.buildings_sheet_id}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests:[{ deleteSheet:{ sheetId: target.sheetId }}]})});
+        }
+      }
+      return new Response(JSON.stringify({ sheets }), { headers: { ...corsHeaders, "Content-Type":"application/json" }});
+    }
 
     const { data: settings } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
     const sheetId = settings?.buildings_sheet_id;
