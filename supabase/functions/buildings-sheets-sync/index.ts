@@ -121,9 +121,12 @@ async function safeBatch(sheetId: string, requests: any[]) {
   try {
     await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests }) });
   } catch (e) {
-    // try one-by-one to skip the failing one
-    for (const r of requests) {
-      try { await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests: [r] }) }); } catch {}
+    // banding fails when it already exists — strip banding and retry once
+    const filtered = requests.filter(r => !r.addBanding);
+    if (filtered.length && filtered.length !== requests.length) {
+      try { await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests: filtered }) }); } catch (e2) { console.error("safeBatch retry failed", e2); }
+    } else {
+      console.error("safeBatch failed", e);
     }
   }
 }
