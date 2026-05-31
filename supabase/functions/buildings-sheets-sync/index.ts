@@ -32,18 +32,27 @@ const BOOKING_STATUS_AR: Record<string,string> = {
 
 async function gw(path: string, init: RequestInit = {}) {
   if (!LOVABLE_API_KEY || !SHEETS_API_KEY) throw new Error("Google Sheets connector not configured");
-  const res = await fetch(`${GATEWAY}${path}`, {
-    ...init,
-    headers: {
-      ...(init.headers||{}),
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": SHEETS_API_KEY,
-      "Content-Type": "application/json",
-    },
-  });
-  const t = await res.text();
-  if (!res.ok) throw new Error(`Sheets API ${res.status}: ${t.slice(0,400)}`);
-  return t ? JSON.parse(t) : {};
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const res = await fetch(`${GATEWAY}${path}`, {
+      ...init,
+      headers: {
+        ...(init.headers||{}),
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": SHEETS_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
+    const t = await res.text();
+    if (res.status === 429) {
+      const wait = 8000 + attempt * 6000;
+      console.warn(`Sheets 429, waiting ${wait}ms (attempt ${attempt+1})`);
+      await new Promise(r => setTimeout(r, wait));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Sheets API ${res.status}: ${t.slice(0,400)}`);
+    return t ? JSON.parse(t) : {};
+  }
+  throw new Error("Sheets API 429: exceeded retry attempts");
 }
 
 function tabName(b: number) { return `مبنى ${b}`; }
