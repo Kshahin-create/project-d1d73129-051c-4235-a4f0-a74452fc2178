@@ -540,21 +540,21 @@ Deno.serve(async (req) => {
       pendingWrites.push({ tab: DASHBOARD_TAB, rows: dash.rows });
       const dashSid = tabIds.get(DASHBOARD_TAB);
 
-      // === Apply formatting ===
-      try {
-        for (const info of buildingTabInfos) {
-          await formatDataTab(sheetId, info.sid, info.name, UNIT_HEADER.length, info.rowCount);
-        }
-        if (bookingsSid !== undefined) await formatDataTab(sheetId, bookingsSid, BOOKINGS_TAB, bookingsHeader.length, bookingsRows.length);
-        if (tenantsSid !== undefined) await formatDataTab(sheetId, tenantsSid, TENANTS_TAB, tenantsHeader.length, tenantsRows.length);
-        if (accountsSid !== undefined) await formatDataTab(sheetId, accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length);
-        if (invoicesSid !== undefined) await formatDataTab(sheetId, invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length);
-        if (leadsSid !== undefined) await formatDataTab(sheetId, leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length);
-        if (dashSid !== undefined) {
-          await formatDashboard(sheetId, dashSid, dash.rows.length);
-          await formatDashboardSections(sheetId, dashSid, dash.sectionRows, dash.tableHeaderRows);
-        }
-      } catch (e) { console.error("formatting error", e); }
+      // Flush all writes in 2 calls (batchClear + batchUpdate)
+      await flushWrites(sheetId, pendingWrites);
+
+      // Accumulate all formatting requests across all tabs into one batch
+      const formatReqs: any[] = [];
+      for (const info of buildingTabInfos) {
+        formatReqs.push(...buildDataTabRequests(info.sid, info.name, UNIT_HEADER.length, info.rowCount));
+      }
+      if (bookingsSid !== undefined) formatReqs.push(...buildDataTabRequests(bookingsSid, BOOKINGS_TAB, bookingsHeader.length, bookingsRows.length));
+      if (tenantsSid !== undefined) formatReqs.push(...buildDataTabRequests(tenantsSid, TENANTS_TAB, tenantsHeader.length, tenantsRows.length));
+      if (accountsSid !== undefined) formatReqs.push(...buildDataTabRequests(accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length));
+      if (invoicesSid !== undefined) formatReqs.push(...buildDataTabRequests(invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length));
+      if (leadsSid !== undefined) formatReqs.push(...buildDataTabRequests(leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length));
+      if (dashSid !== undefined) formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
+      await safeBatch(sheetId, formatReqs);
     }
 
     if (action === "pull") {
