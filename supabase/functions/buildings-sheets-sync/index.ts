@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
         }
         const name = tabName(b);
         await gw(`/${sheetId}/values/${name}!A:M:clear`, { method:"POST", body:"{}" });
-        await gw(`/${sheetId}/values/${name}!A1?valueInputOption=USER_ENTERED`, {
+        await gw(`/${sheetId}/values/${name}!A1?valueInputOption=RAW`, {
           method:"PUT", body: JSON.stringify({ values: rows }),
         });
         pushed += rows.length - 1;
