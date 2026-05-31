@@ -426,7 +426,7 @@ Deno.serve(async (req) => {
 
       // === Building tabs ===
       const perBuilding: BStat[] = [];
-      const buildingTabSheetIds: number[] = [];
+      const buildingTabInfos: { sid: number; name: string; rowCount: number }[] = [];
       for (const b of buildings) {
         const rows: (string|number)[][] = [UNIT_HEADER];
         const buUnits = (units||[]).filter((u:any) => u.building_number === b);
