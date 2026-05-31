@@ -279,7 +279,7 @@ function fmtPhone(raw: string) {
   return s;
 }
 
-function buildDashboardRows(perBuilding: BStat[]): (string|number)[][] {
+function buildDashboardRows(perBuilding: BStat[]): { rows: (string|number)[][]; sectionRows: number[]; tableHeaderRows: number[] } {
   const sum = (k: keyof BStat) => perBuilding.reduce((a, x) => a + (x[k] as number), 0);
   const totalUnits = sum("total");
   const available = sum("available");
@@ -296,37 +296,49 @@ function buildDashboardRows(perBuilding: BStat[]): (string|number)[][] {
   const fmtMoney = (n: number) => Math.round(n).toLocaleString("en-US") + " ر.س";
   const fmtPct = (n: number) => n.toFixed(1) + "%";
 
-  const rows: (string | number)[][] = [
-    ["لوحة المعلومات — مدينة المعجار", "", "", "", ""],
-    [`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""],
-    ["", "", "", "", ""],
-    ["ملخص عام", "", "", "", ""],
-    ["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال", fmtPct(occupancy)],
-    ["متاحة", available, "", "نسبة المؤجر", fmtPct(rentedPct)],
-    ["محجوزة", reserved, "", "", ""],
-    ["مؤجرة", rented, "", "", ""],
-    ["", "", "", "", ""],
-    ["الإيرادات السنوية", "", "", "", ""],
-    ["إجمالي قيمة الوحدات (لو كله مؤجر)", fmtMoney(priceTotal), "", "", ""],
-    ["قيمة الوحدات المؤجرة", fmtMoney(priceRented), "", "", ""],
-    ["قيمة الوحدات المحجوزة", fmtMoney(priceReserved), "", "", ""],
-    ["الإيراد المتوقع (مؤجر + محجوز)", fmtMoney(expectedAnnual), "", "", ""],
-    ["المحصّل فعلياً", fmtMoney(paid), "", "", ""],
-    ["المتبقي من الإيراد المتوقع", fmtMoney(remaining), "", "", ""],
-    ["نسبة التحصيل من المتوقع", fmtPct(expectedAnnual ? (paid / expectedAnnual) * 100 : 0), "", "", ""],
-    ["", "", "", "", ""],
-    ["تفصيل لكل مبنى — العدد", "", "", "", ""],
-    ["المبنى", "إجمالي الوحدات", "متاحة", "محجوزة", "مؤجرة"],
-  ];
+  const rows: (string | number)[][] = [];
+  const sectionRows: number[] = [];
+  const tableHeaderRows: number[] = [];
+
+  rows.push(["لوحة المعلومات — مدينة المعجار", "", "", "", ""]);
+  rows.push([`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""]);
+  rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
+  rows.push(["ملخص عام", "", "", "", ""]);
+  rows.push(["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال", fmtPct(occupancy)]);
+  rows.push(["متاحة", available, "", "نسبة المؤجر", fmtPct(rentedPct)]);
+  rows.push(["محجوزة", reserved, "", "", ""]);
+  rows.push(["مؤجرة", rented, "", "", ""]);
+  rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
+  rows.push(["الإيرادات السنوية", "", "", "", ""]);
+  rows.push(["إجمالي قيمة الوحدات (لو كله مؤجر)", fmtMoney(priceTotal), "", "", ""]);
+  rows.push(["قيمة الوحدات المؤجرة", fmtMoney(priceRented), "", "", ""]);
+  rows.push(["قيمة الوحدات المحجوزة", fmtMoney(priceReserved), "", "", ""]);
+  rows.push(["الإيراد المتوقع (مؤجر + محجوز)", fmtMoney(expectedAnnual), "", "", ""]);
+  rows.push(["المحصّل فعلياً", fmtMoney(paid), "", "", ""]);
+  rows.push(["المتبقي من الإيراد المتوقع", fmtMoney(remaining), "", "", ""]);
+  rows.push(["نسبة التحصيل من المتوقع", fmtPct(expectedAnnual ? (paid / expectedAnnual) * 100 : 0), "", "", ""]);
+  rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
+  rows.push(["تفصيل لكل مبنى — العدد", "", "", "", ""]);
+  tableHeaderRows.push(rows.length);
+  rows.push(["المبنى", "إجمالي الوحدات", "متاحة", "محجوزة", "مؤجرة"]);
   for (const r of perBuilding) rows.push([`مبنى ${r.b}`, r.total, r.available, r.reserved, r.rented]);
   rows.push(["", "", "", "", ""]);
+
+  sectionRows.push(rows.length);
   rows.push(["تفصيل لكل مبنى — المالي", "", "", "", ""]);
+  tableHeaderRows.push(rows.length);
   rows.push(["المبنى", "قيمة المؤجر", "قيمة المحجوز", "إجمالي متوقع", "نسبة الإشغال"]);
   for (const r of perBuilding) {
     const occ = r.total ? ((r.rented + r.reserved) / r.total) * 100 : 0;
     rows.push([`مبنى ${r.b}`, fmtMoney(r.priceRented), fmtMoney(r.priceReserved), fmtMoney(r.priceRented + r.priceReserved), fmtPct(occ)]);
   }
-  return rows;
+  return { rows, sectionRows, tableHeaderRows };
 }
 
 Deno.serve(async (req) => {
