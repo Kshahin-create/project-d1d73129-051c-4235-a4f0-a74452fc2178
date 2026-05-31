@@ -98,6 +98,65 @@ const AdminLeads = () => {
   });
   const [editing, setEditing] = useState<Partial<Lead> | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [sheetId, setSheetId] = useState("");
+  const [sheetName, setSheetName] = useState("Leads");
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState<"" | "push" | "pull" | "sync" | "save">("");
+
+  const loadSettings = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("leads_sheet_id, leads_sheet_name, leads_sheet_last_sync_at")
+      .eq("id", 1)
+      .maybeSingle();
+    if (data) {
+      setSheetId(data.leads_sheet_id || "");
+      setSheetName(data.leads_sheet_name || "Leads");
+      setLastSync(data.leads_sheet_last_sync_at || null);
+    }
+  };
+
+  function extractSheetId(input: string) {
+    const m = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : input.trim();
+  }
+
+  const handleSaveSheet = async () => {
+    setSyncing("save");
+    const id = extractSheetId(sheetId);
+    const { error } = await supabase
+      .from("app_settings")
+      .update({ leads_sheet_id: id || null, leads_sheet_name: sheetName || "Leads" })
+      .eq("id", 1);
+    setSyncing("");
+    if (error) return toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    setSheetId(id);
+    toast({ title: "تم حفظ إعدادات الشييت" });
+  };
+
+  const runSync = async (action: "push" | "pull" | "sync") => {
+    setSyncing(action);
+    const { data, error } = await supabase.functions.invoke("leads-sheets-sync", {
+      body: { action },
+    });
+    setSyncing("");
+    if (error || (data as { error?: string })?.error) {
+      const msg = (data as { error?: string })?.error || error?.message || "حدث خطأ";
+      return toast({ title: "فشلت المزامنة", description: msg, variant: "destructive" });
+    }
+    const r = data as { pushed: number; pulled: number; inserted: number; updated: number };
+    toast({
+      title: "تمت المزامنة",
+      description:
+        action === "push"
+          ? `تم رفع ${r.pushed} صف`
+          : action === "pull"
+          ? `تمت قراءة ${r.pulled} (إضافة ${r.inserted}، تحديث ${r.updated})`
+          : `رفع ${r.pushed} ✓`,
+    });
+    loadSettings();
+    fetchLeads();
+  };
 
   useEffect(() => {
     localStorage.setItem("leads_msg_template", template);
