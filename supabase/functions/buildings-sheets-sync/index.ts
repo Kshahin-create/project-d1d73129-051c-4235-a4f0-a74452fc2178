@@ -461,7 +461,7 @@ Deno.serve(async (req) => {
           bk.expires_at ? new Date(bk.expires_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, BOOKINGS_TAB, bookingsRows);
+      pendingWrites.push({ tab: BOOKINGS_TAB, rows: bookingsRows });
       const bookingsSid = tabIds.get(BOOKINGS_TAB);
 
       // === Tenants tab ===
@@ -486,7 +486,7 @@ Deno.serve(async (req) => {
           t.created_at ? new Date(t.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, TENANTS_TAB, tenantsRows);
+      pendingWrites.push({ tab: TENANTS_TAB, rows: tenantsRows });
       const tenantsSid = tabIds.get(TENANTS_TAB);
 
       // === Tenant accounts tab ===
@@ -501,7 +501,7 @@ Deno.serve(async (req) => {
           a.created_at ? new Date(a.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, ACCOUNTS_TAB, accountsRows);
+      pendingWrites.push({ tab: ACCOUNTS_TAB, rows: accountsRows });
       const accountsSid = tabIds.get(ACCOUNTS_TAB);
 
       // === Invoices tab ===
@@ -519,7 +519,7 @@ Deno.serve(async (req) => {
           i.created_at ? new Date(i.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, INVOICES_TAB, invoicesRows);
+      pendingWrites.push({ tab: INVOICES_TAB, rows: invoicesRows });
       const invoicesSid = tabIds.get(INVOICES_TAB);
 
       // === Leads tab ===
@@ -532,12 +532,12 @@ Deno.serve(async (req) => {
           l.created_at ? new Date(l.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
-      await writeTab(sheetId, LEADS_TAB, leadsRows);
+      pendingWrites.push({ tab: LEADS_TAB, rows: leadsRows });
       const leadsSid = tabIds.get(LEADS_TAB);
 
       // === Dashboard ===
       const dash = buildDashboardRows(perBuilding);
-      await writeTab(sheetId, DASHBOARD_TAB, dash.rows);
+      pendingWrites.push({ tab: DASHBOARD_TAB, rows: dash.rows });
       const dashSid = tabIds.get(DASHBOARD_TAB);
 
       // === Apply formatting ===
