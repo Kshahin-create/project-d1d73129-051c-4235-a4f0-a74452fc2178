@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
           const area = parseFloat((row[2]||"").replace(/[^\d.]/g,"")) || 0;
           const activity = (row[3]||"").trim() || null;
           const price = parseFloat((row[4]||"").replace(/[^\d.]/g,"")) || 0;
-          const statusAr = (row[5]||"").trim();
+          const statusAr = (row[7]||"").trim();
           const status = AR_STATUS[statusAr] || "available";
           pulled++;
           const { error } = await admin.from("units")
