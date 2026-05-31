@@ -180,19 +180,16 @@ function buildDataTabRequests(sid: number, tab: string, cols: number, rowCount: 
   return requests;
 }
 
-async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
+function buildDashboardRequests(sid: number, rowCount: number, sectionRows: number[], tableHeaderRows: number[]): any[] {
   const COLS = 5;
   const requests: any[] = [
     { updateSheetProperties: { properties: { sheetId: sid, rightToLeft: true, gridProperties: { frozenRowCount: 0 } }, fields: "rightToLeft,gridProperties.frozenRowCount" }},
-    // Column widths
-    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 280 }, fields: "pixelSize" }},
-    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 1, endIndex: 2 }, properties: { pixelSize: 180 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 300 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 1, endIndex: 2 }, properties: { pixelSize: 200 }, fields: "pixelSize" }},
     { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 2, endIndex: 3 }, properties: { pixelSize: 40 }, fields: "pixelSize" }},
-    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 3, endIndex: 4 }, properties: { pixelSize: 220 }, fields: "pixelSize" }},
-    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 4, endIndex: 5 }, properties: { pixelSize: 180 }, fields: "pixelSize" }},
-    // All rows
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 3, endIndex: 4 }, properties: { pixelSize: 240 }, fields: "pixelSize" }},
+    { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 4, endIndex: 5 }, properties: { pixelSize: 200 }, fields: "pixelSize" }},
     { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: rowCount }, properties: { pixelSize: 34 }, fields: "pixelSize" }},
-    // Title row
     { updateDimensionProperties: { range: { sheetId: sid, dimension: "ROWS", startIndex: 0, endIndex: 1 }, properties: { pixelSize: 60 }, fields: "pixelSize" }},
     { mergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
     { repeatCell: {
@@ -204,7 +201,6 @@ async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
       }},
       fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
     }},
-    // Last update row (row 2)
     { mergeCells: { range: { sheetId: sid, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
     { repeatCell: {
       range: { sheetId: sid, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: COLS },
@@ -215,7 +211,6 @@ async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
       }},
       fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
     }},
-    // Body style for all data
     { repeatCell: {
       range: { sheetId: sid, startRowIndex: 2, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: COLS },
       cell: { userEnteredFormat: {
@@ -224,25 +219,16 @@ async function formatDashboard(sheetId: string, sid: number, rowCount: number) {
       }},
       fields: "userEnteredFormat(textFormat,verticalAlignment,horizontalAlignment)",
     }},
-    // Borders
     { updateBorders: {
       range: { sheetId: sid, startRowIndex: 0, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: COLS },
       top: BORDER, bottom: BORDER, left: BORDER, right: BORDER, innerHorizontal: BORDER, innerVertical: BORDER,
     }},
   ];
-
-  // Section headers: rows where col A has a label and cols B-E empty (we know from buildDashboardRows)
-  // Section labels are at known indices: 3 (ملخص عام), 9 (الإيرادات), 18 (تفصيل العدد), 19 (header row), and another section after building rows
-  await safeBatch(sheetId, requests);
-}
-
-async function formatDashboardSections(sheetId: string, sid: number, sectionRows: number[], tableHeaderRows: number[]) {
-  const requests: any[] = [];
   for (const r of sectionRows) {
     requests.push(
-      { mergeCells: { range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: 5 }, mergeType: "MERGE_ALL" }},
+      { mergeCells: { range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: COLS }, mergeType: "MERGE_ALL" }},
       { repeatCell: {
-        range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: 5 },
+        range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: COLS },
         cell: { userEnteredFormat: {
           backgroundColor: { red: 0.20, green: 0.40, blue: 0.65 },
           textFormat: { foregroundColor: HEADER_FG, bold: true, fontSize: 14, fontFamily: "Cairo" },
@@ -255,7 +241,7 @@ async function formatDashboardSections(sheetId: string, sid: number, sectionRows
   }
   for (const r of tableHeaderRows) {
     requests.push({ repeatCell: {
-      range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: 5 },
+      range: { sheetId: sid, startRowIndex: r, endRowIndex: r + 1, startColumnIndex: 0, endColumnIndex: COLS },
       cell: { userEnteredFormat: {
         backgroundColor: { red: 0.85, green: 0.89, blue: 0.95 },
         textFormat: { bold: true, fontSize: 11, fontFamily: "Cairo" },
@@ -264,7 +250,7 @@ async function formatDashboardSections(sheetId: string, sid: number, sectionRows
       fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment)",
     }});
   }
-  await safeBatch(sheetId, requests);
+  return requests;
 }
 
 type BStat = { b: number; total: number; available: number; reserved: number; rented: number; priceTotal: number; priceRented: number; priceReserved: number; paid: number };
