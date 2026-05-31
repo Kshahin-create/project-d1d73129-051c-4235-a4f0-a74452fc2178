@@ -44,7 +44,7 @@ async function gw(path: string, init: RequestInit = {}) {
 }
 
 function tabName(b: number) { return `مبنى ${b}`; }
-const DASHBOARD_TAB = "داشبورد";
+const DASHBOARD_TAB = "الداشبورد";
 
 async function ensureTabs(sheetId: string, buildings: number[]) {
   const meta = await gw(`/${sheetId}`);
