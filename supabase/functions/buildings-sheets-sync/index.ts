@@ -44,17 +44,74 @@ async function gw(path: string, init: RequestInit = {}) {
 }
 
 function tabName(b: number) { return `مبنى ${b}`; }
+const DASHBOARD_TAB = "داشبورد";
 
 async function ensureTabs(sheetId: string, buildings: number[]) {
   const meta = await gw(`/${sheetId}`);
   const existing = new Set<string>((meta.sheets||[]).map((s:any)=>s.properties?.title));
-  const requests = buildings
-    .map(b => tabName(b))
+  const titles = [...buildings.map(b => tabName(b)), DASHBOARD_TAB];
+  const requests = titles
     .filter(t => !existing.has(t))
     .map(title => ({ addSheet: { properties: { title } } }));
   if (requests.length) {
     await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests }) });
   }
+}
+
+type BStat = { b: number; total: number; available: number; reserved: number; rented: number; priceTotal: number; priceRented: number; priceReserved: number; paid: number };
+
+async function writeDashboard(sheetId: string, perBuilding: BStat[]) {
+  const sum = (k: keyof BStat) => perBuilding.reduce((a, x) => a + (x[k] as number), 0);
+  const totalUnits = sum("total");
+  const available = sum("available");
+  const reserved = sum("reserved");
+  const rented = sum("rented");
+  const priceTotal = sum("priceTotal");
+  const priceRented = sum("priceRented");
+  const priceReserved = sum("priceReserved");
+  const paid = sum("paid");
+  const expectedAnnual = priceRented + priceReserved;
+  const remaining = expectedAnnual - paid;
+  const occupancy = totalUnits ? ((rented + reserved) / totalUnits) * 100 : 0;
+  const rentedPct = totalUnits ? (rented / totalUnits) * 100 : 0;
+  const fmtMoney = (n: number) => Math.round(n).toLocaleString("en-US") + " ر.س";
+  const fmtPct = (n: number) => n.toFixed(1) + "%";
+
+  const rows: (string | number)[][] = [
+    ["لوحة المعلومات — مدينة المعجار", "", "", "", ""],
+    [`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""],
+    ["", "", "", "", ""],
+    ["ملخص عام", "", "", "", ""],
+    ["إجمالي الوحدات", totalUnits, "", "نسبة الإشغال (محجوز+مؤجر)", fmtPct(occupancy)],
+    ["متاحة", available, "", "نسبة المؤجر فقط", fmtPct(rentedPct)],
+    ["محجوزة", reserved, "", "", ""],
+    ["مؤجرة", rented, "", "", ""],
+    ["", "", "", "", ""],
+    ["الإيرادات السنوية", "", "", "", ""],
+    ["إجمالي قيمة الوحدات (لو كله مؤجر)", fmtMoney(priceTotal), "", "", ""],
+    ["قيمة الوحدات المؤجرة", fmtMoney(priceRented), "", "", ""],
+    ["قيمة الوحدات المحجوزة", fmtMoney(priceReserved), "", "", ""],
+    ["الإيراد المتوقع (مؤجر + محجوز)", fmtMoney(expectedAnnual), "", "", ""],
+    ["المحصّل فعلياً", fmtMoney(paid), "", "", ""],
+    ["المتبقي من الإيراد المتوقع", fmtMoney(remaining), "", "", ""],
+    ["نسبة التحصيل من المتوقع", fmtPct(expectedAnnual ? (paid / expectedAnnual) * 100 : 0), "", "", ""],
+    ["", "", "", "", ""],
+    ["تفصيل لكل مبنى — العدد", "", "", "", ""],
+    ["المبنى", "إجمالي الوحدات", "متاحة", "محجوزة", "مؤجرة"],
+  ];
+  for (const r of perBuilding) rows.push([`مبنى ${r.b}`, r.total, r.available, r.reserved, r.rented]);
+  rows.push(["", "", "", "", ""]);
+  rows.push(["تفصيل لكل مبنى — المالي", "", "", "", ""]);
+  rows.push(["المبنى", "قيمة المؤجر", "قيمة المحجوز", "إجمالي متوقع", "نسبة الإشغال"]);
+  for (const r of perBuilding) {
+    const occ = r.total ? ((r.rented + r.reserved) / r.total) * 100 : 0;
+    rows.push([`مبنى ${r.b}`, fmtMoney(r.priceRented), fmtMoney(r.priceReserved), fmtMoney(r.priceRented + r.priceReserved), fmtPct(occ)]);
+  }
+
+  await gw(`/${sheetId}/values/${DASHBOARD_TAB}!A:Z:clear`, { method: "POST", body: "{}" });
+  await gw(`/${sheetId}/values/${DASHBOARD_TAB}!A1?valueInputOption=RAW`, {
+    method: "PUT", body: JSON.stringify({ values: rows }),
+  });
 }
 
 Deno.serve(async (req) => {
@@ -122,14 +179,22 @@ Deno.serve(async (req) => {
         return pretty;
       };
 
+      const perBuilding: BStat[] = [];
       for (const b of buildings) {
         const rows: (string|number)[][] = [HEADER];
         const buUnits = (units||[]).filter(u => u.building_number === b);
+        const stat: BStat = { b, total: 0, available: 0, reserved: 0, rented: 0, priceTotal: 0, priceRented: 0, priceReserved: 0, paid: 0 };
         for (const u of buUnits) {
           const t = tenantMap.get(u.id) || {};
           const price = Number(u.price) || 0;
           const paid = unitPaid.get(u.id) || 0;
           const remaining = price - paid;
+          stat.total++;
+          stat.priceTotal += price;
+          stat.paid += paid;
+          if (u.status === "available") stat.available++;
+          else if (u.status === "reserved") { stat.reserved++; stat.priceReserved += price; }
+          else if (u.status === "rented") { stat.rented++; stat.priceRented += price; }
           rows.push([
             Number(u.unit_number) || "",
             u.unit_type || "",
@@ -148,6 +213,7 @@ Deno.serve(async (req) => {
             t.notes || "",
           ]);
         }
+        perBuilding.push(stat);
         const name = tabName(b);
         await gw(`/${sheetId}/values/${name}!A:Z:clear`, { method:"POST", body:"{}" });
         await gw(`/${sheetId}/values/${name}!A1?valueInputOption=RAW`, {
@@ -155,6 +221,7 @@ Deno.serve(async (req) => {
         });
         pushed += rows.length - 1;
       }
+      try { await writeDashboard(sheetId, perBuilding); } catch (e) { console.error("dashboard write failed", e); }
     }
 
     if (action === "pull") {
