@@ -12,6 +12,10 @@ import {
   MessageCircle,
   Search,
   FileSpreadsheet,
+  RefreshCw,
+  CloudUpload,
+  CloudDownload,
+  ExternalLink,
 } from "lucide-react";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,6 +98,65 @@ const AdminLeads = () => {
   });
   const [editing, setEditing] = useState<Partial<Lead> | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [sheetId, setSheetId] = useState("");
+  const [sheetName, setSheetName] = useState("Leads");
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState<"" | "push" | "pull" | "sync" | "save">("");
+
+  const loadSettings = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("leads_sheet_id, leads_sheet_name, leads_sheet_last_sync_at")
+      .eq("id", 1)
+      .maybeSingle();
+    if (data) {
+      setSheetId(data.leads_sheet_id || "");
+      setSheetName(data.leads_sheet_name || "Leads");
+      setLastSync(data.leads_sheet_last_sync_at || null);
+    }
+  };
+
+  function extractSheetId(input: string) {
+    const m = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : input.trim();
+  }
+
+  const handleSaveSheet = async () => {
+    setSyncing("save");
+    const id = extractSheetId(sheetId);
+    const { error } = await supabase
+      .from("app_settings")
+      .update({ leads_sheet_id: id || null, leads_sheet_name: sheetName || "Leads" })
+      .eq("id", 1);
+    setSyncing("");
+    if (error) return toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    setSheetId(id);
+    toast({ title: "تم حفظ إعدادات الشييت" });
+  };
+
+  const runSync = async (action: "push" | "pull" | "sync") => {
+    setSyncing(action);
+    const { data, error } = await supabase.functions.invoke("leads-sheets-sync", {
+      body: { action },
+    });
+    setSyncing("");
+    if (error || (data as { error?: string })?.error) {
+      const msg = (data as { error?: string })?.error || error?.message || "حدث خطأ";
+      return toast({ title: "فشلت المزامنة", description: msg, variant: "destructive" });
+    }
+    const r = data as { pushed: number; pulled: number; inserted: number; updated: number };
+    toast({
+      title: "تمت المزامنة",
+      description:
+        action === "push"
+          ? `تم رفع ${r.pushed} صف`
+          : action === "pull"
+          ? `تمت قراءة ${r.pulled} (إضافة ${r.inserted}، تحديث ${r.updated})`
+          : `رفع ${r.pushed} ✓`,
+    });
+    loadSettings();
+    fetchLeads();
+  };
 
   useEffect(() => {
     localStorage.setItem("leads_msg_template", template);
@@ -112,7 +175,10 @@ const AdminLeads = () => {
   };
 
   useEffect(() => {
-    if (!loading && (isAdmin || isManager)) fetchLeads();
+    if (!loading && (isAdmin || isManager)) {
+      fetchLeads();
+      loadSettings();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, isAdmin, isManager]);
 
@@ -292,6 +358,84 @@ const AdminLeads = () => {
         />
         <p className="mt-2 text-xs text-muted-foreground">
           المتغيرات المتاحة: <code>{"{name}"}</code> · <code>{"{phone}"}</code> · <code>{"{notes}"}</code>
+        </p>
+      </div>
+
+      {/* Google Sheets sync */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+        <div className="mb-3 flex items-center gap-2">
+          <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+          <h2 className="text-base font-bold">ربط Google Sheets</h2>
+          {lastSync && (
+            <span className="ms-auto text-xs text-muted-foreground">
+              آخر مزامنة: {new Date(lastSync).toLocaleString("ar-SA-u-nu-latn", { dateStyle: "short", timeStyle: "short" })}
+            </span>
+          )}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_180px_auto]">
+          <div className="space-y-1.5">
+            <Label className="text-xs">رابط الشييت أو الـ ID</Label>
+            <Input
+              dir="ltr"
+              value={sheetId}
+              onChange={(e) => setSheetId(e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">اسم التبويب</Label>
+            <Input
+              dir="ltr"
+              value={sheetName}
+              onChange={(e) => setSheetName(e.target.value)}
+              placeholder="Leads"
+            />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleSaveSheet} disabled={syncing === "save"} className="w-full sm:w-auto">
+              حفظ
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => runSync("push")}
+            disabled={!!syncing || !sheetId}
+            className="gap-2"
+          >
+            <CloudUpload className="h-4 w-4" /> رفع البيانات للشييت
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => runSync("pull")}
+            disabled={!!syncing || !sheetId}
+            className="gap-2"
+          >
+            <CloudDownload className="h-4 w-4" /> تحميل من الشييت
+          </Button>
+          <Button
+            onClick={() => runSync("sync")}
+            disabled={!!syncing || !sheetId}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing === "sync" ? "جاري المزامنة..." : "مزامنة الآن"}
+          </Button>
+          {sheetId && (
+            <a
+              href={`https://docs.google.com/spreadsheets/d/${extractSheetId(sheetId)}/edit`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ms-auto inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              فتح الشييت <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          تأكد إن حساب جوجل المربوط بالسيستم يقدر يعدّل على الشييت (شاركه مع الإيميل اللي ربطته).
+          الأعمدة: الاسم · رقم الجوال · ملاحظات · الحالة · آخر تواصل · ID
         </p>
       </div>
 

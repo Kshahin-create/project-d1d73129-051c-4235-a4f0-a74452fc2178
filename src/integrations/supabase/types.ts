@@ -89,6 +89,9 @@ export type Database = {
       app_settings: {
         Row: {
           id: number
+          leads_sheet_id: string | null
+          leads_sheet_last_sync_at: string | null
+          leads_sheet_name: string | null
           maintenance_message: string | null
           maintenance_mode: boolean
           updated_at: string
@@ -96,6 +99,9 @@ export type Database = {
         }
         Insert: {
           id?: number
+          leads_sheet_id?: string | null
+          leads_sheet_last_sync_at?: string | null
+          leads_sheet_name?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean
           updated_at?: string
@@ -103,6 +109,9 @@ export type Database = {
         }
         Update: {
           id?: number
+          leads_sheet_id?: string | null
+          leads_sheet_last_sync_at?: string | null
+          leads_sheet_name?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean
           updated_at?: string
