@@ -550,19 +550,24 @@ Deno.serve(async (req) => {
       const leadsSid = tabIds.get(LEADS_TAB);
 
       // === Dashboard ===
-      const dashRows = buildDashboardRows(perBuilding);
-      await writeTab(sheetId, DASHBOARD_TAB, dashRows);
+      const dash = buildDashboardRows(perBuilding);
+      await writeTab(sheetId, DASHBOARD_TAB, dash.rows);
       const dashSid = tabIds.get(DASHBOARD_TAB);
 
       // === Apply formatting ===
       try {
-        await formatDataTabs(sheetId, buildingTabSheetIds, UNIT_HEADER.length);
-        if (bookingsSid !== undefined) await formatDataTabs(sheetId, [bookingsSid], bookingsHeader.length);
-        if (tenantsSid !== undefined) await formatDataTabs(sheetId, [tenantsSid], tenantsHeader.length);
-        if (accountsSid !== undefined) await formatDataTabs(sheetId, [accountsSid], accountsHeader.length);
-        if (invoicesSid !== undefined) await formatDataTabs(sheetId, [invoicesSid], invoicesHeader.length);
-        if (leadsSid !== undefined) await formatDataTabs(sheetId, [leadsSid], leadsHeader.length);
-        if (dashSid !== undefined) await formatDashboard(sheetId, dashSid, dashRows.length);
+        for (const info of buildingTabInfos) {
+          await formatDataTab(sheetId, info.sid, info.name, UNIT_HEADER.length, info.rowCount);
+        }
+        if (bookingsSid !== undefined) await formatDataTab(sheetId, bookingsSid, BOOKINGS_TAB, bookingsHeader.length, bookingsRows.length);
+        if (tenantsSid !== undefined) await formatDataTab(sheetId, tenantsSid, TENANTS_TAB, tenantsHeader.length, tenantsRows.length);
+        if (accountsSid !== undefined) await formatDataTab(sheetId, accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length);
+        if (invoicesSid !== undefined) await formatDataTab(sheetId, invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length);
+        if (leadsSid !== undefined) await formatDataTab(sheetId, leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length);
+        if (dashSid !== undefined) {
+          await formatDashboard(sheetId, dashSid, dash.rows.length);
+          await formatDashboardSections(sheetId, dashSid, dash.sectionRows, dash.tableHeaderRows);
+        }
       } catch (e) { console.error("formatting error", e); }
     }
 
