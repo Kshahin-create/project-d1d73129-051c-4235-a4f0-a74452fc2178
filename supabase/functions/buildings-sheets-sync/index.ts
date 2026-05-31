@@ -137,8 +137,14 @@ Deno.serve(async (req) => {
     if (action === "meta") {
       const { data: s } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
       const m = await gw(`/${s?.buildings_sheet_id}`);
-      const tabs = (m.sheets||[]).map((x:any)=>x.properties?.title);
-      return new Response(JSON.stringify({ tabs }), { headers: { ...corsHeaders, "Content-Type":"application/json" }});
+      const sheets = (m.sheets||[]).map((x:any)=>({ title: x.properties?.title, sheetId: x.properties?.sheetId }));
+      if (body.delete_title) {
+        const target = sheets.find((x:any)=>x.title===body.delete_title);
+        if (target) {
+          await gw(`/${s?.buildings_sheet_id}:batchUpdate`, { method:"POST", body: JSON.stringify({ requests:[{ deleteSheet:{ sheetId: target.sheetId }}]})});
+        }
+      }
+      return new Response(JSON.stringify({ sheets }), { headers: { ...corsHeaders, "Content-Type":"application/json" }});
     }
 
     const { data: settings } = await admin.from("app_settings").select("buildings_sheet_id").eq("id",1).maybeSingle();
