@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
         } else if (d.length === 10 && d.startsWith("05")) {
           pretty = `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
         }
-        return "'" + pretty;
+        return pretty;
       };
 
       for (const b of buildings) {
@@ -149,8 +149,8 @@ Deno.serve(async (req) => {
           ]);
         }
         const name = tabName(b);
-        await gw(`/${sheetId}/values/${name}!A:O:clear`, { method:"POST", body:"{}" });
-        await gw(`/${sheetId}/values/${name}!A1?valueInputOption=USER_ENTERED`, {
+        await gw(`/${sheetId}/values/${name}!A:Z:clear`, { method:"POST", body:"{}" });
+        await gw(`/${sheetId}/values/${name}!A1?valueInputOption=RAW`, {
           method:"PUT", body: JSON.stringify({ values: rows }),
         });
         pushed += rows.length - 1;
