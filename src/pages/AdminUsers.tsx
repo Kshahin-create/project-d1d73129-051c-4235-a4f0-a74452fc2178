@@ -293,6 +293,7 @@ const AdminUsers = () => {
                         className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium focus:border-primary focus:outline-none"
                       >
                         <option value="user">مستخدم</option>
+                        <option value="tenant">مستأجر</option>
                         <option value="control">Control (دعم/صيانة)</option>
                         <option value="manager">مدير</option>
                         <option value="admin">أدمن</option>
