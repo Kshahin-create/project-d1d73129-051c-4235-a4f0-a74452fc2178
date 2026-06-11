@@ -1316,6 +1316,13 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: undefined
       }
+      merge_duplicate_tenant_accounts: {
+        Args: never
+        Returns: {
+          deleted_accounts: number
+          merged_groups: number
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
