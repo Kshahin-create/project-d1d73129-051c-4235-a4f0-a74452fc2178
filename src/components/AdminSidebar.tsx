@@ -49,7 +49,7 @@ const allLinks: ExtLink[] = [
   { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
   { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
   { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
-  { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, managerOnly: true },
+  { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
   { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
   { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
   { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
