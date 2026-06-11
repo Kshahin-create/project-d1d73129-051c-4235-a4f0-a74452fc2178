@@ -9,7 +9,7 @@ import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight, User
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { fmtNum } from "@/lib/utils";
 
-type AppRole = "admin" | "control" | "manager" | "user";
+type AppRole = "admin" | "control" | "manager" | "tenant" | "user";
 
 interface UserRow {
   user_id: string;
@@ -24,6 +24,7 @@ const ROLE_META: Record<AppRole, { label: string; icon: typeof Shield; cls: stri
   admin: { label: "أدمن", icon: Shield, cls: "bg-primary/10 text-primary", ring: "ring-primary/20" },
   manager: { label: "مدير", icon: Briefcase, cls: "bg-emerald-500/10 text-emerald-600", ring: "ring-emerald-500/20" },
   control: { label: "Control", icon: Wrench, cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400", ring: "ring-amber-500/20" },
+  tenant: { label: "مستأجر", icon: UserIcon, cls: "bg-sky-500/10 text-sky-600", ring: "ring-sky-500/20" },
   user: { label: "مستخدم", icon: UserIcon, cls: "bg-secondary text-muted-foreground", ring: "ring-border" },
 };
 
@@ -292,6 +293,7 @@ const AdminUsers = () => {
                         className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium focus:border-primary focus:outline-none"
                       >
                         <option value="user">مستخدم</option>
+                        <option value="tenant">مستأجر</option>
                         <option value="control">Control (دعم/صيانة)</option>
                         <option value="manager">مدير</option>
                         <option value="admin">أدمن</option>
