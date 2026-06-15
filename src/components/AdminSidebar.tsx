@@ -57,6 +57,7 @@ const allLinks: ExtLink[] = [
   { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
   { to: "/api-docs", label: "توثيق الـ API", Icon: Code2, adminOnly: true },
   { to: "/mcp", label: "خادم MCP", Icon: Bot, adminOnly: true },
+  { to: "/admin/backup", label: "نسخ احتياطي", Icon: Database, adminOnly: true },
 ];
 
 export const AdminSidebar = () => {
