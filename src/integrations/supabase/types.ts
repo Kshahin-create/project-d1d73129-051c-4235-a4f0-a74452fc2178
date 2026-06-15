@@ -745,6 +745,42 @@ export type Database = {
         }
         Relationships: []
       }
+      system_backups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          name: string
+          notes: string | null
+          size_bytes: number
+          storage_path: string
+          table_counts: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          name: string
+          notes?: string | null
+          size_bytes?: number
+          storage_path: string
+          table_counts?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          notes?: string | null
+          size_bytes?: number
+          storage_path?: string
+          table_counts?: Json
+        }
+        Relationships: []
+      }
       telegram_chat_memory: {
         Row: {
           chat_id: number
