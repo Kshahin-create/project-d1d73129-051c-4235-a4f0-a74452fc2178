@@ -482,6 +482,9 @@ const Dashboard = () => {
             <TabsTrigger value="tenants" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <Users className="ml-1.5 h-3.5 w-3.5" /> المستأجرون
             </TabsTrigger>
+            <TabsTrigger value="map" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
+              <MapPin className="ml-1.5 h-3.5 w-3.5" /> خريطة الوحدات
+            </TabsTrigger>
             <TabsTrigger value="units" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <Package className="ml-1.5 h-3.5 w-3.5" /> الوحدات
             </TabsTrigger>
