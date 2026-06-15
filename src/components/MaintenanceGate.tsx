@@ -16,35 +16,18 @@ export const MaintenanceGate = ({ children }: { children: React.ReactNode }) => 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("app_settings")
-        .select("maintenance_mode, maintenance_message")
-        .eq("id", 1)
-        .maybeSingle();
+      const { data } = await supabase.rpc("get_maintenance_status");
       if (!mounted) return;
-      setEnabled(!!data?.maintenance_mode);
-      setMessage(data?.maintenance_message ?? null);
+      const row = Array.isArray(data) ? data[0] : data;
+      setEnabled(!!row?.maintenance_mode);
+      setMessage(row?.maintenance_message ?? null);
     };
     load();
-
-    const channel = supabase
-      .channel("app_settings_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "app_settings" },
-        (payload: any) => {
-          const row = payload.new ?? payload.old;
-          if (row) {
-            setEnabled(!!row.maintenance_mode);
-            setMessage(row.maintenance_message ?? null);
-          }
-        }
-      )
-      .subscribe();
-
+    // Poll every 30s for maintenance updates (replaces realtime which required public table access)
+    const interval = setInterval(load, 30000);
     return () => {
       mounted = false;
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, []);
 
