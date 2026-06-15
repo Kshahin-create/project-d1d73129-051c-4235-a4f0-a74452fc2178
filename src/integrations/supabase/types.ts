@@ -1329,6 +1329,13 @@ export type Database = {
           unit_id: string
         }[]
       }
+      get_maintenance_status: {
+        Args: never
+        Returns: {
+          maintenance_message: string
+          maintenance_mode: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
