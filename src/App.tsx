@@ -78,6 +78,7 @@ const App = () => (
           <Route path="/install" element={<Install />} />
           <Route path="/admin/leads" element={<AdminLeads />} />
           <Route path="/admin/sheets-sync" element={<AdminSheetsSync />} />
+          <Route path="/admin/backup" element={<AdminBackup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
