@@ -7,9 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users,
   TrendingUp, BarChart3, PieChart as PieIcon, Activity, Layers, Target,
-  Ruler, Coins, Percent, Search, ArrowUpRight, ArrowDownRight,
+  Ruler, Coins, Percent, Search, ArrowUpRight, ArrowDownRight, MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UnitsMap } from "@/components/dashboard/UnitsMap";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -481,6 +482,9 @@ const Dashboard = () => {
             <TabsTrigger value="tenants" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <Users className="ml-1.5 h-3.5 w-3.5" /> المستأجرون
             </TabsTrigger>
+            <TabsTrigger value="map" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
+              <MapPin className="ml-1.5 h-3.5 w-3.5" /> خريطة الوحدات
+            </TabsTrigger>
             <TabsTrigger value="units" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <Package className="ml-1.5 h-3.5 w-3.5" /> الوحدات
             </TabsTrigger>
@@ -933,6 +937,11 @@ const Dashboard = () => {
                 </Card>
               </>
             )}
+          </TabsContent>
+
+          {/* MAP */}
+          <TabsContent value="map" className="mt-5 space-y-4">
+            <UnitsMap buildings={buildings} units={units} />
           </TabsContent>
 
           {/* UNITS */}
