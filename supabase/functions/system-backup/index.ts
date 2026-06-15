@@ -179,9 +179,9 @@ Deno.serve(async (req) => {
       const deleteOrder = [...restoreOrder].reverse();
       const report: Record<string, { deleted: number; inserted: number; error?: string }> = {};
 
-      // Delete children first
+      // Delete children first (use created_at filter — exists on every backed-up table)
       for (const t of deleteOrder) {
-        const { error: delErr, count } = await admin.from(t).delete({ count: "exact" }).not("id", "is", null);
+        const { error: delErr, count } = await admin.from(t).delete({ count: "exact" }).gte("created_at", "1900-01-01");
         report[t] = { deleted: count ?? 0, inserted: 0, error: delErr?.message };
       }
       // Insert parents first
