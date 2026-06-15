@@ -7,9 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Building2, Package, FileText, CheckCircle2, Circle, Wallet, Users,
   TrendingUp, BarChart3, PieChart as PieIcon, Activity, Layers, Target,
-  Ruler, Coins, Percent, Search, ArrowUpRight, ArrowDownRight,
+  Ruler, Coins, Percent, Search, ArrowUpRight, ArrowDownRight, MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UnitsMap } from "@/components/dashboard/UnitsMap";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
