@@ -939,6 +939,11 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
+          {/* MAP */}
+          <TabsContent value="map" className="mt-5 space-y-4">
+            <UnitsMap buildings={buildings} units={units} />
+          </TabsContent>
+
           {/* UNITS */}
           <TabsContent value="units" className="mt-5 space-y-4">
             <Card className="p-5">
