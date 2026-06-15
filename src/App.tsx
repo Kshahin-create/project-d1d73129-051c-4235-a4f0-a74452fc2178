@@ -36,6 +36,7 @@ import TelegramSettings from "./pages/TelegramSettings.tsx";
 import Install from "./pages/Install.tsx";
 import AdminLeads from "./pages/AdminLeads.tsx";
 import AdminSheetsSync from "./pages/AdminSheetsSync.tsx";
+import AdminBackup from "./pages/AdminBackup.tsx";
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
 
 const queryClient = new QueryClient();
