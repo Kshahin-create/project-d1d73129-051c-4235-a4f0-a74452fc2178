@@ -53,11 +53,6 @@ Deno.serve(async (req) => {
     if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: isAdmin, error: roleErr } = await admin.rpc("has_role", {
-      _user_id: userData.user.id,
-      _role: "admin",
-    });
-    // has_role checks auth.uid() so call directly:
     const { data: roleRow } = await admin
       .from("user_roles")
       .select("role")
