@@ -42,24 +42,35 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace("Bearer ", "");
-    if (!token) return json({ error: "Unauthorized" }, 401);
-
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
+    const CRON_SECRET = Deno.env.get("BACKUP_CRON_SECRET") ?? "bkp_2k9m4xz8qr1vp7nlh3sj6";
+    const cronHeader = req.headers.get("x-cron-secret") ?? "";
+    const isCron = cronHeader && cronHeader === CRON_SECRET;
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: roleRow } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) return json({ error: "Admin only" }, 403);
+    let userData: any = { user: null };
+
+    if (!isCron) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const token = authHeader.replace("Bearer ", "");
+      if (!token) return json({ error: "Unauthorized" }, 401);
+
+      const userClient = createClient(SUPABASE_URL, ANON, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const got = await userClient.auth.getUser();
+      if (got.error || !got.data.user) return json({ error: "Unauthorized" }, 401);
+      userData = got.data;
+
+      const { data: roleRow } = await admin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!roleRow) return json({ error: "Admin only" }, 403);
+    } else {
+      userData = { user: { id: null, email: "cron@system" } };
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = body.action as string;
