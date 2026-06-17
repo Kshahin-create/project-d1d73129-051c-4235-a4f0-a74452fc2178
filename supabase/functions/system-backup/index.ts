@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       };
       const json_str = JSON.stringify(payload);
       const bytes = new TextEncoder().encode(json_str);
-      const path = `${userData.user.id}/${Date.now()}-${name}.json`;
+      const path = `${userData.user.id ?? "system"}/${Date.now()}-${name}.json`;
 
       const { error: upErr } = await admin.storage.from(BUCKET).upload(path, bytes, {
         contentType: "application/json",
