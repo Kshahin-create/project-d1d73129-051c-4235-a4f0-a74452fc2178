@@ -1111,6 +1111,53 @@ export type Database = {
           },
         ]
       }
+      unit_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          notes: string | null
+          size_bytes: number | null
+          storage_path: string
+          unit_id: string
+          uploaded_by: string | null
+          uploaded_by_email: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          unit_id: string
+          uploaded_by?: string | null
+          uploaded_by_email?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          unit_id?: string
+          uploaded_by?: string | null
+          uploaded_by_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_files_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           activity: string | null
