@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { exportUnitsToExcel, exportUnitsToCSV, exportUnitsToPDF } from "@/lib/exportUnits";
 import { MaintenanceToggle } from "@/components/MaintenanceToggle";
+import { UnitsMap } from "@/components/dashboard/UnitsMap";
 
 interface TenantForm {
   tenant_name: string;
@@ -297,6 +298,13 @@ const Admin = () => {
           <StatCard icon={<Users />} label="مؤجرة" value={stats.rented} color="text-destructive" />
           <StatCard icon={<TrendingUp />} label="إيراد سنوي" value={stats.revenue.toLocaleString("en-US")} color="text-accent" small />
         </div>
+
+        {/* Interactive units map */}
+        <div className="mb-6">
+          <UnitsMap buildings={buildings} units={units} />
+        </div>
+
+
 
         {/* Building filter */}
         <div className="mb-3 flex flex-wrap items-center gap-2">

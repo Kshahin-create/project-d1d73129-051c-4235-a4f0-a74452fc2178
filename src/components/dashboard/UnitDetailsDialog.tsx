@@ -13,6 +13,8 @@ import {
   History, Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UnitFilesPanel } from "./UnitFilesPanel";
+
 
 const fmt = (n: number | null | undefined) =>
   new Intl.NumberFormat("en-US").format(Math.round(Number(n ?? 0)));
@@ -197,11 +199,12 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                 </div>
 
                 <Tabs defaultValue="overview" dir="rtl">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
                     <TabsTrigger value="bookings">الحجوزات ({totalBookings})</TabsTrigger>
                     <TabsTrigger value="tenant">المستأجر ({tenants.length})</TabsTrigger>
                     <TabsTrigger value="invoices">الفواتير ({invoices.length})</TabsTrigger>
+                    <TabsTrigger value="files">الملفات</TabsTrigger>
                   </TabsList>
 
                   {/* OVERVIEW */}
@@ -348,6 +351,11 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                         </div>
                       ))
                     )}
+                  </TabsContent>
+
+                  {/* FILES */}
+                  <TabsContent value="files" className="mt-4">
+                    <UnitFilesPanel unitId={unit.id!} />
                   </TabsContent>
                 </Tabs>
               </>
