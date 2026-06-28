@@ -352,6 +352,11 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                       ))
                     )}
                   </TabsContent>
+
+                  {/* FILES */}
+                  <TabsContent value="files" className="mt-4">
+                    <UnitFilesPanel unitId={unit.id!} />
+                  </TabsContent>
                 </Tabs>
               </>
             )}
