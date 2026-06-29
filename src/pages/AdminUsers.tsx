@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight, UserPlus, Sparkles, ShieldCheck, Briefcase } from "lucide-react";
+import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight, UserPlus, Sparkles, ShieldCheck, Briefcase, Info, ChevronDown, Check, X as XIcon } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { fmtNum } from "@/lib/utils";
 
@@ -73,6 +73,7 @@ const AdminUsers = () => {
   const [roleFilter, setRoleFilter] = useState<"all" | AppRole>("all");
   const [pendingChange, setPendingChange] = useState<{ row: UserRow; newRole: AppRole } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [showRolesGuide, setShowRolesGuide] = useState(false);
 
   const load = async () => {
     setFetching(true);
@@ -184,6 +185,130 @@ const AdminUsers = () => {
             <span className="hidden sm:inline">رجوع للوحة الأدمن</span>
             <span className="sm:hidden">رجوع</span>
           </Link>
+        </div>
+
+        {/* Roles Guide */}
+        <div className="mb-5 overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+          <button
+            type="button"
+            onClick={() => setShowRolesGuide((v) => !v)}
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-secondary/50"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Info className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-display text-sm font-bold sm:text-base">دليل الصلاحيات</div>
+                <div className="text-[11px] text-muted-foreground sm:text-xs">
+                  اعرف كل دور بيقدر يعمل إيه قبل ما تغيّر صلاحيات أي مستخدم
+                </div>
+              </div>
+            </div>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showRolesGuide ? "rotate-180" : ""}`} />
+          </button>
+          {showRolesGuide && (
+            <div className="border-t border-border bg-background/50 p-4">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {[
+                  {
+                    role: "admin" as AppRole,
+                    summary: "صلاحيات كاملة على السيستم — يقدر يعمل أي حاجة.",
+                    can: [
+                      "إدارة المستخدمين وتغيير صلاحياتهم",
+                      "إدارة المباني والوحدات (إضافة/تعديل/حذف)",
+                      "تأجير الوحدات وإنشاء حسابات للمستأجرين",
+                      "إدارة الحجوزات والفواتير والمدفوعات",
+                      "الوصول لسجل التدقيق والنسخ الاحتياطي",
+                      "إعدادات السيستم (مزامنة Sheets، تيليجرام، API)",
+                    ],
+                    cant: ["لا يقدر يعدّل دوره بنفسه"],
+                  },
+                  {
+                    role: "manager" as AppRole,
+                    summary: "متابعة وعرض كل شيء بدون صلاحيات تخريبية.",
+                    can: [
+                      "عرض كل الوحدات والمباني والمستأجرين",
+                      "عرض الحجوزات والفواتير والداشبورد",
+                      "متابعة العملاء المحتملين (Leads)",
+                      "تأجير وحدات وإدارة بيانات المستأجرين",
+                    ],
+                    cant: [
+                      "لا يقدر يحذف بيانات أو يصل لإعدادات السيستم",
+                      "لا يقدر يغيّر صلاحيات المستخدمين",
+                    ],
+                  },
+                  {
+                    role: "control" as AppRole,
+                    summary: "دعم فني / صيانة — وصول محدود لحل المشاكل.",
+                    can: [
+                      "عرض الوحدات وحالتها للمتابعة",
+                      "متابعة طلبات الصيانة والتذاكر",
+                      "الوصول للوحة Control المخصصة",
+                    ],
+                    cant: [
+                      "لا يقدر يأجّر وحدات أو يصدر فواتير",
+                      "لا يقدر يدير المستخدمين أو الإعدادات المالية",
+                    ],
+                  },
+                  {
+                    role: "tenant" as AppRole,
+                    summary: "مستأجر داخل السيستم — يشوف بياناته فقط.",
+                    can: [
+                      "الدخول على بوابة المستأجر (Tenant Portal)",
+                      "عرض الوحدات المؤجّرة له وفواتيره",
+                      "تحميل فواتيره وعقوده",
+                    ],
+                    cant: [
+                      "لا يشوف بيانات أي مستأجر تاني",
+                      "لا يقدر يدخل لوحة الإدارة",
+                    ],
+                  },
+                  {
+                    role: "user" as AppRole,
+                    summary: "مستخدم عادي مسجّل — بدون صلاحيات إدارية.",
+                    can: [
+                      "تصفح المباني والوحدات المتاحة للحجز",
+                      "إرسال استفسار/طلب حجز",
+                      "تعديل بياناته الشخصية",
+                    ],
+                    cant: [
+                      "لا يدخل أي لوحة إدارية",
+                      "لا يشوف بيانات حساسة لأي مستخدم تاني",
+                    ],
+                  },
+                ].map(({ role, summary, can, cant }) => {
+                  const meta = ROLE_META[role];
+                  const Icon = meta.icon;
+                  return (
+                    <div key={role} className={`rounded-xl border border-border bg-card p-3.5 ring-1 ${meta.ring}`}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${meta.cls}`}>
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <div className="font-display text-sm font-bold">{meta.label}</div>
+                      </div>
+                      <p className="mb-2.5 text-[12px] leading-relaxed text-muted-foreground">{summary}</p>
+                      <ul className="space-y-1">
+                        {can.map((t) => (
+                          <li key={t} className="flex items-start gap-1.5 text-[12px]">
+                            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                            <span>{t}</span>
+                          </li>
+                        ))}
+                        {cant.map((t) => (
+                          <li key={t} className="flex items-start gap-1.5 text-[12px] text-muted-foreground">
+                            <XIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-500" />
+                            <span>{t}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
