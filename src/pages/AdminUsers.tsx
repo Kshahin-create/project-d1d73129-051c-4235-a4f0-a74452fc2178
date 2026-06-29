@@ -73,6 +73,7 @@ const AdminUsers = () => {
   const [roleFilter, setRoleFilter] = useState<"all" | AppRole>("all");
   const [pendingChange, setPendingChange] = useState<{ row: UserRow; newRole: AppRole } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [showRolesGuide, setShowRolesGuide] = useState(false);
 
   const load = async () => {
     setFetching(true);
