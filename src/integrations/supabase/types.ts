@@ -237,11 +237,13 @@ export type Database = {
           customer_phone: string
           expires_at: string
           id: string
+          is_returning_customer: boolean
           notes: string | null
           offer_image_url: string | null
           offer_number: string | null
           paid_amount: number
           payment_plan: string
+          previous_tenant_account_id: string | null
           reminder_12h_sent_at: string | null
           reminder_4h_sent_at: string | null
           status: string
@@ -262,11 +264,13 @@ export type Database = {
           customer_phone: string
           expires_at?: string
           id?: string
+          is_returning_customer?: boolean
           notes?: string | null
           offer_image_url?: string | null
           offer_number?: string | null
           paid_amount?: number
           payment_plan?: string
+          previous_tenant_account_id?: string | null
           reminder_12h_sent_at?: string | null
           reminder_4h_sent_at?: string | null
           status?: string
@@ -287,11 +291,13 @@ export type Database = {
           customer_phone?: string
           expires_at?: string
           id?: string
+          is_returning_customer?: boolean
           notes?: string | null
           offer_image_url?: string | null
           offer_number?: string | null
           paid_amount?: number
           payment_plan?: string
+          previous_tenant_account_id?: string | null
           reminder_12h_sent_at?: string | null
           reminder_4h_sent_at?: string | null
           status?: string
@@ -302,7 +308,15 @@ export type Database = {
           user_id?: string
           whatsapp_sent?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookings_previous_tenant_account_id_fkey"
+            columns: ["previous_tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       buildings: {
         Row: {
@@ -490,6 +504,63 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      interested_customers: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          created_by: string | null
+          customer_source: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string
+          requested_activity: string | null
+          requested_building: string | null
+          requested_unit: string | null
+          source: string
+          status: string
+          telegram_chat_id: number | null
+          telegram_message_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_source?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone: string
+          requested_activity?: string | null
+          requested_building?: string | null
+          requested_unit?: string | null
+          source?: string
+          status?: string
+          telegram_chat_id?: number | null
+          telegram_message_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_source?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          requested_activity?: string | null
+          requested_building?: string | null
+          requested_unit?: string | null
+          source?: string
+          status?: string
+          telegram_chat_id?: number | null
+          telegram_message_id?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -870,6 +941,56 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      tenant_account_files: {
+        Row: {
+          created_at: string
+          custom_name: string
+          id: string
+          mime_type: string | null
+          notes: string | null
+          original_name: string | null
+          size_bytes: number | null
+          storage_path: string
+          tenant_account_id: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          custom_name: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          original_name?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          tenant_account_id: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          original_name?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          tenant_account_id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_account_files_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_account_units: {
         Row: {
