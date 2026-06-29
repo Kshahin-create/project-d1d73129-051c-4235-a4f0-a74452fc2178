@@ -35,6 +35,7 @@ import Invoice from "./pages/Invoice.tsx";
 import TelegramSettings from "./pages/TelegramSettings.tsx";
 import Install from "./pages/Install.tsx";
 import AdminLeads from "./pages/AdminLeads.tsx";
+import AdminInterested from "./pages/AdminInterested.tsx";
 import AdminSheetsSync from "./pages/AdminSheetsSync.tsx";
 import AdminBackup from "./pages/AdminBackup.tsx";
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
