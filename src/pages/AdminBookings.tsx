@@ -535,11 +535,27 @@ const AdminBookings = () => {
                 <div key={b.id} className="rounded-2xl border border-border bg-card p-4 shadow-card">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="font-display text-lg font-bold">{b.customer_full_name}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-display text-lg font-bold">{b.customer_full_name}</div>
+                        {b.is_returning_customer && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                            <UserCheck className="h-3 w-3" /> عميل سابق
+                          </span>
+                        )}
+                      </div>
                       {b.business_name && (
                         <div className="text-sm text-muted-foreground">{b.business_name}</div>
                       )}
-                      <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">#{b.id.slice(0, 8)}</div>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <div className="font-mono text-[10px] text-muted-foreground">#{b.id.slice(0, 8)}</div>
+                        <button
+                          onClick={() => toggleReturning(b)}
+                          className="rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-secondary"
+                          title="تبديل وضع العميل السابق"
+                        >
+                          {b.is_returning_customer ? "إلغاء تعليم" : "تعليم كعميل سابق"}
+                        </button>
+                      </div>
                     </div>
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${st.cls}`}>
                       <StIcon className="h-3 w-3" />
