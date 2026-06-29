@@ -5,8 +5,9 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass, MessageCircle } from "lucide-react";
+import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass, MessageCircle, Download, UserCheck } from "lucide-react";
 import { fmtNum } from "@/lib/utils";
+import { exportRowsToExcel } from "@/lib/exportData";
 
 interface BookingUnitRow {
   building_number: number;
