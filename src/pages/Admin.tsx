@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { exportUnitsToExcel, exportUnitsToCSV, exportUnitsToPDF } from "@/lib/exportUnits";
 import { MaintenanceToggle } from "@/components/MaintenanceToggle";
 import { UnitsMap } from "@/components/dashboard/UnitsMap";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface TenantForm {
   tenant_name: string;
