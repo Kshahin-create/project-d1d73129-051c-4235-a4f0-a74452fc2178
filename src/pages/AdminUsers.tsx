@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight, UserPlus, Sparkles, ShieldCheck, Briefcase } from "lucide-react";
+import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight, UserPlus, Sparkles, ShieldCheck, Briefcase, Info, ChevronDown, Check, X as XIcon } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { fmtNum } from "@/lib/utils";
 
