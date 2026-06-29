@@ -122,6 +122,7 @@ export default function AdminTenantAccounts() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [filesFor, setFilesFor] = useState<{ id: string; name: string } | null>(null);
 
   const load = async () => {
     setFetching(true);
