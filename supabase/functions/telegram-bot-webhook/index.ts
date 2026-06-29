@@ -1349,6 +1349,7 @@ Deno.serve(async (req) => {
       case "sub": await setSub(admin, token, chat_id, arg, true); break;
       case "unsub": await setSub(admin, token, chat_id, arg, false); break;
       case "unlink": await cmdUnlink(admin, token, chat_id); break;
+      case "interested": await cmdInterested(admin, token, chat_id, arg, sub); break;
       case undefined: {
         // Plain text → AI
         const m = text.match(UUID_RE);
