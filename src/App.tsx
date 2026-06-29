@@ -78,6 +78,7 @@ const App = () => (
           <Route path="/invoice/:id" element={<Invoice />} />
           <Route path="/install" element={<Install />} />
           <Route path="/admin/leads" element={<AdminLeads />} />
+          <Route path="/admin/interested" element={<AdminInterested />} />
           <Route path="/admin/sheets-sync" element={<AdminSheetsSync />} />
           <Route path="/admin/backup" element={<AdminBackup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
