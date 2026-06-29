@@ -425,13 +425,23 @@ export default function AdminTenantAccounts() {
                         )}
                       </td>
                       <td className="p-3 text-left">
-                        <button
-                          onClick={() => setDetailId(r.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          إدارة
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setFilesFor({ id: r.id, name: r.full_name })}
+                            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-secondary"
+                            title="الملفات"
+                          >
+                            <Paperclip className="h-3 w-3" />
+                            ملفات
+                          </button>
+                          <button
+                            onClick={() => setDetailId(r.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            إدارة
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
