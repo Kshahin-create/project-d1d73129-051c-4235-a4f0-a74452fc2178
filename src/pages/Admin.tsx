@@ -536,7 +536,10 @@ const Admin = () => {
             </div>
           </div>
         )}
+          </TabsContent>
+        </Tabs>
       </main>
+
 
       {/* Tenant data form dialog */}
       {editingUnit && (
