@@ -153,6 +153,7 @@ function helpText() {
     "/search &lt;كلمة&gt; — بحث في العملاء والحجوزات",
     "/expiring — حجوزات بتنتهي قريباً",
     "/overdue — فواتير متأخرة",
+    "/interested — تسجيل عميل مهتم (الاسم|الجوال|النشاط|الاسم التجاري|المبنى|الوحدة|المصدر|الملاحظات)",
     "",
     "🔕 <b>الإعدادات</b>",
     "/mute &lt;ساعات&gt; — إيقاف الإشعارات مؤقتاً",
@@ -589,6 +590,80 @@ async function cmdOverdue(admin: any, token: string, chat_id: number) {
     lines.push(`• <b>${esc(i.invoice_number)}</b> — ${esc(i.customer_name)} — <b>${fmtNum(r)}</b> — استحق ${i.due_date}`);
   }
   await send(token, chat_id, lines.join("\n"));
+}
+
+
+async function cmdInterested(admin: any, token: string, chat_id: number, arg: string, sub: any) {
+  // Format examples:
+  //  /interested أحمد | 0555555555 | مطعم | مطعم الذواق | 3 | 12 | إعلان | يفضل وحدة كبيرة
+  //  Or labeled lines (الاسم: ... / الجوال: ...)
+  if (!arg || arg.length < 3) {
+    await send(token, chat_id,
+      "✍️ <b>تسجيل عميل مهتم</b>\n" +
+      "أرسل البيانات بأحد الأشكال:\n\n" +
+      "<b>1) مفصول بـ |</b>\n" +
+      "<code>/interested الاسم | الجوال | النشاط | الاسم التجاري | المبنى | الوحدة | المصدر | ملاحظات</code>\n\n" +
+      "<b>2) بأسطر مع تسمية</b>\n" +
+      "<code>/interested\nالاسم: أحمد\nالجوال: 0555555555\nالنشاط: مطعم\nالاسم التجاري: مطعم الذواق\nالمبنى: 3\nالوحدة: 12\nالمصدر: إعلان\nملاحظات: يفضل الدور الأرضي</code>"
+    );
+    return;
+  }
+  let payload: any = {};
+  if (arg.includes("|")) {
+    const parts = arg.split("|").map((p) => p.trim());
+    payload = {
+      full_name: parts[0] || "",
+      phone: parts[1] || "",
+      requested_activity: parts[2] || null,
+      business_name: parts[3] || null,
+      requested_building: parts[4] || null,
+      requested_unit: parts[5] || null,
+      customer_source: parts[6] || null,
+      notes: parts[7] || null,
+    };
+  } else {
+    payload = {
+      full_name: extractLine(arg, ["الاسم", "اسم العميل"]) || "",
+      phone: extractPhone(arg) || extractLine(arg, ["الجوال", "الهاتف", "الموبايل"]) || "",
+      requested_activity: extractLine(arg, ["النشاط", "نشاط"]) || null,
+      business_name: extractLine(arg, ["الاسم التجاري", "اسم النشاط", "المؤسسة"]) || null,
+      requested_building: extractLine(arg, ["المبنى", "المباني", "البلوك"]) || null,
+      requested_unit: extractLine(arg, ["الوحدة", "رقم الوحدة"]) || null,
+      customer_source: extractLine(arg, ["المصدر", "مصدر العميل"]) || null,
+      notes: extractLine(arg, ["ملاحظات", "ملاحظة"]) || null,
+    };
+  }
+  if (!payload.full_name || !payload.phone) {
+    await send(token, chat_id, "❌ لازم تكتب على الأقل <b>الاسم</b> و<b>رقم الجوال</b>");
+    return;
+  }
+  const { data, error } = await admin
+    .from("interested_customers")
+    .insert({
+      ...payload,
+      source: "telegram",
+      telegram_chat_id: chat_id,
+      created_by: sub?.user_id ?? null,
+      status: "new",
+    })
+    .select()
+    .single();
+  if (error) {
+    await send(token, chat_id, "❌ فشل الحفظ: " + esc(error.message));
+    return;
+  }
+  await send(token, chat_id,
+    "✅ <b>تم تسجيل العميل المهتم</b>\n\n" +
+    `👤 ${esc(data.full_name)}\n` +
+    `📱 <code>${esc(data.phone)}</code>\n` +
+    (data.requested_activity ? `🏷️ ${esc(data.requested_activity)}\n` : "") +
+    (data.business_name ? `🏢 ${esc(data.business_name)}\n` : "") +
+    (data.requested_building ? `🏗️ المبنى ${esc(String(data.requested_building))}` : "") +
+    (data.requested_unit ? ` / وحدة ${esc(String(data.requested_unit))}\n` : "\n") +
+    (data.customer_source ? `🎯 ${esc(data.customer_source)}\n` : "") +
+    (data.notes ? `📝 ${esc(data.notes)}\n` : "") +
+    `\n#interested_${data.id.slice(0, 8)}`
+  );
 }
 
 async function cmdMute(admin: any, token: string, chat_id: number, arg: string) {
@@ -1349,6 +1424,7 @@ Deno.serve(async (req) => {
       case "sub": await setSub(admin, token, chat_id, arg, true); break;
       case "unsub": await setSub(admin, token, chat_id, arg, false); break;
       case "unlink": await cmdUnlink(admin, token, chat_id); break;
+      case "interested": await cmdInterested(admin, token, chat_id, arg, sub); break;
       case undefined: {
         // Plain text → AI
         const m = text.match(UUID_RE);

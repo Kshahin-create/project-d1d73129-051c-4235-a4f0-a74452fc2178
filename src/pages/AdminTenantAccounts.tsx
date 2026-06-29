@@ -25,7 +25,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   TrendingUp,
+  Download,
+  Paperclip,
 } from "lucide-react";
+import { exportRowsToExcel } from "@/lib/exportData";
+import { TenantFilesDialog } from "@/components/TenantFilesDialog";
 
 const TONE_CLS: Record<string, string> = {
   primary: "bg-primary/10 text-primary",
@@ -118,6 +122,7 @@ export default function AdminTenantAccounts() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [filesFor, setFilesFor] = useState<{ id: string; name: string } | null>(null);
 
   const load = async () => {
     setFetching(true);
@@ -311,6 +316,31 @@ export default function AdminTenantAccounts() {
               </button>
             ))}
           </div>
+          <button
+            onClick={() => {
+              const data = filtered.map((r) => ({
+                "الاسم": r.full_name,
+                "النشاط": r.activity_type || r.business_name || "",
+                "الاسم التجاري": r.business_name || "",
+                "الرقم الوطني الموحد": r.cr_number || "",
+                "الجوال": r.phone || "",
+                "الإيميل": r.email || "",
+                "وحدات": r.units_count ?? 0,
+                "السعر السنوي (ر.س)": Number(r.total_price || 0),
+                "المدفوع (ر.س)": Number(r.paid_amount || 0),
+                "المتبقي (ر.س)": Math.max(0, Number(r.total_price || 0) - Number(r.paid_amount || 0)),
+                "فواتير غير مدفوعة": r.unpaid_invoices ?? 0,
+                "إجمالي غير المدفوع (ر.س)": Number(r.unpaid_total || 0),
+                "دخول مفعل": r.has_login ? "نعم" : "لا",
+              }));
+              if (!data.length) { toast.error("لا يوجد بيانات للتصدير"); return; }
+              exportRowsToExcel(data, "tenant-accounts", "المستأجرون");
+              toast.success("تم التصدير");
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm"
+          >
+            <Download className="h-4 w-4" /> تصدير
+          </button>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -420,13 +450,23 @@ export default function AdminTenantAccounts() {
                         )}
                       </td>
                       <td className="p-3 text-left">
-                        <button
-                          onClick={() => setDetailId(r.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          إدارة
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setFilesFor({ id: r.id, name: r.full_name })}
+                            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-secondary"
+                            title="الملفات"
+                          >
+                            <Paperclip className="h-3 w-3" />
+                            ملفات
+                          </button>
+                          <button
+                            onClick={() => setDetailId(r.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            إدارة
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -454,6 +494,15 @@ export default function AdminTenantAccounts() {
             setDetailId(null);
             load();
           }}
+        />
+      )}
+
+      {filesFor && (
+        <TenantFilesDialog
+          open={!!filesFor}
+          tenantAccountId={filesFor.id}
+          tenantName={filesFor.name}
+          onClose={() => setFilesFor(null)}
         />
       )}
 

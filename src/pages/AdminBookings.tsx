@@ -5,8 +5,9 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass, MessageCircle } from "lucide-react";
+import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass, MessageCircle, Download, UserCheck } from "lucide-react";
 import { fmtNum } from "@/lib/utils";
+import { exportRowsToExcel } from "@/lib/exportData";
 
 interface BookingUnitRow {
   building_number: number;
@@ -36,6 +37,8 @@ interface BookingRow {
   expires_at: string;
   confirmation_sent_at?: string | null;
   offer_number?: string | null;
+  is_returning_customer?: boolean;
+  previous_tenant_account_id?: string | null;
   booking_units?: BookingUnitRow[];
 }
 
@@ -121,6 +124,47 @@ const AdminBookings = () => {
     }
     return list;
   }, [rows, search, statusFilter]);
+
+  const toggleReturning = async (b: BookingRow) => {
+    const next = !b.is_returning_customer;
+    const { error } = await supabase
+      .from("bookings")
+      .update({ is_returning_customer: next } as any)
+      .eq("id", b.id);
+    if (error) toast.error("فشل التحديث: " + error.message);
+    else {
+      toast.success(next ? "تم تعليمه كعميل سابق" : "تم إلغاء التعليم");
+      setRows((rs) => rs.map((r) => (r.id === b.id ? { ...r, is_returning_customer: next } : r)));
+    }
+  };
+
+  const exportBookings = () => {
+    const data = filtered.map((b) => ({
+      "رقم العرض": b.offer_number ?? "",
+      "العميل": b.customer_full_name,
+      "الجوال": b.customer_phone,
+      "الإيميل": b.customer_email ?? "",
+      "الاسم التجاري": b.business_name ?? "",
+      "عميل سابق": b.is_returning_customer ? "نعم" : "لا",
+      "عدد الوحدات": b.units_count,
+      "إجمالي المساحة (م²)": b.total_area,
+      "الإجمالي (ر.س)": b.total_price,
+      "المدفوع (ر.س)": b.paid_amount,
+      "المتبقي (ر.س)": Math.max(0, Number(b.total_price) - Number(b.paid_amount)),
+      "خطة الدفع": PLAN_LABEL[b.payment_plan] ?? b.payment_plan,
+      "الحالة": STATUS[b.status]?.label ?? b.status,
+      "الوحدات": (b.booking_units ?? []).map((u) => `م${u.building_number}-و${u.unit_number}`).join(" | "),
+      "تاريخ الإنشاء": new Date(b.created_at).toLocaleString("ar-EG-u-nu-latn"),
+      "ينتهي في": new Date(b.expires_at).toLocaleString("ar-EG-u-nu-latn"),
+      "ملاحظات": b.notes ?? "",
+    }));
+    if (!data.length) {
+      toast.error("لا يوجد بيانات للتصدير");
+      return;
+    }
+    exportRowsToExcel(data, "bookings", "الحجوزات");
+    toast.success("تم التصدير");
+  };
 
   const stats = useMemo(() => {
     const by = (s: string) => rows.filter((r) => r.status === s);
@@ -468,6 +512,13 @@ const AdminBookings = () => {
                 </button>
               ))}
             </div>
+            <button
+              onClick={exportBookings}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm"
+              title="تصدير إلى Excel"
+            >
+              <Download className="h-4 w-4" /> تصدير
+            </button>
           </div>
         )}
 
@@ -484,11 +535,27 @@ const AdminBookings = () => {
                 <div key={b.id} className="rounded-2xl border border-border bg-card p-4 shadow-card">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="font-display text-lg font-bold">{b.customer_full_name}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-display text-lg font-bold">{b.customer_full_name}</div>
+                        {b.is_returning_customer && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                            <UserCheck className="h-3 w-3" /> عميل سابق
+                          </span>
+                        )}
+                      </div>
                       {b.business_name && (
                         <div className="text-sm text-muted-foreground">{b.business_name}</div>
                       )}
-                      <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">#{b.id.slice(0, 8)}</div>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <div className="font-mono text-[10px] text-muted-foreground">#{b.id.slice(0, 8)}</div>
+                        <button
+                          onClick={() => toggleReturning(b)}
+                          className="rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-secondary"
+                          title="تبديل وضع العميل السابق"
+                        >
+                          {b.is_returning_customer ? "إلغاء تعليم" : "تعليم كعميل سابق"}
+                        </button>
+                      </div>
                     </div>
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${st.cls}`}>
                       <StIcon className="h-3 w-3" />

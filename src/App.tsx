@@ -35,6 +35,7 @@ import Invoice from "./pages/Invoice.tsx";
 import TelegramSettings from "./pages/TelegramSettings.tsx";
 import Install from "./pages/Install.tsx";
 import AdminLeads from "./pages/AdminLeads.tsx";
+import AdminInterested from "./pages/AdminInterested.tsx";
 import AdminSheetsSync from "./pages/AdminSheetsSync.tsx";
 import AdminBackup from "./pages/AdminBackup.tsx";
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
@@ -77,6 +78,7 @@ const App = () => (
           <Route path="/invoice/:id" element={<Invoice />} />
           <Route path="/install" element={<Install />} />
           <Route path="/admin/leads" element={<AdminLeads />} />
+          <Route path="/admin/interested" element={<AdminInterested />} />
           <Route path="/admin/sheets-sync" element={<AdminSheetsSync />} />
           <Route path="/admin/backup" element={<AdminBackup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
