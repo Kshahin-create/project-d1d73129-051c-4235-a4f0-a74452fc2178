@@ -37,6 +37,8 @@ interface BookingRow {
   expires_at: string;
   confirmation_sent_at?: string | null;
   offer_number?: string | null;
+  is_returning_customer?: boolean;
+  previous_tenant_account_id?: string | null;
   booking_units?: BookingUnitRow[];
 }
 
