@@ -512,6 +512,13 @@ const AdminBookings = () => {
                 </button>
               ))}
             </div>
+            <button
+              onClick={exportBookings}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm"
+              title="تصدير إلى Excel"
+            >
+              <Download className="h-4 w-4" /> تصدير
+            </button>
           </div>
         )}
 
