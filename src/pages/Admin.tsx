@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { exportUnitsToExcel, exportUnitsToCSV, exportUnitsToPDF } from "@/lib/exportUnits";
 import { MaintenanceToggle } from "@/components/MaintenanceToggle";
 import { UnitsMap } from "@/components/dashboard/UnitsMap";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface TenantForm {
   tenant_name: string;
@@ -299,13 +300,17 @@ const Admin = () => {
           <StatCard icon={<TrendingUp />} label="إيراد سنوي" value={stats.revenue.toLocaleString("en-US")} color="text-accent" small />
         </div>
 
-        {/* Interactive units map */}
-        <div className="mb-6">
-          <UnitsMap buildings={buildings} units={units} />
-        </div>
+        <Tabs defaultValue="table" className="mb-6" dir="rtl">
+          <TabsList className="mb-4">
+            <TabsTrigger value="table">الجدول</TabsTrigger>
+            <TabsTrigger value="map">الخريطة التفاعلية</TabsTrigger>
+          </TabsList>
 
+          <TabsContent value="map">
+            <UnitsMap buildings={buildings} units={units} />
+          </TabsContent>
 
-
+          <TabsContent value="table">
         {/* Building filter */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <button
@@ -532,7 +537,10 @@ const Admin = () => {
             </div>
           </div>
         )}
+          </TabsContent>
+        </Tabs>
       </main>
+
 
       {/* Tenant data form dialog */}
       {editingUnit && (
