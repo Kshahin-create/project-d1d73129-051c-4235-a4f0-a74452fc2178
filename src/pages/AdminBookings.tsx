@@ -125,6 +125,47 @@ const AdminBookings = () => {
     return list;
   }, [rows, search, statusFilter]);
 
+  const toggleReturning = async (b: BookingRow) => {
+    const next = !b.is_returning_customer;
+    const { error } = await supabase
+      .from("bookings")
+      .update({ is_returning_customer: next } as any)
+      .eq("id", b.id);
+    if (error) toast.error("فشل التحديث: " + error.message);
+    else {
+      toast.success(next ? "تم تعليمه كعميل سابق" : "تم إلغاء التعليم");
+      setRows((rs) => rs.map((r) => (r.id === b.id ? { ...r, is_returning_customer: next } : r)));
+    }
+  };
+
+  const exportBookings = () => {
+    const data = filtered.map((b) => ({
+      "رقم العرض": b.offer_number ?? "",
+      "العميل": b.customer_full_name,
+      "الجوال": b.customer_phone,
+      "الإيميل": b.customer_email ?? "",
+      "الاسم التجاري": b.business_name ?? "",
+      "عميل سابق": b.is_returning_customer ? "نعم" : "لا",
+      "عدد الوحدات": b.units_count,
+      "إجمالي المساحة (م²)": b.total_area,
+      "الإجمالي (ر.س)": b.total_price,
+      "المدفوع (ر.س)": b.paid_amount,
+      "المتبقي (ر.س)": Math.max(0, Number(b.total_price) - Number(b.paid_amount)),
+      "خطة الدفع": PLAN_LABEL[b.payment_plan] ?? b.payment_plan,
+      "الحالة": STATUS[b.status]?.label ?? b.status,
+      "الوحدات": (b.booking_units ?? []).map((u) => `م${u.building_number}-و${u.unit_number}`).join(" | "),
+      "تاريخ الإنشاء": new Date(b.created_at).toLocaleString("ar-EG-u-nu-latn"),
+      "ينتهي في": new Date(b.expires_at).toLocaleString("ar-EG-u-nu-latn"),
+      "ملاحظات": b.notes ?? "",
+    }));
+    if (!data.length) {
+      toast.error("لا يوجد بيانات للتصدير");
+      return;
+    }
+    exportRowsToExcel(data, "bookings", "الحجوزات");
+    toast.success("تم التصدير");
+  };
+
   const stats = useMemo(() => {
     const by = (s: string) => rows.filter((r) => r.status === s);
     const pending = by("pending");
