@@ -472,6 +472,15 @@ export default function AdminTenantAccounts() {
         />
       )}
 
+      {filesFor && (
+        <TenantFilesDialog
+          open={!!filesFor}
+          tenantAccountId={filesFor.id}
+          tenantName={filesFor.name}
+          onClose={() => setFilesFor(null)}
+        />
+      )}
+
       <Footer />
     </div>
   );
