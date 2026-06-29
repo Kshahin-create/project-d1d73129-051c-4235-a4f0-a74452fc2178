@@ -25,7 +25,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   TrendingUp,
+  Download,
+  Paperclip,
 } from "lucide-react";
+import { exportRowsToExcel } from "@/lib/exportData";
+import { TenantFilesDialog } from "@/components/TenantFilesDialog";
 
 const TONE_CLS: Record<string, string> = {
   primary: "bg-primary/10 text-primary",
