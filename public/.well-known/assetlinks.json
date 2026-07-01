@@ -8,5 +8,18 @@
         "c73cc9bd379d22a0fe2722d8d5101a47911b4aa9"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.mnicity.mobile",
+      "sha256_cert_fingerprints": [
+        "C7:BE:89:46:86:C9:6A:76:EC:36:6A:55:CF:6E:1D:50:28:44:EC:1D:41:05:99:EE:CF:26:A5:94:12:67:A1:C0"
+      ]
+    }
   }
 ]
