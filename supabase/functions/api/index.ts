@@ -246,9 +246,25 @@ async function createTenant(body: any) {
 }
 
 async function updateTenant(id: string, body: any) {
+  const ALLOWED = [
+    "tenant_name",
+    "business_name",
+    "phone",
+    "activity_type",
+    "start_date",
+    "end_date",
+    "notes",
+    "cr_number",
+    "offer_image_url",
+  ];
+  const allowed: Record<string, any> = {};
+  for (const k of ALLOWED) if (k in body) allowed[k] = body[k];
+  if (Object.keys(allowed).length === 0) {
+    return err("No valid fields to update", 400);
+  }
   const { data, error } = await admin
     .from("tenants")
-    .update(body)
+    .update(allowed)
     .eq("id", id)
     .select()
     .single();
