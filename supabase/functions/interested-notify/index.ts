@@ -12,9 +12,40 @@ const esc = (s: string) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Require authenticated caller (user JWT or service_role).
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const bearer = authHeader.slice(7);
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
   try {
     const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
     if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      serviceKey,
+    );
+
+    if (bearer !== serviceKey) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: claims, error: cErr } = await userClient.auth.getClaims(bearer);
+      if (cErr || !claims?.claims?.sub) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const { interested } = await req.json();
     if (!interested?.id) {
@@ -23,11 +54,19 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Don't echo Telegram-sourced records back to the same chat as a duplicate notice.
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    // Validate the interested record actually exists to prevent spoofed notifications.
+    const { data: existing, error: exErr } = await supabase
+      .from("interested_customers")
+      .select("id")
+      .eq("id", interested.id)
+      .maybeSingle();
+    if (exErr || !existing) {
+      return new Response(JSON.stringify({ error: "Interested record not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     const text =
       "🆕 <b>عميل مهتم جديد</b>\n\n" +
