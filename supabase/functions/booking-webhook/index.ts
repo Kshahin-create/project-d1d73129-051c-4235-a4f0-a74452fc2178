@@ -61,6 +61,8 @@ Deno.serve(async (req) => {
     );
   }
 
+  try {
+
     const webhookUrl = Deno.env.get("N8N_WEBHOOK_URL");
     if (!webhookUrl) {
       throw new Error("N8N_WEBHOOK_URL is not configured");
