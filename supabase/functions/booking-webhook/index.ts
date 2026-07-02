@@ -28,7 +28,39 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Require an authenticated caller (user JWT or service_role).
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
   try {
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.95.0");
+    const supa = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const token = authHeader.slice(7);
+    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (token !== service) {
+      const { data, error } = await supa.auth.getClaims(token);
+      if (error || !data?.claims?.sub) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+  } catch (_) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
     const webhookUrl = Deno.env.get("N8N_WEBHOOK_URL");
     if (!webhookUrl) {
       throw new Error("N8N_WEBHOOK_URL is not configured");
