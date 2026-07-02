@@ -238,6 +238,10 @@ app.get("/mcp/health", () =>
   ),
 );
 
+// Tools that expose PII (customer names, phones) or full booking records require
+// a `write` or `admin` scope. Read-only keys can list buildings/units/stats only.
+const PII_TOOLS = new Set(["list_bookings", "get_booking"]);
+
 app.all("/*", async (c) => {
   const auth = await verifyApiKey(c.req.raw);
   if (!auth) {
@@ -252,7 +256,56 @@ app.all("/*", async (c) => {
     );
   }
 
-  const res = await handler(c.req.raw);
+  // Inspect the JSON-RPC body to gate PII tool calls by scope.
+  let rawReq = c.req.raw;
+  if (c.req.method === "POST") {
+    try {
+      const bodyText = await c.req.raw.clone().text();
+      if (bodyText) {
+        const parsed = JSON.parse(bodyText);
+        const calls = Array.isArray(parsed) ? parsed : [parsed];
+        for (const call of calls) {
+          if (
+            call?.method === "tools/call" &&
+            typeof call?.params?.name === "string" &&
+            PII_TOOLS.has(call.params.name)
+          ) {
+            const scopes = auth.scopes ?? [];
+            if (!scopes.includes("write") && !scopes.includes("admin")) {
+              return new Response(
+                JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: call?.id ?? null,
+                  error: {
+                    code: -32001,
+                    message:
+                      "Forbidden: tool requires 'write' or 'admin' scope",
+                  },
+                }),
+                {
+                  status: 403,
+                  headers: {
+                    ...corsHeaders,
+                    "Content-Type": "application/json",
+                  },
+                },
+              );
+            }
+          }
+        }
+        // Rebuild request so downstream handler can re-read the body.
+        rawReq = new Request(c.req.raw.url, {
+          method: c.req.raw.method,
+          headers: c.req.raw.headers,
+          body: bodyText,
+        });
+      }
+    } catch (_) {
+      // Non-JSON bodies fall through; the MCP transport will error appropriately.
+    }
+  }
+
+  const res = await handler(rawReq);
   const headers = new Headers(res.headers);
   for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
   return new Response(res.body, { status: res.status, headers });
