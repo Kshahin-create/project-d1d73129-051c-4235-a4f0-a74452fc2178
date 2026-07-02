@@ -42,7 +42,7 @@ async function isAdminFromRequest(req: Request): Promise<boolean> {
     const hash = await sha256Hex(apiKey);
     const { data } = await admin.rpc("verify_api_key", { _key_hash: hash });
     if (data && data.length > 0 && data[0].is_valid) {
-      return (data[0].scopes ?? []).includes("admin") || (data[0].scopes ?? []).includes("read");
+      return (data[0].scopes ?? []).includes("admin");
     }
     return false;
   }
