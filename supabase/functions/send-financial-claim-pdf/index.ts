@@ -373,6 +373,32 @@ async function sendPdfToTelegram(pdfBytes: Uint8Array, caption: string, fileName
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  // Require an authenticated caller (user JWT or service_role).
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  {
+    const bearer = authHeader.slice(7);
+    const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (bearer !== svc) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: claims, error: cErr } = await userClient.auth.getClaims(bearer);
+      if (cErr || !claims?.claims?.sub) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+  }
+
   try {
     const body = (await req.json()) as Payload;
     if (!body?.customer?.fullName || !Array.isArray(body.units) || body.units.length === 0) {
