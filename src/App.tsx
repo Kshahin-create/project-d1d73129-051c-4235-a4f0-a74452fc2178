@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import Index from "./pages/Index.tsx";
 import Booking from "./pages/Booking.tsx";
@@ -86,6 +87,7 @@ const App = () => (
         </Routes>
         <FloatingWhatsApp />
         <AdminSidebar />
+        <ReadOnlyBanner />
         <InstallPrompt />
         </MaintenanceGate>
       </BrowserRouter>
