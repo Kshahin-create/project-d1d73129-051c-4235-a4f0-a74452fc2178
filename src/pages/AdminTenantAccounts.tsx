@@ -449,7 +449,7 @@ export default function AdminTenantAccounts() {
                           <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">بدون</span>
                         )}
                       </td>
-                      <td className="p-3 text-left">
+                      <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setFilesFor({ id: r.id, name: r.full_name })}
