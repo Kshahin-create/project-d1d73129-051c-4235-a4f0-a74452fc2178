@@ -49,5 +49,7 @@ export const useAuth = () => {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  return { session, user, loading, isAdmin, isControl, isManager, isTenant };
+  // Manager is read-only: only admins can perform write actions on admin surfaces.
+  const canEdit = isAdmin;
+  return { session, user, loading, isAdmin, isControl, isManager, isTenant, canEdit };
 };

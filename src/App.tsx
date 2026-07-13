@@ -86,6 +86,7 @@ const App = () => (
         </Routes>
         <FloatingWhatsApp />
         <AdminSidebar />
+        <ReadOnlyBanner />
         <InstallPrompt />
         </MaintenanceGate>
       </BrowserRouter>
