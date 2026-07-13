@@ -435,7 +435,7 @@ const Booking = () => {
                             المساحة:{" "}
                             <span className="num font-bold text-foreground">{fmtNum(totals.area)}</span> م²
                           </div>
-                          <div className="text-xs text-muted-foreground sm:text-left">
+                          <div className="text-xs text-muted-foreground sm:text-right">
                             الإيجار السنوي:{" "}
                             <span className="num font-bold text-accent">
                               {fmtNum(totals.price, 0)}

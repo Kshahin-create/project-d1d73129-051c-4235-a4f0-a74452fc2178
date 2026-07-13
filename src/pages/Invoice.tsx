@@ -74,7 +74,7 @@ export default function Invoice() {
               <p className="mt-1 text-xs text-slate-600">المدينة الصناعية - شمال مكة المكرمة</p>
               <p className="text-xs text-slate-600">المملكة العربية السعودية</p>
             </div>
-            <div className="text-left">
+            <div className="text-right">
               <div className="rounded-md border border-primary/30 bg-white px-3 py-2 text-center">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">سند قبض / فاتورة</div>
                 <div className="font-mono text-sm font-bold text-primary">{inv.invoice_number || "—"}</div>
@@ -113,17 +113,17 @@ export default function Invoice() {
               <thead className="bg-slate-100">
                 <tr>
                   <th className="p-3 text-right font-semibold">البيان</th>
-                  <th className="p-3 text-left font-semibold">المبلغ</th>
+                  <th className="p-3 text-right font-semibold">المبلغ</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="border-t border-slate-200">
                   <td className="p-3">دفعة من قيمة الإيجار</td>
-                  <td className="p-3 text-left font-mono font-bold">{amount} ر.س</td>
+                  <td className="p-3 text-right font-mono font-bold">{amount} ر.س</td>
                 </tr>
                 <tr className="border-t-2 border-slate-300 bg-primary/5">
                   <td className="p-3 font-bold">الإجمالي المدفوع</td>
-                  <td className="p-3 text-left font-mono text-base font-extrabold text-primary">{amount} ر.س</td>
+                  <td className="p-3 text-right font-mono text-base font-extrabold text-primary">{amount} ر.س</td>
                 </tr>
               </tbody>
             </table>

@@ -267,7 +267,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                                   {b.cr_number && <span className="flex items-center gap-1"><Hash className="h-3 w-3" /><span className="num">{b.cr_number}</span></span>}
                                 </div>
                               </div>
-                              <div className="text-left">
+                              <div className="text-right">
                                 <div className="num text-sm font-bold">{fmt(b.total_price)} ر.س</div>
                                 <div className="text-[10px] text-muted-foreground">
                                   مدفوع <span className="num font-semibold text-emerald-700">{fmt(b.paid_amount)}</span>
@@ -337,7 +337,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                                 {i.paid ? "مدفوعة" : "غير مدفوعة"}
                               </Badge>
                             </div>
-                            <div className="text-left">
+                            <div className="text-right">
                               <div className="num text-sm font-bold">{fmt(i.amount)} ر.س</div>
                               {i.paid && <div className="text-[10px] text-emerald-700">دفعت {fmtDate(i.paid_at)}</div>}
                             </div>
