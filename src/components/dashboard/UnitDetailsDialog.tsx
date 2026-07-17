@@ -170,9 +170,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-hidden p-0" dir="rtl">
         {/* Header */}
-        <div className="border-b bg-gradient-to-l from-primary to-primary/85 p-5 text-primary-foreground">
-          <DialogHeader className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="border-b bg-gradient-to-l from-primary to-primary/85 p-5 pl-12 text-primary-foreground text-right">
+          <DialogHeader className="space-y-2 text-right">
+            <div className="flex flex-wrap items-center justify-start gap-2">
               <Badge className={cn("border", uMeta.cls)}>{uMeta.label}</Badge>
               {unit.unitType && (
                 <Badge variant="outline" className="border-white/30 bg-white/10 text-white">
@@ -183,10 +183,10 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                 <Tag className="ml-1 h-3 w-3" /> {unit.activity ?? "—"}
               </Badge>
             </div>
-            <DialogTitle className="font-display text-2xl font-extrabold text-white">
+            <DialogTitle className="font-display text-2xl font-extrabold text-white text-right">
               مبنى <span className="num">{unit.buildingNumber}</span> · وحدة <span className="num">{unit.unitNumber}</span>
             </DialogTitle>
-            <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs opacity-90">
+            <div className="flex flex-wrap justify-start gap-x-5 gap-y-1 text-xs opacity-90">
               <span className="flex items-center gap-1"><Ruler className="h-3.5 w-3.5" /> <span className="num">{unit.area}</span> م²</span>
               <span className="flex items-center gap-1"><Wallet className="h-3.5 w-3.5" /> <span className="num">{fmt(unit.price)}</span> ر.س / سنة</span>
               <span className="flex items-center gap-1"><Building2 className="h-3.5 w-3.5" /> {unit.buildingType}</span>
@@ -195,7 +195,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
         </div>
 
         <ScrollArea className="max-h-[calc(92vh-150px)]">
-          <div className="p-5">
+          <div className="p-5 text-right">
             {!hasAdminAccess ? (
               <div className="rounded-xl border border-dashed bg-muted/40 p-8 text-center">
                 <Lock className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
@@ -215,7 +215,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                 </div>
 
                 <Tabs defaultValue="overview" dir="rtl">
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-5" dir="rtl">
                     <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
                     <TabsTrigger value="bookings">الحجوزات ({totalBookings})</TabsTrigger>
                     <TabsTrigger value="tenant">المستأجر ({tenants.length})</TabsTrigger>
@@ -314,9 +314,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                       <EmptyState text="لم يتم تسجيل مستأجر لهذه الوحدة" />
                     ) : (
                       tenants.map((t) => (
-                        <div key={t.id} className="rounded-xl border bg-card p-4">
+                        <div key={t.id} className="rounded-xl border bg-card p-4 text-right">
                           <div className="font-display text-base font-extrabold">{t.tenant_name}</div>
-                          <div className="mt-2 grid gap-y-1 text-xs sm:grid-cols-2">
+                          <div className="mt-3 grid gap-y-1 text-xs sm:grid-cols-2 sm:gap-x-8">
                             {t.phone && <Row label="الجوال"><span className="num">{t.phone}</span></Row>}
                             {t.business_name && <Row label="النشاط التجاري">{t.business_name}</Row>}
                             {t.activity_type && <Row label="نوع النشاط">{t.activity_type}</Row>}
@@ -405,7 +405,7 @@ function SummaryCard({ icon, label, value, loading }: { icon: React.ReactNode; l
 
 function InfoGrid({ rows }: { rows: [string, string][] }) {
   return (
-    <div className="grid gap-y-1 rounded-xl border bg-card p-4 text-xs sm:grid-cols-2 sm:gap-x-6">
+    <div className="grid gap-y-1 rounded-xl border bg-card p-4 text-xs text-right sm:grid-cols-2 sm:gap-x-8">
       {rows.map(([k, v], i) => <Row key={i} label={k}>{v}</Row>)}
     </div>
   );
@@ -413,9 +413,9 @@ function InfoGrid({ rows }: { rows: [string, string][] }) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-dashed py-1.5 last:border-b-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground">{children}</span>
+    <div className="flex items-baseline justify-between gap-4 border-b border-dashed py-1.5 last:border-b-0">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate text-left font-semibold text-foreground">{children}</span>
     </div>
   );
 }
