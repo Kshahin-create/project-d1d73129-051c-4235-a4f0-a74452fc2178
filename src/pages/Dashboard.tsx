@@ -54,6 +54,51 @@ const STATUS_COLORS = {
   available: C.green,
 };
 
+// Shared chart styling — visible ticks, RTL-friendly tooltip, subtle grid
+const AXIS_TICK = { fontSize: 11, fill: "hsl(var(--foreground))", fontWeight: 500 } as const;
+const AXIS_LINE = { stroke: "hsl(var(--border))" } as const;
+const GRID_STROKE = "hsl(var(--border))";
+
+const ChartTooltip = ({ active, payload, label, formatter, unit }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      dir="rtl"
+      className="rounded-xl border border-border/70 bg-card/95 px-3 py-2 shadow-elevated backdrop-blur-md"
+      style={{ minWidth: 140 }}
+    >
+      {label !== undefined && label !== "" && (
+        <div className="mb-1.5 border-b border-border/60 pb-1 text-[11px] font-bold text-foreground">
+          {label}
+        </div>
+      )}
+      <div className="space-y-1">
+        {payload.map((p: any, i: number) => {
+          const raw = p.value;
+          const val = formatter ? formatter(raw, p.name, p) : fmt(Number(raw));
+          return (
+            <div key={i} className="flex items-center justify-between gap-3 text-[11px]">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ background: p.color || p.fill || p.payload?.color }}
+                />
+                <span className="text-muted-foreground">{p.name}</span>
+              </div>
+              <span className="num font-bold text-foreground">
+                {val}
+                {unit ? ` ${unit}` : ""}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const legendStyle = { fontSize: 12, color: "hsl(var(--foreground))", paddingTop: 8 } as const;
+
 type FilterKey = "all" | "rented" | "reserved" | "available";
 
 const Dashboard = () => {
@@ -536,8 +581,8 @@ const Dashboard = () => {
                       <Pie data={analytics.statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={55} paddingAngle={2}>
                         {analytics.statusData.map((d, i) => <Cell key={i} fill={d.color} stroke="white" strokeWidth={2} />)}
                       </Pie>
-                      <Tooltip formatter={(v: any) => fmt(Number(v))} />
-                      <Legend verticalAlign="bottom" iconType="circle" />
+                      <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={legendStyle} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -581,8 +626,8 @@ const Dashboard = () => {
                       <Pie data={analytics.activityPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={0} label={(e: any) => `${e.value}`}>
                         {analytics.activityPie.map((d, i) => <Cell key={i} fill={d.color} stroke="white" strokeWidth={2} />)}
                       </Pie>
-                      <Tooltip formatter={(v: any) => fmt(Number(v))} />
-                      <Legend verticalAlign="bottom" iconType="circle" />
+                      <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={legendStyle} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -595,11 +640,11 @@ const Dashboard = () => {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={analytics.activityData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                    <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                    <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                    <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar dataKey="مؤجر" stackId="a" fill={STATUS_COLORS.rented} radius={[0, 0, 0, 0]} />
                     <Bar dataKey="محجوز" stackId="a" fill={STATUS_COLORS.reserved} />
                     <Bar dataKey="متاح" stackId="a" fill={STATUS_COLORS.available} radius={[6, 6, 0, 0]} />
@@ -644,12 +689,12 @@ const Dashboard = () => {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={analytics.activityData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                    <Tooltip formatter={(v: any, n: any) => n === "إشغال" ? `${v}%` : fmt(Number(v))} />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                    <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                    <YAxis yAxisId="left" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                    <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                    <Tooltip content={<ChartTooltip formatter={(v: any, n: any) => n === "إشغال" ? `${v}%` : fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                    <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar yAxisId="left" dataKey="إيراد" fill={C.green} radius={[6, 6, 0, 0]} />
                     <Bar yAxisId="left" dataKey="إمكانية" fill={C.muted} radius={[6, 6, 0, 0]} />
                     <Line yAxisId="right" type="monotone" dataKey="إشغال" stroke={C.gold} strokeWidth={3} dot={{ r: 5 }} />
@@ -664,11 +709,11 @@ const Dashboard = () => {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={analytics.buildingChart}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: any) => fmt(Number(v))} />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                    <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                    <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                    <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar dataKey="إيراد" stackId="r" fill={C.green} />
                     <Bar dataKey="فجوة" stackId="r" fill={C.red} radius={[6, 6, 0, 0]} />
                   </BarChart>
@@ -682,11 +727,11 @@ const Dashboard = () => {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={analytics.priceBands}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                    <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                    <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                    <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar dataKey="وحدات" fill={C.primary} radius={[6, 6, 0, 0]}>
                       <LabelList dataKey="وحدات" position="top" style={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
                     </Bar>
@@ -705,10 +750,10 @@ const Dashboard = () => {
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analytics.buildingChart} layout="vertical" margin={{ left: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
-                      <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={50} />
-                      <Tooltip formatter={(v: any) => `${v}%`} />
+                      <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                      <XAxis type="number" domain={[0, 100]} tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${v}%`} />
+                      <YAxis dataKey="name" type="category" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={50} />
+                      <Tooltip content={<ChartTooltip formatter={(v: any) => `${v}%`} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                       <Bar dataKey="إشغال" fill={C.primary} radius={[0, 6, 6, 0]}>
                         <LabelList dataKey="إشغال" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
                       </Bar>
@@ -722,11 +767,11 @@ const Dashboard = () => {
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analytics.buildingChart}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip />
-                      <Legend />
+                      <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                      <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                      <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                      <Legend wrapperStyle={legendStyle} iconType="circle" />
                       <Bar dataKey="مؤجر" stackId="a" fill={STATUS_COLORS.rented} />
                       <Bar dataKey="محجوز" stackId="a" fill={STATUS_COLORS.reserved} />
                       <Bar dataKey="متاح" stackId="a" fill={STATUS_COLORS.available} radius={[6, 6, 0, 0]} />
@@ -808,10 +853,10 @@ const Dashboard = () => {
                           <stop offset="100%" stopColor={C.primary} stopOpacity={0.05} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip />
+                      <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                      <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                      <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                       <Area type="monotone" dataKey="وحدات" stroke={C.primary} fill="url(#areaGrad)" strokeWidth={2.5} />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -826,8 +871,8 @@ const Dashboard = () => {
                       <Pie data={analytics.unitTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} innerRadius={55} label={(e: any) => `${e.name}: ${e.value}`}>
                         {analytics.unitTypeData.map((d, i) => <Cell key={i} fill={d.color} stroke="white" strokeWidth={2} />)}
                       </Pie>
-                      <Tooltip />
-                      <Legend verticalAlign="bottom" iconType="circle" />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                      <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={legendStyle} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -840,10 +885,10 @@ const Dashboard = () => {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={analytics.buildingLeaders} layout="vertical" margin={{ left: 40 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={60} />
-                    <Tooltip formatter={(v: any) => fmt(Number(v))} />
+                    <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                    <XAxis type="number" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                    <YAxis dataKey="name" type="category" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={60} />
+                    <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Bar dataKey="إيراد" fill={C.green} radius={[0, 6, 6, 0]}>
                       <LabelList dataKey="إيراد" position="right" formatter={(v: any) => fmt(Number(v))} style={{ fontSize: 10, fill: "hsl(var(--foreground))" }} />
                     </Bar>
@@ -858,11 +903,11 @@ const Dashboard = () => {
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analytics.topTenants} layout="vertical" margin={{ left: 100 }}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis type="number" tick={{ fontSize: 11 }} />
-                      <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={150} />
-                      <Tooltip formatter={(v: any) => fmt(Number(v))} />
-                      <Legend />
+                      <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
+                      <XAxis type="number" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                      <YAxis dataKey="name" type="category" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={150} />
+                      <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                      <Legend wrapperStyle={legendStyle} iconType="circle" />
                       <Bar dataKey="وحدات" fill={C.primary} radius={[0, 6, 6, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
