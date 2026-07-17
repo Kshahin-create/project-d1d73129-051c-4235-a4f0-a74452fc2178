@@ -735,7 +735,6 @@ const Dashboard = () => {
                     data={[...analytics.buildingChart].reverse()}
                     margin={{ top: 24, right: 16, bottom: 8, left: 22 }}
                     barCategoryGap="18%"
-                    dir="rtl"
                   >
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                     <XAxis
@@ -744,7 +743,7 @@ const Dashboard = () => {
                       tick={AXIS_TICK}
                       tickLine={AXIS_LINE}
                       axisLine={AXIS_LINE}
-                      tickFormatter={(_, index) => `م ${10 - index}`}
+                      tickFormatter={(value) => value.replace("م", "م ")}
                     />
                     <YAxis
                       width={66}
