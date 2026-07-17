@@ -416,9 +416,9 @@ function InfoGrid({ rows }: { rows: [string, string][] }) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-dashed py-1.5 last:border-b-0">
+    <div className="flex items-baseline justify-start gap-2 border-b border-dashed py-1.5 last:border-b-0" dir="rtl">
       <span className="shrink-0 whitespace-nowrap text-muted-foreground">{label}</span>
-      <span className="min-w-0 flex-1 break-words text-left font-semibold text-foreground">{children}</span>
+      <span className="min-w-0 break-words text-right font-semibold text-foreground">{children}</span>
     </div>
   );
 }
