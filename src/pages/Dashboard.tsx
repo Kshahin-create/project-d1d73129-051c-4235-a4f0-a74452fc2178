@@ -317,7 +317,7 @@ const Dashboard = () => {
       .sort((a, b) => b.units.length - a.units.length)
       .slice(0, 10)
       .map((t) => ({
-        name: t.tenant_name.length > 22 ? t.tenant_name.slice(0, 22) + "…" : t.tenant_name,
+        name: t.tenant_name,
         وحدات: t.units.length,
         إيراد: Math.round(t.units.reduce((s, u) => s + Number(u.price || 0), 0)),
       }));
@@ -994,19 +994,27 @@ const Dashboard = () => {
             {analytics.topTenants.length > 0 && (
               <Card className="p-5">
                 <h3 className="mb-3 font-display text-sm font-bold">أكبر المستأجرين (حسب عدد الوحدات)</h3>
-                <div className="h-[420px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={analytics.topTenants} layout="vertical" margin={{ top: 10, right: 40, bottom: 10, left: 10 }}>
-                      <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
-                      <XAxis type="number" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} allowDecimals={false} />
-                      <YAxis dataKey="name" type="category" orientation="right" tick={{ ...AXIS_TICK, fontSize: 11 }} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={200} interval={0} />
-                      <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
-                      <Legend wrapperStyle={legendStyle} iconType="circle" />
-                      <Bar dataKey="وحدات" fill={C.primary} radius={[6, 0, 0, 6]}>
-                        <LabelList dataKey="وحدات" position="right" style={{ fontSize: 11, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="space-y-4" dir="rtl">
+                  {analytics.topTenants.map((tenant, index) => {
+                    const maxUnits = Math.max(...analytics.topTenants.map((item) => item.وحدات), 1);
+                    const width = Math.max((tenant.وحدات / maxUnits) * 100, 8);
+                    return (
+                      <div key={`${tenant.name}-${index}`} className="grid grid-cols-[minmax(0,1fr)_3rem] gap-x-3 gap-y-2">
+                        <div className="min-w-0 text-right text-sm font-semibold leading-6 text-foreground">
+                          {tenant.name}
+                        </div>
+                        <div className="num row-span-2 flex h-7 items-center justify-center self-end rounded-md bg-secondary text-sm font-extrabold text-secondary-foreground">
+                          {tenant.وحدات}
+                        </div>
+                        <div className="h-3 w-full overflow-hidden rounded-sm bg-muted" aria-hidden="true">
+                          <div
+                            className="h-full rounded-sm bg-primary transition-[width] duration-500"
+                            style={{ width: `${width}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </Card>
             )}
