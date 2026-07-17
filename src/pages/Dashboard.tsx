@@ -491,7 +491,7 @@ const Dashboard = () => {
           </TabsList>
 
           {/* OVERVIEW */}
-          <TabsContent value="overview" className="mt-5 space-y-5">
+          <TabsContent value="overview" dir="rtl" className="mt-5 space-y-5">
             {/* Mini KPIs */}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Card className="p-4">
@@ -698,7 +698,7 @@ const Dashboard = () => {
           </TabsContent>
 
           {/* BUILDINGS */}
-          <TabsContent value="buildings" className="mt-5 space-y-5">
+          <TabsContent value="buildings" dir="rtl" className="mt-5 space-y-5">
             <div className="grid gap-4 lg:grid-cols-2">
               <Card className="p-5">
                 <h3 className="mb-3 font-display text-sm font-bold">إشغال كل مبنى (%)</h3>
@@ -795,7 +795,7 @@ const Dashboard = () => {
           </TabsContent>
 
           {/* ANALYTICS */}
-          <TabsContent value="analytics" className="mt-5 space-y-5">
+          <TabsContent value="analytics" dir="rtl" className="mt-5 space-y-5">
             <div className="grid gap-4 lg:grid-cols-2">
               <Card className="p-5">
                 <h3 className="mb-3 font-display text-sm font-bold">توزيع الوحدات حسب المساحة (م²)</h3>
@@ -872,7 +872,7 @@ const Dashboard = () => {
           </TabsContent>
 
           {/* TENANTS */}
-          <TabsContent value="tenants" className="mt-5 space-y-5">
+          <TabsContent value="tenants" dir="rtl" className="mt-5 space-y-5">
             {tenants.length === 0 ? (
               <Card className="p-10 text-center text-muted-foreground">لا يوجد مستأجرون بعد</Card>
             ) : (
@@ -940,12 +940,12 @@ const Dashboard = () => {
           </TabsContent>
 
           {/* MAP */}
-          <TabsContent value="map" className="mt-5 space-y-4">
+          <TabsContent value="map" dir="rtl" className="mt-5 space-y-4">
             <UnitsMap buildings={buildings} units={units} />
           </TabsContent>
 
           {/* UNITS */}
-          <TabsContent value="units" className="mt-5 space-y-4">
+          <TabsContent value="units" dir="rtl" className="mt-5 space-y-4">
             <Card className="p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
                 <h2 className="flex items-center gap-2 font-display text-base font-bold">
