@@ -4,16 +4,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Unit } from "@/data/types";
+import { toast } from "sonner";
 import {
   Building2, Calendar, FileText, Phone, User, Briefcase, Hash,
   CheckCircle2, XCircle, Clock, AlertCircle, Wallet, Ruler, Tag,
-  History, Lock,
+  History, Lock, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitFilesPanel } from "./UnitFilesPanel";
+
 
 
 const fmt = (n: number | null | undefined) =>
