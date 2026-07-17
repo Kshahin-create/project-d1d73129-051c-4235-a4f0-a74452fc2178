@@ -54,6 +54,51 @@ const STATUS_COLORS = {
   available: C.green,
 };
 
+// Shared chart styling — visible ticks, RTL-friendly tooltip, subtle grid
+const AXIS_TICK = { fontSize: 11, fill: "hsl(var(--foreground))", fontWeight: 500 } as const;
+const AXIS_LINE = { stroke: "hsl(var(--border))" } as const;
+const GRID_STROKE = "hsl(var(--border))";
+
+const ChartTooltip = ({ active, payload, label, formatter, unit }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      dir="rtl"
+      className="rounded-xl border border-border/70 bg-card/95 px-3 py-2 shadow-elevated backdrop-blur-md"
+      style={{ minWidth: 140 }}
+    >
+      {label !== undefined && label !== "" && (
+        <div className="mb-1.5 border-b border-border/60 pb-1 text-[11px] font-bold text-foreground">
+          {label}
+        </div>
+      )}
+      <div className="space-y-1">
+        {payload.map((p: any, i: number) => {
+          const raw = p.value;
+          const val = formatter ? formatter(raw, p.name, p) : fmt(Number(raw));
+          return (
+            <div key={i} className="flex items-center justify-between gap-3 text-[11px]">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ background: p.color || p.fill || p.payload?.color }}
+                />
+                <span className="text-muted-foreground">{p.name}</span>
+              </div>
+              <span className="num font-bold text-foreground">
+                {val}
+                {unit ? ` ${unit}` : ""}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const legendStyle = { fontSize: 12, color: "hsl(var(--foreground))", paddingTop: 8 } as const;
+
 type FilterKey = "all" | "rented" | "reserved" | "available";
 
 const Dashboard = () => {
