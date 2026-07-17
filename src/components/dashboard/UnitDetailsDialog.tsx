@@ -90,22 +90,25 @@ const UNIT_STATUS_META = {
 export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
   const { isAdmin, isManager } = useAuth();
   const hasAdminAccess = isAdmin || isManager;
+  const canEdit = isAdmin;
 
   const [loading, setLoading] = useState(false);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [tenantAccountId, setTenantAccountId] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     if (!open || !unit?.id || !hasAdminAccess) {
-      setBookings([]); setTenants([]); setInvoices([]);
+      setBookings([]); setTenants([]); setInvoices([]); setTenantAccountId(null);
       return;
     }
     let cancel = false;
     (async () => {
       setLoading(true);
       try {
-        const [bRes, tRes, iRes] = await Promise.all([
+        const [bRes, tRes, iRes, taRes] = await Promise.all([
           supabase
             .from("booking_units")
             .select("booking_id, bookings:booking_id (id, offer_number, status, customer_full_name, customer_phone, customer_email, business_name, cr_number, total_price, paid_amount, units_count, payment_plan, created_at, expires_at, notes)")
@@ -120,6 +123,12 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
             .select("id, invoice_number, amount, paid_amount, paid, paid_at, payment_method, customer_name, notes, created_at")
             .eq("unit_id", unit.id)
             .order("created_at", { ascending: false }),
+          supabase
+            .from("tenant_account_units")
+            .select("tenant_account_id")
+            .eq("unit_id", unit.id)
+            .limit(1)
+            .maybeSingle(),
         ]);
         if (cancel) return;
         const bRows: BookingRow[] = (bRes.data ?? [])
@@ -129,12 +138,14 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
         setBookings(bRows);
         setTenants((tRes.data ?? []) as any);
         setInvoices((iRes.data ?? []) as any);
+        setTenantAccountId((taRes.data as any)?.tenant_account_id ?? null);
       } finally {
         if (!cancel) setLoading(false);
       }
     })();
     return () => { cancel = true; };
-  }, [open, unit?.id, hasAdminAccess]);
+  }, [open, unit?.id, hasAdminAccess, reloadTick]);
+
 
   if (!unit) return null;
 
