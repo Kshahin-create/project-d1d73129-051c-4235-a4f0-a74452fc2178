@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, Download, Trash2, FileText, Paperclip, Loader2 } from "lucide-react";
+import { X, Upload, Download, Trash2, FileText, Paperclip, Loader2, Plus } from "lucide-react";
 
 interface TenantFile {
   id: string;
@@ -21,6 +21,13 @@ interface Props {
   onClose: () => void;
 }
 
+interface PendingItem {
+  id: string;
+  file: File;
+  customName: string;
+  notes: string;
+}
+
 const BUCKET = "tenant-account-files";
 
 const fmtSize = (b?: number | null) => {
@@ -34,9 +41,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
   const [files, setFiles] = useState<TenantFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [customName, setCustomName] = useState("");
-  const [notes, setNotes] = useState("");
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pending, setPending] = useState<PendingItem[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -53,62 +58,72 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
   useEffect(() => {
     if (open) {
       load();
-      setCustomName("");
-      setNotes("");
-      setPendingFile(null);
+      setPending([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tenantAccountId]);
 
-  const onPick = (f: File | null) => {
-    setPendingFile(f);
-    if (f && !customName.trim()) {
-      setCustomName(f.name.replace(/\.[^/.]+$/, ""));
-    }
+  const addFiles = (list: FileList | null) => {
+    if (!list) return;
+    const items: PendingItem[] = Array.from(list).map((f) => ({
+      id: crypto.randomUUID(),
+      file: f,
+      customName: f.name.replace(/\.[^/.]+$/, ""),
+      notes: "",
+    }));
+    setPending((p) => [...p, ...items]);
   };
 
-  const upload = async () => {
-    if (!pendingFile) {
-      toast.error("اختر ملفاً أولاً");
+  const updatePending = (id: string, patch: Partial<PendingItem>) =>
+    setPending((p) => p.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+
+  const removePending = (id: string) => setPending((p) => p.filter((it) => it.id !== id));
+
+  const uploadAll = async () => {
+    if (pending.length === 0) {
+      toast.error("اختر ملفات أولاً");
       return;
     }
-    if (!customName.trim()) {
-      toast.error("اكتب اسماً للملف");
+    if (pending.some((p) => !p.customName.trim())) {
+      toast.error("اكتب اسماً لكل ملف");
       return;
     }
     setUploading(true);
-    try {
-      const ext = pendingFile.name.split(".").pop() || "bin";
-      const path = `${tenantAccountId}/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from(BUCKET)
-        .upload(path, pendingFile, { contentType: pendingFile.type || undefined, upsert: false });
-      if (upErr) throw upErr;
-      const { data: userRes } = await supabase.auth.getUser();
-      const { error: insErr } = await supabase.from("tenant_account_files" as any).insert({
-        tenant_account_id: tenantAccountId,
-        custom_name: customName.trim(),
-        original_name: pendingFile.name,
-        storage_path: path,
-        mime_type: pendingFile.type || null,
-        size_bytes: pendingFile.size,
-        notes: notes.trim() || null,
-        uploaded_by: userRes.user?.id ?? null,
-      });
-      if (insErr) {
-        await supabase.storage.from(BUCKET).remove([path]);
-        throw insErr;
+    const { data: userRes } = await supabase.auth.getUser();
+    let ok = 0;
+    let fail = 0;
+    for (const item of pending) {
+      try {
+        const ext = item.file.name.split(".").pop() || "bin";
+        const path = `${tenantAccountId}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(path, item.file, { contentType: item.file.type || undefined, upsert: false });
+        if (upErr) throw upErr;
+        const { error: insErr } = await supabase.from("tenant_account_files" as any).insert({
+          tenant_account_id: tenantAccountId,
+          custom_name: item.customName.trim(),
+          original_name: item.file.name,
+          storage_path: path,
+          mime_type: item.file.type || null,
+          size_bytes: item.file.size,
+          notes: item.notes.trim() || null,
+          uploaded_by: userRes.user?.id ?? null,
+        });
+        if (insErr) {
+          await supabase.storage.from(BUCKET).remove([path]);
+          throw insErr;
+        }
+        ok++;
+      } catch (e: any) {
+        fail++;
+        toast.error(`فشل رفع "${item.customName}": ${e?.message ?? e}`);
       }
-      toast.success("تم رفع الملف");
-      setPendingFile(null);
-      setCustomName("");
-      setNotes("");
-      load();
-    } catch (e: any) {
-      toast.error("فشل الرفع: " + (e?.message ?? e));
-    } finally {
-      setUploading(false);
     }
+    if (ok > 0) toast.success(`تم رفع ${ok} ملف${fail ? ` (فشل ${fail})` : ""}`);
+    setPending([]);
+    setUploading(false);
+    load();
   };
 
   const download = async (f: TenantFile) => {
@@ -154,36 +169,69 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
 
         <div className="max-h-[calc(90vh-60px)] overflow-y-auto p-4">
           <div className="mb-5 rounded-2xl border border-dashed border-border bg-secondary/30 p-4">
-            <div className="mb-2 text-sm font-semibold">رفع ملف جديد</div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <input
-                type="text"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                placeholder="اسم الملف (مثلاً: العقد، صورة الهوية...)"
-                className="rounded-xl border border-border bg-background px-3 py-2 text-sm"
-              />
-              <input
-                type="file"
-                onChange={(e) => onPick(e.target.files?.[0] ?? null)}
-                className="rounded-xl border border-border bg-background px-3 py-2 text-sm"
-              />
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="ملاحظات (اختياري)"
-                rows={2}
-                className="rounded-xl border border-border bg-background px-3 py-2 text-sm sm:col-span-2"
-              />
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-sm font-semibold">رفع ملفات جديدة</div>
+              <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border bg-background px-2 py-1 text-xs hover:bg-secondary">
+                <Plus className="h-3 w-3" /> اختيار ملفات
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    addFiles(e.target.files);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
             </div>
+
+            {pending.length === 0 ? (
+              <div className="py-4 text-center text-xs text-muted-foreground">
+                اضغط "اختيار ملفات" لإضافة ملف واحد أو أكثر
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {pending.map((it) => (
+                  <div key={it.id} className="rounded-xl border border-border bg-background p-2">
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
+                        {it.file.name} • {fmtSize(it.file.size)}
+                      </div>
+                      <button
+                        onClick={() => removePending(it.id)}
+                        className="rounded-md p-1 text-destructive hover:bg-destructive/10"
+                        title="إزالة"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={it.customName}
+                      onChange={(e) => updatePending(it.id, { customName: e.target.value })}
+                      placeholder="اسم الملف"
+                      className="mb-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={it.notes}
+                      onChange={(e) => updatePending(it.id, { notes: e.target.value })}
+                      placeholder="ملاحظات (اختياري)"
+                      className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="mt-3 flex justify-end">
               <button
-                onClick={upload}
-                disabled={uploading || !pendingFile}
+                onClick={uploadAll}
+                disabled={uploading || pending.length === 0}
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                رفع
+                رفع {pending.length > 0 ? `(${pending.length})` : ""}
               </button>
             </div>
           </div>

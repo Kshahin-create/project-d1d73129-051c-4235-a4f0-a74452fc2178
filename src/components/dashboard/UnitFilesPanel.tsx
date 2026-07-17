@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, FileIcon, Download, Trash2, Paperclip } from "lucide-react";
+import { Upload, FileIcon, Download, Trash2, Paperclip, X, Plus } from "lucide-react";
 
 type FileRow = {
   id: string;
@@ -18,6 +17,13 @@ type FileRow = {
   notes: string | null;
   created_at: string;
 };
+
+interface PendingItem {
+  id: string;
+  file: File;
+  customName: string;
+  notes: string;
+}
 
 const BUCKET = "unit-files";
 const fmtSize = (n: number | null) => {
@@ -33,9 +39,7 @@ export function UnitFilesPanel({ unitId }: { unitId: string }) {
   const [files, setFiles] = useState<FileRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [customName, setCustomName] = useState("");
-  const [notes, setNotes] = useState("");
-  const [pending, setPending] = useState<File | null>(null);
+  const [pending, setPending] = useState<PendingItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -52,57 +56,69 @@ export function UnitFilesPanel({ unitId }: { unitId: string }) {
 
   useEffect(() => { if (unitId) load(); /* eslint-disable-next-line */ }, [unitId]);
 
-  const onPick = (f: File | null) => {
-    setPending(f);
-    if (f && !customName) {
+  const addFiles = (list: FileList | null) => {
+    if (!list) return;
+    const items: PendingItem[] = Array.from(list).map((f) => {
       const dot = f.name.lastIndexOf(".");
-      setCustomName(dot > 0 ? f.name.slice(0, dot) : f.name);
-    }
+      return {
+        id: crypto.randomUUID(),
+        file: f,
+        customName: dot > 0 ? f.name.slice(0, dot) : f.name,
+        notes: "",
+      };
+    });
+    setPending((p) => [...p, ...items]);
   };
 
-  const upload = async () => {
-    if (!pending) return toast.error("اختر ملف أولاً");
-    const name = customName.trim();
-    if (!name) return toast.error("اكتب اسم الملف");
+  const updatePending = (id: string, patch: Partial<PendingItem>) =>
+    setPending((p) => p.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const removePending = (id: string) => setPending((p) => p.filter((it) => it.id !== id));
+
+  const uploadAll = async () => {
+    if (pending.length === 0) return toast.error("اختر ملفات أولاً");
+    if (pending.some((p) => !p.customName.trim())) return toast.error("اكتب اسماً لكل ملف");
     setUploading(true);
-    try {
-      const dot = pending.name.lastIndexOf(".");
-      const ext = dot > 0 ? pending.name.slice(dot) : "";
-      const display = name.endsWith(ext) ? name : `${name}${ext}`;
-      const path = `${unitId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    const { data: u } = await supabase.auth.getUser();
+    let ok = 0, fail = 0;
+    for (const item of pending) {
+      try {
+        const dot = item.file.name.lastIndexOf(".");
+        const ext = dot > 0 ? item.file.name.slice(dot) : "";
+        const name = item.customName.trim();
+        const display = name.endsWith(ext) ? name : `${name}${ext}`;
+        const path = `${unitId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
 
-      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, pending, {
-        contentType: pending.type || undefined,
-        upsert: false,
-      });
-      if (upErr) throw upErr;
+        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, item.file, {
+          contentType: item.file.type || undefined,
+          upsert: false,
+        });
+        if (upErr) throw upErr;
 
-      const { data: u } = await supabase.auth.getUser();
-      const { error: insErr } = await supabase.from("unit_files").insert({
-        unit_id: unitId,
-        file_name: display,
-        storage_path: path,
-        mime_type: pending.type || null,
-        size_bytes: pending.size,
-        uploaded_by: u.user?.id ?? null,
-        uploaded_by_email: u.user?.email ?? null,
-        notes: notes.trim() || null,
-      });
-      if (insErr) {
-        await supabase.storage.from(BUCKET).remove([path]);
-        throw insErr;
+        const { error: insErr } = await supabase.from("unit_files").insert({
+          unit_id: unitId,
+          file_name: display,
+          storage_path: path,
+          mime_type: item.file.type || null,
+          size_bytes: item.file.size,
+          uploaded_by: u.user?.id ?? null,
+          uploaded_by_email: u.user?.email ?? null,
+          notes: item.notes.trim() || null,
+        });
+        if (insErr) {
+          await supabase.storage.from(BUCKET).remove([path]);
+          throw insErr;
+        }
+        ok++;
+      } catch (e: any) {
+        fail++;
+        toast.error(`فشل "${item.customName}": ${e.message ?? e}`);
       }
-      toast.success("تم رفع الملف");
-      setPending(null);
-      setCustomName("");
-      setNotes("");
-      if (inputRef.current) inputRef.current.value = "";
-      load();
-    } catch (e: any) {
-      toast.error(e.message || "فشل الرفع");
-    } finally {
-      setUploading(false);
     }
+    if (ok > 0) toast.success(`تم رفع ${ok} ملف${fail ? ` (فشل ${fail})` : ""}`);
+    setPending([]);
+    if (inputRef.current) inputRef.current.value = "";
+    setUploading(false);
+    load();
   };
 
   const download = async (f: FileRow) => {
@@ -126,32 +142,69 @@ export function UnitFilesPanel({ unitId }: { unitId: string }) {
   return (
     <div className="space-y-3">
       <div className="rounded-xl border bg-gradient-to-b from-primary/5 to-card p-3">
-        <div className="mb-2 flex items-center gap-2 text-xs font-bold text-primary">
-          <Upload className="h-4 w-4" /> رفع ملف جديد
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold text-primary">
+            <Upload className="h-4 w-4" /> رفع ملفات جديدة
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border bg-background px-2 py-1 text-xs hover:bg-secondary">
+            <Plus className="h-3 w-3" /> اختيار
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                addFiles(e.target.files);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
         </div>
-        <div className="grid gap-2">
-          <Input
-            ref={inputRef}
-            type="file"
-            onChange={(e) => onPick(e.target.files?.[0] ?? null)}
-            className="text-xs"
-          />
-          <Input
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-            placeholder="اكتب اسم الملف (بدون الامتداد إن أحببت)"
-            className="text-xs"
-          />
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="ملاحظات (اختياري)"
-            className="min-h-[60px] text-xs"
-          />
-          <Button onClick={upload} disabled={uploading || !pending} size="sm" className="w-full">
-            {uploading ? "جاري الرفع…" : "رفع الملف"}
-          </Button>
-        </div>
+
+        {pending.length === 0 ? (
+          <div className="py-3 text-center text-[11px] text-muted-foreground">
+            اضغط "اختيار" لإضافة ملف واحد أو أكثر
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {pending.map((it) => (
+              <div key={it.id} className="rounded-lg border bg-background p-2">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">
+                    {it.file.name} • {fmtSize(it.file.size)}
+                  </div>
+                  <button
+                    onClick={() => removePending(it.id)}
+                    className="rounded p-0.5 text-destructive hover:bg-destructive/10"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <Input
+                  value={it.customName}
+                  onChange={(e) => updatePending(it.id, { customName: e.target.value })}
+                  placeholder="اسم الملف"
+                  className="mb-1 h-7 text-xs"
+                />
+                <Input
+                  value={it.notes}
+                  onChange={(e) => updatePending(it.id, { notes: e.target.value })}
+                  placeholder="ملاحظات (اختياري)"
+                  className="h-7 text-xs"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Button
+          onClick={uploadAll}
+          disabled={uploading || pending.length === 0}
+          size="sm"
+          className="mt-2 w-full"
+        >
+          {uploading ? "جاري الرفع…" : `رفع ${pending.length > 0 ? `(${pending.length})` : ""}`}
+        </Button>
       </div>
 
       <div className="flex items-center gap-2 text-xs font-bold">
