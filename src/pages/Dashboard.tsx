@@ -610,7 +610,7 @@ const Dashboard = () => {
           </TabsContent>
 
           {/* FINANCIAL */}
-          <TabsContent value="financial" className="mt-5 space-y-5">
+          <TabsContent value="financial" dir="rtl" className="mt-5 space-y-5">
             <div className="grid gap-3 sm:grid-cols-3">
               <Card className="overflow-hidden border-none p-5 text-white" style={{ background: "linear-gradient(135deg, hsl(152 60% 38%), hsl(152 55% 28%))" }}>
                 <div className="text-xs opacity-90">الإيراد المحقق</div>
