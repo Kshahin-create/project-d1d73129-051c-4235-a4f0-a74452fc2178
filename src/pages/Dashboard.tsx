@@ -994,15 +994,17 @@ const Dashboard = () => {
             {analytics.topTenants.length > 0 && (
               <Card className="p-5">
                 <h3 className="mb-3 font-display text-sm font-bold">أكبر المستأجرين (حسب عدد الوحدات)</h3>
-                <div className="h-80">
+                <div className="h-[420px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={analytics.topTenants} layout="vertical" margin={{ left: 100 }}>
+                    <BarChart data={analytics.topTenants} layout="vertical" margin={{ top: 10, right: 40, bottom: 10, left: 10 }}>
                       <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
-                      <XAxis type="number" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
-                      <YAxis dataKey="name" type="category" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={150} />
+                      <XAxis type="number" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} allowDecimals={false} />
+                      <YAxis dataKey="name" type="category" orientation="right" tick={{ ...AXIS_TICK, fontSize: 11 }} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={200} interval={0} />
                       <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                       <Legend wrapperStyle={legendStyle} iconType="circle" />
-                      <Bar dataKey="وحدات" fill={C.primary} radius={[0, 6, 6, 0]} />
+                      <Bar dataKey="وحدات" fill={C.primary} radius={[6, 0, 0, 6]}>
+                        <LabelList dataKey="وحدات" position="right" style={{ fontSize: 11, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
