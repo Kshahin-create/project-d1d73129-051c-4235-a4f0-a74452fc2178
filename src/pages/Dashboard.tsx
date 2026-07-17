@@ -978,13 +978,13 @@ const Dashboard = () => {
               <h3 className="mb-3 font-display text-sm font-bold">ترتيب المباني بالإيراد المحقق (Top 8)</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics.buildingLeaders} layout="vertical" margin={{ left: 40 }}>
+                  <BarChart data={analytics.buildingLeaders} layout="vertical" margin={{ top: 10, right: 70, bottom: 10, left: 10 }}>
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
-                    <XAxis type="number" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <YAxis dataKey="name" type="category" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={60} />
+                    <XAxis type="number" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.15 / 10000) * 10000]} />
+                    <YAxis dataKey="name" type="category" orientation="right" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={80} />
                     <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
-                    <Bar dataKey="إيراد" fill={C.green} radius={[0, 6, 6, 0]}>
-                      <LabelList dataKey="إيراد" position="right" formatter={(v: any) => fmt(Number(v))} style={{ fontSize: 10, fill: "hsl(var(--foreground))" }} />
+                    <Bar dataKey="إيراد" fill={C.green} radius={[6, 0, 0, 6]}>
+                      <LabelList dataKey="إيراد" position="right" formatter={(v: any) => fmt(Number(v))} style={{ fontSize: 11, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
