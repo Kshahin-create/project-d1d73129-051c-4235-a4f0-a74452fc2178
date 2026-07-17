@@ -839,81 +839,11 @@ function UnitsTab({ tenantId, linked, allUnits, onChanged }: { tenantId: string;
 }
 
 function InvoicesTab({ tenantId, linked, invoices, onChanged }: { tenantId: string; linked: LinkedUnit[]; invoices: Invoice[]; onChanged: () => void }) {
-  const [showNew, setShowNew] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [unit_id, setUnitId] = useState<string>("");
-  const [due_date, setDueDate] = useState("");
-  const [period_start, setPS] = useState("");
-  const [period_end, setPE] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const create = async () => {
-    if (!amount) return toast.error("المبلغ مطلوب");
-    const { error } = await supabase.from("invoices").insert({
-      tenant_account_id: tenantId,
-      unit_id: unit_id || null,
-      amount: Number(amount),
-      due_date: due_date || null,
-      period_start: period_start || null,
-      period_end: period_end || null,
-      notes: notes || null,
-    });
-    if (error) return toast.error(error.message);
-    toast.success("تم إنشاء الفاتورة");
-    setShowNew(false);
-    setAmount(""); setUnitId(""); setDueDate(""); setPS(""); setPE(""); setNotes("");
-    onChanged();
-  };
-
-  const togglePaid = async (inv: Invoice) => {
-    const newPaid = !inv.paid;
-    const { error } = await supabase
-      .from("invoices")
-      .update({
-        paid: newPaid,
-        paid_at: newPaid ? new Date().toISOString() : null,
-        paid_amount: newPaid ? inv.amount : 0,
-      })
-      .eq("id", inv.id);
-    if (error) toast.error(error.message);
-    else onChanged();
-  };
-
-  const del = async (id: string) => {
-    if (!confirm("حذف الفاتورة؟")) return;
-    const { error } = await supabase.from("invoices").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else onChanged();
-  };
-
   return (
     <div className="space-y-3">
-      <button onClick={() => setShowNew(!showNew)} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
-        <Plus className="h-4 w-4" /> {showNew ? "إغلاق" : "فاتورة جديدة"}
-      </button>
-
-      {showNew && (
-        <div className="space-y-2 rounded-xl border border-border p-3">
-          <div className="grid grid-cols-2 gap-2">
-            <Field label="المبلغ *"><input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inp} /></Field>
-            <Field label="الوحدة">
-              <select value={unit_id} onChange={(e) => setUnitId(e.target.value)} className={inp}>
-                <option value="">— اختياري —</option>
-                {linked.map((l) => (
-                  <option key={l.unit_id} value={l.unit_id}>مبنى {l.unit?.building_number} - وحدة {l.unit?.unit_number}</option>
-                ))}
-              </select>
-            </Field>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <Field label="تاريخ الاستحقاق"><input type="date" value={due_date} onChange={(e) => setDueDate(e.target.value)} className={inp} /></Field>
-            <Field label="بداية الفترة"><input type="date" value={period_start} onChange={(e) => setPS(e.target.value)} className={inp} /></Field>
-            <Field label="نهاية الفترة"><input type="date" value={period_end} onChange={(e) => setPE(e.target.value)} className={inp} /></Field>
-          </div>
-          <Field label="ملاحظات"><input value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} /></Field>
-          <button onClick={create} className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">إنشاء</button>
-        </div>
-      )}
+      <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 p-3 text-xs text-amber-800">
+        الفواتير هنا للعرض فقط. لإصدار فاتورة جديدة، افتح إعدادات الوحدة المؤجرة من صفحة الوحدات وأنشئها من هناك — سيتم ربطها تلقائياً بالمستأجر واحتسابها عليه.
+      </div>
 
       <div className="space-y-2">
         {invoices.length === 0 ? (
@@ -938,14 +868,6 @@ function InvoicesTab({ tenantId, linked, invoices, onChanged }: { tenantId: stri
                     {inv.notes}
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <button onClick={() => togglePaid(inv)} className="rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-secondary">
-                    {inv.paid ? "ألغي السداد" : "تعليم كمدفوعة"}
-                  </button>
-                  <button onClick={() => del(inv.id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
               </div>
             );
           })
@@ -954,6 +876,7 @@ function InvoicesTab({ tenantId, linked, invoices, onChanged }: { tenantId: stri
     </div>
   );
 }
+
 
 function AuthTab({ tenantId, magicLink, setMagicLink, onDeleted }: { tenantId: string; magicLink: string | null; setMagicLink: (s: string | null) => void; onDeleted: () => void }) {
   const [pwd, setPwd] = useState("");
