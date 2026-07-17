@@ -753,7 +753,7 @@ const Dashboard = () => {
                       <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                       <XAxis type="number" domain={[0, 100]} tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${v}%`} />
                       <YAxis dataKey="name" type="category" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={50} />
-                      <Tooltip formatter={(v: any) => `${v}%`} />
+                      <Tooltip content={<ChartTooltip formatter={(v: any) => `${v}%`} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                       <Bar dataKey="إشغال" fill={C.primary} radius={[0, 6, 6, 0]}>
                         <LabelList dataKey="إشغال" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
                       </Bar>
