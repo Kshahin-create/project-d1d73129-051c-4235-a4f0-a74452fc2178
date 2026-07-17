@@ -4,16 +4,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Unit } from "@/data/types";
+import { toast } from "sonner";
 import {
   Building2, Calendar, FileText, Phone, User, Briefcase, Hash,
   CheckCircle2, XCircle, Clock, AlertCircle, Wallet, Ruler, Tag,
-  History, Lock,
+  History, Lock, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitFilesPanel } from "./UnitFilesPanel";
+
 
 
 const fmt = (n: number | null | undefined) =>
@@ -90,22 +95,25 @@ const UNIT_STATUS_META = {
 export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
   const { isAdmin, isManager } = useAuth();
   const hasAdminAccess = isAdmin || isManager;
+  const canEdit = isAdmin;
 
   const [loading, setLoading] = useState(false);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [tenantAccountId, setTenantAccountId] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     if (!open || !unit?.id || !hasAdminAccess) {
-      setBookings([]); setTenants([]); setInvoices([]);
+      setBookings([]); setTenants([]); setInvoices([]); setTenantAccountId(null);
       return;
     }
     let cancel = false;
     (async () => {
       setLoading(true);
       try {
-        const [bRes, tRes, iRes] = await Promise.all([
+        const [bRes, tRes, iRes, taRes] = await Promise.all([
           supabase
             .from("booking_units")
             .select("booking_id, bookings:booking_id (id, offer_number, status, customer_full_name, customer_phone, customer_email, business_name, cr_number, total_price, paid_amount, units_count, payment_plan, created_at, expires_at, notes)")
@@ -120,6 +128,12 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
             .select("id, invoice_number, amount, paid_amount, paid, paid_at, payment_method, customer_name, notes, created_at")
             .eq("unit_id", unit.id)
             .order("created_at", { ascending: false }),
+          supabase
+            .from("tenant_account_units")
+            .select("tenant_account_id")
+            .eq("unit_id", unit.id)
+            .limit(1)
+            .maybeSingle(),
         ]);
         if (cancel) return;
         const bRows: BookingRow[] = (bRes.data ?? [])
@@ -129,12 +143,14 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
         setBookings(bRows);
         setTenants((tRes.data ?? []) as any);
         setInvoices((iRes.data ?? []) as any);
+        setTenantAccountId((taRes.data as any)?.tenant_account_id ?? null);
       } finally {
         if (!cancel) setLoading(false);
       }
     })();
     return () => { cancel = true; };
-  }, [open, unit?.id, hasAdminAccess]);
+  }, [open, unit?.id, hasAdminAccess, reloadTick]);
+
 
   if (!unit) return null;
 
@@ -318,6 +334,15 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
 
                   {/* INVOICES */}
                   <TabsContent value="invoices" className="mt-4 space-y-3">
+                    {canEdit && (
+                      <NewInvoiceForUnit
+                        unitId={unit.id!}
+                        tenantAccountId={tenantAccountId}
+                        tenantName={currentTenant?.tenant_name ?? null}
+                        onCreated={() => setReloadTick((t) => t + 1)}
+                      />
+                    )}
+
                     {loading ? (
                       <SkeletonList />
                     ) : invoices.length === 0 ? (
@@ -403,6 +428,100 @@ function SkeletonList() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+    </div>
+  );
+}
+
+function NewInvoiceForUnit({
+  unitId,
+  tenantAccountId,
+  tenantName,
+  onCreated,
+}: {
+  unitId: string;
+  tenantAccountId: string | null;
+  tenantName: string | null;
+  onCreated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const create = async () => {
+    if (!amount || Number(amount) <= 0) return toast.error("أدخل مبلغاً صحيحاً");
+    if (!tenantAccountId) return toast.error("لا يوجد مستأجر مرتبط بهذه الوحدة");
+    setBusy(true);
+    const { error } = await supabase.from("invoices").insert({
+      tenant_account_id: tenantAccountId,
+      unit_id: unitId,
+      amount: Number(amount),
+      due_date: dueDate || null,
+      period_start: periodStart || null,
+      period_end: periodEnd || null,
+      notes: notes || null,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("تم إنشاء الفاتورة وربطها بالمستأجر");
+    setOpen(false);
+    setAmount(""); setDueDate(""); setPeriodStart(""); setPeriodEnd(""); setNotes("");
+    onCreated();
+  };
+
+  if (!tenantAccountId) {
+    return (
+      <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 p-3 text-xs text-amber-800">
+        لا يوجد مستأجر مرتبط حالياً بهذه الوحدة، لا يمكن إصدار فاتورة عليها.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border bg-gradient-to-b from-primary/5 to-card p-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs">
+          <div className="font-bold text-primary">إصدار فاتورة على المستأجر</div>
+          {tenantName && <div className="mt-0.5 text-muted-foreground">{tenantName}</div>}
+        </div>
+        <Button size="sm" variant={open ? "outline" : "default"} onClick={() => setOpen((v) => !v)}>
+          <Plus className="ml-1 h-3.5 w-3.5" />
+          {open ? "إغلاق" : "فاتورة جديدة"}
+        </Button>
+      </div>
+
+      {open && (
+        <div className="mt-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">المبلغ (ر.س) *</label>
+              <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">تاريخ الاستحقاق</label>
+              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">بداية الفترة</label>
+              <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">نهاية الفترة</label>
+              <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="h-8 text-xs" />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">ملاحظات</label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[60px] text-xs" />
+          </div>
+          <Button onClick={create} disabled={busy} size="sm" className="w-full">
+            {busy ? "جاري الإنشاء…" : "إنشاء الفاتورة"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
