@@ -937,10 +937,32 @@ const Dashboard = () => {
 
               <Card className="p-5">
                 <h3 className="mb-3 font-display text-sm font-bold">توزيع نوع الوحدات</h3>
-                <div className="h-72">
+                <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={analytics.unitTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} innerRadius={55} label={(e: any) => `${e.name}: ${e.value}`}>
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                      <Pie
+                        data={analytics.unitTypeData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="45%"
+                        outerRadius={90}
+                        innerRadius={50}
+                        labelLine={false}
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, value, name, percent }: any) => {
+                          const RAD = Math.PI / 180;
+                          const r = innerRadius + (outerRadius - innerRadius) * 0.5;
+                          const x = cx + r * Math.cos(-midAngle * RAD);
+                          const y = cy + r * Math.sin(-midAngle * RAD);
+                          if (percent < 0.06) return null;
+                          return (
+                            <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central" style={{ fontSize: 12, fontWeight: 700 }}>
+                              <tspan x={x} dy="-0.4em">{name}</tspan>
+                              <tspan x={x} dy="1.2em">{value}</tspan>
+                            </text>
+                          );
+                        }}
+                      >
                         {analytics.unitTypeData.map((d, i) => <Cell key={i} fill={d.color} stroke="white" strokeWidth={2} />)}
                       </Pie>
                       <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
