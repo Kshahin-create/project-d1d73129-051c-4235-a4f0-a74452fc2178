@@ -622,20 +622,28 @@ const Dashboard = () => {
                 </h3>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 20, right: 30, bottom: 10, left: 30 }}>
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                       <Pie
                         data={analytics.activityPie}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
                         cy="45%"
-                        outerRadius={70}
-                        innerRadius={0}
-                        labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
+                        outerRadius={90}
+                        innerRadius={40}
+                        labelLine={false}
                         label={(e: any) => {
                           const total = analytics.activityPie.reduce((s, x) => s + x.value, 0);
                           const pct = total ? Math.round((e.value / total) * 100) : 0;
-                          return `${e.value} (${pct}%)`;
+                          const RADIAN = Math.PI / 180;
+                          const r = e.innerRadius + (e.outerRadius - e.innerRadius) * 0.55;
+                          const x = e.cx + r * Math.cos(-e.midAngle * RADIAN);
+                          const y = e.cy + r * Math.sin(-e.midAngle * RADIAN);
+                          return (
+                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={13} fontWeight={700}>
+                              {`${e.value} • ${pct}%`}
+                            </text>
+                          );
                         }}
                       >
                         {analytics.activityPie.map((d, i) => <Cell key={i} fill={d.color} stroke="white" strokeWidth={2} />)}
