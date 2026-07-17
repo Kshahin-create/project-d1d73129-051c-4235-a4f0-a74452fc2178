@@ -267,6 +267,7 @@ const Dashboard = () => {
           مؤجر: rented, محجوز: reserved, متاح: available,
           إيراد: Math.round(revenue),
           فجوة: Math.round(potential - revenue),
+          إجمالي: Math.round(potential),
           إشغال: bu.length ? Math.round((rented / bu.length) * 100) : 0,
         };
       })
@@ -730,14 +731,40 @@ const Dashboard = () => {
               <h3 className="mb-3 font-display text-sm font-bold">الإيراد المحقق مقابل الفجوة لكل مبنى (ر.س / سنة)</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics.buildingChart}>
+                  <BarChart
+                    data={[...analytics.buildingChart].reverse()}
+                    margin={{ top: 24, right: 16, bottom: 8, left: 22 }}
+                    barCategoryGap="18%"
+                    dir="rtl"
+                  >
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
-                    <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
-                    <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
+                    <XAxis
+                      dataKey="name"
+                      interval={0}
+                      tick={AXIS_TICK}
+                      tickLine={AXIS_LINE}
+                      axisLine={AXIS_LINE}
+                      tickFormatter={(_, index) => `م ${10 - index}`}
+                    />
+                    <YAxis
+                      width={66}
+                      tick={AXIS_TICK}
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={10}
+                      tickFormatter={(v) => `${fmt(v / 1000)} ألف`}
+                    />
+                    <Tooltip content={<ChartTooltip formatter={(v: any) => `${fmt(Number(v))} ر.س`} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
-                    <Bar dataKey="إيراد" stackId="r" fill={C.green} />
-                    <Bar dataKey="فجوة" stackId="r" fill={C.red} radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="إيراد" stackId="r" fill={C.green} maxBarSize={64} />
+                    <Bar dataKey="فجوة" stackId="r" fill={C.red} radius={[6, 6, 0, 0]} maxBarSize={64}>
+                      <LabelList
+                        dataKey="إجمالي"
+                        position="top"
+                        formatter={(v: number) => `${fmt(v / 1000)}k`}
+                        style={{ fill: "hsl(var(--foreground))", fontSize: 10, fontWeight: 700 }}
+                      />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
