@@ -405,7 +405,7 @@ function SummaryCard({ icon, label, value, loading }: { icon: React.ReactNode; l
 
 function InfoGrid({ rows }: { rows: [string, string][] }) {
   return (
-    <div className="grid gap-y-1 rounded-xl border bg-card p-4 text-xs sm:grid-cols-2 sm:gap-x-6">
+    <div className="grid gap-y-1 rounded-xl border bg-card p-4 text-xs text-right sm:grid-cols-2 sm:gap-x-8">
       {rows.map(([k, v], i) => <Row key={i} label={k}>{v}</Row>)}
     </div>
   );
@@ -413,9 +413,9 @@ function InfoGrid({ rows }: { rows: [string, string][] }) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-dashed py-1.5 last:border-b-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground">{children}</span>
+    <div className="flex items-baseline justify-between gap-4 border-b border-dashed py-1.5 last:border-b-0">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate text-left font-semibold text-foreground">{children}</span>
     </div>
   );
 }
