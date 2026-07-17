@@ -75,7 +75,7 @@ export default function TenantPortal() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" dir="rtl">
         <Header />
         <div className="container-tight py-16 text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
@@ -86,7 +86,7 @@ export default function TenantPortal() {
 
   if (!account && !isTenant && !isAdmin && !isManager) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" dir="rtl">
         <Header />
         <main className="container-tight py-16">
           <div className="mx-auto max-w-md rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center">

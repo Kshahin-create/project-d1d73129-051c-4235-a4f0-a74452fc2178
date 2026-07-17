@@ -173,7 +173,7 @@ export default function AdminTenantAccounts() {
   }
   if (!loading && !isAdmin && !isManager) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" dir="rtl">
         <Header />
         <main className="container-tight py-16">
           <div className="mx-auto max-w-md rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center">
