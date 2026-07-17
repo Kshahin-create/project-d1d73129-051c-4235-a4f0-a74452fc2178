@@ -170,9 +170,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-hidden p-0" dir="rtl">
         {/* Header */}
-        <div className="border-b bg-gradient-to-l from-primary to-primary/85 p-5 text-primary-foreground">
-          <DialogHeader className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="border-b bg-gradient-to-l from-primary to-primary/85 p-5 pl-12 text-primary-foreground text-right">
+          <DialogHeader className="space-y-2 text-right">
+            <div className="flex flex-wrap items-center justify-start gap-2">
               <Badge className={cn("border", uMeta.cls)}>{uMeta.label}</Badge>
               {unit.unitType && (
                 <Badge variant="outline" className="border-white/30 bg-white/10 text-white">
@@ -183,10 +183,10 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                 <Tag className="ml-1 h-3 w-3" /> {unit.activity ?? "—"}
               </Badge>
             </div>
-            <DialogTitle className="font-display text-2xl font-extrabold text-white">
+            <DialogTitle className="font-display text-2xl font-extrabold text-white text-right">
               مبنى <span className="num">{unit.buildingNumber}</span> · وحدة <span className="num">{unit.unitNumber}</span>
             </DialogTitle>
-            <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs opacity-90">
+            <div className="flex flex-wrap justify-start gap-x-5 gap-y-1 text-xs opacity-90">
               <span className="flex items-center gap-1"><Ruler className="h-3.5 w-3.5" /> <span className="num">{unit.area}</span> م²</span>
               <span className="flex items-center gap-1"><Wallet className="h-3.5 w-3.5" /> <span className="num">{fmt(unit.price)}</span> ر.س / سنة</span>
               <span className="flex items-center gap-1"><Building2 className="h-3.5 w-3.5" /> {unit.buildingType}</span>
@@ -195,7 +195,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
         </div>
 
         <ScrollArea className="max-h-[calc(92vh-150px)]">
-          <div className="p-5">
+          <div className="p-5 text-right">
             {!hasAdminAccess ? (
               <div className="rounded-xl border border-dashed bg-muted/40 p-8 text-center">
                 <Lock className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
@@ -215,7 +215,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                 </div>
 
                 <Tabs defaultValue="overview" dir="rtl">
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-5" dir="rtl">
                     <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
                     <TabsTrigger value="bookings">الحجوزات ({totalBookings})</TabsTrigger>
                     <TabsTrigger value="tenant">المستأجر ({tenants.length})</TabsTrigger>
