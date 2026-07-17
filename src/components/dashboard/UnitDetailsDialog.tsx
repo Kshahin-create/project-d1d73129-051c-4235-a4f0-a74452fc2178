@@ -334,6 +334,15 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
 
                   {/* INVOICES */}
                   <TabsContent value="invoices" className="mt-4 space-y-3">
+                    {canEdit && (
+                      <NewInvoiceForUnit
+                        unitId={unit.id!}
+                        tenantAccountId={tenantAccountId}
+                        tenantName={currentTenant?.tenant_name ?? null}
+                        onCreated={() => setReloadTick((t) => t + 1)}
+                      />
+                    )}
+
                     {loading ? (
                       <SkeletonList />
                     ) : invoices.length === 0 ? (
