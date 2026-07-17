@@ -620,10 +620,24 @@ const Dashboard = () => {
                 <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-bold">
                   <Layers className="h-4 w-4 text-accent" /> توزيع الأنشطة
                 </h3>
-                <div className="h-64">
+                <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={analytics.activityPie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={0} label={(e: any) => `${e.value}`}>
+                    <PieChart margin={{ top: 20, right: 30, bottom: 10, left: 30 }}>
+                      <Pie
+                        data={analytics.activityPie}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="45%"
+                        outerRadius={70}
+                        innerRadius={0}
+                        labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
+                        label={(e: any) => {
+                          const total = analytics.activityPie.reduce((s, x) => s + x.value, 0);
+                          const pct = total ? Math.round((e.value / total) * 100) : 0;
+                          return `${e.value} (${pct}%)`;
+                        }}
+                      >
                         {analytics.activityPie.map((d, i) => <Cell key={i} fill={d.color} stroke="white" strokeWidth={2} />)}
                       </Pie>
                       <Tooltip content={<ChartTooltip formatter={(v: any) => fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
