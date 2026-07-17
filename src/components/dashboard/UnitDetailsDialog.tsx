@@ -394,9 +394,12 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
 
 function SummaryCard({ icon, label, value, loading }: { icon: React.ReactNode; label: string; value: number; loading: boolean }) {
   return (
-    <div className="rounded-lg border bg-card p-2.5">
-      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">{icon} {label}</div>
-      <div className="num mt-1 text-lg font-extrabold">
+    <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
+      <div className="flex min-w-0 items-center gap-1.5 text-[11px] leading-tight text-muted-foreground">
+        <span className="shrink-0">{icon}</span>
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="num shrink-0 text-lg font-extrabold leading-none">
         {loading ? <Skeleton className="inline-block h-5 w-8" /> : value}
       </div>
     </div>
@@ -413,9 +416,9 @@ function InfoGrid({ rows }: { rows: [string, string][] }) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-dashed py-1.5 last:border-b-0">
-      <span className="shrink-0 text-muted-foreground">{label}</span>
-      <span className="min-w-0 truncate text-left font-semibold text-foreground">{children}</span>
+    <div className="flex items-baseline justify-between gap-3 border-b border-dashed py-1.5 last:border-b-0">
+      <span className="shrink-0 whitespace-nowrap text-muted-foreground">{label}</span>
+      <span className="min-w-0 flex-1 break-words text-left font-semibold text-foreground">{children}</span>
     </div>
   );
 }
