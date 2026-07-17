@@ -466,7 +466,7 @@ const Dashboard = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
+          <TabsList dir="rtl" className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
             <TabsTrigger value="overview" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <PieIcon className="ml-1.5 h-3.5 w-3.5" /> نظرة عامة
             </TabsTrigger>
