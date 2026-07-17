@@ -795,15 +795,39 @@ const Dashboard = () => {
             <div className="grid gap-4 lg:grid-cols-2">
               <Card className="p-5">
                 <h3 className="mb-3 font-display text-sm font-bold">إشغال كل مبنى (%)</h3>
-                <div className="h-80">
+                <div className="h-[430px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={analytics.buildingChart} layout="vertical" margin={{ left: 30 }}>
-                      <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
-                      <XAxis type="number" domain={[0, 100]} tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${v}%`} />
-                      <YAxis dataKey="name" type="category" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} width={50} />
+                    <BarChart
+                      data={analytics.buildingChart}
+                      layout="vertical"
+                      margin={{ top: 8, right: 64, bottom: 8, left: 24 }}
+                      barCategoryGap="28%"
+                    >
+                      <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} horizontal={false} />
+                      <XAxis
+                        type="number"
+                        domain={[0, 100]}
+                        ticks={[0, 25, 50, 75, 100]}
+                        tick={AXIS_TICK}
+                        tickLine={false}
+                        axisLine={AXIS_LINE}
+                        tickMargin={8}
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        orientation="right"
+                        tick={AXIS_TICK}
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        width={48}
+                        tickFormatter={(value) => value.replace("م", "م ")}
+                      />
                       <Tooltip content={<ChartTooltip formatter={(v: any) => `${v}%`} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
-                      <Bar dataKey="إشغال" fill={C.primary} radius={[0, 6, 6, 0]}>
-                        <LabelList dataKey="إشغال" position="right" formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
+                      <Bar dataKey="إشغال" fill={C.primary} radius={[6, 0, 0, 6]} maxBarSize={24}>
+                        <LabelList dataKey="إشغال" position="left" offset={8} formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
