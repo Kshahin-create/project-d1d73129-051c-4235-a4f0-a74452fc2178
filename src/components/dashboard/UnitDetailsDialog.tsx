@@ -431,3 +431,97 @@ function SkeletonList() {
     </div>
   );
 }
+
+function NewInvoiceForUnit({
+  unitId,
+  tenantAccountId,
+  tenantName,
+  onCreated,
+}: {
+  unitId: string;
+  tenantAccountId: string | null;
+  tenantName: string | null;
+  onCreated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const create = async () => {
+    if (!amount || Number(amount) <= 0) return toast.error("أدخل مبلغاً صحيحاً");
+    if (!tenantAccountId) return toast.error("لا يوجد مستأجر مرتبط بهذه الوحدة");
+    setBusy(true);
+    const { error } = await supabase.from("invoices").insert({
+      tenant_account_id: tenantAccountId,
+      unit_id: unitId,
+      amount: Number(amount),
+      due_date: dueDate || null,
+      period_start: periodStart || null,
+      period_end: periodEnd || null,
+      notes: notes || null,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("تم إنشاء الفاتورة وربطها بالمستأجر");
+    setOpen(false);
+    setAmount(""); setDueDate(""); setPeriodStart(""); setPeriodEnd(""); setNotes("");
+    onCreated();
+  };
+
+  if (!tenantAccountId) {
+    return (
+      <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 p-3 text-xs text-amber-800">
+        لا يوجد مستأجر مرتبط حالياً بهذه الوحدة، لا يمكن إصدار فاتورة عليها.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border bg-gradient-to-b from-primary/5 to-card p-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs">
+          <div className="font-bold text-primary">إصدار فاتورة على المستأجر</div>
+          {tenantName && <div className="mt-0.5 text-muted-foreground">{tenantName}</div>}
+        </div>
+        <Button size="sm" variant={open ? "outline" : "default"} onClick={() => setOpen((v) => !v)}>
+          <Plus className="ml-1 h-3.5 w-3.5" />
+          {open ? "إغلاق" : "فاتورة جديدة"}
+        </Button>
+      </div>
+
+      {open && (
+        <div className="mt-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">المبلغ (ر.س) *</label>
+              <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">تاريخ الاستحقاق</label>
+              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">بداية الفترة</label>
+              <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">نهاية الفترة</label>
+              <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="h-8 text-xs" />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold text-muted-foreground">ملاحظات</label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[60px] text-xs" />
+          </div>
+          <Button onClick={create} disabled={busy} size="sm" className="w-full">
+            {busy ? "جاري الإنشاء…" : "إنشاء الفاتورة"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
