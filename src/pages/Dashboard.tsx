@@ -693,7 +693,7 @@ const Dashboard = () => {
                     <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
                     <YAxis yAxisId="left" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                     <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                    <Tooltip formatter={(v: any, n: any) => n === "إشغال" ? `${v}%` : fmt(Number(v))} />
+                    <Tooltip content={<ChartTooltip formatter={(v: any, n: any) => n === "إشغال" ? `${v}%` : fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar yAxisId="left" dataKey="إيراد" fill={C.green} radius={[6, 6, 0, 0]} />
                     <Bar yAxisId="left" dataKey="إمكانية" fill={C.muted} radius={[6, 6, 0, 0]} />
