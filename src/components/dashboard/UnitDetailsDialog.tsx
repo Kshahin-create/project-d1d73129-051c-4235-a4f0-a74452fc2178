@@ -314,9 +314,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                       <EmptyState text="لم يتم تسجيل مستأجر لهذه الوحدة" />
                     ) : (
                       tenants.map((t) => (
-                        <div key={t.id} className="rounded-xl border bg-card p-4">
+                        <div key={t.id} className="rounded-xl border bg-card p-4 text-right">
                           <div className="font-display text-base font-extrabold">{t.tenant_name}</div>
-                          <div className="mt-2 grid gap-y-1 text-xs sm:grid-cols-2">
+                          <div className="mt-3 grid gap-y-1 text-xs sm:grid-cols-2 sm:gap-x-8">
                             {t.phone && <Row label="الجوال"><span className="num">{t.phone}</span></Row>}
                             {t.business_name && <Row label="النشاط التجاري">{t.business_name}</Row>}
                             {t.activity_type && <Row label="نوع النشاط">{t.activity_type}</Row>}
