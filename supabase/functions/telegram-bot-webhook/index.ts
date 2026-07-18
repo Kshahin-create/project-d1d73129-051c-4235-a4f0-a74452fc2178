@@ -116,7 +116,7 @@ function sanitizeAIReply(s: string): string {
     .trim();
 }
 
-async function loadChatMemory(admin: any, chat_id: number, limit = 8): Promise<Array<{ role: string; content: string }>> {
+async function loadChatMemory(admin: any, chat_id: number, limit = 40): Promise<Array<{ role: string; content: string }>> {
   const { data } = await admin.from("telegram_chat_memory")
     .select("role,content,created_at").eq("chat_id", chat_id)
     .order("created_at", { ascending: false }).limit(limit);
@@ -124,11 +124,11 @@ async function loadChatMemory(admin: any, chat_id: number, limit = 8): Promise<A
 }
 async function saveChatMemory(admin: any, chat_id: number, role: string, content: string) {
   try {
-    await admin.from("telegram_chat_memory").insert({ chat_id, role, content: String(content || "").slice(0, 4000) });
-    // Trim: keep latest 16 rows per chat
+    await admin.from("telegram_chat_memory").insert({ chat_id, role, content: String(content || "").slice(0, 6000) });
+    // Trim: keep latest 200 rows per chat (long-term conversation memory)
     const { data } = await admin.from("telegram_chat_memory")
       .select("id,created_at").eq("chat_id", chat_id)
-      .order("created_at", { ascending: false }).range(16, 200);
+      .order("created_at", { ascending: false }).range(200, 3000);
     const ids = (data || []).map((r: any) => r.id);
     if (ids.length) await admin.from("telegram_chat_memory").delete().in("id", ids);
   } catch {}
@@ -886,6 +886,227 @@ const AI_TOOLS = [
       parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "list_recent_activity",
+      description: "آخر أحداث النظام من audit_log (حجوزات، فواتير، وحدات، مستأجرين). للاطلاع على 'إيه اللي حصل حديثاً'.",
+      parameters: {
+        type: "object",
+        properties: {
+          table: { type: "string", description: "فلترة بجدول معين (bookings/invoices/units/tenants/tenant_accounts/interested_customers)" },
+          action: { type: "string", enum: ["INSERT","UPDATE","DELETE"] },
+          hours: { type: "number", description: "خلال آخر كام ساعة (افتراضي 24)" },
+          limit: { type: "number", default: 20 },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_interested_customers",
+      description: "قائمة العملاء المهتمين مع فلاتر (الحالة، تاريخ).",
+      parameters: {
+        type: "object",
+        properties: {
+          status: { type: "string", enum: ["new","contacted","converted","lost"] },
+          query: { type: "string" },
+          limit: { type: "number", default: 15 },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_tenant_full",
+      description: "بيانات مستأجر كاملة: الوحدات المرتبطة، الفواتير، آخر المدفوعات.",
+      parameters: { type: "object", properties: { tenant_account_id: { type: "string" } }, required: ["tenant_account_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_building_report",
+      description: "تقرير كامل عن مبنى: إحصائيات الإشغال، الإيرادات، الوحدات، المستأجرين.",
+      parameters: { type: "object", properties: { building_number: { type: "number" } }, required: ["building_number"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_bookings_for_tenant",
+      description: "كل حجوزات عميل معين (بالاسم أو الجوال).",
+      parameters: { type: "object", properties: { query: { type: "string" }, limit: { type: "number", default: 20 } }, required: ["query"], additionalProperties: false },
+    },
+  },
+
+  // ==== WRITE TOOLS ====
+  {
+    type: "function",
+    function: {
+      name: "create_booking",
+      description: "إنشاء حجز جديد من بيانات عميل + وحدات (بأرقام). ينشئ الحجز ويحجز الوحدات.",
+      parameters: {
+        type: "object",
+        properties: {
+          customer_full_name: { type: "string" },
+          customer_phone: { type: "string" },
+          customer_email: { type: "string" },
+          business_name: { type: "string" },
+          cr_number: { type: "string" },
+          notes: { type: "string" },
+          building_number: { type: "number" },
+          unit_numbers: { type: "array", items: { type: "number" } },
+          payment_plan: { type: "string", enum: ["full","70","50"], default: "full" },
+        },
+        required: ["customer_full_name","customer_phone","building_number","unit_numbers"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_booking",
+      description: "تعديل بيانات حجز (اسم، جوال، بريد، نشاط، ملاحظات، خطة السداد، تاريخ الانتهاء).",
+      parameters: {
+        type: "object",
+        properties: {
+          booking_id: { type: "string" },
+          customer_full_name: { type: "string" },
+          customer_phone: { type: "string" },
+          customer_email: { type: "string" },
+          business_name: { type: "string" },
+          notes: { type: "string" },
+          payment_plan: { type: "string", enum: ["full","70","50"] },
+          expires_at: { type: "string", description: "ISO datetime" },
+        },
+        required: ["booking_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_tenant_account",
+      description: "تعديل بيانات حساب مستأجر (اسم، جوال، بريد، اسم النشاط، ملاحظات، السجل التجاري).",
+      parameters: {
+        type: "object",
+        properties: {
+          tenant_account_id: { type: "string" },
+          full_name: { type: "string" },
+          phone: { type: "string" },
+          email: { type: "string" },
+          business_name: { type: "string" },
+          cr_number: { type: "string" },
+          notes: { type: "string" },
+        },
+        required: ["tenant_account_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_unit",
+      description: "تعديل بيانات وحدة (السعر، النشاط، المساحة، النوع).",
+      parameters: {
+        type: "object",
+        properties: {
+          unit_id: { type: "string" },
+          price: { type: "number" },
+          activity: { type: "string" },
+          area: { type: "number" },
+          unit_type: { type: "string" },
+        },
+        required: ["unit_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_invoice",
+      description: "إنشاء فاتورة يدوية على وحدة/حساب مستأجر بمبلغ محدد وتاريخ استحقاق.",
+      parameters: {
+        type: "object",
+        properties: {
+          tenant_account_id: { type: "string" },
+          unit_id: { type: "string" },
+          amount: { type: "number" },
+          due_date: { type: "string", description: "YYYY-MM-DD" },
+          notes: { type: "string" },
+          period_start: { type: "string" },
+          period_end: { type: "string" },
+        },
+        required: ["tenant_account_id","amount"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_invoice",
+      description: "حذف فاتورة (احرص أنها غير مدفوعة أو تأكد أولاً).",
+      parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_invoice_reminder",
+      description: "إرسال تذكير بفاتورة إلى المستأجر عبر تيليجرام (لو مربوط).",
+      parameters: { type: "object", properties: { invoice_id: { type: "string" }, message: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_interested_status",
+      description: "تحديث حالة عميل مهتم (contacted/converted/lost) وإضافة ملاحظة.",
+      parameters: {
+        type: "object",
+        properties: {
+          interested_id: { type: "string" },
+          status: { type: "string", enum: ["new","contacted","converted","lost"] },
+          notes: { type: "string" },
+        },
+        required: ["interested_id","status"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_interested_customer",
+      description: "تسجيل عميل مهتم جديد.",
+      parameters: {
+        type: "object",
+        properties: {
+          full_name: { type: "string" },
+          phone: { type: "string" },
+          requested_activity: { type: "string" },
+          business_name: { type: "string" },
+          requested_building: { type: "string" },
+          requested_unit: { type: "string" },
+          notes: { type: "string" },
+        },
+        required: ["full_name","phone"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_booking",
+      description: "حذف حجز نهائياً من قاعدة البيانات (خطر — استخدم cancel_booking بدلاً منها إن أمكن).",
+      parameters: { type: "object", properties: { booking_id: { type: "string" }, confirm: { type: "boolean" } }, required: ["booking_id","confirm"], additionalProperties: false },
+    },
+  },
 ];
 
 // Check if linked user has admin/manager role for write operations
@@ -1008,6 +1229,73 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
       .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number)).limit(5);
     return { results: data || [] };
   }
+  if (name === "list_recent_activity") {
+    const hrs = Math.max(1, Math.min(720, Number(args.hours) || 24));
+    const since = new Date(Date.now() - hrs * 3600 * 1000).toISOString();
+    let q = admin.from("audit_log").select("id,entity_table,action,entity_id,actor_email,changed_fields,created_at,after_data,before_data")
+      .gte("created_at", since).order("created_at", { ascending: false }).limit(lim(args.limit, 20));
+    if (args.table) q = q.eq("entity_table", args.table);
+    if (args.action) q = q.eq("action", args.action);
+    const { data, error } = await q;
+    if (error) return { error: error.message };
+    return { results: (data || []).map((r: any) => ({
+      table: r.entity_table, action: r.action, entity_id: r.entity_id,
+      actor: r.actor_email, changed: r.changed_fields, at: r.created_at,
+      snapshot: r.after_data || r.before_data,
+    })) };
+  }
+  if (name === "list_interested_customers") {
+    let q = admin.from("interested_customers")
+      .select("id,full_name,phone,requested_activity,business_name,requested_building,requested_unit,status,notes,created_at")
+      .order("created_at", { ascending: false }).limit(lim(args.limit, 15));
+    if (args.status) q = q.eq("status", args.status);
+    if (args.query) q = q.or(`full_name.ilike.%${args.query}%,phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`);
+    const { data } = await q;
+    return { results: data || [] };
+  }
+  if (name === "get_tenant_full") {
+    const [acc, links, invs, pays] = await Promise.all([
+      admin.from("tenant_accounts").select("*").eq("id", args.tenant_account_id).maybeSingle(),
+      admin.from("tenant_account_units").select("unit_id,units(id,building_number,unit_number,status,price,activity)").eq("tenant_account_id", args.tenant_account_id),
+      admin.from("invoices").select("id,invoice_number,amount,paid_amount,paid,due_date,paid_at,notes,created_at").eq("tenant_account_id", args.tenant_account_id).order("created_at",{ascending:false}).limit(30),
+      admin.from("invoices").select("paid_amount,paid_at").eq("tenant_account_id", args.tenant_account_id).eq("paid", true).not("paid_at","is",null).order("paid_at",{ascending:false}).limit(10),
+    ]);
+    if (!acc.data) return { error: "tenant not found" };
+    const totalDue = (invs.data || []).reduce((s: number, i: any) => s + (Number(i.amount) - Number(i.paid_amount || 0)), 0);
+    return {
+      account: acc.data,
+      units: (links.data || []).map((l: any) => l.units).filter(Boolean),
+      invoices: invs.data || [],
+      recent_payments: pays.data || [],
+      outstanding_balance: totalDue,
+    };
+  }
+  if (name === "get_building_report") {
+    const bn = Number(args.building_number);
+    const [units, ts] = await Promise.all([
+      admin.from("units").select("id,unit_number,status,price,area,activity,unit_type").eq("building_number", bn).order("unit_number"),
+      admin.from("tenants").select("tenant_name,phone,unit_id,start_date,end_date,business_name,activity_type").in("unit_id",
+        (await admin.from("units").select("id").eq("building_number", bn)).data?.map((u: any) => u.id) || []
+      ),
+    ]);
+    const U = units.data || [];
+    const rented = U.filter((u: any) => u.status === "rented").length;
+    const reserved = U.filter((u: any) => u.status === "reserved").length;
+    const available = U.filter((u: any) => u.status === "available").length;
+    const revenue = U.filter((u: any) => u.status === "rented").reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+    const expected = U.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+    return {
+      building_number: bn,
+      total_units: U.length, rented, reserved, available,
+      occupancy_rate: U.length ? Math.round(rented/U.length*100) : 0,
+      current_annual_revenue: revenue,
+      expected_annual_revenue: expected,
+      units: U, tenants: ts.data || [],
+    };
+  }
+  if (name === "list_bookings_for_tenant") {
+    return { results: await searchBookingsSmart(admin, String(args.query), lim(args.limit, 20)) };
+  }
   return { error: "unknown tool" };
 }
 
@@ -1100,11 +1388,131 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     }).eq("id", args.invoice_id);
     return { ok: true, invoice_id: args.invoice_id };
   }
+  if (name === "create_booking") {
+    const bn = Number(args.building_number);
+    const nums = (args.unit_numbers || []).map(Number).filter(Boolean);
+    if (!bn || !nums.length) return { error: "building_number + unit_numbers required" };
+    const { data: units } = await admin.from("units").select("id,unit_number,status").eq("building_number", bn).in("unit_number", nums);
+    if (!units || units.length !== nums.length) {
+      const found = new Set((units || []).map((u: any) => Number(u.unit_number)));
+      return { error: `وحدات غير موجودة: ${nums.filter((n: number) => !found.has(n)).join("، ")}` };
+    }
+    const unavail = units.filter((u: any) => u.status !== "available").map((u: any) => u.unit_number);
+    if (unavail.length) return { error: `وحدات غير متاحة: ${unavail.join("، ")}` };
+    const { data: id, error } = await admin.rpc("create_booking", {
+      _customer_full_name: args.customer_full_name,
+      _customer_phone: args.customer_phone,
+      _customer_email: args.customer_email || null,
+      _business_name: args.business_name || null,
+      _notes: args.notes || null,
+      _unit_ids: units.map((u: any) => u.id),
+      _cr_number: args.cr_number || null,
+      _payment_plan: args.payment_plan || "full",
+    });
+    if (error) return { error: error.message };
+    return { ok: true, booking_id: id, building_number: bn, unit_numbers: nums };
+  }
+  if (name === "update_booking") {
+    const upd: any = { updated_at: new Date().toISOString() };
+    for (const k of ["customer_full_name","customer_phone","customer_email","business_name","notes","payment_plan","expires_at"]) {
+      if (args[k] !== undefined) upd[k] = args[k];
+    }
+    if (Object.keys(upd).length === 1) return { error: "no fields to update" };
+    const { error } = await admin.from("bookings").update(upd).eq("id", args.booking_id);
+    if (error) return { error: error.message };
+    return { ok: true, booking_id: args.booking_id, updated_fields: Object.keys(upd).filter((k) => k !== "updated_at") };
+  }
+  if (name === "update_tenant_account") {
+    const upd: any = { updated_at: new Date().toISOString() };
+    for (const k of ["full_name","phone","email","business_name","cr_number","notes"]) {
+      if (args[k] !== undefined) upd[k] = args[k];
+    }
+    if (Object.keys(upd).length === 1) return { error: "no fields to update" };
+    const { error } = await admin.from("tenant_accounts").update(upd).eq("id", args.tenant_account_id);
+    if (error) return { error: error.message };
+    return { ok: true, tenant_account_id: args.tenant_account_id, updated_fields: Object.keys(upd).filter((k) => k !== "updated_at") };
+  }
+  if (name === "update_unit") {
+    const upd: any = { updated_at: new Date().toISOString() };
+    for (const k of ["price","activity","area","unit_type"]) {
+      if (args[k] !== undefined) upd[k] = args[k];
+    }
+    if (Object.keys(upd).length === 1) return { error: "no fields to update" };
+    const { error } = await admin.from("units").update(upd).eq("id", args.unit_id);
+    if (error) return { error: error.message };
+    return { ok: true, unit_id: args.unit_id, updated_fields: Object.keys(upd).filter((k) => k !== "updated_at") };
+  }
+  if (name === "create_invoice") {
+    const amt = Number(args.amount);
+    if (!amt || amt <= 0) return { error: "amount must be > 0" };
+    const { data, error } = await admin.from("invoices").insert({
+      tenant_account_id: args.tenant_account_id,
+      unit_id: args.unit_id || null,
+      amount: amt,
+      due_date: args.due_date || null,
+      notes: args.notes || null,
+      period_start: args.period_start || null,
+      period_end: args.period_end || null,
+      paid: false, paid_amount: 0,
+      created_by: userId,
+    }).select("id,invoice_number").single();
+    if (error) return { error: error.message };
+    return { ok: true, invoice_id: data.id, invoice_number: data.invoice_number, amount: amt };
+  }
+  if (name === "delete_invoice") {
+    const { error } = await admin.from("invoices").delete().eq("id", args.invoice_id);
+    if (error) return { error: error.message };
+    return { ok: true, deleted: args.invoice_id };
+  }
+  if (name === "send_invoice_reminder") {
+    const supaUrl = Deno.env.get("SUPABASE_URL")!;
+    const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const r = await fetch(`${supaUrl}/functions/v1/send-invoice-telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc },
+      body: JSON.stringify({ invoice_id: args.invoice_id, message: args.message || null }),
+    });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) return { error: out.error || `HTTP ${r.status}` };
+    return { ok: true, ...out };
+  }
+  if (name === "update_interested_status") {
+    const upd: any = { status: args.status, updated_at: new Date().toISOString() };
+    if (args.notes) upd.notes = args.notes;
+    const { error } = await admin.from("interested_customers").update(upd).eq("id", args.interested_id);
+    if (error) return { error: error.message };
+    return { ok: true, id: args.interested_id, status: args.status };
+  }
+  if (name === "create_interested_customer") {
+    const { data, error } = await admin.from("interested_customers").insert({
+      full_name: args.full_name,
+      phone: args.phone,
+      requested_activity: args.requested_activity || null,
+      business_name: args.business_name || null,
+      requested_building: args.requested_building || null,
+      requested_unit: args.requested_unit || null,
+      notes: args.notes || null,
+      source: "telegram_ai",
+      status: "new",
+      created_by: userId,
+    }).select("id").single();
+    if (error) return { error: error.message };
+    return { ok: true, id: data.id };
+  }
+  if (name === "delete_booking") {
+    if (!args.confirm) return { error: "confirm=true required — استخدم cancel_booking بدلاً منها إن أمكن" };
+    const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", args.booking_id);
+    const ids = (bus || []).map((x: any) => x.unit_id);
+    if (ids.length) await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).in("id", ids).eq("status", "reserved");
+    const { error } = await admin.from("bookings").delete().eq("id", args.booking_id);
+    if (error) return { error: error.message };
+    return { ok: true, deleted: args.booking_id };
+  }
   return { error: "unknown write tool" };
 }
 
-const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
-const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit"]);
+const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid","create_booking","update_booking","update_tenant_account","update_unit","create_invoice","delete_invoice","send_invoice_reminder","update_interested_status","create_interested_customer","delete_booking"]);
+const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit","list_recent_activity","list_interested_customers","get_tenant_full","get_building_report","list_bookings_for_tenant"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
   const args: Record<string, unknown> = {};
@@ -1172,7 +1580,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
   await typing(token, chat_id);
   const writeAllowed = await canWrite(admin, userId);
   const preCtx = await buildPreContext(admin, question);
-  const history = await loadChatMemory(admin, chat_id, 8);
+  const history = await loadChatMemory(admin, chat_id, 40);
 
   const systemPrompt = [
     "أنت مساعد ذكي خبير لإدارة \"المدينة الصناعية شمال مكة\" (تأجير وحدات).",
@@ -1187,16 +1595,22 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     "6) لو الطلب «مطالبة/مطلبة مالية» + فيه عميل + مبنى + وحدات، نادِ generate_financial_claim فوراً ومرّر query = نص رسالة المستخدم كاملاً + tenant_account_id لو متوفر.",
     "7) لما المستخدم يسأل «الوحدة X في مبنى Y محجوزة لمين/حالتها إيه/مؤجّرة لمين» نادِ lookup_unit فوراً — ما ترجعش «مش محجوزة» من نفسك.",
     "8) نفّذ مباشرة لو الطلب واضح. اسأل سؤال واحد فقط لو فيه غموض حقيقي.",
+    "9) استخدم ذاكرة المحادثة (history) — أنت بتشوف آخر ٤٠ رسالة. المستخدم بيبني على كلامه السابق، فاربط الطلب الجديد بالسياق (مثلاً: 'كمّلي' → أكمل آخر إجراء).",
+    "",
+    "🧰 أدواتك الكاملة (استخدمها بدل ما ترفض):",
+    "- قراءة: get_overview / search_bookings / search_invoices / search_tenants / units_breakdown / revenue_report / lookup_unit / list_recent_activity / list_interested_customers / get_tenant_full / get_building_report / list_bookings_for_tenant",
+    "- كتابة: create_booking / update_booking / delete_booking / confirm_booking / cancel_booking / extend_booking_expiry / set_booking_paid_amount / update_tenant_account / update_unit / set_unit_status / create_invoice / delete_invoice / mark_invoice_paid / record_payment / send_invoice_reminder / generate_financial_claim / update_interested_status / create_interested_customer",
     "",
     "🚫 ممنوعات صارمة:",
     "- ممنوع تطبع كود مثل print(...) أو default_api.xxx(...) للمستخدم نهائياً.",
     "- ممنوع تقول «لم أجد العميل» قبل ما تشوف tenant_matches و booking_matches في PRE_CONTEXT.",
     "- ممنوع تطلب من المستخدم UUID — لازم تستخرجه بنفسك عبر الأدوات.",
-    `- صلاحية الكتابة الحالية للمستخدم: ${writeAllowed ? "مفعّلة" : "غير مفعّلة (للقراءة فقط)"}.`,
+    "- ممنوع ترفض طلب إداري لو للمستخدم صلاحية الكتابة — نفّذه بأدواتك.",
+    `- صلاحية الكتابة الحالية للمستخدم: ${writeAllowed ? "مفعّلة (نفّذ الطلبات الإدارية مباشرة)" : "غير مفعّلة (للقراءة فقط)"}.`,
     "",
     "📝 صياغة الرد:",
     "- نقاط قصيرة، أرقام بصيغة 1,234 ر.س، تواريخ ميلادية، استخدم <b>…</b> للأرقام المهمة.",
-    "- بعد أي تعديل اكتب الحالة النهائية بالأرقام.",
+    "- بعد أي تعديل اكتب الحالة النهائية بالأرقام والـ IDs المختصرة.",
     "",
     "📅 تاريخ اليوم: " + new Date().toLocaleDateString("ar-EG-u-nu-latn", { timeZone: "Asia/Riyadh" }),
   ].join("\n");
@@ -1208,7 +1622,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
   ];
 
   let finalReply = "";
-  for (let round = 0; round < 8; round++) {
+  for (let round = 0; round < 16; round++) {
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
