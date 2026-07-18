@@ -1104,7 +1104,7 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
 }
 
 const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
-const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id"]);
+const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
   const args: Record<string, unknown> = {};
