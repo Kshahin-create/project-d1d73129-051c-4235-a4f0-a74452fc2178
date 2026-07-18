@@ -103,8 +103,8 @@ const YTickOffset = ({ x, y, payload }: any) => (
   <text
     x={x}
     y={y}
-    dy={-6}
-    dx={-10}
+    dy={4}
+    dx={-14}
     textAnchor="end"
     fill={AXIS_TICK.fill}
     fontSize={AXIS_TICK.fontSize}
@@ -116,14 +116,15 @@ const YTickOffset = ({ x, y, payload }: any) => (
 
 // Shared numeric Y-axis props to guarantee full number visibility across all charts
 const Y_AXIS_NUMERIC = {
-  width: 72,
+  width: 88,
   tick: AXIS_TICK,
   tickLine: false,
   axisLine: false,
-  tickMargin: 10,
+  tickMargin: 14,
 } as const;
 
-const CHART_MARGIN = { top: 10, right: 12, bottom: 8, left: 24 } as const;
+const CHART_MARGIN = { top: 12, right: 16, bottom: 8, left: 36 } as const;
+
 
 type FilterKey = "all" | "rented" | "reserved" | "available";
 
