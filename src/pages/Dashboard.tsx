@@ -767,7 +767,7 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[...analytics.buildingChart].reverse()}
-                    margin={{ top: 34, right: 16, bottom: 8, left: 56 }}
+                    margin={{ top: 36, right: 16, bottom: 8, left: 72 }}
                     barCategoryGap="18%"
                   >
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
@@ -780,11 +780,13 @@ const Dashboard = () => {
                       tickFormatter={(value) => value.replace("م", "م ")}
                     />
                     <YAxis
-                      width={96}
+                      width={112}
+                      tickMargin={14}
                       tick={<YTickOffset />}
                       tickLine={false}
                       axisLine={false}
                     />
+
                     <Tooltip content={<ChartTooltip formatter={(v: any) => `${fmt(Number(v))} ر.س`} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar dataKey="إيراد" stackId="r" fill={C.green} maxBarSize={64} />
