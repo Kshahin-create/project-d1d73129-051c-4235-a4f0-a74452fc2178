@@ -1201,13 +1201,14 @@ const Dashboard = () => {
                   <div className="min-w-[820px]">
                     <div
                       className="grid items-center gap-3 bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground"
-                      style={{ gridTemplateColumns: "70px 100px 90px 100px minmax(160px,1fr) 140px 100px" }}
+                      style={{ gridTemplateColumns: "70px 100px 90px 100px minmax(160px,1fr) minmax(160px,1fr) 140px 100px" }}
                     >
                       <div className="text-right">المبنى</div>
                       <div className="text-right">رقم الوحدة</div>
                       <div className="text-right">النوع</div>
                       <div className="text-right">المساحة</div>
                       <div className="text-right">النشاط</div>
+                      <div className="text-right">المستأجر</div>
                       <div className="text-right">الإيجار / سنة</div>
                       <div className="text-right">الحالة</div>
                     </div>
@@ -1219,7 +1220,7 @@ const Dashboard = () => {
                             "grid items-center gap-3 px-4 py-2.5 text-xs transition hover:bg-muted/40",
                             idx % 2 === 0 && "bg-muted/10",
                           )}
-                          style={{ gridTemplateColumns: "70px 100px 90px 100px minmax(160px,1fr) 140px 100px" }}
+                          style={{ gridTemplateColumns: "70px 100px 90px 100px minmax(160px,1fr) minmax(160px,1fr) 140px 100px" }}
                         >
                           <div className="num text-right font-medium">{u.buildingNumber}</div>
                           <div className="num text-right font-bold">{u.unitNumber}</div>
@@ -1230,6 +1231,7 @@ const Dashboard = () => {
                           </div>
                           <div className="num text-right">{u.area} م²</div>
                           <div className="truncate text-right" title={u.activity ?? ""}>{u.activity ?? "—"}</div>
+                          <div className="truncate text-right font-medium" title={u.tenant ?? ""}>{u.tenant || "—"}</div>
                           <div className="num text-right font-semibold">{fmt(u.price)} ر.س</div>
                           <div className="text-right">
                             <span className={cn(
@@ -1243,6 +1245,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       ))}
+
                       {pagedUnits.length === 0 && (
                         <div className="px-4 py-10 text-center text-muted-foreground">لا توجد نتائج مطابقة</div>
                       )}
