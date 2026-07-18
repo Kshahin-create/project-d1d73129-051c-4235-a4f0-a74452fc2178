@@ -116,7 +116,7 @@ function sanitizeAIReply(s: string): string {
     .trim();
 }
 
-async function loadChatMemory(admin: any, chat_id: number, limit = 8): Promise<Array<{ role: string; content: string }>> {
+async function loadChatMemory(admin: any, chat_id: number, limit = 40): Promise<Array<{ role: string; content: string }>> {
   const { data } = await admin.from("telegram_chat_memory")
     .select("role,content,created_at").eq("chat_id", chat_id)
     .order("created_at", { ascending: false }).limit(limit);
@@ -124,11 +124,11 @@ async function loadChatMemory(admin: any, chat_id: number, limit = 8): Promise<A
 }
 async function saveChatMemory(admin: any, chat_id: number, role: string, content: string) {
   try {
-    await admin.from("telegram_chat_memory").insert({ chat_id, role, content: String(content || "").slice(0, 4000) });
-    // Trim: keep latest 16 rows per chat
+    await admin.from("telegram_chat_memory").insert({ chat_id, role, content: String(content || "").slice(0, 6000) });
+    // Trim: keep latest 200 rows per chat (long-term conversation memory)
     const { data } = await admin.from("telegram_chat_memory")
       .select("id,created_at").eq("chat_id", chat_id)
-      .order("created_at", { ascending: false }).range(16, 200);
+      .order("created_at", { ascending: false }).range(200, 3000);
     const ids = (data || []).map((r: any) => r.id);
     if (ids.length) await admin.from("telegram_chat_memory").delete().in("id", ids);
   } catch {}
