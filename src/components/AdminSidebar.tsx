@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Home,
@@ -9,6 +9,7 @@ import {
   LogIn,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Menu,
   X,
   UserCircle2,
@@ -24,41 +25,88 @@ import {
   MessageCircle,
   FileSpreadsheet,
   Database,
+  Compass,
+  Briefcase,
+  Settings2,
+  Terminal,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-type LinkItem = {
+type ExtLink = {
   to: string;
   label: string;
   Icon: typeof Home;
   adminOnly?: boolean;
   controlOnly?: boolean;
+  authOnly?: boolean;
+  managerOnly?: boolean;
+  tenantOnly?: boolean;
 };
 
-type ExtLink = LinkItem & { authOnly?: boolean; managerOnly?: boolean; tenantOnly?: boolean };
+type LinkGroup = {
+  id: string;
+  label: string;
+  Icon: typeof Home;
+  links: ExtLink[];
+};
 
-const allLinks: ExtLink[] = [
-  { to: "/", label: "الرئيسية", Icon: Home },
-  { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
-  { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
-  { to: "/tenant", label: "وحداتي وفواتيري", Icon: ClipboardList, tenantOnly: true },
-  { to: "/control", label: "لوحة الكنترول", Icon: Wrench, controlOnly: true },
-  { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, managerOnly: true },
-  { to: "/admin/stats", label: "إحصائيات السيرفر", Icon: Activity, adminOnly: true },
-  { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
-  { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
-  { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
-  { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
-  { to: "/admin/interested", label: "المهتمون", Icon: MessageCircle, managerOnly: true },
-  { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
-  { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
-  { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
-  { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
-  { to: "/api-docs", label: "توثيق الـ API", Icon: Code2, adminOnly: true },
-  { to: "/mcp", label: "خادم MCP", Icon: Bot, adminOnly: true },
-  { to: "/admin/backup", label: "نسخ احتياطي", Icon: Database, adminOnly: true },
+const groups: LinkGroup[] = [
+  {
+    id: "general",
+    label: "عام",
+    Icon: Compass,
+    links: [
+      { to: "/", label: "الرئيسية", Icon: Home },
+      { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
+      { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
+      { to: "/tenant", label: "وحداتي وفواتيري", Icon: ClipboardList, tenantOnly: true },
+    ],
+  },
+  {
+    id: "dashboards",
+    label: "اللوحات",
+    Icon: LayoutDashboard,
+    links: [
+      { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, managerOnly: true },
+      { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
+      { to: "/control", label: "لوحة الكنترول", Icon: Wrench, controlOnly: true },
+    ],
+  },
+  {
+    id: "operations",
+    label: "العمليات",
+    Icon: Briefcase,
+    links: [
+      { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
+      { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
+      { to: "/admin/interested", label: "المهتمون", Icon: MessageCircle, managerOnly: true },
+      { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
+    ],
+  },
+  {
+    id: "system",
+    label: "النظام",
+    Icon: Settings2,
+    links: [
+      { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
+      { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
+      { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
+      { to: "/admin/backup", label: "نسخ احتياطي", Icon: Database, adminOnly: true },
+    ],
+  },
+  {
+    id: "developers",
+    label: "المطورون",
+    Icon: Terminal,
+    links: [
+      { to: "/admin/stats", label: "إحصائيات السيرفر", Icon: Activity, adminOnly: true },
+      { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
+      { to: "/api-docs", label: "توثيق الـ API", Icon: Code2, adminOnly: true },
+      { to: "/mcp", label: "خادم MCP", Icon: Bot, adminOnly: true },
+    ],
+  },
 ];
 
 export const AdminSidebar = () => {
