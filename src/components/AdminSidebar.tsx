@@ -144,8 +144,6 @@ export const AdminSidebar = () => {
     setMobileOpen(false);
   }, [pathname]);
 
-  if (loading) return null;
-
   const visibleGroups = useMemo(() => {
     const canSee = (l: ExtLink) =>
       (!l.adminOnly || isAdmin) &&
@@ -169,6 +167,8 @@ export const AdminSidebar = () => {
       return next;
     });
   }, [pathname, visibleGroups]);
+
+  if (loading) return null;
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
