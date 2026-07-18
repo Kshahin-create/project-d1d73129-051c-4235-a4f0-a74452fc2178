@@ -965,7 +965,7 @@ const Dashboard = () => {
                 <h3 className="mb-3 font-display text-sm font-bold">توزيع الوحدات حسب المساحة (م²)</h3>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={analytics.areaBands}>
+                    <AreaChart data={analytics.areaBands} margin={CHART_MARGIN}>
                       <defs>
                         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={C.primary} stopOpacity={0.6} />
@@ -974,7 +974,7 @@ const Dashboard = () => {
                       </defs>
                       <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                       <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
-                      <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                      <YAxis {...Y_AXIS_NUMERIC} />
                       <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                       <Area type="monotone" dataKey="وحدات" stroke={C.primary} fill="url(#areaGrad)" strokeWidth={2.5} />
                     </AreaChart>
