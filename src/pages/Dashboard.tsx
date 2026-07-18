@@ -885,10 +885,10 @@ const Dashboard = () => {
                 <h3 className="mb-3 font-display text-sm font-bold">توزيع الوحدات في المباني</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={analytics.buildingChart}>
+                    <BarChart data={analytics.buildingChart} margin={CHART_MARGIN}>
                       <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                       <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
-                      <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                      <YAxis {...Y_AXIS_NUMERIC} />
                       <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                       <Legend wrapperStyle={legendStyle} iconType="circle" />
                       <Bar dataKey="مؤجر" stackId="a" fill={STATUS_COLORS.rented} />
