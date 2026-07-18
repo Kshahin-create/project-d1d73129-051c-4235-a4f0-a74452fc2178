@@ -169,6 +169,8 @@ export const AdminSidebar = () => {
       return next;
     });
   }, [pathname, visibleGroups]);
+
+  const handleSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
