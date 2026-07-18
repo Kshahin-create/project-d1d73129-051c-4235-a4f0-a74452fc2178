@@ -744,11 +744,11 @@ const Dashboard = () => {
               <h3 className="mb-3 font-display text-sm font-bold">الإيراد المحقق مقابل الإمكانية حسب النشاط (ر.س / سنة)</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={analytics.activityData}>
+                  <ComposedChart data={analytics.activityData} margin={{ top: 10, right: 60, bottom: 8, left: 24 }}>
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                     <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
-                    <YAxis yAxisId="left" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                    <YAxis yAxisId="left" width={72} tickMargin={10} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)} ألف`} />
+                    <YAxis yAxisId="right" orientation="right" width={52} tickMargin={10} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
                     <Tooltip content={<ChartTooltip formatter={(v: any, n: any) => n === "إشغال" ? `${v}%` : fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar yAxisId="left" dataKey="إيراد" fill={C.green} radius={[6, 6, 0, 0]} />
