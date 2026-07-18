@@ -881,9 +881,222 @@ const AI_TOOLS = [
   {
     type: "function",
     function: {
-      name: "mark_invoice_paid",
-      description: "وضع فاتورة كمدفوعة بالكامل.",
+      name: "list_recent_activity",
+      description: "آخر أحداث النظام من audit_log (حجوزات، فواتير، وحدات، مستأجرين). للاطلاع على 'إيه اللي حصل حديثاً'.",
+      parameters: {
+        type: "object",
+        properties: {
+          table: { type: "string", description: "فلترة بجدول معين (bookings/invoices/units/tenants/tenant_accounts/interested_customers)" },
+          action: { type: "string", enum: ["INSERT","UPDATE","DELETE"] },
+          hours: { type: "number", description: "خلال آخر كام ساعة (افتراضي 24)" },
+          limit: { type: "number", default: 20 },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_interested_customers",
+      description: "قائمة العملاء المهتمين مع فلاتر (الحالة، تاريخ).",
+      parameters: {
+        type: "object",
+        properties: {
+          status: { type: "string", enum: ["new","contacted","converted","lost"] },
+          query: { type: "string" },
+          limit: { type: "number", default: 15 },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_tenant_full",
+      description: "بيانات مستأجر كاملة: الوحدات المرتبطة، الفواتير، آخر المدفوعات.",
+      parameters: { type: "object", properties: { tenant_account_id: { type: "string" } }, required: ["tenant_account_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_building_report",
+      description: "تقرير كامل عن مبنى: إحصائيات الإشغال، الإيرادات، الوحدات، المستأجرين.",
+      parameters: { type: "object", properties: { building_number: { type: "number" } }, required: ["building_number"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_bookings_for_tenant",
+      description: "كل حجوزات عميل معين (بالاسم أو الجوال).",
+      parameters: { type: "object", properties: { query: { type: "string" }, limit: { type: "number", default: 20 } }, required: ["query"], additionalProperties: false },
+    },
+  },
+
+  // ==== WRITE TOOLS ====
+  {
+    type: "function",
+    function: {
+      name: "create_booking",
+      description: "إنشاء حجز جديد من بيانات عميل + وحدات (بأرقام). ينشئ الحجز ويحجز الوحدات.",
+      parameters: {
+        type: "object",
+        properties: {
+          customer_full_name: { type: "string" },
+          customer_phone: { type: "string" },
+          customer_email: { type: "string" },
+          business_name: { type: "string" },
+          cr_number: { type: "string" },
+          notes: { type: "string" },
+          building_number: { type: "number" },
+          unit_numbers: { type: "array", items: { type: "number" } },
+          payment_plan: { type: "string", enum: ["full","70","50"], default: "full" },
+        },
+        required: ["customer_full_name","customer_phone","building_number","unit_numbers"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_booking",
+      description: "تعديل بيانات حجز (اسم، جوال، بريد، نشاط، ملاحظات، خطة السداد، تاريخ الانتهاء).",
+      parameters: {
+        type: "object",
+        properties: {
+          booking_id: { type: "string" },
+          customer_full_name: { type: "string" },
+          customer_phone: { type: "string" },
+          customer_email: { type: "string" },
+          business_name: { type: "string" },
+          notes: { type: "string" },
+          payment_plan: { type: "string", enum: ["full","70","50"] },
+          expires_at: { type: "string", description: "ISO datetime" },
+        },
+        required: ["booking_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_tenant_account",
+      description: "تعديل بيانات حساب مستأجر (اسم، جوال، بريد، اسم النشاط، ملاحظات، السجل التجاري).",
+      parameters: {
+        type: "object",
+        properties: {
+          tenant_account_id: { type: "string" },
+          full_name: { type: "string" },
+          phone: { type: "string" },
+          email: { type: "string" },
+          business_name: { type: "string" },
+          cr_number: { type: "string" },
+          notes: { type: "string" },
+        },
+        required: ["tenant_account_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_unit",
+      description: "تعديل بيانات وحدة (السعر، النشاط، المساحة، النوع).",
+      parameters: {
+        type: "object",
+        properties: {
+          unit_id: { type: "string" },
+          price: { type: "number" },
+          activity: { type: "string" },
+          area: { type: "number" },
+          unit_type: { type: "string" },
+        },
+        required: ["unit_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_invoice",
+      description: "إنشاء فاتورة يدوية على وحدة/حساب مستأجر بمبلغ محدد وتاريخ استحقاق.",
+      parameters: {
+        type: "object",
+        properties: {
+          tenant_account_id: { type: "string" },
+          unit_id: { type: "string" },
+          amount: { type: "number" },
+          due_date: { type: "string", description: "YYYY-MM-DD" },
+          notes: { type: "string" },
+          period_start: { type: "string" },
+          period_end: { type: "string" },
+        },
+        required: ["tenant_account_id","amount"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_invoice",
+      description: "حذف فاتورة (احرص أنها غير مدفوعة أو تأكد أولاً).",
       parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_invoice_reminder",
+      description: "إرسال تذكير بفاتورة إلى المستأجر عبر تيليجرام (لو مربوط).",
+      parameters: { type: "object", properties: { invoice_id: { type: "string" }, message: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_interested_status",
+      description: "تحديث حالة عميل مهتم (contacted/converted/lost) وإضافة ملاحظة.",
+      parameters: {
+        type: "object",
+        properties: {
+          interested_id: { type: "string" },
+          status: { type: "string", enum: ["new","contacted","converted","lost"] },
+          notes: { type: "string" },
+        },
+        required: ["interested_id","status"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_interested_customer",
+      description: "تسجيل عميل مهتم جديد.",
+      parameters: {
+        type: "object",
+        properties: {
+          full_name: { type: "string" },
+          phone: { type: "string" },
+          requested_activity: { type: "string" },
+          business_name: { type: "string" },
+          requested_building: { type: "string" },
+          requested_unit: { type: "string" },
+          notes: { type: "string" },
+        },
+        required: ["full_name","phone"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_booking",
+      description: "حذف حجز نهائياً من قاعدة البيانات (خطر — استخدم cancel_booking بدلاً منها إن أمكن).",
+      parameters: { type: "object", properties: { booking_id: { type: "string" }, confirm: { type: "boolean" } }, required: ["booking_id","confirm"], additionalProperties: false },
     },
   },
 ];
