@@ -99,6 +99,21 @@ const ChartTooltip = ({ active, payload, label, formatter, unit }: any) => {
 
 const legendStyle = { fontSize: 12, color: "hsl(var(--foreground))", paddingTop: 8 } as const;
 
+const YTickOffset = ({ x, y, payload }: any) => (
+  <text
+    x={x}
+    y={y}
+    dy={-6}
+    dx={-4}
+    textAnchor="end"
+    fill={AXIS_TICK.fill}
+    fontSize={AXIS_TICK.fontSize}
+    fontWeight={AXIS_TICK.fontWeight}
+  >
+    {`${fmt(Number(payload.value) / 1000)} ألف`}
+  </text>
+);
+
 type FilterKey = "all" | "rented" | "reserved" | "available";
 
 const Dashboard = () => {
