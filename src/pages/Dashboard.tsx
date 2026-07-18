@@ -766,7 +766,7 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[...analytics.buildingChart].reverse()}
-                    margin={{ top: 34, right: 16, bottom: 8, left: 28 }}
+                    margin={{ top: 34, right: 16, bottom: 8, left: 56 }}
                     barCategoryGap="18%"
                   >
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
@@ -779,7 +779,7 @@ const Dashboard = () => {
                       tickFormatter={(value) => value.replace("م", "م ")}
                     />
                     <YAxis
-                      width={70}
+                      width={96}
                       tick={<YTickOffset />}
                       tickLine={false}
                       axisLine={false}
