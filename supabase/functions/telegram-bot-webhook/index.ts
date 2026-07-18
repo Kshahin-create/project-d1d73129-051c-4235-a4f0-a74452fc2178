@@ -797,6 +797,14 @@ const AI_TOOLS = [
   {
     type: "function",
     function: {
+      name: "lookup_unit",
+      description: "أعطيني بيانات وحدة كاملة (الحالة، السعر، النشاط) مع المستأجر الحالي إن وُجد وأي حجز نشط (pending/confirmed) عليها. استخدمها لما المستخدم يسأل «الوحدة X في مبنى Y محجوزة لمين؟» أو «حالتها إيه؟».",
+      parameters: { type: "object", properties: { building_number: { type: "number" }, unit_number: { type: "string" } }, required: ["building_number","unit_number"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "confirm_booking",
       description: "تأكيد حجز معلّق وتحويل وحداته إلى مؤجّرة. يحتاج صلاحية admin/manager.",
       parameters: { type: "object", properties: { booking_id: { type: "string" }, paid_amount: { type: "number", default: 0 } }, required: ["booking_id"], additionalProperties: false },
@@ -972,6 +980,29 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     if (!q) return { error: "query required" };
     return { results: await searchBookingsSmart(admin, q, 8) };
   }
+  if (name === "lookup_unit") {
+    const { data: unit } = await admin.from("units")
+      .select("id,building_number,unit_number,status,price,area,activity,unit_type")
+      .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number))
+      .maybeSingle();
+    if (!unit) return { error: "الوحدة غير موجودة" };
+    const [tenantsRes, bookingUnitsRes] = await Promise.all([
+      admin.from("tenants").select("tenant_name,phone,business_name,activity_type,start_date,end_date,cr_number,booking_id").eq("unit_id", unit.id),
+      admin.from("booking_units").select("booking_id,bookings(id,customer_full_name,customer_phone,business_name,status,total_price,paid_amount,expires_at,created_at,payment_plan)").eq("unit_id", unit.id),
+    ]);
+    const activeBookings = (bookingUnitsRes.data || [])
+      .map((r: any) => r.bookings)
+      .filter((b: any) => b && (b.status === "pending" || b.status === "confirmed"))
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return {
+      unit,
+      current_tenants: tenantsRes.data || [],
+      active_bookings: activeBookings,
+      summary: activeBookings.length
+        ? `الوحدة ${unit.unit_number} في مبنى ${unit.building_number} حالتها ${unit.status} — محجوزة لصالح: ${activeBookings[0].customer_full_name} (${activeBookings[0].customer_phone || "بدون جوال"}) — حالة الحجز: ${activeBookings[0].status}`
+        : (tenantsRes.data?.length ? `الوحدة مؤجّرة لـ ${tenantsRes.data[0].tenant_name}` : "الوحدة غير محجوزة حالياً"),
+    };
+  }
   if (name === "resolve_unit_id") {
     const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
       .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number)).limit(5);
@@ -1073,7 +1104,7 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
 }
 
 const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
-const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id"]);
+const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
   const args: Record<string, unknown> = {};
@@ -1154,7 +1185,8 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     "4) لو السياق فيه units بحالاتها وأسعارها، استخدمها على طول من غير ما تنادي resolve_unit_id.",
     "5) قبل أي أداة كتابة: تأكد من الـ UUID. لو ناقص استخدم resolve_booking_id/resolve_unit_id.",
     "6) لو الطلب «مطالبة/مطلبة مالية» + فيه عميل + مبنى + وحدات، نادِ generate_financial_claim فوراً ومرّر query = نص رسالة المستخدم كاملاً + tenant_account_id لو متوفر.",
-    "7) نفّذ مباشرة لو الطلب واضح. اسأل سؤال واحد فقط لو فيه غموض حقيقي.",
+    "7) لما المستخدم يسأل «الوحدة X في مبنى Y محجوزة لمين/حالتها إيه/مؤجّرة لمين» نادِ lookup_unit فوراً — ما ترجعش «مش محجوزة» من نفسك.",
+    "8) نفّذ مباشرة لو الطلب واضح. اسأل سؤال واحد فقط لو فيه غموض حقيقي.",
     "",
     "🚫 ممنوعات صارمة:",
     "- ممنوع تطبع كود مثل print(...) أو default_api.xxx(...) للمستخدم نهائياً.",
