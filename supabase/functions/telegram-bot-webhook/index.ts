@@ -1232,14 +1232,14 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
   if (name === "list_recent_activity") {
     const hrs = Math.max(1, Math.min(720, Number(args.hours) || 24));
     const since = new Date(Date.now() - hrs * 3600 * 1000).toISOString();
-    let q = admin.from("audit_log").select("id,table_name,action,entity_id,actor_email,changed_fields,created_at,after_data,before_data")
+    let q = admin.from("audit_log").select("id,entity_table,action,entity_id,actor_email,changed_fields,created_at,after_data,before_data")
       .gte("created_at", since).order("created_at", { ascending: false }).limit(lim(args.limit, 20));
-    if (args.table) q = q.eq("table_name", args.table);
+    if (args.table) q = q.eq("entity_table", args.table);
     if (args.action) q = q.eq("action", args.action);
     const { data, error } = await q;
     if (error) return { error: error.message };
     return { results: (data || []).map((r: any) => ({
-      table: r.table_name, action: r.action, entity_id: r.entity_id,
+      table: r.entity_table, action: r.action, entity_id: r.entity_id,
       actor: r.actor_email, changed: r.changed_fields, at: r.created_at,
       snapshot: r.after_data || r.before_data,
     })) };
