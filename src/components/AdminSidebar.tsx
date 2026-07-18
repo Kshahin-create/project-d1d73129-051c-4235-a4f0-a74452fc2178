@@ -237,25 +237,89 @@ export const AdminSidebar = () => {
           </button>
         </div>
 
-        {/* Links */}
+        {/* Groups */}
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-          {links.map(({ to, label, Icon }) => {
-            const active = pathname === to;
+          {visibleGroups.map((group) => {
+            const GroupIcon = group.Icon;
+            const isOpen = openGroups[group.id] ?? false;
+            const hasActive = group.links.some((l) => l.to === pathname);
+
+            if (collapsed) {
+              // In collapsed mode, just render icons flat
+              return (
+                <div key={group.id} className="flex flex-col gap-1">
+                  {group.links.map(({ to, label, Icon }) => {
+                    const active = pathname === to;
+                    return (
+                      <NavLink
+                        key={to}
+                        to={to}
+                        title={`${group.label} — ${label}`}
+                        className={cn(
+                          "flex items-center justify-center rounded-xl px-2 py-2 text-sm font-medium transition",
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : "text-foreground hover:bg-secondary",
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                      </NavLink>
+                    );
+                  })}
+                  <div className="my-1 border-t border-border/60" />
+                </div>
+              );
+            }
+
             return (
-              <NavLink
-                key={to}
-                to={to}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-secondary",
+              <div key={group.id} className="flex flex-col">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenGroups((p) => ({ ...p, [group.id]: !isOpen }))
+                  }
+                  className={cn(
+                    "flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition",
+                    hasActive
+                      ? "text-primary"
+                      : "text-muted-foreground hover:bg-secondary",
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    <GroupIcon className="h-4 w-4 shrink-0" />
+                    <span>{group.label}</span>
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 shrink-0 transition-transform",
+                      isOpen ? "rotate-180" : "",
+                    )}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="mt-1 flex flex-col gap-0.5 pr-3">
+                    {group.links.map(({ to, label, Icon }) => {
+                      const active = pathname === to;
+                      return (
+                        <NavLink
+                          key={to}
+                          to={to}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                            active
+                              ? "bg-primary text-primary-foreground"
+                              : "text-foreground hover:bg-secondary",
+                          )}
+                          title={label}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
                 )}
-                title={label}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span className="truncate">{label}</span>}
-              </NavLink>
+              </div>
             );
           })}
         </nav>
