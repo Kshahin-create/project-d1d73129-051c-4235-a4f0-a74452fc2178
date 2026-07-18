@@ -1580,7 +1580,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
   await typing(token, chat_id);
   const writeAllowed = await canWrite(admin, userId);
   const preCtx = await buildPreContext(admin, question);
-  const history = await loadChatMemory(admin, chat_id, 8);
+  const history = await loadChatMemory(admin, chat_id, 40);
 
   const systemPrompt = [
     "أنت مساعد ذكي خبير لإدارة \"المدينة الصناعية شمال مكة\" (تأجير وحدات).",
