@@ -1224,10 +1224,72 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
         : (tenantsRes.data?.length ? `الوحدة مؤجّرة لـ ${tenantsRes.data[0].tenant_name}` : "الوحدة غير محجوزة حالياً"),
     };
   }
-  if (name === "resolve_unit_id") {
-    const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
-      .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number)).limit(5);
+  if (name === "list_recent_activity") {
+    const hrs = Math.max(1, Math.min(720, Number(args.hours) || 24));
+    const since = new Date(Date.now() - hrs * 3600 * 1000).toISOString();
+    let q = admin.from("audit_log").select("id,table_name,action,entity_id,actor_email,changed_fields,created_at,after_data,before_data")
+      .gte("created_at", since).order("created_at", { ascending: false }).limit(lim(args.limit, 20));
+    if (args.table) q = q.eq("table_name", args.table);
+    if (args.action) q = q.eq("action", args.action);
+    const { data, error } = await q;
+    if (error) return { error: error.message };
+    return { results: (data || []).map((r: any) => ({
+      table: r.table_name, action: r.action, entity_id: r.entity_id,
+      actor: r.actor_email, changed: r.changed_fields, at: r.created_at,
+      snapshot: r.after_data || r.before_data,
+    })) };
+  }
+  if (name === "list_interested_customers") {
+    let q = admin.from("interested_customers")
+      .select("id,full_name,phone,requested_activity,business_name,requested_building,requested_unit,status,notes,created_at")
+      .order("created_at", { ascending: false }).limit(lim(args.limit, 15));
+    if (args.status) q = q.eq("status", args.status);
+    if (args.query) q = q.or(`full_name.ilike.%${args.query}%,phone.ilike.%${args.query}%,business_name.ilike.%${args.query}%`);
+    const { data } = await q;
     return { results: data || [] };
+  }
+  if (name === "get_tenant_full") {
+    const [acc, links, invs, pays] = await Promise.all([
+      admin.from("tenant_accounts").select("*").eq("id", args.tenant_account_id).maybeSingle(),
+      admin.from("tenant_account_units").select("unit_id,units(id,building_number,unit_number,status,price,activity)").eq("tenant_account_id", args.tenant_account_id),
+      admin.from("invoices").select("id,invoice_number,amount,paid_amount,paid,due_date,paid_at,notes,created_at").eq("tenant_account_id", args.tenant_account_id).order("created_at",{ascending:false}).limit(30),
+      admin.from("invoices").select("paid_amount,paid_at").eq("tenant_account_id", args.tenant_account_id).eq("paid", true).not("paid_at","is",null).order("paid_at",{ascending:false}).limit(10),
+    ]);
+    if (!acc.data) return { error: "tenant not found" };
+    const totalDue = (invs.data || []).reduce((s: number, i: any) => s + (Number(i.amount) - Number(i.paid_amount || 0)), 0);
+    return {
+      account: acc.data,
+      units: (links.data || []).map((l: any) => l.units).filter(Boolean),
+      invoices: invs.data || [],
+      recent_payments: pays.data || [],
+      outstanding_balance: totalDue,
+    };
+  }
+  if (name === "get_building_report") {
+    const bn = Number(args.building_number);
+    const [units, ts] = await Promise.all([
+      admin.from("units").select("id,unit_number,status,price,area,activity,unit_type").eq("building_number", bn).order("unit_number"),
+      admin.from("tenants").select("tenant_name,phone,unit_id,start_date,end_date,business_name,activity_type").in("unit_id",
+        (await admin.from("units").select("id").eq("building_number", bn)).data?.map((u: any) => u.id) || []
+      ),
+    ]);
+    const U = units.data || [];
+    const rented = U.filter((u: any) => u.status === "rented").length;
+    const reserved = U.filter((u: any) => u.status === "reserved").length;
+    const available = U.filter((u: any) => u.status === "available").length;
+    const revenue = U.filter((u: any) => u.status === "rented").reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+    const expected = U.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
+    return {
+      building_number: bn,
+      total_units: U.length, rented, reserved, available,
+      occupancy_rate: U.length ? Math.round(rented/U.length*100) : 0,
+      current_annual_revenue: revenue,
+      expected_annual_revenue: expected,
+      units: U, tenants: ts.data || [],
+    };
+  }
+  if (name === "list_bookings_for_tenant") {
+    return { results: await searchBookingsSmart(admin, String(args.query), lim(args.limit, 20)) };
   }
   return { error: "unknown tool" };
 }
