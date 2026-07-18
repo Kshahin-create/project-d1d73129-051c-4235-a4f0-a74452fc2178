@@ -1224,6 +1224,11 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
         : (tenantsRes.data?.length ? `الوحدة مؤجّرة لـ ${tenantsRes.data[0].tenant_name}` : "الوحدة غير محجوزة حالياً"),
     };
   }
+  if (name === "resolve_unit_id") {
+    const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
+      .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number)).limit(5);
+    return { results: data || [] };
+  }
   if (name === "list_recent_activity") {
     const hrs = Math.max(1, Math.min(720, Number(args.hours) || 24));
     const since = new Date(Date.now() - hrs * 3600 * 1000).toISOString();
