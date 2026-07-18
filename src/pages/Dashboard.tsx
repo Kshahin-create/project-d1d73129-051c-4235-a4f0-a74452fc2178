@@ -688,12 +688,12 @@ const Dashboard = () => {
               <h3 className="mb-3 font-display text-sm font-bold">حالة الوحدات حسب النشاط</h3>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics.activityData} margin={{ top: 10, right: 60, bottom: 10, left: 10 }}>
+                  <BarChart data={analytics.activityData} margin={{ top: 10, right: 24, bottom: 8, left: 24 }}>
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                     <XAxis dataKey="name" tick={AXIS_TICK} tickLine={false} axisLine={AXIS_LINE} tickMargin={8} />
                     <YAxis
                       orientation="right"
-                      width={50}
+                      width={56}
                       tick={AXIS_TICK}
                       tickLine={false}
                       axisLine={false}
