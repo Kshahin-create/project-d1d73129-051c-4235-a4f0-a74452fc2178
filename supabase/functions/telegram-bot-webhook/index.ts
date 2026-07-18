@@ -881,6 +881,14 @@ const AI_TOOLS = [
   {
     type: "function",
     function: {
+      name: "mark_invoice_paid",
+      description: "وضع فاتورة كمدفوعة بالكامل.",
+      parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "list_recent_activity",
       description: "آخر أحداث النظام من audit_log (حجوزات، فواتير، وحدات، مستأجرين). للاطلاع على 'إيه اللي حصل حديثاً'.",
       parameters: {
