@@ -103,8 +103,8 @@ const YTickOffset = ({ x, y, payload }: any) => (
   <text
     x={x}
     y={y}
-    dy={-6}
-    dx={-10}
+    dy={4}
+    dx={-14}
     textAnchor="end"
     fill={AXIS_TICK.fill}
     fontSize={AXIS_TICK.fontSize}
@@ -116,14 +116,15 @@ const YTickOffset = ({ x, y, payload }: any) => (
 
 // Shared numeric Y-axis props to guarantee full number visibility across all charts
 const Y_AXIS_NUMERIC = {
-  width: 72,
+  width: 88,
   tick: AXIS_TICK,
   tickLine: false,
   axisLine: false,
-  tickMargin: 10,
+  tickMargin: 14,
 } as const;
 
-const CHART_MARGIN = { top: 10, right: 12, bottom: 8, left: 24 } as const;
+const CHART_MARGIN = { top: 12, right: 16, bottom: 8, left: 36 } as const;
+
 
 type FilterKey = "all" | "rented" | "reserved" | "available";
 
@@ -688,17 +689,18 @@ const Dashboard = () => {
               <h3 className="mb-3 font-display text-sm font-bold">حالة الوحدات حسب النشاط</h3>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics.activityData} margin={{ top: 10, right: 24, bottom: 8, left: 24 }}>
+                  <BarChart data={analytics.activityData} margin={{ top: 12, right: 24, bottom: 8, left: 36 }}>
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                     <XAxis dataKey="name" tick={AXIS_TICK} tickLine={false} axisLine={AXIS_LINE} tickMargin={8} />
                     <YAxis
                       orientation="right"
-                      width={56}
+                      width={72}
                       tick={AXIS_TICK}
                       tickLine={false}
                       axisLine={false}
-                      tickMargin={12}
+                      tickMargin={14}
                     />
+
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar dataKey="مؤجر" stackId="a" fill={STATUS_COLORS.rented} radius={[0, 0, 0, 0]} />
@@ -744,11 +746,12 @@ const Dashboard = () => {
               <h3 className="mb-3 font-display text-sm font-bold">الإيراد المحقق مقابل الإمكانية حسب النشاط (ر.س / سنة)</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={analytics.activityData} margin={{ top: 10, right: 60, bottom: 8, left: 24 }}>
+                  <ComposedChart data={analytics.activityData} margin={{ top: 12, right: 72, bottom: 8, left: 36 }}>
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
                     <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
-                    <YAxis yAxisId="left" width={72} tickMargin={10} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)} ألف`} />
-                    <YAxis yAxisId="right" orientation="right" width={52} tickMargin={10} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                    <YAxis yAxisId="left" width={88} tickMargin={14} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)} ألف`} />
+                    <YAxis yAxisId="right" orientation="right" width={64} tickMargin={12} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+
                     <Tooltip content={<ChartTooltip formatter={(v: any, n: any) => n === "إشغال" ? `${v}%` : fmt(Number(v))} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar yAxisId="left" dataKey="إيراد" fill={C.green} radius={[6, 6, 0, 0]} />
@@ -766,7 +769,7 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[...analytics.buildingChart].reverse()}
-                    margin={{ top: 34, right: 16, bottom: 8, left: 56 }}
+                    margin={{ top: 36, right: 16, bottom: 8, left: 72 }}
                     barCategoryGap="18%"
                   >
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
@@ -779,11 +782,13 @@ const Dashboard = () => {
                       tickFormatter={(value) => value.replace("م", "م ")}
                     />
                     <YAxis
-                      width={96}
+                      width={112}
+                      tickMargin={14}
                       tick={<YTickOffset />}
                       tickLine={false}
                       axisLine={false}
                     />
+
                     <Tooltip content={<ChartTooltip formatter={(v: any) => `${fmt(Number(v))} ر.س`} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar dataKey="إيراد" stackId="r" fill={C.green} maxBarSize={64} />
