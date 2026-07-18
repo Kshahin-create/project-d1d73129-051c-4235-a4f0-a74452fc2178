@@ -662,10 +662,17 @@ const Dashboard = () => {
               <h3 className="mb-3 font-display text-sm font-bold">حالة الوحدات حسب النشاط</h3>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics.activityData}>
+                  <BarChart data={analytics.activityData} margin={{ top: 10, right: 60, bottom: 10, left: 10 }}>
                     <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} vertical={false} />
-                    <XAxis dataKey="name" tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
-                    <YAxis tick={AXIS_TICK} tickLine={AXIS_LINE} axisLine={AXIS_LINE} />
+                    <XAxis dataKey="name" tick={AXIS_TICK} tickLine={false} axisLine={AXIS_LINE} tickMargin={8} />
+                    <YAxis
+                      orientation="right"
+                      width={50}
+                      tick={AXIS_TICK}
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={12}
+                    />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                     <Legend wrapperStyle={legendStyle} iconType="circle" />
                     <Bar dataKey="مؤجر" stackId="a" fill={STATUS_COLORS.rented} radius={[0, 0, 0, 0]} />
