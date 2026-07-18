@@ -797,6 +797,14 @@ const AI_TOOLS = [
   {
     type: "function",
     function: {
+      name: "lookup_unit",
+      description: "أعطيني بيانات وحدة كاملة (الحالة، السعر، النشاط) مع المستأجر الحالي إن وُجد وأي حجز نشط (pending/confirmed) عليها. استخدمها لما المستخدم يسأل «الوحدة X في مبنى Y محجوزة لمين؟» أو «حالتها إيه؟».",
+      parameters: { type: "object", properties: { building_number: { type: "number" }, unit_number: { type: "string" } }, required: ["building_number","unit_number"], additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "confirm_booking",
       description: "تأكيد حجز معلّق وتحويل وحداته إلى مؤجّرة. يحتاج صلاحية admin/manager.",
       parameters: { type: "object", properties: { booking_id: { type: "string" }, paid_amount: { type: "number", default: 0 } }, required: ["booking_id"], additionalProperties: false },
