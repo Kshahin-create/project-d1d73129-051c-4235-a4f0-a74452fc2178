@@ -1616,7 +1616,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
   ];
 
   let finalReply = "";
-  for (let round = 0; round < 8; round++) {
+  for (let round = 0; round < 16; round++) {
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
