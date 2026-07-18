@@ -104,7 +104,7 @@ const YTickOffset = ({ x, y, payload }: any) => (
     x={x}
     y={y}
     dy={-6}
-    dx={-4}
+    dx={-10}
     textAnchor="end"
     fill={AXIS_TICK.fill}
     fontSize={AXIS_TICK.fontSize}
@@ -113,6 +113,17 @@ const YTickOffset = ({ x, y, payload }: any) => (
     {`${fmt(Number(payload.value) / 1000)} ألف`}
   </text>
 );
+
+// Shared numeric Y-axis props to guarantee full number visibility across all charts
+const Y_AXIS_NUMERIC = {
+  width: 72,
+  tick: AXIS_TICK,
+  tickLine: false,
+  axisLine: false,
+  tickMargin: 10,
+} as const;
+
+const CHART_MARGIN = { top: 10, right: 12, bottom: 8, left: 24 } as const;
 
 type FilterKey = "all" | "rented" | "reserved" | "available";
 
