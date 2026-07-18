@@ -807,7 +807,7 @@ const Dashboard = () => {
                     <BarChart
                       data={analytics.buildingChart}
                       layout="vertical"
-                      margin={{ top: 44, right: 76, bottom: 16, left: 16 }}
+                      margin={{ top: 44, right: 90, bottom: 16, left: 40 }}
                       barCategoryGap="28%"
                     >
                       <CartesianGrid strokeDasharray="4 4" stroke={GRID_STROKE} strokeOpacity={0.45} horizontal={false} />
@@ -835,7 +835,7 @@ const Dashboard = () => {
                       />
                       <Tooltip content={<ChartTooltip formatter={(v: any) => `${v}%`} />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.35 }} />
                       <Bar dataKey="إشغال" fill={C.primary} radius={[6, 0, 0, 6]} maxBarSize={24}>
-                        <LabelList dataKey="إشغال" position="insideLeft" offset={8} formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fontWeight: 700, fill: "#fff" }} />
+                        <LabelList dataKey="إشغال" position="right" offset={10} formatter={(v: any) => `${v}%`} style={{ fontSize: 11, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
