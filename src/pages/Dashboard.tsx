@@ -1198,7 +1198,7 @@ const Dashboard = () => {
               {/* Table */}
               <div className="overflow-hidden rounded-lg border" dir="rtl">
                 <div className="overflow-x-auto">
-                  <div className="min-w-[820px]">
+                  <div className="min-w-[980px]">
                     <div
                       className="grid items-center gap-3 bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground"
                       style={{ gridTemplateColumns: "70px 100px 90px 100px minmax(160px,1fr) minmax(160px,1fr) 140px 100px" }}
