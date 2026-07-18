@@ -1388,11 +1388,131 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     }).eq("id", args.invoice_id);
     return { ok: true, invoice_id: args.invoice_id };
   }
+  if (name === "create_booking") {
+    const bn = Number(args.building_number);
+    const nums = (args.unit_numbers || []).map(Number).filter(Boolean);
+    if (!bn || !nums.length) return { error: "building_number + unit_numbers required" };
+    const { data: units } = await admin.from("units").select("id,unit_number,status").eq("building_number", bn).in("unit_number", nums);
+    if (!units || units.length !== nums.length) {
+      const found = new Set((units || []).map((u: any) => Number(u.unit_number)));
+      return { error: `وحدات غير موجودة: ${nums.filter((n: number) => !found.has(n)).join("، ")}` };
+    }
+    const unavail = units.filter((u: any) => u.status !== "available").map((u: any) => u.unit_number);
+    if (unavail.length) return { error: `وحدات غير متاحة: ${unavail.join("، ")}` };
+    const { data: id, error } = await admin.rpc("create_booking", {
+      _customer_full_name: args.customer_full_name,
+      _customer_phone: args.customer_phone,
+      _customer_email: args.customer_email || null,
+      _business_name: args.business_name || null,
+      _notes: args.notes || null,
+      _unit_ids: units.map((u: any) => u.id),
+      _cr_number: args.cr_number || null,
+      _payment_plan: args.payment_plan || "full",
+    });
+    if (error) return { error: error.message };
+    return { ok: true, booking_id: id, building_number: bn, unit_numbers: nums };
+  }
+  if (name === "update_booking") {
+    const upd: any = { updated_at: new Date().toISOString() };
+    for (const k of ["customer_full_name","customer_phone","customer_email","business_name","notes","payment_plan","expires_at"]) {
+      if (args[k] !== undefined) upd[k] = args[k];
+    }
+    if (Object.keys(upd).length === 1) return { error: "no fields to update" };
+    const { error } = await admin.from("bookings").update(upd).eq("id", args.booking_id);
+    if (error) return { error: error.message };
+    return { ok: true, booking_id: args.booking_id, updated_fields: Object.keys(upd).filter((k) => k !== "updated_at") };
+  }
+  if (name === "update_tenant_account") {
+    const upd: any = { updated_at: new Date().toISOString() };
+    for (const k of ["full_name","phone","email","business_name","cr_number","notes"]) {
+      if (args[k] !== undefined) upd[k] = args[k];
+    }
+    if (Object.keys(upd).length === 1) return { error: "no fields to update" };
+    const { error } = await admin.from("tenant_accounts").update(upd).eq("id", args.tenant_account_id);
+    if (error) return { error: error.message };
+    return { ok: true, tenant_account_id: args.tenant_account_id, updated_fields: Object.keys(upd).filter((k) => k !== "updated_at") };
+  }
+  if (name === "update_unit") {
+    const upd: any = { updated_at: new Date().toISOString() };
+    for (const k of ["price","activity","area","unit_type"]) {
+      if (args[k] !== undefined) upd[k] = args[k];
+    }
+    if (Object.keys(upd).length === 1) return { error: "no fields to update" };
+    const { error } = await admin.from("units").update(upd).eq("id", args.unit_id);
+    if (error) return { error: error.message };
+    return { ok: true, unit_id: args.unit_id, updated_fields: Object.keys(upd).filter((k) => k !== "updated_at") };
+  }
+  if (name === "create_invoice") {
+    const amt = Number(args.amount);
+    if (!amt || amt <= 0) return { error: "amount must be > 0" };
+    const { data, error } = await admin.from("invoices").insert({
+      tenant_account_id: args.tenant_account_id,
+      unit_id: args.unit_id || null,
+      amount: amt,
+      due_date: args.due_date || null,
+      notes: args.notes || null,
+      period_start: args.period_start || null,
+      period_end: args.period_end || null,
+      paid: false, paid_amount: 0,
+      created_by: userId,
+    }).select("id,invoice_number").single();
+    if (error) return { error: error.message };
+    return { ok: true, invoice_id: data.id, invoice_number: data.invoice_number, amount: amt };
+  }
+  if (name === "delete_invoice") {
+    const { error } = await admin.from("invoices").delete().eq("id", args.invoice_id);
+    if (error) return { error: error.message };
+    return { ok: true, deleted: args.invoice_id };
+  }
+  if (name === "send_invoice_reminder") {
+    const supaUrl = Deno.env.get("SUPABASE_URL")!;
+    const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const r = await fetch(`${supaUrl}/functions/v1/send-invoice-telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc },
+      body: JSON.stringify({ invoice_id: args.invoice_id, message: args.message || null }),
+    });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) return { error: out.error || `HTTP ${r.status}` };
+    return { ok: true, ...out };
+  }
+  if (name === "update_interested_status") {
+    const upd: any = { status: args.status, updated_at: new Date().toISOString() };
+    if (args.notes) upd.notes = args.notes;
+    const { error } = await admin.from("interested_customers").update(upd).eq("id", args.interested_id);
+    if (error) return { error: error.message };
+    return { ok: true, id: args.interested_id, status: args.status };
+  }
+  if (name === "create_interested_customer") {
+    const { data, error } = await admin.from("interested_customers").insert({
+      full_name: args.full_name,
+      phone: args.phone,
+      requested_activity: args.requested_activity || null,
+      business_name: args.business_name || null,
+      requested_building: args.requested_building || null,
+      requested_unit: args.requested_unit || null,
+      notes: args.notes || null,
+      source: "telegram_ai",
+      status: "new",
+      created_by: userId,
+    }).select("id").single();
+    if (error) return { error: error.message };
+    return { ok: true, id: data.id };
+  }
+  if (name === "delete_booking") {
+    if (!args.confirm) return { error: "confirm=true required — استخدم cancel_booking بدلاً منها إن أمكن" };
+    const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", args.booking_id);
+    const ids = (bus || []).map((x: any) => x.unit_id);
+    if (ids.length) await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).in("id", ids).eq("status", "reserved");
+    const { error } = await admin.from("bookings").delete().eq("id", args.booking_id);
+    if (error) return { error: error.message };
+    return { ok: true, deleted: args.booking_id };
+  }
   return { error: "unknown write tool" };
 }
 
-const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid"]);
-const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit"]);
+const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid","create_booking","update_booking","update_tenant_account","update_unit","create_invoice","delete_invoice","send_invoice_reminder","update_interested_status","create_interested_customer","delete_booking"]);
+const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit","list_recent_activity","list_interested_customers","get_tenant_full","get_building_report","list_bookings_for_tenant"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
   const args: Record<string, unknown> = {};
