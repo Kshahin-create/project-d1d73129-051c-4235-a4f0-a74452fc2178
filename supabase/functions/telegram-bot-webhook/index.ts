@@ -980,6 +980,29 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     if (!q) return { error: "query required" };
     return { results: await searchBookingsSmart(admin, q, 8) };
   }
+  if (name === "lookup_unit") {
+    const { data: unit } = await admin.from("units")
+      .select("id,building_number,unit_number,status,price,area,activity,unit_type")
+      .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number))
+      .maybeSingle();
+    if (!unit) return { error: "الوحدة غير موجودة" };
+    const [tenantsRes, bookingUnitsRes] = await Promise.all([
+      admin.from("tenants").select("tenant_name,phone,business_name,activity_type,start_date,end_date,cr_number,booking_id").eq("unit_id", unit.id),
+      admin.from("booking_units").select("booking_id,bookings(id,customer_full_name,customer_phone,business_name,status,total_price,paid_amount,expires_at,created_at,payment_plan)").eq("unit_id", unit.id),
+    ]);
+    const activeBookings = (bookingUnitsRes.data || [])
+      .map((r: any) => r.bookings)
+      .filter((b: any) => b && (b.status === "pending" || b.status === "confirmed"))
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return {
+      unit,
+      current_tenants: tenantsRes.data || [],
+      active_bookings: activeBookings,
+      summary: activeBookings.length
+        ? `الوحدة ${unit.unit_number} في مبنى ${unit.building_number} حالتها ${unit.status} — محجوزة لصالح: ${activeBookings[0].customer_full_name} (${activeBookings[0].customer_phone || "بدون جوال"}) — حالة الحجز: ${activeBookings[0].status}`
+        : (tenantsRes.data?.length ? `الوحدة مؤجّرة لـ ${tenantsRes.data[0].tenant_name}` : "الوحدة غير محجوزة حالياً"),
+    };
+  }
   if (name === "resolve_unit_id") {
     const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
       .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number)).limit(5);
