@@ -146,16 +146,29 @@ export const AdminSidebar = () => {
 
   if (loading) return null;
 
-  const links = allLinks.filter(
-    (l) =>
+  const visibleGroups = useMemo(() => {
+    const canSee = (l: ExtLink) =>
       (!l.adminOnly || isAdmin) &&
       (!l.controlOnly || isControl || isAdmin || isManager) &&
       (!l.managerOnly || isManager || isAdmin) &&
       (!l.tenantOnly || isTenant) &&
-      (!l.authOnly || !!user),
-  );
+      (!l.authOnly || !!user);
+    return groups
+      .map((g) => ({ ...g, links: g.links.filter(canSee) }))
+      .filter((g) => g.links.length > 0);
+  }, [isAdmin, isControl, isManager, isTenant, user]);
 
-  const handleSignOut = async () => {
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    // auto-open the group that contains the active route
+    setOpenGroups((prev) => {
+      const next = { ...prev };
+      for (const g of visibleGroups) {
+        if (g.links.some((l) => l.to === pathname)) next[g.id] = true;
+      }
+      return next;
+    });
+  }, [pathname, visibleGroups]);
     await supabase.auth.signOut();
     window.location.href = "/";
   };
