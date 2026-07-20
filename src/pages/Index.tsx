@@ -207,7 +207,7 @@ const Index = () => {
             <img
               src={landSpaces}
               alt="مساحات مرنة بأرض المشروع — ورش سيارات ومحلات قطع غيار ومحطة فحص فني دوري"
-              className="w-full object-cover"
+              className="w-full h-auto object-contain bg-secondary"
               loading="lazy"
             />
           </motion.div>
