@@ -8,7 +8,7 @@ import { PROJECT, LOCATION } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.png";
 import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-city.png";
-import landSpacesAsset from "@/assets/land-spaces-new.png.asset.json";
+import landSpacesAsset from "@/assets/land-spaces.jpg.asset.json";
 const landSpaces = landSpacesAsset.url;
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 
