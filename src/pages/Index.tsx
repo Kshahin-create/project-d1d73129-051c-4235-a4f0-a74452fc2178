@@ -8,7 +8,8 @@ import { PROJECT, LOCATION } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.png";
 import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-city.png";
-import landSpaces from "@/assets/land-spaces.png";
+import landSpacesAsset from "@/assets/land-spaces-new.png.asset.json";
+const landSpaces = landSpacesAsset.url;
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 
 const Index = () => {
@@ -206,7 +207,7 @@ const Index = () => {
             <img
               src={landSpaces}
               alt="مساحات مرنة بأرض المشروع — ورش سيارات ومحلات قطع غيار ومحطة فحص فني دوري"
-              className="w-full object-cover"
+              className="w-full h-auto object-contain bg-secondary"
               loading="lazy"
             />
           </motion.div>
