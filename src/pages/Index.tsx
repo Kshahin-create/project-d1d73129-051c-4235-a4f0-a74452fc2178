@@ -8,8 +8,7 @@ import { PROJECT, LOCATION } from "@/lib/config";
 import masterPlan from "@/assets/master-plan.png";
 import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-city.png";
-import landSpacesAsset from "@/assets/land-spaces.jpg.asset.json";
-const landSpaces = landSpacesAsset.url;
+const landSpaces = "/land-spaces.jpg";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 
 const Index = () => {
