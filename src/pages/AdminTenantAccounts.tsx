@@ -356,18 +356,17 @@ export default function AdminTenantAccounts() {
             <div className="p-12 text-center text-muted-foreground">لا توجد حسابات</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-sm">
+              <table className="w-full min-w-[960px] text-sm">
                 <thead className="border-b border-border bg-secondary/50 text-xs">
                   <tr>
-                    <th className="p-3 text-right">الاسم</th>
-                    <th className="p-3 text-right">النشاط</th>
+                    <th className="p-3 text-right">اسم المستأجر أو المنشأة</th>
+                    <th className="p-3 text-right">العلامة التجارية</th>
                     <th className="p-3 text-right">الرقم الوطني الموحد</th>
+                    <th className="p-3 text-right">النشاط</th>
                     <th className="p-3 text-right">الجوال</th>
-                    <th className="p-3 text-right">وحدات</th>
-                    <th className="p-3 text-right">السعر السنوي</th>
-                    <th className="p-3 text-right">المدفوع</th>
-                    <th className="p-3 text-right">فواتير</th>
-                    <th className="p-3 text-right">دخول</th>
+                    <th className="p-3 text-right">البريد الإلكتروني</th>
+                    <th className="p-3 text-right">الوحدات</th>
+                    <th className="p-3 text-right">الملفات</th>
                     <th className="p-3 text-right"></th>
                   </tr>
                 </thead>
@@ -375,104 +374,29 @@ export default function AdminTenantAccounts() {
                   {filtered.map((r) => (
                     <tr key={r.id} className="border-b border-border last:border-0">
                       <td className="p-3 font-medium">{r.full_name}</td>
-                      <td className="p-3 text-muted-foreground">{r.activity_type || r.business_name || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{r.business_name || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.cr_number || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{r.activity_type || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.phone || "—"}</td>
+                      <td className="p-3 text-muted-foreground" dir="ltr">{r.email || "—"}</td>
                       <td className="p-3 font-bold">{r.units_count}</td>
-                      <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ر.س</td>
                       <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          {Number(r.paid_amount) > 0 ? (
-                            <span className="font-bold text-emerald-600">{Number(r.paid_amount).toLocaleString()} ر.س</span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                          <button
-                            onClick={async () => {
-                              const remaining = Math.max(0, Number(r.total_price || 0) - Number(r.paid_amount || 0));
-                              const input = window.prompt(
-                                `أدخل مبلغ الدفعة من ${r.full_name}\nالمتبقي: ${remaining.toLocaleString()} ر.س`,
-                                "",
-                              );
-                              if (input === null) return;
-                              const amount = Number(input);
-                              if (!Number.isFinite(amount) || amount <= 0) return toast.error("أدخل مبلغًا صحيحًا");
-                              const method = window.prompt("طريقة الدفع: cash / transfer / card / check", "cash") || "cash";
-                              const notes = window.prompt("ملاحظات (اختياري)", "") || null;
-                              const { data: invId, error } = await supabase.rpc("record_payment" as any, {
-                                _tenant_account_id: r.id, _amount: amount, _method: method, _notes: notes,
-                              });
-                              if (error) return toast.error(error.message);
-                              toast.success("تم تسجيل الدفعة وإصدار الفاتورة");
-                              try { await supabase.functions.invoke("send-invoice-telegram", { body: { invoice_id: invId } }); } catch {}
-                              load();
-                            }}
-                            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
-                          >
-                            <Plus className="h-3 w-3" />
-                            إضافة دفعة
-                          </button>
-                          <button
-                            onClick={async () => {
-                              const paid = Number(r.paid_amount || 0);
-                              if (paid <= 0) return toast.error("لا يوجد مدفوع لخصمه");
-                              const input = window.prompt(
-                                `أدخل المبلغ المراد خصمه من ${r.full_name}\nالمدفوع حاليًا: ${paid.toLocaleString()} ر.س`,
-                                "",
-                              );
-                              if (input === null) return;
-                              const amount = Number(input);
-                              if (!Number.isFinite(amount) || amount <= 0) return toast.error("أدخل مبلغًا صحيحًا");
-                              const notes = window.prompt("سبب الخصم (اختياري)", "تصحيح مبلغ زائد") || null;
-                              if (!window.confirm(`تأكيد خصم ${amount.toLocaleString()} ر.س من المدفوع؟`)) return;
-                              const { error } = await supabase.rpc("adjust_payment" as any, {
-                                _tenant_account_id: r.id, _amount: -Math.abs(amount), _notes: notes,
-                              });
-                              if (error) return toast.error(error.message);
-                              toast.success("تم خصم المبلغ");
-                              load();
-                            }}
-                            className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
-                          >
-                            <Minus className="h-3 w-3" />
-                            خصم
-                          </button>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        {r.unpaid_invoices > 0 ? (
-                          <span className="text-destructive">
-                            {r.unpaid_invoices} ({Number(r.unpaid_total).toLocaleString()})
-                          </span>
-                        ) : (
-                          <span className="text-emerald-600">—</span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {r.has_login ? (
-                          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-700">مفعل</span>
-                        ) : (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">بدون</span>
-                        )}
+                        <button
+                          onClick={() => setFilesFor({ id: r.id, name: r.full_name })}
+                          className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/20"
+                        >
+                          <Paperclip className="h-3 w-3" />
+                          {r.files_count ?? 0}
+                        </button>
                       </td>
                       <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setFilesFor({ id: r.id, name: r.full_name })}
-                            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-secondary"
-                            title="الملفات"
-                          >
-                            <Paperclip className="h-3 w-3" />
-                            ملفات
-                          </button>
-                          <button
-                            onClick={() => setDetailId(r.id)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                          >
-                            <Pencil className="h-3 w-3" />
-                            إدارة
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setDetailId(r.id)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          إدارة
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -481,6 +405,7 @@ export default function AdminTenantAccounts() {
             </div>
           )}
         </div>
+
       </main>
 
       {showCreate && (
