@@ -1241,6 +1241,66 @@ export type Database = {
           },
         ]
       }
+      unit_collections: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          proof_mime: string | null
+          proof_name: string | null
+          proof_path: string | null
+          proof_size: number | null
+          tenant_account_id: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          proof_mime?: string | null
+          proof_name?: string | null
+          proof_path?: string | null
+          proof_size?: number | null
+          tenant_account_id: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          proof_mime?: string | null
+          proof_name?: string | null
+          proof_path?: string | null
+          proof_size?: number | null
+          tenant_account_id?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_collections_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_collections_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_files: {
         Row: {
           created_at: string
@@ -1374,6 +1434,7 @@ export type Database = {
         Returns: {
           activity_type: string
           business_name: string
+          collected_total: number
           cr_number: string
           created_at: string
           email: string

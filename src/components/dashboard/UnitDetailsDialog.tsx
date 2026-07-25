@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitFilesPanel } from "./UnitFilesPanel";
+import { UnitCollectionsPanel } from "./UnitCollectionsPanel";
 
 
 
@@ -100,20 +101,21 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [tenants, setTenants] = useState<TenantRow[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [collectedTotal, setCollectedTotal] = useState(0);
+  const [collectionsCount, setCollectionsCount] = useState(0);
   const [tenantAccountId, setTenantAccountId] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     if (!open || !unit?.id || !hasAdminAccess) {
-      setBookings([]); setTenants([]); setInvoices([]); setTenantAccountId(null);
+      setBookings([]); setTenants([]); setCollectedTotal(0); setCollectionsCount(0); setTenantAccountId(null);
       return;
     }
     let cancel = false;
     (async () => {
       setLoading(true);
       try {
-        const [bRes, tRes, iRes, taRes] = await Promise.all([
+        const [bRes, tRes, cRes, taRes] = await Promise.all([
           supabase
             .from("booking_units")
             .select("booking_id, bookings:booking_id (id, offer_number, status, customer_full_name, customer_phone, customer_email, business_name, cr_number, total_price, paid_amount, units_count, payment_plan, created_at, expires_at, notes)")
@@ -124,10 +126,10 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
             .eq("unit_id", unit.id)
             .order("start_date", { ascending: false }),
           supabase
-            .from("invoices")
-            .select("id, invoice_number, amount, paid_amount, paid, paid_at, payment_method, customer_name, notes, created_at")
+            .from("unit_collections" as any)
+            .select("amount")
             .eq("unit_id", unit.id)
-            .order("created_at", { ascending: false }),
+            .eq("is_archived", false),
           supabase
             .from("tenant_account_units")
             .select("tenant_account_id")
@@ -142,7 +144,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
           .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setBookings(bRows);
         setTenants((tRes.data ?? []) as any);
-        setInvoices((iRes.data ?? []) as any);
+        const cRows = (cRes.data ?? []) as any[];
+        setCollectionsCount(cRows.length);
+        setCollectedTotal(cRows.reduce((s, r) => s + Number(r.amount || 0), 0));
         setTenantAccountId((taRes.data as any)?.tenant_account_id ?? null);
       } finally {
         if (!cancel) setLoading(false);
@@ -162,8 +166,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
   const pendingCount = bookings.filter((b) => b.status === "pending").length;
   const cancelledCount = bookings.filter((b) => b.status === "cancelled").length;
   const expiredCount = bookings.filter((b) => b.status === "expired").length;
-  const totalPaid = bookings.reduce((s, b) => s + Number(b.paid_amount || 0), 0)
-                  + invoices.filter((i) => i.paid).reduce((s, i) => s + Number(i.paid_amount || 0), 0);
+  const totalPaid = collectedTotal;
+  const remainingUnit = Number(unit.price || 0) - totalPaid;
+  const collectionRate = unit.price > 0 ? Math.min(100, Math.round((totalPaid / unit.price) * 100)) : 0;
   const currentTenant = tenants[0] ?? null;
 
   return (
@@ -219,7 +224,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                     <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
                     <TabsTrigger value="bookings">الحجوزات ({totalBookings})</TabsTrigger>
                     <TabsTrigger value="tenant">المستأجر ({tenants.length})</TabsTrigger>
-                    <TabsTrigger value="invoices">الفواتير ({invoices.length})</TabsTrigger>
+                    <TabsTrigger value="collections">التحصيلات ({collectionsCount})</TabsTrigger>
                     <TabsTrigger value="files">الملفات</TabsTrigger>
                   </TabsList>
 
@@ -232,12 +237,36 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                         ["النوع", unit.unitType ?? "—"],
                         ["المساحة", `${unit.area} م²`],
                         ["النشاط", unit.activity ?? "—"],
-                        ["الإيجار السنوي", `${fmt(unit.price)} ر.س`],
                         ["الحالة الحالية", uMeta.label],
                         ["إجمالي مرات الحجز", String(totalBookings)],
-                        ["إجمالي المحصّل", `${fmt(totalPaid)} ر.س`],
                       ]}
                     />
+                    {/* Financial breakdown */}
+                    <div className="rounded-xl border bg-gradient-to-b from-primary/5 to-card p-4">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-bold text-primary">
+                        <Wallet className="h-4 w-4" /> ملخص التحصيل
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                        <MiniKV label="قيمة الوحدة" value={`${fmt(unit.price)} ر.س`} />
+                        <MiniKV label="إجمالي المدفوع" value={`${fmt(totalPaid)} ر.س`} tone="emerald" />
+                        <MiniKV label="المتبقي" value={`${fmt(remainingUnit)} ر.س`} tone={remainingUnit < 0 ? "amber" : "rose"} />
+                        <MiniKV label="عدد الدفعات" value={String(collectionsCount)} />
+                      </div>
+                      <div className="mt-3">
+                        <div className="mb-1 flex items-center justify-between text-[11px]">
+                          <span className="text-muted-foreground">نسبة التحصيل</span>
+                          <span className="num font-bold">{collectionRate}%</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                          <div className={cn("h-full rounded-full", remainingUnit < 0 ? "bg-amber-500" : "bg-primary")} style={{ width: `${collectionRate}%` }} />
+                        </div>
+                        {remainingUnit < 0 && (
+                          <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-800">
+                            تم تحصيل مبلغ زائد عن قيمة الوحدة.
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     {currentTenant && (
                       <div className="rounded-xl border bg-gradient-to-b from-primary/5 to-card p-4">
                         <div className="mb-2 flex items-center gap-2 text-xs font-bold text-primary">
@@ -332,50 +361,16 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                     )}
                   </TabsContent>
 
-                  {/* INVOICES */}
-                  <TabsContent value="invoices" className="mt-4 space-y-3">
-                    {canEdit && (
-                      <NewInvoiceForUnit
-                        unitId={unit.id!}
-                        tenantAccountId={tenantAccountId}
-                        tenantName={currentTenant?.tenant_name ?? null}
-                        onCreated={() => setReloadTick((t) => t + 1)}
-                      />
-                    )}
-
-                    {loading ? (
-                      <SkeletonList />
-                    ) : invoices.length === 0 ? (
-                      <EmptyState text="لا توجد فواتير مرتبطة بهذه الوحدة" />
-                    ) : (
-                      invoices.map((i) => (
-                        <div key={i.id} className="rounded-xl border bg-card p-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-primary" />
-                              <span className="num font-mono text-xs font-bold">{i.invoice_number}</span>
-                              <Badge className={cn("border text-[10px]",
-                                i.paid
-                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                  : "bg-amber-100 text-amber-800 border-amber-300"
-                              )}>
-                                {i.paid ? "مدفوعة" : "غير مدفوعة"}
-                              </Badge>
-                            </div>
-                            <div className="text-right">
-                              <div className="num text-sm font-bold">{fmt(i.amount)} ر.س</div>
-                              {i.paid && <div className="text-[10px] text-emerald-700">دفعت {fmtDate(i.paid_at)}</div>}
-                            </div>
-                          </div>
-                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-                            {i.customer_name && <span>{i.customer_name}</span>}
-                            {i.payment_method && <span>طريقة: {i.payment_method}</span>}
-                            <span>تاريخ: {fmtDate(i.created_at)}</span>
-                          </div>
-                          {i.notes && <div className="mt-1 text-[10px] text-muted-foreground">{i.notes}</div>}
-                        </div>
-                      ))
-                    )}
+                  {/* COLLECTIONS */}
+                  <TabsContent value="collections" className="mt-4">
+                    <UnitCollectionsPanel
+                      unitId={unit.id!}
+                      unitPrice={Number(unit.price || 0)}
+                      tenantAccountId={tenantAccountId}
+                      tenantName={currentTenant?.tenant_name ?? null}
+                      canEdit={canEdit}
+                      onChanged={() => setReloadTick((t) => t + 1)}
+                    />
                   </TabsContent>
 
                   {/* FILES */}
@@ -431,6 +426,16 @@ function SkeletonList() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+    </div>
+  );
+}
+
+function MiniKV({ label, value, tone }: { label: string; value: string; tone?: "emerald" | "rose" | "amber" }) {
+  const cls = tone === "emerald" ? "text-emerald-700" : tone === "rose" ? "text-rose-700" : tone === "amber" ? "text-amber-700" : "text-foreground";
+  return (
+    <div className="rounded-lg border bg-card p-2">
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className={cn("num text-sm font-extrabold", cls)}>{value}</div>
     </div>
   );
 }

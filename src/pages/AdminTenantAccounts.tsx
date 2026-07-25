@@ -84,6 +84,7 @@ type TenantRow = {
   has_login: boolean;
   cr_number: string | null;
   files_count: number;
+  collected_total: number;
 };
 
 
@@ -343,6 +344,7 @@ export default function AdminTenantAccounts() {
                 "البريد الإلكتروني": r.email || "",
                 "عدد الوحدات": r.units_count ?? 0,
                 "عدد الملفات": r.files_count ?? 0,
+                "إجمالي المبلغ المدفوع": r.collected_total ?? 0,
               }));
 
               if (!data.length) { toast.error("لا يوجد بيانات للتصدير"); return; }
@@ -373,6 +375,7 @@ export default function AdminTenantAccounts() {
                     <th className="p-3 text-right">البريد الإلكتروني</th>
                     <th className="p-3 text-right">الوحدات</th>
                     <th className="p-3 text-right">الملفات</th>
+                    <th className="p-3 text-right">إجمالي المدفوع</th>
                     <th className="p-3 text-right"></th>
                   </tr>
                 </thead>
@@ -395,6 +398,7 @@ export default function AdminTenantAccounts() {
                           {r.files_count ?? 0}
                         </button>
                       </td>
+                      <td className="p-3 num font-bold text-emerald-700">{Number(r.collected_total ?? 0).toLocaleString()} ر.س</td>
                       <td className="p-3 text-right">
                         <button
                           onClick={() => setDetailId(r.id)}
