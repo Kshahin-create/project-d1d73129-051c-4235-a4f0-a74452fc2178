@@ -325,20 +325,16 @@ export default function AdminTenantAccounts() {
           <button
             onClick={() => {
               const data = filtered.map((r) => ({
-                "الاسم": r.full_name,
-                "النشاط": r.activity_type || r.business_name || "",
-                "الاسم التجاري": r.business_name || "",
+                "اسم المستأجر أو المنشأة": r.full_name,
+                "العلامة التجارية": r.business_name || "",
                 "الرقم الوطني الموحد": r.cr_number || "",
+                "النشاط": r.activity_type || "",
                 "الجوال": r.phone || "",
-                "الإيميل": r.email || "",
-                "وحدات": r.units_count ?? 0,
-                "السعر السنوي (ر.س)": Number(r.total_price || 0),
-                "المدفوع (ر.س)": Number(r.paid_amount || 0),
-                "المتبقي (ر.س)": Math.max(0, Number(r.total_price || 0) - Number(r.paid_amount || 0)),
-                "فواتير غير مدفوعة": r.unpaid_invoices ?? 0,
-                "إجمالي غير المدفوع (ر.س)": Number(r.unpaid_total || 0),
-                "دخول مفعل": r.has_login ? "نعم" : "لا",
+                "البريد الإلكتروني": r.email || "",
+                "عدد الوحدات": r.units_count ?? 0,
+                "عدد الملفات": r.files_count ?? 0,
               }));
+
               if (!data.length) { toast.error("لا يوجد بيانات للتصدير"); return; }
               exportRowsToExcel(data, "tenant-accounts", "المستأجرون");
               toast.success("تم التصدير");
