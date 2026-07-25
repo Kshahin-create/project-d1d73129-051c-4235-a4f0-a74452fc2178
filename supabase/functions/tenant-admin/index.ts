@@ -66,36 +66,62 @@ Deno.serve(async (req) => {
         password,
         business_name,
         cr_number,
+        activity_type,
         notes,
         unit_ids,
       } = body;
-      if (!full_name || !email || !password) {
-        return json({ error: "full_name, email, password مطلوبة" }, 400);
+      if (!full_name || !String(full_name).trim()) {
+        return json({ error: "الاسم مطلوب" }, 400);
       }
-      // Create auth user
-      const { data: created, error: cErr } = await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        phone: phone || undefined,
-        user_metadata: { display_name: full_name, is_tenant: true },
-      });
-      if (cErr || !created.user) return json({ error: cErr?.message || "فشل إنشاء الحساب" }, 400);
+      if (!cr_number || !String(cr_number).trim()) {
+        return json({ error: "الرقم الوطني الموحد أو رقم الهوية مطلوب" }, 400);
+      }
+      if (!activity_type || !String(activity_type).trim()) {
+        return json({ error: "النشاط مطلوب" }, 400);
+      }
+      if (!phone || !String(phone).trim()) {
+        return json({ error: "رقم الجوال مطلوب" }, 400);
+      }
 
-      const newUserId = created.user.id;
-      // Replace default 'user' role with 'tenant'
-      await admin.from("user_roles").delete().eq("user_id", newUserId);
-      await admin.from("user_roles").insert({ user_id: newUserId, role: "tenant" });
+      // Enforce CR uniqueness at application layer
+      const { data: dup } = await admin
+        .from("tenant_accounts")
+        .select("id, full_name")
+        .eq("cr_number", String(cr_number).trim())
+        .maybeSingle();
+      if (dup) {
+        return json({
+          error: "يوجد مستأجر مسجل بنفس الرقم الوطني الموحد",
+          duplicate: dup,
+        }, 409);
+      }
+
+      let newUserId: string | null = null;
+      // Only create an auth user if both email and password were provided
+      if (email && password) {
+        const { data: created, error: cErr } = await admin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          phone: phone || undefined,
+          user_metadata: { display_name: full_name, is_tenant: true },
+        });
+        if (cErr || !created.user) return json({ error: cErr?.message || "فشل إنشاء حساب الدخول" }, 400);
+        newUserId = created.user.id;
+        await admin.from("user_roles").delete().eq("user_id", newUserId);
+        await admin.from("user_roles").insert({ user_id: newUserId, role: "tenant" });
+      }
 
       const { data: ta, error: taErr } = await admin
         .from("tenant_accounts")
         .insert({
           user_id: newUserId,
-          full_name,
-          email,
+          full_name: String(full_name).trim(),
+          email: email || null,
           phone: phone || null,
           business_name: business_name || null,
-          cr_number: cr_number || null,
+          cr_number: String(cr_number).trim(),
+          activity_type: String(activity_type).trim(),
           notes: notes || null,
           created_by: userRes.user.id,
         })
@@ -111,6 +137,7 @@ Deno.serve(async (req) => {
 
       return json({ ok: true, tenant_account: ta });
     }
+
 
     if (action === "set_password") {
       const { tenant_account_id, password } = body;
