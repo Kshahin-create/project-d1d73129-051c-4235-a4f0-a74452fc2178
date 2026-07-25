@@ -398,6 +398,7 @@ export default function AdminTenantAccounts() {
                           {r.files_count ?? 0}
                         </button>
                       </td>
+                      <td className="p-3 num font-bold text-emerald-700">{Number(r.collected_total ?? 0).toLocaleString()} ر.س</td>
                       <td className="p-3 text-right">
                         <button
                           onClick={() => setDetailId(r.id)}
