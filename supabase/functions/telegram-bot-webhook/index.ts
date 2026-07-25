@@ -1107,6 +1107,38 @@ const AI_TOOLS = [
       parameters: { type: "object", properties: { booking_id: { type: "string" }, confirm: { type: "boolean" } }, required: ["booking_id","confirm"], additionalProperties: false },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "send_booking_pdfs",
+      description: "أرسل ملفَي PDF (عرض التأجير + المطالبة المالية) لحجز موجود إلى محادثة تيليجرام الحالية. استخدمها لما المستخدم يطلب «ابعت العرض/المطالبة/الـ PDF/الملفات» — ممنوع ترسل روابط بدل الملفات.",
+      parameters: {
+        type: "object",
+        properties: {
+          booking_id: { type: "string" },
+          which: { type: "string", enum: ["both","offer","claim"], default: "both" },
+        },
+        required: ["booking_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_booking_units",
+      description: "إلغاء وحدات محددة من حجز موجود (إلغاء جزئي) وإرجاعها متاحة، وتحديث إجمالي الحجز. لو الحجز بقى بدون وحدات يتم إلغاؤه كلياً. استخدمها لما المستخدم يقول «ألغي كذا وحدة من حجز فلان» أو «شيل الوحدات X من الحجز».",
+      parameters: {
+        type: "object",
+        properties: {
+          booking_id: { type: "string" },
+          unit_numbers: { type: "array", items: { type: "number" }, description: "أرقام الوحدات المراد إلغاؤها" },
+          building_number: { type: "number", description: "رقم المبنى (لو الوحدات في مبنى واحد)" },
+          unit_ids: { type: "array", items: { type: "string" }, description: "بديل: UUIDs مباشرة" },
+        },
+        required: ["booking_id"], additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // Check if linked user has admin/manager role for write operations
@@ -1508,10 +1540,72 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     if (error) return { error: error.message };
     return { ok: true, deleted: args.booking_id };
   }
+  if (name === "send_booking_pdfs") {
+    if (!args.booking_id) return { error: "booking_id required" };
+    if (!chat_id) return { error: "chat_id غير متاح — لا يمكن إرسال الملفات" };
+    const supaUrl = Deno.env.get("SUPABASE_URL")!;
+    const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const { data: b } = await admin.from("bookings").select("*").eq("id", args.booking_id).maybeSingle();
+    if (!b) return { error: "الحجز غير موجود" };
+    const { data: u } = await admin.from("booking_units").select("*").eq("booking_id", args.booking_id);
+    const units = (u || []).map((x: any) => ({
+      buildingNumber: x.building_number, unitNumber: x.unit_number, unitType: x.unit_type,
+      area: Number(x.area || 0), activity: x.activity, price: Number(x.price || 0),
+    }));
+    if (!units.length) return { error: "الحجز مافيهوش وحدات" };
+    const customer = {
+      fullName: b.customer_full_name, phone: b.customer_phone, email: b.customer_email,
+      business: b.business_name, notes: b.notes, crNumber: b.cr_number,
+    };
+    const payload = { booking_id: b.id, payment_plan: b.payment_plan || "full", target_chat_id: String(chat_id), customer, units };
+    const opts = { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${svc}`, "apikey": svc }, body: JSON.stringify(payload) };
+    const which = args.which || "both";
+    const sent: string[] = [];
+    const errors: string[] = [];
+    if (which === "both" || which === "offer") {
+      const r = await fetch(`${supaUrl}/functions/v1/send-offer-pdf`, opts);
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && (j.success !== false)) sent.push("offer"); else errors.push(`offer: ${j.error || `HTTP ${r.status}`}`);
+    }
+    if (which === "both" || which === "claim") {
+      const r = await fetch(`${supaUrl}/functions/v1/send-financial-claim-pdf`, opts);
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && (j.success !== false)) sent.push("claim"); else errors.push(`claim: ${j.error || `HTTP ${r.status}`}`);
+    }
+    return { ok: sent.length > 0, booking_id: b.id, sent, errors, note: "تم إرسال الملفات مباشرة إلى محادثة تيليجرام الحالية." };
+  }
+  if (name === "remove_booking_units") {
+    const bookingId = String(args.booking_id);
+    const { data: bus } = await admin.from("booking_units").select("*").eq("booking_id", bookingId);
+    if (!bus?.length) return { error: "الحجز مافيهوش وحدات" };
+    let targets: any[] = [];
+    if (Array.isArray(args.unit_ids) && args.unit_ids.length) {
+      targets = bus.filter((x: any) => args.unit_ids.includes(x.unit_id));
+    } else if (Array.isArray(args.unit_numbers) && args.unit_numbers.length) {
+      const nums = args.unit_numbers.map((n: any) => Number(n));
+      targets = bus.filter((x: any) => nums.includes(Number(x.unit_number)) && (!args.building_number || Number(x.building_number) === Number(args.building_number)));
+    } else {
+      return { error: "حدد unit_numbers أو unit_ids" };
+    }
+    if (!targets.length) return { error: "لم أجد الوحدات المطلوبة داخل هذا الحجز" };
+    const targetIds = targets.map((x: any) => x.unit_id);
+    const targetBuIds = targets.map((x: any) => x.id);
+    await admin.from("booking_units").delete().in("id", targetBuIds);
+    await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).in("id", targetIds).eq("status", "reserved");
+    const remaining = bus.filter((x: any) => !targetBuIds.includes(x.id));
+    if (!remaining.length) {
+      await admin.from("bookings").update({ status: "cancelled", total_price: 0, total_area: 0, units_count: 0, updated_at: new Date().toISOString() }).eq("id", bookingId);
+      return { ok: true, booking_id: bookingId, removed: targets.length, remaining: 0, booking_status: "cancelled" };
+    }
+    const total_price = remaining.reduce((s: number, x: any) => s + Number(x.price || 0), 0);
+    const total_area = remaining.reduce((s: number, x: any) => s + Number(x.area || 0), 0);
+    await admin.from("bookings").update({ total_price, total_area, units_count: remaining.length, updated_at: new Date().toISOString() }).eq("id", bookingId);
+    return { ok: true, booking_id: bookingId, removed: targets.length, remaining: remaining.length, new_total_price: total_price };
+  }
   return { error: "unknown write tool" };
 }
 
-const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid","create_booking","update_booking","update_tenant_account","update_unit","create_invoice","delete_invoice","send_invoice_reminder","update_interested_status","create_interested_customer","delete_booking"]);
+const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid","create_booking","update_booking","update_tenant_account","update_unit","create_invoice","delete_invoice","send_invoice_reminder","update_interested_status","create_interested_customer","delete_booking","send_booking_pdfs","remove_booking_units"]);
 const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit","list_recent_activity","list_interested_customers","get_tenant_full","get_building_report","list_bookings_for_tenant"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
@@ -1599,13 +1693,18 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     "",
     "🧰 أدواتك الكاملة (استخدمها بدل ما ترفض):",
     "- قراءة: get_overview / search_bookings / search_invoices / search_tenants / units_breakdown / revenue_report / lookup_unit / list_recent_activity / list_interested_customers / get_tenant_full / get_building_report / list_bookings_for_tenant",
-    "- كتابة: create_booking / update_booking / delete_booking / confirm_booking / cancel_booking / extend_booking_expiry / set_booking_paid_amount / update_tenant_account / update_unit / set_unit_status / create_invoice / delete_invoice / mark_invoice_paid / record_payment / send_invoice_reminder / generate_financial_claim / update_interested_status / create_interested_customer",
+    "- كتابة: create_booking / update_booking / delete_booking / confirm_booking / cancel_booking / remove_booking_units / extend_booking_expiry / set_booking_paid_amount / update_tenant_account / update_unit / set_unit_status / create_invoice / delete_invoice / mark_invoice_paid / record_payment / send_invoice_reminder / generate_financial_claim / send_booking_pdfs / update_interested_status / create_interested_customer",
+    "",
+    "📄 لإرسال ملفات PDF (عرض التأجير / المطالبة المالية) لحجز موجود: نادِ send_booking_pdfs بـ booking_id — هي بترسل الملفات مباشرة للشات. ممنوع منعاً باتاً ترسل روابط أو URLs للملفات نيابةً عنها.",
+    "✂️ لإلغاء جزء من حجز (مثلاً عميل حجز 6 وحدات وعاوز يلغي 4)، نادِ remove_booking_units مع unit_numbers + building_number — ماتستخدمش cancel_booking إلا لو المستخدم عاوز يلغي الحجز كله.",
     "",
     "🚫 ممنوعات صارمة:",
     "- ممنوع تطبع كود مثل print(...) أو default_api.xxx(...) للمستخدم نهائياً.",
     "- ممنوع تقول «لم أجد العميل» قبل ما تشوف tenant_matches و booking_matches في PRE_CONTEXT.",
     "- ممنوع تطلب من المستخدم UUID — لازم تستخرجه بنفسك عبر الأدوات.",
     "- ممنوع ترفض طلب إداري لو للمستخدم صلاحية الكتابة — نفّذه بأدواتك.",
+    "- ممنوع تختلق أو تبعت روابط لملفات PDF أو صفحات — استخدم send_booking_pdfs.",
+    "- ممنوع تقول «تم الإلغاء/التأكيد/التعديل» إلا لو الأداة رجعت ok:true فعلاً — لو رجعت error بلّغ المستخدم بالخطأ.",
     `- صلاحية الكتابة الحالية للمستخدم: ${writeAllowed ? "مفعّلة (نفّذ الطلبات الإدارية مباشرة)" : "غير مفعّلة (للقراءة فقط)"}.`,
     "",
     "📝 صياغة الرد:",
