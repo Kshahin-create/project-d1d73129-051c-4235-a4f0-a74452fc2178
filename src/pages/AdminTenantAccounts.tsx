@@ -617,12 +617,21 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
 
 
 // ============ Detail Modal ============
-function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => void }) {
-  const [tab, setTab] = useState<"profile" | "units" | "invoices" | "auth">("profile");
+function DetailModal({
+  tenantId,
+  onClose,
+  onOpenFiles,
+}: {
+  tenantId: string;
+  onClose: () => void;
+  onOpenFiles: (id: string, name: string) => void;
+}) {
+  const [tab, setTab] = useState<"profile" | "files" | "units" | "invoices" | "auth">("profile");
   const [account, setAccount] = useState<any>(null);
   const [linked, setLinked] = useState<LinkedUnit[]>([]);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [filesCount, setFilesCount] = useState<number>(0);
   const [magicLink, setMagicLink] = useState<string | null>(null);
 
   const load = async () => {
@@ -654,6 +663,13 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
       .eq("tenant_account_id", tenantId)
       .order("created_at", { ascending: false });
     setInvoices((inv as any) ?? []);
+
+    const { count } = await supabase
+      .from("tenant_account_files" as any)
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_account_id", tenantId)
+      .eq("is_archived", false);
+    setFilesCount(count ?? 0);
   };
 
   useEffect(() => {
@@ -664,10 +680,11 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
 
   return (
     <Modal title={account.full_name} onClose={onClose} wide>
-      <div className="mb-4 flex gap-1 border-b border-border">
+      <div className="mb-4 flex flex-wrap gap-1 border-b border-border">
         {[
           { id: "profile", label: "البيانات" },
-          { id: "units", label: "الوحدات" },
+          { id: "files", label: `الملفات العامة (${filesCount})` },
+          { id: "units", label: `الوحدات (${linked.length})` },
           { id: "invoices", label: "الفواتير" },
           { id: "auth", label: "الحساب والدخول" },
         ].map((t) => (
@@ -682,6 +699,20 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
       </div>
 
       {tab === "profile" && <ProfileTab account={account} onSaved={load} />}
+      {tab === "files" && (
+        <div className="space-y-3">
+          <div className="rounded-xl border border-dashed border-border bg-secondary/30 p-4 text-sm text-muted-foreground">
+            الملفات العامة للمستأجر — تدعم رفع أكثر من ملف بأسماء مخصصة، أرشفة، استعادة، تعديل الاسم، واستبدال الملف.
+          </div>
+          <button
+            onClick={() => onOpenFiles(tenantId, account.full_name)}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+          >
+            <Paperclip className="h-4 w-4" />
+            فتح مدير الملفات ({filesCount} نشط)
+          </button>
+        </div>
+      )}
       {tab === "units" && <UnitsTab tenantId={tenantId} linked={linked} allUnits={allUnits} onChanged={load} />}
       {tab === "invoices" && <InvoicesTab tenantId={tenantId} linked={linked} invoices={invoices} onChanged={load} />}
       {tab === "auth" && (
@@ -693,25 +724,32 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
 
 function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void }) {
   const [full_name, setFullName] = useState(account.full_name || "");
-  const [email, setEmail] = useState(account.email || "");
-  const [phone, setPhone] = useState(account.phone || "");
   const [business_name, setBusiness] = useState(account.business_name || "");
   const [cr_number, setCrNumber] = useState(account.cr_number || "");
-  const [notes, setNotes] = useState(account.notes || "");
+  const [activity_type, setActivity] = useState(account.activity_type || "");
+  const [phone, setPhone] = useState(account.phone || "");
+  const [email, setEmail] = useState(account.email || "");
   const [busy, setBusy] = useState(false);
 
+  const validEmail = (s: string) => !s || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+
   const save = async () => {
+    if (!full_name.trim()) return toast.error("اسم المستأجر أو المنشأة مطلوب");
+    if (!cr_number.trim()) return toast.error("الرقم الوطني الموحد أو رقم الهوية مطلوب");
+    if (!activity_type.trim()) return toast.error("النشاط مطلوب");
+    if (!phone || !isValidPhoneNumber(phone)) return toast.error("رقم الجوال غير صحيح");
+    if (!validEmail(email)) return toast.error("البريد الإلكتروني غير صحيح");
     setBusy(true);
     try {
       await callTenantAdmin({
         action: "update_profile",
         tenant_account_id: account.id,
-        full_name,
-        email,
+        full_name: full_name.trim(),
+        business_name: business_name.trim() || null,
+        cr_number: cr_number.trim(),
+        activity_type: activity_type.trim(),
         phone,
-        business_name,
-        cr_number,
-        notes,
+        email: email.trim() || null,
       });
       toast.success("تم الحفظ");
       onSaved();
@@ -724,20 +762,36 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
 
   return (
     <div className="space-y-3">
-      <Field label="الاسم"><input value={full_name} onChange={(e) => setFullName(e.target.value)} className={inp} /></Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="الإيميل"><input value={email} onChange={(e) => setEmail(e.target.value)} className={inp} dir="ltr" /></Field>
-        <Field label="الجوال"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} dir="ltr" /></Field>
-      </div>
-      <Field label="النشاط"><input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} /></Field>
-      <Field label="الرقم الوطني الموحد"><input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" /></Field>
-      <Field label="ملاحظات"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={3} /></Field>
+      <Field label="اسم المستأجر أو المنشأة *">
+        <input value={full_name} onChange={(e) => setFullName(e.target.value)} className={inp} />
+      </Field>
+      <Field label="اسم العلامة التجارية">
+        <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} placeholder="اختياري" />
+      </Field>
+      <Field label="الرقم الوطني الموحد أو رقم الهوية *">
+        <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
+      </Field>
+      <Field label="النشاط *">
+        <input value={activity_type} onChange={(e) => setActivity(e.target.value)} className={inp} list="tenant-activities-edit" />
+        <datalist id="tenant-activities-edit">
+          {["قطع غيار سيارات","صيانة سيارات","مطعم","مقهى","بقالة","صيدلية","محلات ملابس","أدوات كهربائية","سباكة","نجارة","حدادة"].map((a) => (
+            <option key={a} value={a} />
+          ))}
+        </datalist>
+      </Field>
+      <Field label="رقم الجوال *">
+        <PhoneField value={phone} onChange={setPhone} />
+      </Field>
+      <Field label="البريد الإلكتروني">
+        <input value={email} onChange={(e) => setEmail(e.target.value)} className={inp} dir="ltr" placeholder="name@example.com" />
+      </Field>
       <button onClick={save} disabled={busy} className="rounded-xl bg-primary px-4 py-2 font-bold text-primary-foreground disabled:opacity-50">
         {busy ? "..." : "حفظ"}
       </button>
     </div>
   );
 }
+
 
 function UnitsTab({ tenantId, linked, allUnits, onChanged }: { tenantId: string; linked: LinkedUnit[]; allUnits: Unit[]; onChanged: () => void }) {
   const [adding, setAdding] = useState<Set<string>>(new Set());
