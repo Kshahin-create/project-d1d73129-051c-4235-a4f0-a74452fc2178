@@ -112,8 +112,18 @@ function sanitizeAIReply(s: string): string {
     .replace(/`[^`\n]*`/g, "")
     .replace(/^\s*(print|console\.log|return)\s*\(.*$/gim, "")
     .replace(/default_api\.[a-zA-Z_]\w*\([^)]*\)/g, "")
+    // Strip markdown links [text](url) → text (prevents fake PDF/report URLs)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, "$1")
+    // Strip bare http(s) URLs
+    .replace(/https?:\/\/\S+/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+function replyHadPdfLinks(original: string): boolean {
+  const hasPdfIntent = /(PDF|عرض\s*الت[أا]جير|المطالبة\s*المالية|تحميل)/i.test(original);
+  const hadUrl = /https?:\/\//i.test(original) || /\]\(https?:/i.test(original);
+  return hasPdfIntent && hadUrl;
 }
 
 async function loadChatMemory(admin: any, chat_id: number, limit = 40): Promise<Array<{ role: string; content: string }>> {
