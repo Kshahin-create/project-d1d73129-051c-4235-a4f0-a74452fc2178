@@ -421,12 +421,14 @@ export default function AdminTenantAccounts() {
       {detailId && (
         <DetailModal
           tenantId={detailId}
+          onOpenFiles={(id, name) => setFilesFor({ id, name })}
           onClose={() => {
             setDetailId(null);
             load();
           }}
         />
       )}
+
 
       {filesFor && (
         <TenantFilesDialog
