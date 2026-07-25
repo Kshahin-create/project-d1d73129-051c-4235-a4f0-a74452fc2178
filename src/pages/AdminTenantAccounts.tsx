@@ -27,9 +27,13 @@ import {
   TrendingUp,
   Download,
   Paperclip,
+  Info,
 } from "lucide-react";
 import { exportRowsToExcel } from "@/lib/exportData";
 import { TenantFilesDialog } from "@/components/TenantFilesDialog";
+import { PhoneField } from "@/components/PhoneField";
+import { isValidPhoneNumber } from "libphonenumber-js";
+
 
 const TONE_CLS: Record<string, string> = {
   primary: "bg-primary/10 text-primary",
