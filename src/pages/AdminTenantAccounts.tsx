@@ -447,15 +447,16 @@ export default function AdminTenantAccounts() {
 // ============ Create Modal ============
 function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [full_name, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
   const [business_name, setBusiness] = useState("");
   const [cr_number, setCrNumber] = useState("");
-  const [notes, setNotes] = useState("");
+  const [activity_type, setActivity] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [units, setUnits] = useState<Unit[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [duplicate, setDuplicate] = useState<{ id: string; full_name: string } | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     supabase
@@ -466,20 +467,41 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
       .then(({ data }) => setUnits((data as any) ?? []));
   }, []);
 
+  // Debounced CR duplicate check
+  useEffect(() => {
+    const val = cr_number.trim();
+    if (!val) { setDuplicate(null); return; }
+    setChecking(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("find_tenant_by_cr" as any, { _cr: val });
+      const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+      setDuplicate(row ? { id: row.id, full_name: row.full_name } : null);
+      setChecking(false);
+    }, 400);
+    return () => { clearTimeout(t); setChecking(false); };
+  }, [cr_number]);
+
+  const validEmail = (s: string) => !s || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!full_name || !email || !password) return toast.error("الاسم والإيميل وكلمة السر مطلوبة");
+    if (!full_name.trim()) return toast.error("اسم المستأجر أو المنشأة مطلوب");
+    if (!cr_number.trim()) return toast.error("الرقم الوطني الموحد أو رقم الهوية مطلوب");
+    if (!activity_type.trim()) return toast.error("النشاط مطلوب");
+    if (!phone || !isValidPhoneNumber(phone)) return toast.error("رقم الجوال غير صحيح");
+    if (!validEmail(email)) return toast.error("البريد الإلكتروني غير صحيح");
+    if (duplicate) return toast.error("يوجد مستأجر بنفس الرقم — افتح حسابه بدل إنشاء حساب جديد");
+
     setBusy(true);
     try {
       await callTenantAdmin({
         action: "create",
-        full_name,
-        email,
+        full_name: full_name.trim(),
+        business_name: business_name.trim() || null,
+        cr_number: cr_number.trim(),
+        activity_type: activity_type.trim(),
         phone,
-        password,
-        business_name,
-        cr_number,
-        notes,
+        email: email.trim() || null,
         unit_ids: Array.from(selected),
       });
       toast.success("تم إنشاء الحساب");
@@ -494,32 +516,67 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
   return (
     <Modal title="إنشاء حساب مستأجر" onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
-        <Field label="الاسم الكامل *">
+        <Field label="اسم المستأجر أو المنشأة *">
           <input value={full_name} onChange={(e) => setFullName(e.target.value)} className={inp} required />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="الإيميل *">
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={inp} required dir="ltr" />
-          </Field>
-          <Field label="الجوال">
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} dir="ltr" placeholder="+20..." />
-          </Field>
-        </div>
-        <Field label="كلمة المرور *">
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" className={inp} required minLength={6} />
-        </Field>
-        <Field label="اسم النشاط">
-          <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} />
-        </Field>
-        <Field label="الرقم الوطني الموحد">
-          <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
-        </Field>
-        <Field label="ملاحظات">
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={2} />
+
+        <Field label="اسم العلامة التجارية">
+          <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} placeholder="اختياري" />
         </Field>
 
-        <Field label="الوحدات المرتبطة">
-          <div className="max-h-48 overflow-y-auto rounded-xl border border-border p-2">
+        <Field label="الرقم الوطني الموحد أو رقم الهوية *">
+          <input
+            value={cr_number}
+            onChange={(e) => setCrNumber(e.target.value)}
+            className={inp}
+            dir="ltr"
+            required
+            placeholder="7000000000"
+          />
+          {checking && <div className="mt-1 text-[11px] text-muted-foreground">جارٍ التحقق...</div>}
+          {duplicate && (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-2 text-xs">
+              <div className="flex items-center gap-1.5 text-destructive">
+                <Info className="h-3.5 w-3.5" />
+                <span>هذا المستأجر موجود بالفعل: <b>{duplicate.full_name}</b></span>
+              </div>
+              <button
+                type="button"
+                onClick={() => { onClose(); setTimeout(() => document.dispatchEvent(new CustomEvent("open-tenant", { detail: duplicate.id })), 50); }}
+                className="rounded-lg bg-destructive px-2 py-1 text-[11px] font-bold text-destructive-foreground"
+              >
+                فتح حسابه
+              </button>
+            </div>
+          )}
+        </Field>
+
+        <Field label="النشاط *">
+          <input
+            value={activity_type}
+            onChange={(e) => setActivity(e.target.value)}
+            className={inp}
+            list="tenant-activities"
+            required
+            placeholder="مثال: قطع غيار سيارات"
+          />
+          <datalist id="tenant-activities">
+            {["قطع غيار سيارات","صيانة سيارات","مطعم","مقهى","بقالة","صيدلية","محلات ملابس","أدوات كهربائية","سباكة","نجارة","حدادة"].map((a) => (
+              <option key={a} value={a} />
+            ))}
+          </datalist>
+        </Field>
+
+        <Field label="رقم الجوال *">
+          <PhoneField value={phone} onChange={setPhone} />
+        </Field>
+
+        <Field label="البريد الإلكتروني">
+          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={inp} dir="ltr" placeholder="name@example.com" />
+        </Field>
+
+        <Field label="الوحدات المرتبطة (اختياري)">
+          <div className="max-h-40 overflow-y-auto rounded-xl border border-border p-2">
             {units.length === 0 ? (
               <div className="p-3 text-center text-xs text-muted-foreground">لا توجد وحدات</div>
             ) : (
@@ -547,7 +604,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
 
         <button
           type="submit"
-          disabled={busy}
+          disabled={busy || !!duplicate}
           className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-bold text-primary-foreground disabled:opacity-50"
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -557,6 +614,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
     </Modal>
   );
 }
+
 
 // ============ Detail Modal ============
 function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => void }) {
