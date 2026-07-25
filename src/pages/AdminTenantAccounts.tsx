@@ -83,7 +83,9 @@ type TenantRow = {
   unpaid_total: number;
   has_login: boolean;
   cr_number: string | null;
+  files_count: number;
 };
+
 
 type Unit = {
   id: string;
