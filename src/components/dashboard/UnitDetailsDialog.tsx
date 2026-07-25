@@ -430,6 +430,16 @@ function SkeletonList() {
   );
 }
 
+function MiniKV({ label, value, tone }: { label: string; value: string; tone?: "emerald" | "rose" | "amber" }) {
+  const cls = tone === "emerald" ? "text-emerald-700" : tone === "rose" ? "text-rose-700" : tone === "amber" ? "text-amber-700" : "text-foreground";
+  return (
+    <div className="rounded-lg border bg-card p-2">
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className={cn("num text-sm font-extrabold", cls)}>{value}</div>
+    </div>
+  );
+}
+
 function NewInvoiceForUnit({
   unitId,
   tenantAccountId,
