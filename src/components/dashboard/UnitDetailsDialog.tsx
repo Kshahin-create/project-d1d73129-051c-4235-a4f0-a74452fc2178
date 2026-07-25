@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitFilesPanel } from "./UnitFilesPanel";
+import { UnitCollectionsPanel } from "./UnitCollectionsPanel";
 
 
 
