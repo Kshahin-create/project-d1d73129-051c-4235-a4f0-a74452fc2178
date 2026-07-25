@@ -1754,8 +1754,17 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
 
     const toolCalls = m.tool_calls || [];
     if (toolCalls.length === 0) {
-      let reply = sanitizeAIReply(m.content || "");
-      const inlineCalls = parseInlineToolCalls(m.content || "");
+      const rawContent = m.content || "";
+      let reply = sanitizeAIReply(rawContent);
+      if (replyHadPdfLinks(rawContent)) {
+        messages.push({ role: "assistant", content: rawContent });
+        messages.push({
+          role: "user",
+          content: "⚠️ ممنوع ترسل روابط لملفات PDF. لازم تنادي أداة send_booking_pdfs بـ booking_id الفعلي للحجز. لو مش عارف الـ booking_id ابحث بـ search_bookings الأول. نفّذ دلوقتي بدون كلام.",
+        });
+        continue;
+      }
+      const inlineCalls = parseInlineToolCalls(rawContent);
       if (inlineCalls.length) {
         const inlineResults = await Promise.all(inlineCalls.map(async (call) => {
           try {
