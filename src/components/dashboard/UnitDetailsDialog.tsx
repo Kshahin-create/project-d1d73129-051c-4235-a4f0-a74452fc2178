@@ -166,8 +166,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
   const pendingCount = bookings.filter((b) => b.status === "pending").length;
   const cancelledCount = bookings.filter((b) => b.status === "cancelled").length;
   const expiredCount = bookings.filter((b) => b.status === "expired").length;
-  const totalPaid = bookings.reduce((s, b) => s + Number(b.paid_amount || 0), 0)
-                  + invoices.filter((i) => i.paid).reduce((s, i) => s + Number(i.paid_amount || 0), 0);
+  const totalPaid = collectedTotal;
+  const remainingUnit = Number(unit.price || 0) - totalPaid;
+  const collectionRate = unit.price > 0 ? Math.min(100, Math.round((totalPaid / unit.price) * 100)) : 0;
   const currentTenant = tenants[0] ?? null;
 
   return (
