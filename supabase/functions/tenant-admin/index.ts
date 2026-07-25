@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
         .from("tenant_accounts")
         .select("id, full_name")
         .eq("cr_number", String(cr_number).trim())
+        .is("merged_into", null)
         .maybeSingle();
       if (dup) {
         return json({
@@ -95,6 +96,28 @@ Deno.serve(async (req) => {
           duplicate: dup,
         }, 409);
       }
+
+      // Prevent duplicate by normalized full_name / business_name
+      const normalize = (s: string) =>
+        s.toLowerCase().trim().replace(/[\s\p{P}]+/gu, " ").trim();
+      const nName = normalize(String(full_name));
+      const nBiz = business_name ? normalize(String(business_name)) : "";
+      const { data: allActive } = await admin
+        .from("tenant_accounts")
+        .select("id, full_name, business_name")
+        .is("merged_into", null);
+      const nameClash = (allActive || []).find((r: any) => {
+        const rn = normalize(r.full_name || "");
+        const rb = normalize(r.business_name || "");
+        return (nName && rn === nName) || (nBiz && rb && rb === nBiz);
+      });
+      if (nameClash) {
+        return json({
+          error: "يوجد مستأجر مسجل بنفس الاسم أو نفس اسم المنشأة",
+          duplicate: nameClash,
+        }, 409);
+      }
+
 
       let newUserId: string | null = null;
       // Only create an auth user if both email and password were provided

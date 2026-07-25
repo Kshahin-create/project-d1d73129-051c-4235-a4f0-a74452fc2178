@@ -355,6 +355,20 @@ export default function AdminTenantAccounts() {
           >
             <Download className="h-4 w-4" /> تصدير
           </button>
+          <button
+            onClick={async () => {
+              if (!confirm("سيتم دمج المستأجرين المكررين تلقائياً بمطابقة الاسم أو اسم المنشأة بالضبط. سيتم نقل كل الوحدات والتحصيلات والملفات والفواتير إلى السجل الرئيسي، وتُخفى النسخ المكررة (تُحفظ للمراجعة). المتابعة؟")) return;
+              const { data, error } = await supabase.rpc("admin_auto_merge_duplicate_tenants");
+              if (error) { toast.error(error.message); return; }
+              const d: any = data || {};
+              toast.success(`تم الدمج: ${d.groups ?? 0} مجموعة، ${d.merged_duplicates ?? 0} سجل مكرر`);
+              load();
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 sm:text-sm"
+          >
+            <AlertTriangle className="h-4 w-4" /> دمج المكررين
+          </button>
+
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card">

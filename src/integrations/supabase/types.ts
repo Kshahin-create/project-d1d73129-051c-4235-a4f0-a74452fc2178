@@ -1050,6 +1050,9 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          merged_at: string | null
+          merged_by: string | null
+          merged_into: string | null
           notes: string | null
           paid_amount: number
           phone: string | null
@@ -1066,6 +1069,9 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          merged_at?: string | null
+          merged_by?: string | null
+          merged_into?: string | null
           notes?: string | null
           paid_amount?: number
           phone?: string | null
@@ -1082,6 +1088,9 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          merged_at?: string | null
+          merged_by?: string | null
+          merged_into?: string | null
           notes?: string | null
           paid_amount?: number
           phone?: string | null
@@ -1089,7 +1098,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenant_accounts_merged_into_fkey"
+            columns: ["merged_into"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_login_links: {
         Row: {
@@ -1425,6 +1442,7 @@ export type Database = {
         Args: { _amount: number; _notes?: string; _tenant_account_id: string }
         Returns: string
       }
+      admin_auto_merge_duplicate_tenants: { Args: never; Returns: Json }
       admin_link_tenant_units: {
         Args: { _tenant_account_id: string; _unit_ids: string[] }
         Returns: undefined
@@ -1462,6 +1480,10 @@ export type Database = {
           role: string
           user_id: string
         }[]
+      }
+      admin_merge_tenant_accounts: {
+        Args: { _canonical_id: string; _duplicate_ids: string[] }
+        Returns: Json
       }
       admin_set_role: {
         Args: { _make_admin: boolean; _target_user: string }
