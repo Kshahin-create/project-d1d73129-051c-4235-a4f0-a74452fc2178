@@ -84,6 +84,7 @@ type TenantRow = {
   has_login: boolean;
   cr_number: string | null;
   files_count: number;
+  collected_total: number;
 };
 
 
