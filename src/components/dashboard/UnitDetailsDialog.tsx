@@ -361,50 +361,16 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                     )}
                   </TabsContent>
 
-                  {/* INVOICES */}
-                  <TabsContent value="invoices" className="mt-4 space-y-3">
-                    {canEdit && (
-                      <NewInvoiceForUnit
-                        unitId={unit.id!}
-                        tenantAccountId={tenantAccountId}
-                        tenantName={currentTenant?.tenant_name ?? null}
-                        onCreated={() => setReloadTick((t) => t + 1)}
-                      />
-                    )}
-
-                    {loading ? (
-                      <SkeletonList />
-                    ) : invoices.length === 0 ? (
-                      <EmptyState text="لا توجد فواتير مرتبطة بهذه الوحدة" />
-                    ) : (
-                      invoices.map((i) => (
-                        <div key={i.id} className="rounded-xl border bg-card p-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-primary" />
-                              <span className="num font-mono text-xs font-bold">{i.invoice_number}</span>
-                              <Badge className={cn("border text-[10px]",
-                                i.paid
-                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                  : "bg-amber-100 text-amber-800 border-amber-300"
-                              )}>
-                                {i.paid ? "مدفوعة" : "غير مدفوعة"}
-                              </Badge>
-                            </div>
-                            <div className="text-right">
-                              <div className="num text-sm font-bold">{fmt(i.amount)} ر.س</div>
-                              {i.paid && <div className="text-[10px] text-emerald-700">دفعت {fmtDate(i.paid_at)}</div>}
-                            </div>
-                          </div>
-                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-                            {i.customer_name && <span>{i.customer_name}</span>}
-                            {i.payment_method && <span>طريقة: {i.payment_method}</span>}
-                            <span>تاريخ: {fmtDate(i.created_at)}</span>
-                          </div>
-                          {i.notes && <div className="mt-1 text-[10px] text-muted-foreground">{i.notes}</div>}
-                        </div>
-                      ))
-                    )}
+                  {/* COLLECTIONS */}
+                  <TabsContent value="collections" className="mt-4">
+                    <UnitCollectionsPanel
+                      unitId={unit.id!}
+                      unitPrice={Number(unit.price || 0)}
+                      tenantAccountId={tenantAccountId}
+                      tenantName={currentTenant?.tenant_name ?? null}
+                      canEdit={canEdit}
+                      onChanged={() => setReloadTick((t) => t + 1)}
+                    />
                   </TabsContent>
 
                   {/* FILES */}
