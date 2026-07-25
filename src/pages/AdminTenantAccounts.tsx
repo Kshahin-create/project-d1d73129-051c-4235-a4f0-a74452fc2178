@@ -344,6 +344,7 @@ export default function AdminTenantAccounts() {
                 "البريد الإلكتروني": r.email || "",
                 "عدد الوحدات": r.units_count ?? 0,
                 "عدد الملفات": r.files_count ?? 0,
+                "إجمالي المبلغ المدفوع": r.collected_total ?? 0,
               }));
 
               if (!data.length) { toast.error("لا يوجد بيانات للتصدير"); return; }
