@@ -142,6 +142,16 @@ export default function AdminTenantAccounts() {
     if (!loading && (isAdmin || isManager)) load();
   }, [loading, isAdmin, isManager]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const id = (e as CustomEvent).detail as string;
+      if (id) setDetailId(id);
+    };
+    document.addEventListener("open-tenant", handler as EventListener);
+    return () => document.removeEventListener("open-tenant", handler as EventListener);
+  }, []);
+
+
   const matchesFilter = (r: TenantRow, key: FilterKey) => {
     switch (key) {
       case "all": return true;
