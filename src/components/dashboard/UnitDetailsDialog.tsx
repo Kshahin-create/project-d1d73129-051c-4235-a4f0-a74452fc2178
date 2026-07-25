@@ -101,20 +101,21 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [tenants, setTenants] = useState<TenantRow[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [collectedTotal, setCollectedTotal] = useState(0);
+  const [collectionsCount, setCollectionsCount] = useState(0);
   const [tenantAccountId, setTenantAccountId] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     if (!open || !unit?.id || !hasAdminAccess) {
-      setBookings([]); setTenants([]); setInvoices([]); setTenantAccountId(null);
+      setBookings([]); setTenants([]); setCollectedTotal(0); setCollectionsCount(0); setTenantAccountId(null);
       return;
     }
     let cancel = false;
     (async () => {
       setLoading(true);
       try {
-        const [bRes, tRes, iRes, taRes] = await Promise.all([
+        const [bRes, tRes, cRes, taRes] = await Promise.all([
           supabase
             .from("booking_units")
             .select("booking_id, bookings:booking_id (id, offer_number, status, customer_full_name, customer_phone, customer_email, business_name, cr_number, total_price, paid_amount, units_count, payment_plan, created_at, expires_at, notes)")
@@ -125,10 +126,10 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
             .eq("unit_id", unit.id)
             .order("start_date", { ascending: false }),
           supabase
-            .from("invoices")
-            .select("id, invoice_number, amount, paid_amount, paid, paid_at, payment_method, customer_name, notes, created_at")
+            .from("unit_collections" as any)
+            .select("amount")
             .eq("unit_id", unit.id)
-            .order("created_at", { ascending: false }),
+            .eq("is_archived", false),
           supabase
             .from("tenant_account_units")
             .select("tenant_account_id")
@@ -143,7 +144,9 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
           .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setBookings(bRows);
         setTenants((tRes.data ?? []) as any);
-        setInvoices((iRes.data ?? []) as any);
+        const cRows = (cRes.data ?? []) as any[];
+        setCollectionsCount(cRows.length);
+        setCollectedTotal(cRows.reduce((s, r) => s + Number(r.amount || 0), 0));
         setTenantAccountId((taRes.data as any)?.tenant_account_id ?? null);
       } finally {
         if (!cancel) setLoading(false);
