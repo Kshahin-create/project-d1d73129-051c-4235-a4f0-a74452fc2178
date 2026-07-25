@@ -400,13 +400,31 @@ export default function AdminTenantAccounts() {
                       </td>
                       <td className="p-3 num font-bold text-emerald-700">{Number(r.collected_total ?? 0).toLocaleString()} ر.س</td>
                       <td className="p-3 text-right">
-                        <button
-                          onClick={() => setDetailId(r.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          إدارة
-                        </button>
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            onClick={() => setDetailId(r.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            إدارة
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`حذف حساب "${r.full_name}" نهائياً؟ سيتم فك ربط الوحدات ولن يتمكن من الدخول.`)) return;
+                              try {
+                                await callTenantAdmin({ action: "delete", tenant_account_id: r.id });
+                                toast.success("تم الحذف");
+                                await load();
+                              } catch (e: any) {
+                                toast.error(e?.message || "تعذر الحذف");
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 rounded-lg border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                            title="حذف نهائي"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
