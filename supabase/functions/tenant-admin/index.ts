@@ -66,36 +66,62 @@ Deno.serve(async (req) => {
         password,
         business_name,
         cr_number,
+        activity_type,
         notes,
         unit_ids,
       } = body;
-      if (!full_name || !email || !password) {
-        return json({ error: "full_name, email, password مطلوبة" }, 400);
+      if (!full_name || !String(full_name).trim()) {
+        return json({ error: "الاسم مطلوب" }, 400);
       }
-      // Create auth user
-      const { data: created, error: cErr } = await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        phone: phone || undefined,
-        user_metadata: { display_name: full_name, is_tenant: true },
-      });
-      if (cErr || !created.user) return json({ error: cErr?.message || "فشل إنشاء الحساب" }, 400);
+      if (!cr_number || !String(cr_number).trim()) {
+        return json({ error: "الرقم الوطني الموحد أو رقم الهوية مطلوب" }, 400);
+      }
+      if (!activity_type || !String(activity_type).trim()) {
+        return json({ error: "النشاط مطلوب" }, 400);
+      }
+      if (!phone || !String(phone).trim()) {
+        return json({ error: "رقم الجوال مطلوب" }, 400);
+      }
 
-      const newUserId = created.user.id;
-      // Replace default 'user' role with 'tenant'
-      await admin.from("user_roles").delete().eq("user_id", newUserId);
-      await admin.from("user_roles").insert({ user_id: newUserId, role: "tenant" });
+      // Enforce CR uniqueness at application layer
+      const { data: dup } = await admin
+        .from("tenant_accounts")
+        .select("id, full_name")
+        .eq("cr_number", String(cr_number).trim())
+        .maybeSingle();
+      if (dup) {
+        return json({
+          error: "يوجد مستأجر مسجل بنفس الرقم الوطني الموحد",
+          duplicate: dup,
+        }, 409);
+      }
+
+      let newUserId: string | null = null;
+      // Only create an auth user if both email and password were provided
+      if (email && password) {
+        const { data: created, error: cErr } = await admin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          phone: phone || undefined,
+          user_metadata: { display_name: full_name, is_tenant: true },
+        });
+        if (cErr || !created.user) return json({ error: cErr?.message || "فشل إنشاء حساب الدخول" }, 400);
+        newUserId = created.user.id;
+        await admin.from("user_roles").delete().eq("user_id", newUserId);
+        await admin.from("user_roles").insert({ user_id: newUserId, role: "tenant" });
+      }
 
       const { data: ta, error: taErr } = await admin
         .from("tenant_accounts")
         .insert({
           user_id: newUserId,
-          full_name,
-          email,
+          full_name: String(full_name).trim(),
+          email: email || null,
           phone: phone || null,
           business_name: business_name || null,
-          cr_number: cr_number || null,
+          cr_number: String(cr_number).trim(),
+          activity_type: String(activity_type).trim(),
           notes: notes || null,
           created_by: userRes.user.id,
         })
@@ -111,6 +137,7 @@ Deno.serve(async (req) => {
 
       return json({ ok: true, tenant_account: ta });
     }
+
 
     if (action === "set_password") {
       const { tenant_account_id, password } = body;
@@ -128,7 +155,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update_profile") {
-      const { tenant_account_id, full_name, phone, email, business_name, cr_number, notes } = body;
+      const { tenant_account_id, full_name, phone, email, business_name, cr_number, activity_type, notes } = body;
       if (!tenant_account_id) return json({ error: "tenant_account_id مطلوب" }, 400);
       const { data: ta } = await admin
         .from("tenant_accounts")
@@ -137,13 +164,25 @@ Deno.serve(async (req) => {
         .single();
       if (!ta) return json({ error: "حساب غير موجود" }, 404);
 
+      // Enforce CR uniqueness on update too (if changed)
+      if (cr_number !== undefined && String(cr_number).trim() !== "") {
+        const { data: dup } = await admin
+          .from("tenant_accounts")
+          .select("id")
+          .eq("cr_number", String(cr_number).trim())
+          .neq("id", tenant_account_id)
+          .maybeSingle();
+        if (dup) return json({ error: "الرقم الوطني الموحد مستخدم من مستأجر آخر" }, 409);
+      }
+
       const updates: any = {};
-      if (full_name !== undefined) updates.full_name = full_name;
-      if (phone !== undefined) updates.phone = phone;
-      if (email !== undefined) updates.email = email;
-      if (business_name !== undefined) updates.business_name = business_name;
-      if (cr_number !== undefined) updates.cr_number = cr_number;
-      if (notes !== undefined) updates.notes = notes;
+      if (full_name !== undefined) updates.full_name = String(full_name).trim();
+      if (phone !== undefined) updates.phone = phone || null;
+      if (email !== undefined) updates.email = email || null;
+      if (business_name !== undefined) updates.business_name = business_name || null;
+      if (cr_number !== undefined) updates.cr_number = String(cr_number).trim() || null;
+      if (activity_type !== undefined) updates.activity_type = activity_type || null;
+      if (notes !== undefined) updates.notes = notes || null;
 
       const { error } = await admin
         .from("tenant_accounts")
@@ -151,15 +190,17 @@ Deno.serve(async (req) => {
         .eq("id", tenant_account_id);
       if (error) return json({ error: error.message }, 400);
 
-      // Sync auth email/phone if provided
-      const authUpdates: any = {};
-      if (email !== undefined) authUpdates.email = email;
-      if (phone !== undefined) authUpdates.phone = phone;
-      if (Object.keys(authUpdates).length > 0) {
-        await admin.auth.admin.updateUserById(ta.user_id, authUpdates);
+      if (ta.user_id) {
+        const authUpdates: any = {};
+        if (email !== undefined && email) authUpdates.email = email;
+        if (phone !== undefined && phone) authUpdates.phone = phone;
+        if (Object.keys(authUpdates).length > 0) {
+          await admin.auth.admin.updateUserById(ta.user_id, authUpdates);
+        }
       }
       return json({ ok: true });
     }
+
 
     if (action === "magic_link") {
       const { tenant_account_id, hours } = body;

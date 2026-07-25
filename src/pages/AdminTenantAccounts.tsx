@@ -27,9 +27,13 @@ import {
   TrendingUp,
   Download,
   Paperclip,
+  Info,
 } from "lucide-react";
 import { exportRowsToExcel } from "@/lib/exportData";
 import { TenantFilesDialog } from "@/components/TenantFilesDialog";
+import { PhoneField } from "@/components/PhoneField";
+import { isValidPhoneNumber } from "libphonenumber-js";
+
 
 const TONE_CLS: Record<string, string> = {
   primary: "bg-primary/10 text-primary",
@@ -79,7 +83,9 @@ type TenantRow = {
   unpaid_total: number;
   has_login: boolean;
   cr_number: string | null;
+  files_count: number;
 };
+
 
 type Unit = {
   id: string;
@@ -319,20 +325,16 @@ export default function AdminTenantAccounts() {
           <button
             onClick={() => {
               const data = filtered.map((r) => ({
-                "الاسم": r.full_name,
-                "النشاط": r.activity_type || r.business_name || "",
-                "الاسم التجاري": r.business_name || "",
+                "اسم المستأجر أو المنشأة": r.full_name,
+                "العلامة التجارية": r.business_name || "",
                 "الرقم الوطني الموحد": r.cr_number || "",
+                "النشاط": r.activity_type || "",
                 "الجوال": r.phone || "",
-                "الإيميل": r.email || "",
-                "وحدات": r.units_count ?? 0,
-                "السعر السنوي (ر.س)": Number(r.total_price || 0),
-                "المدفوع (ر.س)": Number(r.paid_amount || 0),
-                "المتبقي (ر.س)": Math.max(0, Number(r.total_price || 0) - Number(r.paid_amount || 0)),
-                "فواتير غير مدفوعة": r.unpaid_invoices ?? 0,
-                "إجمالي غير المدفوع (ر.س)": Number(r.unpaid_total || 0),
-                "دخول مفعل": r.has_login ? "نعم" : "لا",
+                "البريد الإلكتروني": r.email || "",
+                "عدد الوحدات": r.units_count ?? 0,
+                "عدد الملفات": r.files_count ?? 0,
               }));
+
               if (!data.length) { toast.error("لا يوجد بيانات للتصدير"); return; }
               exportRowsToExcel(data, "tenant-accounts", "المستأجرون");
               toast.success("تم التصدير");
@@ -350,18 +352,17 @@ export default function AdminTenantAccounts() {
             <div className="p-12 text-center text-muted-foreground">لا توجد حسابات</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-sm">
+              <table className="w-full min-w-[960px] text-sm">
                 <thead className="border-b border-border bg-secondary/50 text-xs">
                   <tr>
-                    <th className="p-3 text-right">الاسم</th>
-                    <th className="p-3 text-right">النشاط</th>
+                    <th className="p-3 text-right">اسم المستأجر أو المنشأة</th>
+                    <th className="p-3 text-right">العلامة التجارية</th>
                     <th className="p-3 text-right">الرقم الوطني الموحد</th>
+                    <th className="p-3 text-right">النشاط</th>
                     <th className="p-3 text-right">الجوال</th>
-                    <th className="p-3 text-right">وحدات</th>
-                    <th className="p-3 text-right">السعر السنوي</th>
-                    <th className="p-3 text-right">المدفوع</th>
-                    <th className="p-3 text-right">فواتير</th>
-                    <th className="p-3 text-right">دخول</th>
+                    <th className="p-3 text-right">البريد الإلكتروني</th>
+                    <th className="p-3 text-right">الوحدات</th>
+                    <th className="p-3 text-right">الملفات</th>
                     <th className="p-3 text-right"></th>
                   </tr>
                 </thead>
@@ -369,104 +370,29 @@ export default function AdminTenantAccounts() {
                   {filtered.map((r) => (
                     <tr key={r.id} className="border-b border-border last:border-0">
                       <td className="p-3 font-medium">{r.full_name}</td>
-                      <td className="p-3 text-muted-foreground">{r.activity_type || r.business_name || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{r.business_name || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.cr_number || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{r.activity_type || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.phone || "—"}</td>
+                      <td className="p-3 text-muted-foreground" dir="ltr">{r.email || "—"}</td>
                       <td className="p-3 font-bold">{r.units_count}</td>
-                      <td className="p-3 font-bold text-primary">{Number(r.total_price).toLocaleString()} ر.س</td>
                       <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          {Number(r.paid_amount) > 0 ? (
-                            <span className="font-bold text-emerald-600">{Number(r.paid_amount).toLocaleString()} ر.س</span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                          <button
-                            onClick={async () => {
-                              const remaining = Math.max(0, Number(r.total_price || 0) - Number(r.paid_amount || 0));
-                              const input = window.prompt(
-                                `أدخل مبلغ الدفعة من ${r.full_name}\nالمتبقي: ${remaining.toLocaleString()} ر.س`,
-                                "",
-                              );
-                              if (input === null) return;
-                              const amount = Number(input);
-                              if (!Number.isFinite(amount) || amount <= 0) return toast.error("أدخل مبلغًا صحيحًا");
-                              const method = window.prompt("طريقة الدفع: cash / transfer / card / check", "cash") || "cash";
-                              const notes = window.prompt("ملاحظات (اختياري)", "") || null;
-                              const { data: invId, error } = await supabase.rpc("record_payment" as any, {
-                                _tenant_account_id: r.id, _amount: amount, _method: method, _notes: notes,
-                              });
-                              if (error) return toast.error(error.message);
-                              toast.success("تم تسجيل الدفعة وإصدار الفاتورة");
-                              try { await supabase.functions.invoke("send-invoice-telegram", { body: { invoice_id: invId } }); } catch {}
-                              load();
-                            }}
-                            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
-                          >
-                            <Plus className="h-3 w-3" />
-                            إضافة دفعة
-                          </button>
-                          <button
-                            onClick={async () => {
-                              const paid = Number(r.paid_amount || 0);
-                              if (paid <= 0) return toast.error("لا يوجد مدفوع لخصمه");
-                              const input = window.prompt(
-                                `أدخل المبلغ المراد خصمه من ${r.full_name}\nالمدفوع حاليًا: ${paid.toLocaleString()} ر.س`,
-                                "",
-                              );
-                              if (input === null) return;
-                              const amount = Number(input);
-                              if (!Number.isFinite(amount) || amount <= 0) return toast.error("أدخل مبلغًا صحيحًا");
-                              const notes = window.prompt("سبب الخصم (اختياري)", "تصحيح مبلغ زائد") || null;
-                              if (!window.confirm(`تأكيد خصم ${amount.toLocaleString()} ر.س من المدفوع؟`)) return;
-                              const { error } = await supabase.rpc("adjust_payment" as any, {
-                                _tenant_account_id: r.id, _amount: -Math.abs(amount), _notes: notes,
-                              });
-                              if (error) return toast.error(error.message);
-                              toast.success("تم خصم المبلغ");
-                              load();
-                            }}
-                            className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
-                          >
-                            <Minus className="h-3 w-3" />
-                            خصم
-                          </button>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        {r.unpaid_invoices > 0 ? (
-                          <span className="text-destructive">
-                            {r.unpaid_invoices} ({Number(r.unpaid_total).toLocaleString()})
-                          </span>
-                        ) : (
-                          <span className="text-emerald-600">—</span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {r.has_login ? (
-                          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-700">مفعل</span>
-                        ) : (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">بدون</span>
-                        )}
+                        <button
+                          onClick={() => setFilesFor({ id: r.id, name: r.full_name })}
+                          className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/20"
+                        >
+                          <Paperclip className="h-3 w-3" />
+                          {r.files_count ?? 0}
+                        </button>
                       </td>
                       <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setFilesFor({ id: r.id, name: r.full_name })}
-                            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-secondary"
-                            title="الملفات"
-                          >
-                            <Paperclip className="h-3 w-3" />
-                            ملفات
-                          </button>
-                          <button
-                            onClick={() => setDetailId(r.id)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                          >
-                            <Pencil className="h-3 w-3" />
-                            إدارة
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setDetailId(r.id)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          إدارة
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -475,6 +401,7 @@ export default function AdminTenantAccounts() {
             </div>
           )}
         </div>
+
       </main>
 
       {showCreate && (
@@ -490,12 +417,14 @@ export default function AdminTenantAccounts() {
       {detailId && (
         <DetailModal
           tenantId={detailId}
+          onOpenFiles={(id, name) => setFilesFor({ id, name })}
           onClose={() => {
             setDetailId(null);
             load();
           }}
         />
       )}
+
 
       {filesFor && (
         <TenantFilesDialog
@@ -514,15 +443,16 @@ export default function AdminTenantAccounts() {
 // ============ Create Modal ============
 function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [full_name, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
   const [business_name, setBusiness] = useState("");
   const [cr_number, setCrNumber] = useState("");
-  const [notes, setNotes] = useState("");
+  const [activity_type, setActivity] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [units, setUnits] = useState<Unit[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [duplicate, setDuplicate] = useState<{ id: string; full_name: string } | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     supabase
@@ -533,20 +463,41 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
       .then(({ data }) => setUnits((data as any) ?? []));
   }, []);
 
+  // Debounced CR duplicate check
+  useEffect(() => {
+    const val = cr_number.trim();
+    if (!val) { setDuplicate(null); return; }
+    setChecking(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("find_tenant_by_cr" as any, { _cr: val });
+      const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+      setDuplicate(row ? { id: row.id, full_name: row.full_name } : null);
+      setChecking(false);
+    }, 400);
+    return () => { clearTimeout(t); setChecking(false); };
+  }, [cr_number]);
+
+  const validEmail = (s: string) => !s || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!full_name || !email || !password) return toast.error("الاسم والإيميل وكلمة السر مطلوبة");
+    if (!full_name.trim()) return toast.error("اسم المستأجر أو المنشأة مطلوب");
+    if (!cr_number.trim()) return toast.error("الرقم الوطني الموحد أو رقم الهوية مطلوب");
+    if (!activity_type.trim()) return toast.error("النشاط مطلوب");
+    if (!phone || !isValidPhoneNumber(phone)) return toast.error("رقم الجوال غير صحيح");
+    if (!validEmail(email)) return toast.error("البريد الإلكتروني غير صحيح");
+    if (duplicate) return toast.error("يوجد مستأجر بنفس الرقم — افتح حسابه بدل إنشاء حساب جديد");
+
     setBusy(true);
     try {
       await callTenantAdmin({
         action: "create",
-        full_name,
-        email,
+        full_name: full_name.trim(),
+        business_name: business_name.trim() || null,
+        cr_number: cr_number.trim(),
+        activity_type: activity_type.trim(),
         phone,
-        password,
-        business_name,
-        cr_number,
-        notes,
+        email: email.trim() || null,
         unit_ids: Array.from(selected),
       });
       toast.success("تم إنشاء الحساب");
@@ -561,32 +512,67 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
   return (
     <Modal title="إنشاء حساب مستأجر" onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
-        <Field label="الاسم الكامل *">
+        <Field label="اسم المستأجر أو المنشأة *">
           <input value={full_name} onChange={(e) => setFullName(e.target.value)} className={inp} required />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="الإيميل *">
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={inp} required dir="ltr" />
-          </Field>
-          <Field label="الجوال">
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} dir="ltr" placeholder="+20..." />
-          </Field>
-        </div>
-        <Field label="كلمة المرور *">
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="text" className={inp} required minLength={6} />
-        </Field>
-        <Field label="اسم النشاط">
-          <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} />
-        </Field>
-        <Field label="الرقم الوطني الموحد">
-          <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
-        </Field>
-        <Field label="ملاحظات">
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={2} />
+
+        <Field label="اسم العلامة التجارية">
+          <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} placeholder="اختياري" />
         </Field>
 
-        <Field label="الوحدات المرتبطة">
-          <div className="max-h-48 overflow-y-auto rounded-xl border border-border p-2">
+        <Field label="الرقم الوطني الموحد أو رقم الهوية *">
+          <input
+            value={cr_number}
+            onChange={(e) => setCrNumber(e.target.value)}
+            className={inp}
+            dir="ltr"
+            required
+            placeholder="7000000000"
+          />
+          {checking && <div className="mt-1 text-[11px] text-muted-foreground">جارٍ التحقق...</div>}
+          {duplicate && (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-2 text-xs">
+              <div className="flex items-center gap-1.5 text-destructive">
+                <Info className="h-3.5 w-3.5" />
+                <span>هذا المستأجر موجود بالفعل: <b>{duplicate.full_name}</b></span>
+              </div>
+              <button
+                type="button"
+                onClick={() => { onClose(); setTimeout(() => document.dispatchEvent(new CustomEvent("open-tenant", { detail: duplicate.id })), 50); }}
+                className="rounded-lg bg-destructive px-2 py-1 text-[11px] font-bold text-destructive-foreground"
+              >
+                فتح حسابه
+              </button>
+            </div>
+          )}
+        </Field>
+
+        <Field label="النشاط *">
+          <input
+            value={activity_type}
+            onChange={(e) => setActivity(e.target.value)}
+            className={inp}
+            list="tenant-activities"
+            required
+            placeholder="مثال: قطع غيار سيارات"
+          />
+          <datalist id="tenant-activities">
+            {["قطع غيار سيارات","صيانة سيارات","مطعم","مقهى","بقالة","صيدلية","محلات ملابس","أدوات كهربائية","سباكة","نجارة","حدادة"].map((a) => (
+              <option key={a} value={a} />
+            ))}
+          </datalist>
+        </Field>
+
+        <Field label="رقم الجوال *">
+          <PhoneField value={phone} onChange={setPhone} />
+        </Field>
+
+        <Field label="البريد الإلكتروني">
+          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={inp} dir="ltr" placeholder="name@example.com" />
+        </Field>
+
+        <Field label="الوحدات المرتبطة (اختياري)">
+          <div className="max-h-40 overflow-y-auto rounded-xl border border-border p-2">
             {units.length === 0 ? (
               <div className="p-3 text-center text-xs text-muted-foreground">لا توجد وحدات</div>
             ) : (
@@ -614,7 +600,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
 
         <button
           type="submit"
-          disabled={busy}
+          disabled={busy || !!duplicate}
           className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-bold text-primary-foreground disabled:opacity-50"
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -625,13 +611,23 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
   );
 }
 
+
 // ============ Detail Modal ============
-function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => void }) {
-  const [tab, setTab] = useState<"profile" | "units" | "invoices" | "auth">("profile");
+function DetailModal({
+  tenantId,
+  onClose,
+  onOpenFiles,
+}: {
+  tenantId: string;
+  onClose: () => void;
+  onOpenFiles: (id: string, name: string) => void;
+}) {
+  const [tab, setTab] = useState<"profile" | "files" | "units" | "invoices" | "auth">("profile");
   const [account, setAccount] = useState<any>(null);
   const [linked, setLinked] = useState<LinkedUnit[]>([]);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [filesCount, setFilesCount] = useState<number>(0);
   const [magicLink, setMagicLink] = useState<string | null>(null);
 
   const load = async () => {
@@ -663,6 +659,13 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
       .eq("tenant_account_id", tenantId)
       .order("created_at", { ascending: false });
     setInvoices((inv as any) ?? []);
+
+    const { count } = await supabase
+      .from("tenant_account_files" as any)
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_account_id", tenantId)
+      .eq("is_archived", false);
+    setFilesCount(count ?? 0);
   };
 
   useEffect(() => {
@@ -673,10 +676,11 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
 
   return (
     <Modal title={account.full_name} onClose={onClose} wide>
-      <div className="mb-4 flex gap-1 border-b border-border">
+      <div className="mb-4 flex flex-wrap gap-1 border-b border-border">
         {[
           { id: "profile", label: "البيانات" },
-          { id: "units", label: "الوحدات" },
+          { id: "files", label: `الملفات العامة (${filesCount})` },
+          { id: "units", label: `الوحدات (${linked.length})` },
           { id: "invoices", label: "الفواتير" },
           { id: "auth", label: "الحساب والدخول" },
         ].map((t) => (
@@ -691,6 +695,20 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
       </div>
 
       {tab === "profile" && <ProfileTab account={account} onSaved={load} />}
+      {tab === "files" && (
+        <div className="space-y-3">
+          <div className="rounded-xl border border-dashed border-border bg-secondary/30 p-4 text-sm text-muted-foreground">
+            الملفات العامة للمستأجر — تدعم رفع أكثر من ملف بأسماء مخصصة، أرشفة، استعادة، تعديل الاسم، واستبدال الملف.
+          </div>
+          <button
+            onClick={() => onOpenFiles(tenantId, account.full_name)}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+          >
+            <Paperclip className="h-4 w-4" />
+            فتح مدير الملفات ({filesCount} نشط)
+          </button>
+        </div>
+      )}
       {tab === "units" && <UnitsTab tenantId={tenantId} linked={linked} allUnits={allUnits} onChanged={load} />}
       {tab === "invoices" && <InvoicesTab tenantId={tenantId} linked={linked} invoices={invoices} onChanged={load} />}
       {tab === "auth" && (
@@ -702,25 +720,32 @@ function DetailModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
 
 function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void }) {
   const [full_name, setFullName] = useState(account.full_name || "");
-  const [email, setEmail] = useState(account.email || "");
-  const [phone, setPhone] = useState(account.phone || "");
   const [business_name, setBusiness] = useState(account.business_name || "");
   const [cr_number, setCrNumber] = useState(account.cr_number || "");
-  const [notes, setNotes] = useState(account.notes || "");
+  const [activity_type, setActivity] = useState(account.activity_type || "");
+  const [phone, setPhone] = useState(account.phone || "");
+  const [email, setEmail] = useState(account.email || "");
   const [busy, setBusy] = useState(false);
 
+  const validEmail = (s: string) => !s || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+
   const save = async () => {
+    if (!full_name.trim()) return toast.error("اسم المستأجر أو المنشأة مطلوب");
+    if (!cr_number.trim()) return toast.error("الرقم الوطني الموحد أو رقم الهوية مطلوب");
+    if (!activity_type.trim()) return toast.error("النشاط مطلوب");
+    if (!phone || !isValidPhoneNumber(phone)) return toast.error("رقم الجوال غير صحيح");
+    if (!validEmail(email)) return toast.error("البريد الإلكتروني غير صحيح");
     setBusy(true);
     try {
       await callTenantAdmin({
         action: "update_profile",
         tenant_account_id: account.id,
-        full_name,
-        email,
+        full_name: full_name.trim(),
+        business_name: business_name.trim() || null,
+        cr_number: cr_number.trim(),
+        activity_type: activity_type.trim(),
         phone,
-        business_name,
-        cr_number,
-        notes,
+        email: email.trim() || null,
       });
       toast.success("تم الحفظ");
       onSaved();
@@ -733,20 +758,36 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
 
   return (
     <div className="space-y-3">
-      <Field label="الاسم"><input value={full_name} onChange={(e) => setFullName(e.target.value)} className={inp} /></Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="الإيميل"><input value={email} onChange={(e) => setEmail(e.target.value)} className={inp} dir="ltr" /></Field>
-        <Field label="الجوال"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} dir="ltr" /></Field>
-      </div>
-      <Field label="النشاط"><input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} /></Field>
-      <Field label="الرقم الوطني الموحد"><input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" /></Field>
-      <Field label="ملاحظات"><textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inp} rows={3} /></Field>
+      <Field label="اسم المستأجر أو المنشأة *">
+        <input value={full_name} onChange={(e) => setFullName(e.target.value)} className={inp} />
+      </Field>
+      <Field label="اسم العلامة التجارية">
+        <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} placeholder="اختياري" />
+      </Field>
+      <Field label="الرقم الوطني الموحد أو رقم الهوية *">
+        <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
+      </Field>
+      <Field label="النشاط *">
+        <input value={activity_type} onChange={(e) => setActivity(e.target.value)} className={inp} list="tenant-activities-edit" />
+        <datalist id="tenant-activities-edit">
+          {["قطع غيار سيارات","صيانة سيارات","مطعم","مقهى","بقالة","صيدلية","محلات ملابس","أدوات كهربائية","سباكة","نجارة","حدادة"].map((a) => (
+            <option key={a} value={a} />
+          ))}
+        </datalist>
+      </Field>
+      <Field label="رقم الجوال *">
+        <PhoneField value={phone} onChange={setPhone} />
+      </Field>
+      <Field label="البريد الإلكتروني">
+        <input value={email} onChange={(e) => setEmail(e.target.value)} className={inp} dir="ltr" placeholder="name@example.com" />
+      </Field>
       <button onClick={save} disabled={busy} className="rounded-xl bg-primary px-4 py-2 font-bold text-primary-foreground disabled:opacity-50">
         {busy ? "..." : "حفظ"}
       </button>
     </div>
   );
 }
+
 
 function UnitsTab({ tenantId, linked, allUnits, onChanged }: { tenantId: string; linked: LinkedUnit[]; allUnits: Unit[]; onChanged: () => void }) {
   const [adding, setAdding] = useState<Set<string>>(new Set());

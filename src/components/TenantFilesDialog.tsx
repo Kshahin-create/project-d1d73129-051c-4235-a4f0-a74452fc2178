@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, Download, Trash2, FileText, Paperclip, Loader2, Plus } from "lucide-react";
+import {
+  X, Upload, Download, Trash2, FileText, Paperclip, Loader2, Plus,
+  Archive, ArchiveRestore, Pencil, RefreshCw, Eye,
+} from "lucide-react";
 
 interface TenantFile {
   id: string;
@@ -12,6 +15,9 @@ interface TenantFile {
   size_bytes: number | null;
   notes: string | null;
   created_at: string;
+  is_archived: boolean;
+  archived_at: string | null;
+  uploaded_by: string | null;
 }
 
 interface Props {
@@ -37,8 +43,12 @@ const fmtSize = (b?: number | null) => {
   return `${(b / 1024 / 1024).toFixed(2)} MB`;
 };
 
+const ACCEPT = ".pdf,.doc,.docx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }: Props) {
   const [files, setFiles] = useState<TenantFile[]>([]);
+  const [uploaderMap, setUploaderMap] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState<"active" | "archived">("active");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pending, setPending] = useState<PendingItem[]>([]);
@@ -51,7 +61,17 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
       .eq("tenant_account_id", tenantAccountId)
       .order("created_at", { ascending: false });
     if (error) toast.error("تعذر التحميل: " + error.message);
-    else setFiles((data as any) ?? []);
+    else {
+      const list = (data as any) ?? [];
+      setFiles(list);
+      const ids = Array.from(new Set(list.map((f: any) => f.uploaded_by).filter(Boolean))) as string[];
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("user_id, display_name, email").in("user_id", ids);
+        const map: Record<string, string> = {};
+        (profs ?? []).forEach((p: any) => { map[p.user_id] = p.display_name || p.email || ""; });
+        setUploaderMap(map);
+      }
+    }
     setLoading(false);
   };
 
@@ -59,6 +79,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
     if (open) {
       load();
       setPending([]);
+      setTab("active");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tenantAccountId]);
@@ -80,18 +101,11 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
   const removePending = (id: string) => setPending((p) => p.filter((it) => it.id !== id));
 
   const uploadAll = async () => {
-    if (pending.length === 0) {
-      toast.error("اختر ملفات أولاً");
-      return;
-    }
-    if (pending.some((p) => !p.customName.trim())) {
-      toast.error("اكتب اسماً لكل ملف");
-      return;
-    }
+    if (pending.length === 0) { toast.error("اختر ملفات أولاً"); return; }
+    if (pending.some((p) => !p.customName.trim())) { toast.error("اكتب اسماً لكل ملف"); return; }
     setUploading(true);
     const { data: userRes } = await supabase.auth.getUser();
-    let ok = 0;
-    let fail = 0;
+    let ok = 0, fail = 0;
     for (const item of pending) {
       try {
         const ext = item.file.name.split(".").pop() || "bin";
@@ -126,28 +140,82 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
     load();
   };
 
-  const download = async (f: TenantFile) => {
-    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(f.storage_path, 60);
-    if (error || !data?.signedUrl) {
-      toast.error("تعذر التنزيل");
-      return;
+  const signedUrl = async (path: string) => {
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) { toast.error("تعذر إنشاء الرابط"); return null; }
+    return data.signedUrl;
+  };
+
+  const view = async (f: TenantFile) => {
+    const u = await signedUrl(f.storage_path);
+    if (u) window.open(u, "_blank");
+  };
+  const download = view; // signed URL works for both
+
+  const rename = async (f: TenantFile) => {
+    const next = window.prompt("اسم الملف الجديد", f.custom_name);
+    if (!next || !next.trim() || next.trim() === f.custom_name) return;
+    const { error } = await supabase.from("tenant_account_files" as any)
+      .update({ custom_name: next.trim() }).eq("id", f.id);
+    if (error) return toast.error(error.message);
+    toast.success("تم التعديل"); load();
+  };
+
+  const replace = async (f: TenantFile, file: File) => {
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const newPath = `${tenantAccountId}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(BUCKET).upload(newPath, file, { contentType: file.type || undefined, upsert: false });
+      if (upErr) throw upErr;
+      const { error: uErr } = await supabase.from("tenant_account_files" as any).update({
+        storage_path: newPath,
+        original_name: file.name,
+        mime_type: file.type || null,
+        size_bytes: file.size,
+      }).eq("id", f.id);
+      if (uErr) {
+        await supabase.storage.from(BUCKET).remove([newPath]);
+        throw uErr;
+      }
+      await supabase.storage.from(BUCKET).remove([f.storage_path]);
+      toast.success("تم استبدال الملف"); load();
+    } catch (e: any) {
+      toast.error(e?.message ?? String(e));
     }
-    window.open(data.signedUrl, "_blank");
+  };
+
+  const archive = async (f: TenantFile) => {
+    const { data: userRes } = await supabase.auth.getUser();
+    const { error } = await supabase.from("tenant_account_files" as any).update({
+      is_archived: true, archived_at: new Date().toISOString(), archived_by: userRes.user?.id ?? null,
+    }).eq("id", f.id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الأرشفة"); load();
+  };
+
+  const restore = async (f: TenantFile) => {
+    const { error } = await supabase.from("tenant_account_files" as any).update({
+      is_archived: false, archived_at: null, archived_by: null,
+    }).eq("id", f.id);
+    if (error) return toast.error(error.message);
+    toast.success("تمت الاستعادة"); load();
   };
 
   const remove = async (f: TenantFile) => {
-    if (!confirm(`حذف الملف "${f.custom_name}"؟`)) return;
+    if (!confirm(`حذف الملف "${f.custom_name}" نهائياً؟`)) return;
     const { error: dErr } = await supabase.from("tenant_account_files" as any).delete().eq("id", f.id);
-    if (dErr) {
-      toast.error("فشل الحذف: " + dErr.message);
-      return;
-    }
+    if (dErr) return toast.error("فشل الحذف: " + dErr.message);
     await supabase.storage.from(BUCKET).remove([f.storage_path]);
-    toast.success("تم الحذف");
-    load();
+    toast.success("تم الحذف"); load();
   };
 
   if (!open) return null;
+
+  const visible = files.filter((f) => (tab === "active" ? !f.is_archived : f.is_archived));
+  const activeCount = files.filter((f) => !f.is_archived).length;
+  const archivedCount = files.length - activeCount;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" dir="rtl" onClick={onClose}>
       <div
@@ -158,7 +226,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
           <div className="flex items-center gap-2">
             <Paperclip className="h-5 w-5 text-primary" />
             <div>
-              <h3 className="font-display text-base font-bold">ملفات المستأجر</h3>
+              <h3 className="font-display text-base font-bold">الملفات العامة للمستأجر</h3>
               <div className="text-xs text-muted-foreground">{tenantName}</div>
             </div>
           </div>
@@ -168,6 +236,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
         </div>
 
         <div className="max-h-[calc(90vh-60px)] overflow-y-auto p-4">
+          {/* Uploader */}
           <div className="mb-5 rounded-2xl border border-dashed border-border bg-secondary/30 p-4">
             <div className="mb-2 flex items-center justify-between">
               <div className="text-sm font-semibold">رفع ملفات جديدة</div>
@@ -176,18 +245,16 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
                 <input
                   type="file"
                   multiple
+                  accept={ACCEPT}
                   className="hidden"
-                  onChange={(e) => {
-                    addFiles(e.target.files);
-                    e.currentTarget.value = "";
-                  }}
+                  onChange={(e) => { addFiles(e.target.files); e.currentTarget.value = ""; }}
                 />
               </label>
             </div>
 
             {pending.length === 0 ? (
               <div className="py-4 text-center text-xs text-muted-foreground">
-                اضغط "اختيار ملفات" لإضافة ملف واحد أو أكثر
+                يدعم PDF والصور وملفات Word — اكتب اسماً واضحاً لكل ملف (مثال: السجل التجاري، هوية المستأجر...).
               </div>
             ) : (
               <div className="space-y-2">
@@ -209,7 +276,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
                       type="text"
                       value={it.customName}
                       onChange={(e) => updatePending(it.id, { customName: e.target.value })}
-                      placeholder="اسم الملف"
+                      placeholder="اسم الملف (مطلوب)"
                       className="mb-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
                     />
                     <input
@@ -236,37 +303,87 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
             </div>
           </div>
 
+          {/* Tabs */}
+          <div className="mb-3 flex gap-1 rounded-xl border border-border bg-background p-1">
+            <button
+              onClick={() => setTab("active")}
+              className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold ${tab === "active" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+            >
+              الملفات النشطة ({activeCount})
+            </button>
+            <button
+              onClick={() => setTab("archived")}
+              className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold ${tab === "archived" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+            >
+              المؤرشفة ({archivedCount})
+            </button>
+          </div>
+
           {loading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">جارٍ التحميل...</div>
-          ) : files.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">لا توجد ملفات</div>
+          ) : visible.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              {tab === "active" ? "لا توجد ملفات" : "لا توجد ملفات مؤرشفة"}
+            </div>
           ) : (
             <div className="space-y-2">
-              {files.map((f) => (
-                <div key={f.id} className="flex items-center gap-2 rounded-xl border border-border bg-background p-3">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{f.custom_name}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {f.original_name && <span>{f.original_name} • </span>}
-                      {fmtSize(f.size_bytes)} • {new Date(f.created_at).toLocaleDateString("ar-EG-u-nu-latn")}
+              {visible.map((f) => (
+                <div key={f.id} className={`rounded-xl border border-border bg-background p-3 ${f.is_archived ? "opacity-70" : ""}`}>
+                  <div className="flex items-start gap-2">
+                    <FileText className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold">{f.custom_name}</div>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">
+                        {f.original_name && <span>{f.original_name} • </span>}
+                        {f.mime_type && <span>{f.mime_type} • </span>}
+                        {fmtSize(f.size_bytes)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">
+                        رُفع في {new Date(f.created_at).toLocaleDateString("ar-EG-u-nu-latn")}
+                        {f.uploaded_by && uploaderMap[f.uploaded_by] && <> · بواسطة {uploaderMap[f.uploaded_by]}</>}
+                      </div>
+                      {f.notes && <div className="mt-1 text-[11px] text-muted-foreground">{f.notes}</div>}
                     </div>
-                    {f.notes && <div className="mt-0.5 text-[11px] text-muted-foreground">{f.notes}</div>}
                   </div>
-                  <button
-                    onClick={() => download(f)}
-                    className="rounded-lg border border-border p-1.5 hover:bg-secondary"
-                    title="تنزيل"
-                  >
-                    <Download className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => remove(f)}
-                    className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20"
-                    title="حذف"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="mt-2 flex flex-wrap items-center justify-end gap-1.5">
+                    <button onClick={() => view(f)} title="عرض" className="rounded-lg border border-border p-1.5 hover:bg-secondary">
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => download(f)} title="تحميل" className="rounded-lg border border-border p-1.5 hover:bg-secondary">
+                      <Download className="h-3.5 w-3.5" />
+                    </button>
+                    {!f.is_archived && (
+                      <>
+                        <button onClick={() => rename(f)} title="تعديل الاسم" className="rounded-lg border border-border p-1.5 hover:bg-secondary">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <label title="استبدال الملف" className="cursor-pointer rounded-lg border border-border p-1.5 hover:bg-secondary">
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          <input
+                            type="file"
+                            accept={ACCEPT}
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              e.currentTarget.value = "";
+                              if (file) replace(f, file);
+                            }}
+                          />
+                        </label>
+                        <button onClick={() => archive(f)} title="أرشفة" className="rounded-lg border border-border p-1.5 hover:bg-secondary">
+                          <Archive className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
+                    {f.is_archived && (
+                      <button onClick={() => restore(f)} title="استعادة" className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-1.5 text-emerald-700 hover:bg-emerald-500/20">
+                        <ArchiveRestore className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    <button onClick={() => remove(f)} title="حذف نهائي" className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
