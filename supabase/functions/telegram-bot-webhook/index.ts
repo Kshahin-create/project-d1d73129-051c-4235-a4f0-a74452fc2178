@@ -1543,7 +1543,7 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
   return { error: "unknown write tool" };
 }
 
-const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid","create_booking","update_booking","update_tenant_account","update_unit","create_invoice","delete_invoice","send_invoice_reminder","update_interested_status","create_interested_customer","delete_booking"]);
+const WRITE_TOOLS = new Set(["confirm_booking","cancel_booking","extend_booking_expiry","record_payment","generate_financial_claim","set_booking_paid_amount","set_unit_status","mark_invoice_paid","create_booking","update_booking","update_tenant_account","update_unit","create_invoice","delete_invoice","send_invoice_reminder","update_interested_status","create_interested_customer","delete_booking","send_booking_pdfs","remove_booking_units"]);
 const READ_TOOLS = new Set(["get_overview","search_bookings","search_invoices","search_tenants","units_breakdown","revenue_report","resolve_booking_id","resolve_unit_id","lookup_unit","list_recent_activity","list_interested_customers","get_tenant_full","get_building_report","list_bookings_for_tenant"]);
 
 function parseInlineToolArgs(raw: string): Record<string, unknown> {
