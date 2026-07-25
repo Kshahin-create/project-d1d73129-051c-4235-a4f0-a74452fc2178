@@ -944,9 +944,12 @@ export type Database = {
       }
       tenant_account_files: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           custom_name: string
           id: string
+          is_archived: boolean
           mime_type: string | null
           notes: string | null
           original_name: string | null
@@ -957,9 +960,12 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           custom_name: string
           id?: string
+          is_archived?: boolean
           mime_type?: string | null
           notes?: string | null
           original_name?: string | null
@@ -970,9 +976,12 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           custom_name?: string
           id?: string
+          is_archived?: boolean
           mime_type?: string | null
           notes?: string | null
           original_name?: string | null
@@ -1368,6 +1377,7 @@ export type Database = {
           cr_number: string
           created_at: string
           email: string
+          files_count: number
           full_name: string
           has_login: boolean
           id: string
@@ -1476,6 +1486,16 @@ export type Database = {
       extend_booking_expiry: {
         Args: { _booking_id: string; _hours: number }
         Returns: string
+      }
+      find_tenant_by_cr: {
+        Args: { _cr: string }
+        Returns: {
+          business_name: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+        }[]
       }
       get_invoice_for_view: {
         Args: { _invoice_id: string }
