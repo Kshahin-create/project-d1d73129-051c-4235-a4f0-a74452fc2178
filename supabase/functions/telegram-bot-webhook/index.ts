@@ -1107,6 +1107,38 @@ const AI_TOOLS = [
       parameters: { type: "object", properties: { booking_id: { type: "string" }, confirm: { type: "boolean" } }, required: ["booking_id","confirm"], additionalProperties: false },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "send_booking_pdfs",
+      description: "أرسل ملفَي PDF (عرض التأجير + المطالبة المالية) لحجز موجود إلى محادثة تيليجرام الحالية. استخدمها لما المستخدم يطلب «ابعت العرض/المطالبة/الـ PDF/الملفات» — ممنوع ترسل روابط بدل الملفات.",
+      parameters: {
+        type: "object",
+        properties: {
+          booking_id: { type: "string" },
+          which: { type: "string", enum: ["both","offer","claim"], default: "both" },
+        },
+        required: ["booking_id"], additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_booking_units",
+      description: "إلغاء وحدات محددة من حجز موجود (إلغاء جزئي) وإرجاعها متاحة، وتحديث إجمالي الحجز. لو الحجز بقى بدون وحدات يتم إلغاؤه كلياً. استخدمها لما المستخدم يقول «ألغي كذا وحدة من حجز فلان» أو «شيل الوحدات X من الحجز».",
+      parameters: {
+        type: "object",
+        properties: {
+          booking_id: { type: "string" },
+          unit_numbers: { type: "array", items: { type: "number" }, description: "أرقام الوحدات المراد إلغاؤها" },
+          building_number: { type: "number", description: "رقم المبنى (لو الوحدات في مبنى واحد)" },
+          unit_ids: { type: "array", items: { type: "string" }, description: "بديل: UUIDs مباشرة" },
+        },
+        required: ["booking_id"], additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // Check if linked user has admin/manager role for write operations
