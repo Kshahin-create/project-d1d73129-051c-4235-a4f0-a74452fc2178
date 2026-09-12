@@ -263,7 +263,7 @@ export default function AdminPaidTenants() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-            لا يوجد مستأجرون مسددون بالكامل حالياً
+            لا يوجد مستأجرون مسددون حالياً
           </div>
         ) : (
           <div className="space-y-4">
