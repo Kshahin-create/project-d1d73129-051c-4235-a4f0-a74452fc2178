@@ -178,9 +178,9 @@ export default function AdminPaidTenants() {
             "سعر الوحدة": u.price,
             "المسدد على الوحدة": paidByTenantUnit.get(`${t.id}:${u.unit_id}`) ?? 0,
             "الملفات": (filesByTenant.get(t.id) ?? []).join("، "),
-            "إجمالي المحصل": t.collected_total ?? 0,
+            "إجمالي المحصل": idx === 0 ? (t.collected_total ?? 0) : "",
           });
-        }
+        });
       }
     }
     if (!rows.length) {
