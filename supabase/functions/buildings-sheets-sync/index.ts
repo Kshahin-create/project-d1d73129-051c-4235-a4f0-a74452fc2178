@@ -393,6 +393,7 @@ Deno.serve(async (req) => {
         { data: bookingUnits },
         { data: invoices },
         { data: leads },
+        { data: collections },
       ] = await Promise.all([
         admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").in("building_number", buildings).order("building_number").order("unit_number"),
         admin.from("tenants").select("id, unit_id, tenant_name, phone, business_name, activity_type, cr_number, start_date, end_date, notes, created_at"),
@@ -402,6 +403,7 @@ Deno.serve(async (req) => {
         admin.from("booking_units").select("booking_id, building_number, unit_number, unit_type, area, price, activity"),
         admin.from("invoices").select("invoice_number, customer_name, customer_phone, customer_business, cr_number, amount, paid_amount, paid, paid_at, payment_method, notes, created_at"),
         admin.from("leads").select("full_name, phone, status, notes, last_message_at, created_at"),
+        admin.from("unit_collections").select("unit_id, amount, is_archived"),
       ]);
 
       const tenantMap = new Map<string, any>();
@@ -409,8 +411,15 @@ Deno.serve(async (req) => {
       const accPaid = new Map<string, number>();
       (accs||[]).forEach((a:any) => accPaid.set(a.id, Number(a.paid_amount) || 0));
       const unitPaid = new Map<string, number>();
+      const hasCollections = new Set<string>();
+      (collections||[]).forEach((c:any) => {
+        if (!c.unit_id || c.is_archived) return;
+        hasCollections.add(c.unit_id);
+        unitPaid.set(c.unit_id, (unitPaid.get(c.unit_id) || 0) + (Number(c.amount) || 0));
+      });
+      // fallback: units without recorded collections use their tenant account paid amount
       (tau||[]).forEach((l:any) => {
-        if (!l.unit_id) return;
+        if (!l.unit_id || hasCollections.has(l.unit_id)) return;
         const p = accPaid.get(l.tenant_account_id) || 0;
         unitPaid.set(l.unit_id, (unitPaid.get(l.unit_id) || 0) + p);
       });
@@ -565,7 +574,11 @@ Deno.serve(async (req) => {
       if (accountsSid !== undefined) formatReqs.push(...buildDataTabRequests(accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length));
       if (invoicesSid !== undefined) formatReqs.push(...buildDataTabRequests(invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length));
       if (leadsSid !== undefined) formatReqs.push(...buildDataTabRequests(leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length));
-      if (dashSid !== undefined) formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
+      if (dashSid !== undefined) {
+        formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
+        // keep the dashboard as the first tab
+        formatReqs.push({ updateSheetProperties: { properties: { sheetId: dashSid, index: 0 }, fields: "index" } });
+      }
       await safeBatch(sheetId, formatReqs);
     }
 
