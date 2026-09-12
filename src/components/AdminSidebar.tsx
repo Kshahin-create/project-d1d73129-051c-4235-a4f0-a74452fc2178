@@ -84,6 +84,7 @@ const groups: LinkGroup[] = [
       { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
       { to: "/admin/paid-tenants", label: "المسددون", Icon: BadgeCheck, managerOnly: true },
       { to: "/admin/interested", label: "المهتمون", Icon: MessageCircle, managerOnly: true },
+      { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
       { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
     ],
   },
@@ -94,7 +95,6 @@ const groups: LinkGroup[] = [
     links: [
       { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
       { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
-      { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
       { to: "/admin/backup", label: "نسخ احتياطي", Icon: Database, adminOnly: true },
     ],
   },
