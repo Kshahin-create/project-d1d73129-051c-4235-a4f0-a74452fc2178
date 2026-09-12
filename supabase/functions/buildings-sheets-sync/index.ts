@@ -419,11 +419,33 @@ Deno.serve(async (req) => {
         hasCollections.add(c.unit_id);
         unitPaid.set(c.unit_id, (unitPaid.get(c.unit_id) || 0) + (Number(c.amount) || 0));
       });
-      // fallback: units without recorded collections use their tenant account paid amount
+      // fallback: distribute each account's paid amount across its units that have
+      // no recorded collections — capped per unit at its price, never exceeding the
+      // account's remaining paid balance (prevents duplicating the paid amount on
+      // every unit of a multi-unit account).
+      const unitPrice = new Map<string, number>();
+      (units||[]).forEach((u:any) => unitPrice.set(u.id, Number(u.price) || 0));
+      const accUnits = new Map<string, string[]>();
       (tau||[]).forEach((l:any) => {
-        if (!l.unit_id || hasCollections.has(l.unit_id)) return;
-        const p = accPaid.get(l.tenant_account_id) || 0;
-        unitPaid.set(l.unit_id, (unitPaid.get(l.unit_id) || 0) + p);
+        if (!l.unit_id || !l.tenant_account_id) return;
+        const arr = accUnits.get(l.tenant_account_id) || [];
+        arr.push(l.unit_id);
+        accUnits.set(l.tenant_account_id, arr);
+      });
+      accUnits.forEach((unitIds, accId) => {
+        let remaining = accPaid.get(accId) || 0;
+        // subtract what's already attributed via collections on this account's units
+        unitIds.forEach((uid) => { if (hasCollections.has(uid)) remaining -= (unitPaid.get(uid) || 0); });
+        if (remaining <= 0) return;
+        const targets = unitIds.filter((uid) => !hasCollections.has(uid))
+          .sort((a, b) => (unitPrice.get(a) || 0) - (unitPrice.get(b) || 0));
+        for (const uid of targets) {
+          if (remaining <= 0) break;
+          const alloc = Math.min(remaining, unitPrice.get(uid) || 0);
+          if (alloc <= 0) continue;
+          unitPaid.set(uid, (unitPaid.get(uid) || 0) + alloc);
+          remaining -= alloc;
+        }
       });
       const buMap = new Map<string, any[]>();
       (bookingUnits||[]).forEach((bu:any) => {
