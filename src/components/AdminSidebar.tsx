@@ -27,6 +27,7 @@ import {
   Database,
   Compass,
   Briefcase,
+  BadgeCheck,
   Settings2,
   Terminal,
 } from "lucide-react";
