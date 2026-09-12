@@ -336,18 +336,39 @@ export default function AdminTenantAccounts() {
             ))}
           </div>
           <button
-            onClick={() => {
-              const data = filtered.map((r) => ({
-                "اسم المستأجر أو المنشأة": r.full_name,
-                "العلامة التجارية": r.business_name || "",
-                "الرقم الوطني الموحد": r.cr_number || "",
-                "النشاط": r.activity_type || "",
-                "الجوال": r.phone || "",
-                "البريد الإلكتروني": r.email || "",
-                "عدد الوحدات": r.units_count ?? 0,
-                "عدد الملفات": r.files_count ?? 0,
-                "إجمالي المبلغ المدفوع": r.collected_total ?? 0,
-              }));
+            onClick={async () => {
+              const { data: links, error: linksErr } = await supabase
+                .from("tenant_account_units")
+                .select("tenant_account_id, units:unit_id(unit_number, building_number, unit_type, area, price)")
+                .in("tenant_account_id", filtered.map((r) => r.id));
+              if (linksErr) { toast.error(linksErr.message); return; }
+
+              const unitsByTenant = new Map<string, any[]>();
+              for (const l of (links as any[]) ?? []) {
+                if (!l.units) continue;
+                const arr = unitsByTenant.get(l.tenant_account_id) ?? [];
+                arr.push(l.units);
+                unitsByTenant.set(l.tenant_account_id, arr);
+              }
+
+              const data = filtered.map((r) => {
+                const units = (unitsByTenant.get(r.id) ?? []).sort(
+                  (a, b) => a.building_number - b.building_number || a.unit_number - b.unit_number,
+                );
+                return {
+                  "اسم المستأجر أو المنشأة": r.full_name,
+                  "العلامة التجارية": r.business_name || "",
+                  "الرقم الوطني الموحد": r.cr_number || "",
+                  "النشاط": r.activity_type || "",
+                  "الجوال": r.phone || "",
+                  "البريد الإلكتروني": r.email || "",
+                  "المباني": [...new Set(units.map((u) => u.building_number))].join("، "),
+                  "الوحدات": units.map((u) => `مبنى ${u.building_number} - وحدة ${u.unit_number}`).join("، "),
+                  "عدد الوحدات": r.units_count ?? 0,
+                  "عدد الملفات": r.files_count ?? 0,
+                  "إجمالي المبلغ المدفوع": r.collected_total ?? 0,
+                };
+              });
 
               if (!data.length) { toast.error("لا يوجد بيانات للتصدير"); return; }
               exportRowsToExcel(data, "tenant-accounts", "المستأجرون");
