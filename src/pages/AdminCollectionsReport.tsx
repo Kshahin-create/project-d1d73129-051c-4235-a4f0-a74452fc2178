@@ -32,7 +32,7 @@ type UnitRow = {
 };
 
 const fmt = (n: number) =>
-  n.toLocaleString("ar-EG", { maximumFractionDigits: 2 });
+  n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 
 export default function AdminCollectionsReport() {
   const nav = useNavigate();
