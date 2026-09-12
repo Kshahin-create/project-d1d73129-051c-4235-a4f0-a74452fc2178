@@ -300,7 +300,7 @@ function buildDashboardRows(perBuilding: BStat[]): { rows: (string|number)[][]; 
   const tableHeaderRows: number[] = [];
 
   rows.push(["لوحة المعلومات — مدينة المعجار", "", "", "", ""]);
-  rows.push([`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""]);
+  rows.push([`آخر تحديث: ${new Date().toLocaleString("en-GB", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""]);
   rows.push(["", "", "", "", ""]);
 
   sectionRows.push(rows.length);
@@ -486,8 +486,8 @@ Deno.serve(async (req) => {
           bk.payment_plan === "full" ? "كامل" : bk.payment_plan === "70" ? "70%" : bk.payment_plan === "50" ? "50%" : (bk.payment_plan||""),
           BOOKING_STATUS_AR[bk.status] || bk.status || "",
           bk.notes || "",
-          bk.created_at ? new Date(bk.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
-          bk.expires_at ? new Date(bk.expires_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          bk.created_at ? new Date(bk.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
+          bk.expires_at ? new Date(bk.expires_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: BOOKINGS_TAB, rows: bookingsRows });
@@ -512,7 +512,7 @@ Deno.serve(async (req) => {
           t.tenant_name || "", fmtPhone(t.phone || ""), t.business_name || "",
           t.activity_type || "", t.cr_number ? "'"+t.cr_number : "",
           t.start_date || "", t.end_date || "", t.notes || "",
-          t.created_at ? new Date(t.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          t.created_at ? new Date(t.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: TENANTS_TAB, rows: tenantsRows });
@@ -527,7 +527,7 @@ Deno.serve(async (req) => {
           a.full_name || "", fmtPhone(a.phone||""), a.email || "", a.business_name || "",
           a.activity_type || "", a.cr_number ? "'"+a.cr_number : "",
           total, paid, total - paid, a.notes || "",
-          a.created_at ? new Date(a.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          a.created_at ? new Date(a.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: ACCOUNTS_TAB, rows: accountsRows });
@@ -543,9 +543,9 @@ Deno.serve(async (req) => {
           i.customer_business || "", i.cr_number ? "'"+i.cr_number : "",
           amt, pd, amt - pd, i.paid ? "مدفوعة" : "غير مدفوعة",
           i.payment_method || "",
-          i.paid_at ? new Date(i.paid_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          i.paid_at ? new Date(i.paid_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
           i.notes || "",
-          i.created_at ? new Date(i.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          i.created_at ? new Date(i.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: INVOICES_TAB, rows: invoicesRows });
@@ -557,8 +557,8 @@ Deno.serve(async (req) => {
       for (const l of (leads||[])) {
         leadsRows.push([
           l.full_name || "", fmtPhone(l.phone||""), l.status || "", l.notes || "",
-          l.last_message_at ? new Date(l.last_message_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
-          l.created_at ? new Date(l.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          l.last_message_at ? new Date(l.last_message_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
+          l.created_at ? new Date(l.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: LEADS_TAB, rows: leadsRows });
