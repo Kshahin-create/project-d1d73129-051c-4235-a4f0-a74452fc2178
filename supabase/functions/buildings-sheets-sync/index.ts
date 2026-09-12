@@ -408,8 +408,16 @@ Deno.serve(async (req) => {
         admin.from("unit_collections").select("unit_id, amount, is_archived"),
       ]);
 
+      const unitStatus = new Map<string, string>();
+      (units||[]).forEach((u:any) => unitStatus.set(u.id, u.status));
       const tenantMap = new Map<string, any>();
-      (tenants||[]).forEach((t:any) => { if (t.unit_id) tenantMap.set(t.unit_id, t); });
+      (tenants||[]).forEach((t:any) => {
+        if (!t.unit_id) return;
+        // never show tenant data on an available unit (stale historical rows)
+        if (unitStatus.get(t.unit_id) === "available") return;
+        const prev = tenantMap.get(t.unit_id);
+        if (!prev || new Date(t.created_at||0) > new Date(prev.created_at||0)) tenantMap.set(t.unit_id, t);
+      });
       const accPaid = new Map<string, number>();
       (accs||[]).forEach((a:any) => accPaid.set(a.id, Number(a.paid_amount) || 0));
       const unitPaid = new Map<string, number>();
@@ -419,34 +427,10 @@ Deno.serve(async (req) => {
         hasCollections.add(c.unit_id);
         unitPaid.set(c.unit_id, (unitPaid.get(c.unit_id) || 0) + (Number(c.amount) || 0));
       });
-      // fallback: distribute each account's paid amount across its units that have
-      // no recorded collections — capped per unit at its price, never exceeding the
-      // account's remaining paid balance (prevents duplicating the paid amount on
-      // every unit of a multi-unit account).
-      const unitPrice = new Map<string, number>();
-      (units||[]).forEach((u:any) => unitPrice.set(u.id, Number(u.price) || 0));
-      const accUnits = new Map<string, string[]>();
-      (tau||[]).forEach((l:any) => {
-        if (!l.unit_id || !l.tenant_account_id) return;
-        const arr = accUnits.get(l.tenant_account_id) || [];
-        arr.push(l.unit_id);
-        accUnits.set(l.tenant_account_id, arr);
-      });
-      accUnits.forEach((unitIds, accId) => {
-        let remaining = accPaid.get(accId) || 0;
-        // subtract what's already attributed via collections on this account's units
-        unitIds.forEach((uid) => { if (hasCollections.has(uid)) remaining -= (unitPaid.get(uid) || 0); });
-        if (remaining <= 0) return;
-        const targets = unitIds.filter((uid) => !hasCollections.has(uid))
-          .sort((a, b) => (unitPrice.get(a) || 0) - (unitPrice.get(b) || 0));
-        for (const uid of targets) {
-          if (remaining <= 0) break;
-          const alloc = Math.min(remaining, unitPrice.get(uid) || 0);
-          if (alloc <= 0) continue;
-          unitPaid.set(uid, (unitPaid.get(uid) || 0) + alloc);
-          remaining -= alloc;
-        }
-      });
+      // NOTE: paid per unit comes ONLY from unit_collections (the same source as the
+      // in-app collections report). No fallback from tenant_accounts.paid_amount —
+      // that used to duplicate an account's paid amount across its units.
+
       const buMap = new Map<string, any[]>();
       (bookingUnits||[]).forEach((bu:any) => {
         const arr = buMap.get(bu.booking_id) || [];
@@ -600,7 +584,7 @@ Deno.serve(async (req) => {
       });
       const collectionsHeader = ["المبنى","الوحدة","الحالة","المستأجر","المنشأة","سعر الوحدة","المحصّل","عدد الدفعات","المتبقي"];
       const collectionsData: (string|number)[][] = [];
-      const activeUnits = (units||[]).filter((u:any) => u.status === "rented" || u.status === "reserved" || u.status === "booked");
+      const activeUnits = (units||[]).filter((u:any) => u.status === "rented" || u.status === "reserved");
       for (const u of activeUnits) {
         const t = tenantMap.get(u.id) || {};
         const acc = accByUnit.get(u.id) || {};
