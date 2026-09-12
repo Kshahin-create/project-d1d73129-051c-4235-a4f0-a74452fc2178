@@ -28,6 +28,7 @@ import {
   Compass,
   Briefcase,
   BadgeCheck,
+  Banknote,
   Settings2,
   Terminal,
 } from "lucide-react";
@@ -83,6 +84,7 @@ const groups: LinkGroup[] = [
       { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
       { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
       { to: "/admin/paid-tenants", label: "المسددون", Icon: BadgeCheck, managerOnly: true },
+      { to: "/admin/collections-report", label: "تقرير التحصيلات", Icon: Banknote, managerOnly: true },
       { to: "/admin/interested", label: "المهتمون", Icon: MessageCircle, managerOnly: true },
       { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
       { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
