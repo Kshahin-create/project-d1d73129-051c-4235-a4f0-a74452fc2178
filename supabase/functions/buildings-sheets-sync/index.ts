@@ -574,7 +574,11 @@ Deno.serve(async (req) => {
       if (accountsSid !== undefined) formatReqs.push(...buildDataTabRequests(accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length));
       if (invoicesSid !== undefined) formatReqs.push(...buildDataTabRequests(invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length));
       if (leadsSid !== undefined) formatReqs.push(...buildDataTabRequests(leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length));
-      if (dashSid !== undefined) formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
+      if (dashSid !== undefined) {
+        formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
+        // keep the dashboard as the first tab
+        formatReqs.push({ updateSheetProperties: { properties: { sheetId: dashSid, index: 0 }, fields: "index" } });
+      }
       await safeBatch(sheetId, formatReqs);
     }
 
