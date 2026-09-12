@@ -534,8 +534,22 @@ Deno.serve(async (req) => {
       // === Tenant accounts tab ===
       const accountsHeader = ["الاسم","الجوال","البريد","الاسم التجاري","النشاط","السجل التجاري","إجمالي العقود","المدفوع","المتبقي","ملاحظات","تاريخ الإنشاء"];
       const accountsRows: (string|number)[][] = [accountsHeader];
+      // paid per account = sum of actual collections on its linked units (same source
+      // as the collections report). Stored paid_amount is used only for accounts that
+      // have no linked units at all.
+      const accCollected = new Map<string, number>();
+      const accHasUnits = new Set<string>();
+      (tau||[]).forEach((l:any) => {
+        if (!l.tenant_account_id || !l.unit_id) return;
+        accHasUnits.add(l.tenant_account_id);
+        const add = unitPaid.get(l.unit_id) || 0;
+        if (add) accCollected.set(l.tenant_account_id, (accCollected.get(l.tenant_account_id) || 0) + add);
+      });
       for (const a of (accs||[])) {
-        const total = Number(a.total_price)||0; const paid = Number(a.paid_amount)||0;
+        const total = Number(a.total_price)||0;
+        const paid = accHasUnits.has(a.id)
+          ? (accCollected.get(a.id) || 0)
+          : (Number(a.paid_amount)||0);
         accountsRows.push([
           a.full_name || "", fmtPhone(a.phone||""), a.email || "", a.business_name || "",
           a.activity_type || "", a.cr_number ? "'"+a.cr_number : "",
@@ -543,6 +557,7 @@ Deno.serve(async (req) => {
           a.created_at ? new Date(a.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
+
       pendingWrites.push({ tab: ACCOUNTS_TAB, rows: accountsRows });
       const accountsSid = tabIds.get(ACCOUNTS_TAB);
 
