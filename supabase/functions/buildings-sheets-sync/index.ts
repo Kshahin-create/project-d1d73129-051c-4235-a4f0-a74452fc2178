@@ -62,6 +62,7 @@ const TENANTS_TAB = "المستأجرين";
 const ACCOUNTS_TAB = "حسابات المستأجرين";
 const INVOICES_TAB = "الفواتير";
 const LEADS_TAB = "العملاء المحتملين";
+const COLLECTIONS_TAB = "تقرير التحصيلات";
 
 async function getOrCreateTabs(sheetId: string, titles: string[]): Promise<Map<string, number>> {
   const meta = await gw(`/${sheetId}`);
@@ -137,6 +138,7 @@ function moneyCols(tab: string): number[] {
   if (tab === BOOKINGS_TAB) return [9, 10, 11];
   if (tab === ACCOUNTS_TAB) return [6, 7, 8];
   if (tab === INVOICES_TAB) return [5, 6, 7];
+  if (tab === COLLECTIONS_TAB) return [5, 6, 8]; // price, collected, remaining
   return [];
 }
 
@@ -379,7 +381,7 @@ Deno.serve(async (req) => {
     if (action === "push") {
       const titles = [
         ...buildings.map(b => tabName(b)),
-        DASHBOARD_TAB, BOOKINGS_TAB, TENANTS_TAB, ACCOUNTS_TAB, INVOICES_TAB, LEADS_TAB,
+        DASHBOARD_TAB, BOOKINGS_TAB, TENANTS_TAB, ACCOUNTS_TAB, INVOICES_TAB, LEADS_TAB, COLLECTIONS_TAB,
       ];
       const tabIds = await getOrCreateTabs(sheetId, titles);
 
@@ -561,6 +563,50 @@ Deno.serve(async (req) => {
       pendingWrites.push({ tab: DASHBOARD_TAB, rows: dash.rows });
       const dashSid = tabIds.get(DASHBOARD_TAB);
 
+      // === Collections Report tab ===
+      const unitPaymentsCount = new Map<string, number>();
+      (collections||[]).forEach((c:any) => {
+        if (!c.unit_id || c.is_archived) return;
+        unitPaymentsCount.set(c.unit_id, (unitPaymentsCount.get(c.unit_id) || 0) + 1);
+      });
+      const accById2 = new Map<string, any>();
+      (accs||[]).forEach((a:any) => accById2.set(a.id, a));
+      const accByUnit = new Map<string, any>();
+      (tau||[]).forEach((l:any) => {
+        const acc = accById2.get(l.tenant_account_id);
+        if (acc) accByUnit.set(l.unit_id, acc);
+      });
+      const collectionsHeader = ["المبنى","الوحدة","الحالة","المستأجر","المنشأة","سعر الوحدة","المحصّل","عدد الدفعات","المتبقي"];
+      const collectionsData: (string|number)[][] = [];
+      const activeUnits = (units||[]).filter((u:any) => u.status === "rented" || u.status === "reserved" || u.status === "booked");
+      for (const u of activeUnits) {
+        const t = tenantMap.get(u.id) || {};
+        const acc = accByUnit.get(u.id) || {};
+        const price = Number(u.price) || 0;
+        const collected = unitPaid.get(u.id) || 0;
+        const payments = unitPaymentsCount.get(u.id) || 0;
+        collectionsData.push([
+          Number(u.building_number) || "",
+          Number(u.unit_number) || "",
+          STATUS_AR[u.status] || u.status || "",
+          t.tenant_name || acc.full_name || "",
+          t.business_name || acc.business_name || "",
+          price,
+          collected,
+          payments,
+          Math.max(0, price - collected),
+        ]);
+      }
+      // sort by building then unit
+      collectionsData.sort((a, b) => {
+        const ab = Number(a[0]) || 0, bb = Number(b[0]) || 0;
+        if (ab !== bb) return ab - bb;
+        return (Number(a[1]) || 0) - (Number(b[1]) || 0);
+      });
+      const collectionsRows = [collectionsHeader, ...collectionsData];
+      pendingWrites.push({ tab: COLLECTIONS_TAB, rows: collectionsRows });
+      const collectionsSid = tabIds.get(COLLECTIONS_TAB);
+
       // Flush all writes in 2 calls (batchClear + batchUpdate)
       await flushWrites(sheetId, pendingWrites);
 
@@ -574,6 +620,7 @@ Deno.serve(async (req) => {
       if (accountsSid !== undefined) formatReqs.push(...buildDataTabRequests(accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length));
       if (invoicesSid !== undefined) formatReqs.push(...buildDataTabRequests(invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length));
       if (leadsSid !== undefined) formatReqs.push(...buildDataTabRequests(leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length));
+      if (collectionsSid !== undefined) formatReqs.push(...buildDataTabRequests(collectionsSid, COLLECTIONS_TAB, collectionsHeader.length, collectionsRows.length));
       if (dashSid !== undefined) {
         formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
         // keep the dashboard as the first tab
