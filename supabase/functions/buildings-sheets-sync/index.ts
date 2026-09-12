@@ -62,6 +62,7 @@ const TENANTS_TAB = "المستأجرين";
 const ACCOUNTS_TAB = "حسابات المستأجرين";
 const INVOICES_TAB = "الفواتير";
 const LEADS_TAB = "العملاء المحتملين";
+const COLLECTIONS_TAB = "تقرير التحصيلات";
 
 async function getOrCreateTabs(sheetId: string, titles: string[]): Promise<Map<string, number>> {
   const meta = await gw(`/${sheetId}`);
@@ -137,6 +138,7 @@ function moneyCols(tab: string): number[] {
   if (tab === BOOKINGS_TAB) return [9, 10, 11];
   if (tab === ACCOUNTS_TAB) return [6, 7, 8];
   if (tab === INVOICES_TAB) return [5, 6, 7];
+  if (tab === COLLECTIONS_TAB) return [5, 6, 8]; // price, collected, remaining
   return [];
 }
 
