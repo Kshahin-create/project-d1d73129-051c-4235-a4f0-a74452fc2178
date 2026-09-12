@@ -450,7 +450,7 @@ Deno.serve(async (req) => {
           const t = tenantMap.get(u.id) || {};
           const price = Number(u.price) || 0;
           const paid = unitPaid.get(u.id) || 0;
-          const remaining = price - paid;
+          const remaining = Math.max(0, price - paid);
           stat.total++; stat.priceTotal += price; stat.paid += paid;
           if (u.status === "available") stat.available++;
           else if (u.status === "reserved") { stat.reserved++; stat.priceReserved += price; }
