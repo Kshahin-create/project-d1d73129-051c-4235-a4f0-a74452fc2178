@@ -243,7 +243,7 @@ export default function AdminCollectionsReport() {
               {fmt(totals.collected)} ريال
             </div>
             <div className="text-xs text-muted-foreground">
-              {totals.payments} دفعة مسجلة
+              <span lang="en">{fmt(totals.payments)}</span> دفعة مسجلة
             </div>
           </div>
           <div className="rounded-xl border bg-card p-4">
@@ -251,9 +251,9 @@ export default function AdminCollectionsReport() {
               <Building2 className="h-4 w-4" />
               الوحدات الشغالة
             </div>
-            <div className="mt-2 text-2xl font-bold">{totals.units}</div>
+            <div className="mt-2 text-2xl font-bold" lang="en">{fmt(totals.units)}</div>
             <div className="text-xs text-muted-foreground">
-              {totals.withCollection} عليها تحصيل
+              <span lang="en">{fmt(totals.withCollection)}</span> عليها تحصيل
             </div>
           </div>
           <div className="rounded-xl border bg-card p-4">
@@ -295,14 +295,14 @@ export default function AdminCollectionsReport() {
               <tbody>
                 {perBuilding.map(([b, v]) => (
                   <tr key={b} className="border-b last:border-0">
-                    <td className="px-4 py-2 font-medium">مبنى {b}</td>
-                    <td className="px-4 py-2">{v.units}</td>
+                    <td className="px-4 py-2 font-medium">مبنى <span lang="en">{fmt(b)}</span></td>
+                    <td className="px-4 py-2" lang="en">{fmt(v.units)}</td>
                     <td className="px-4 py-2 font-semibold text-primary">
                       {fmt(v.collected)} ريال
                     </td>
                     <td className="px-4 py-2">{fmt(v.price)} ريال</td>
-                    <td className="px-4 py-2">
-                      {v.price > 0 ? fmt((v.collected / v.price) * 100) : 0}%
+                    <td className="px-4 py-2" lang="en">
+                      {v.price > 0 ? fmt((v.collected / v.price) * 100) : fmt(0)}%
                     </td>
                   </tr>
                 ))}
@@ -330,7 +330,7 @@ export default function AdminCollectionsReport() {
             <option value="all">كل المباني</option>
             {buildings.map((b) => (
               <option key={b} value={String(b)}>
-                مبنى {b}
+                مبنى <span lang="en">{fmt(b)}</span>
               </option>
             ))}
           </select>
@@ -360,8 +360,8 @@ export default function AdminCollectionsReport() {
               <tbody>
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2">{r.building_number}</td>
-                    <td className="px-3 py-2 font-medium">{r.unit_number}</td>
+                    <td className="px-3 py-2" lang="en">{fmt(r.building_number)}</td>
+                    <td className="px-3 py-2 font-medium" lang="en">{fmt(r.unit_number)}</td>
                     <td className="px-3 py-2">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs ${
@@ -375,12 +375,12 @@ export default function AdminCollectionsReport() {
                     </td>
                     <td className="px-3 py-2">{r.tenant_name ?? "—"}</td>
                     <td className="px-3 py-2">{r.tenant_business ?? "—"}</td>
-                    <td className="px-3 py-2">{fmt(r.price)}</td>
-                    <td className="px-3 py-2 font-semibold text-primary">
+                    <td className="px-3 py-2" lang="en">{fmt(r.price)}</td>
+                    <td className="px-3 py-2 font-semibold text-primary" lang="en">
                       {fmt(r.collected)}
                     </td>
-                    <td className="px-3 py-2">{r.payments_count}</td>
-                    <td className="px-3 py-2">{fmt(Math.max(0, r.price - r.collected))}</td>
+                    <td className="px-3 py-2" lang="en">{fmt(r.payments_count)}</td>
+                    <td className="px-3 py-2" lang="en">{fmt(Math.max(0, r.price - r.collected))}</td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
@@ -395,12 +395,12 @@ export default function AdminCollectionsReport() {
                 <tfoot>
                   <tr className="bg-muted/50 font-semibold">
                     <td className="px-3 py-2" colSpan={5}>
-                      الإجمالي ({filtered.length} وحدة)
+                      الإجمالي (<span lang="en">{fmt(filtered.length)}</span> وحدة)
                     </td>
-                    <td className="px-3 py-2">{fmt(totals.prices)}</td>
-                    <td className="px-3 py-2 text-primary">{fmt(totals.collected)}</td>
-                    <td className="px-3 py-2">{totals.payments}</td>
-                    <td className="px-3 py-2">{fmt(Math.max(0, totals.prices - totals.collected))}</td>
+                    <td className="px-3 py-2" lang="en">{fmt(totals.prices)}</td>
+                    <td className="px-3 py-2 text-primary" lang="en">{fmt(totals.collected)}</td>
+                    <td className="px-3 py-2" lang="en">{fmt(totals.payments)}</td>
+                    <td className="px-3 py-2" lang="en">{fmt(Math.max(0, totals.prices - totals.collected))}</td>
                   </tr>
                 </tfoot>
               )}
