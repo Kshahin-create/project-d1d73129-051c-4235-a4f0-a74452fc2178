@@ -403,6 +403,7 @@ Deno.serve(async (req) => {
         admin.from("booking_units").select("booking_id, building_number, unit_number, unit_type, area, price, activity"),
         admin.from("invoices").select("invoice_number, customer_name, customer_phone, customer_business, cr_number, amount, paid_amount, paid, paid_at, payment_method, notes, created_at"),
         admin.from("leads").select("full_name, phone, status, notes, last_message_at, created_at"),
+        admin.from("unit_collections").select("unit_id, amount, is_archived"),
       ]);
 
       const tenantMap = new Map<string, any>();
