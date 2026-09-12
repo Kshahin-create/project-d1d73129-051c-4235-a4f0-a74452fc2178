@@ -385,6 +385,15 @@ Deno.serve(async (req) => {
       ];
       const tabIds = await getOrCreateTabs(sheetId, titles);
 
+      // Remove any leftover merged cells on every tab BEFORE writing values —
+      // merged cells swallow all but the top-left value and corrupt the data grid.
+      const unmergeReqs = Array.from(tabIds.values())
+        .filter((sid) => sid !== undefined)
+        .map((sid) => ({ unmergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 2000, startColumnIndex: 0, endColumnIndex: 26 } } }));
+      for (const r of unmergeReqs) await safeBatch(sheetId, [r]);
+
+
+
       // Fetch all data once
       const [
         { data: units },
