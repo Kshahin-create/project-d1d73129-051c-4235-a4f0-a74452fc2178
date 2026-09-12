@@ -569,15 +569,15 @@ Deno.serve(async (req) => {
         if (!c.unit_id || c.is_archived) return;
         unitPaymentsCount.set(c.unit_id, (unitPaymentsCount.get(c.unit_id) || 0) + 1);
       });
-      const accById = new Map<string, any>();
-      (accs||[]).forEach((a:any) => accById.set(a.id, a));
+      const accById2 = new Map<string, any>();
+      (accs||[]).forEach((a:any) => accById2.set(a.id, a));
       const accByUnit = new Map<string, any>();
       (tau||[]).forEach((l:any) => {
-        const acc = accById.get(l.tenant_account_id);
+        const acc = accById2.get(l.tenant_account_id);
         if (acc) accByUnit.set(l.unit_id, acc);
       });
       const collectionsHeader = ["المبنى","الوحدة","الحالة","المستأجر","المنشأة","سعر الوحدة","المحصّل","عدد الدفعات","المتبقي"];
-      const collectionsRows: (string|number)[][] = [collectionsHeader];
+      const collectionsData: (string|number)[][] = [];
       const activeUnits = (units||[]).filter((u:any) => u.status === "rented" || u.status === "reserved" || u.status === "booked");
       for (const u of activeUnits) {
         const t = tenantMap.get(u.id) || {};
@@ -585,7 +585,7 @@ Deno.serve(async (req) => {
         const price = Number(u.price) || 0;
         const collected = unitPaid.get(u.id) || 0;
         const payments = unitPaymentsCount.get(u.id) || 0;
-        collectionsRows.push([
+        collectionsData.push([
           Number(u.building_number) || "",
           Number(u.unit_number) || "",
           STATUS_AR[u.status] || u.status || "",
@@ -598,13 +598,12 @@ Deno.serve(async (req) => {
         ]);
       }
       // sort by building then unit
-      collectionsRows.sort((a, b) => {
+      collectionsData.sort((a, b) => {
         const ab = Number(a[0]) || 0, bb = Number(b[0]) || 0;
         if (ab !== bb) return ab - bb;
         return (Number(a[1]) || 0) - (Number(b[1]) || 0);
       });
-      // re-insert header at top after sort
-      collectionsRows.unshift(collectionsHeader);
+      const collectionsRows = [collectionsHeader, ...collectionsData];
       pendingWrites.push({ tab: COLLECTIONS_TAB, rows: collectionsRows });
       const collectionsSid = tabIds.get(COLLECTIONS_TAB);
 
