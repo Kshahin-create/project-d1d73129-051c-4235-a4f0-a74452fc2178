@@ -381,7 +381,7 @@ Deno.serve(async (req) => {
     if (action === "push") {
       const titles = [
         ...buildings.map(b => tabName(b)),
-        DASHBOARD_TAB, BOOKINGS_TAB, TENANTS_TAB, ACCOUNTS_TAB, INVOICES_TAB, LEADS_TAB,
+        DASHBOARD_TAB, BOOKINGS_TAB, TENANTS_TAB, ACCOUNTS_TAB, INVOICES_TAB, LEADS_TAB, COLLECTIONS_TAB,
       ];
       const tabIds = await getOrCreateTabs(sheetId, titles);
 
