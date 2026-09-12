@@ -390,7 +390,11 @@ Deno.serve(async (req) => {
       const unmergeReqs = Array.from(tabIds.values())
         .filter((sid) => sid !== undefined)
         .map((sid) => ({ unmergeCells: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 2000, startColumnIndex: 0, endColumnIndex: 26 } } }));
-      for (const r of unmergeReqs) await safeBatch(sheetId, [r]);
+      try {
+        await gw(`/${sheetId}:batchUpdate`, { method: "POST", body: JSON.stringify({ requests: unmergeReqs }) });
+      } catch {
+        for (const r of unmergeReqs) await safeBatch(sheetId, [r]);
+      }
 
 
 
