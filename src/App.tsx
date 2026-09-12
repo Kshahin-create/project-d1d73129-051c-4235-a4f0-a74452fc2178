@@ -74,6 +74,7 @@ const App = () => (
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/how-to-book" element={<HowToBook />} />
           <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
+          <Route path="/admin/paid-tenants" element={<AdminPaidTenants />} />
           <Route path="/tenant" element={<TenantPortal />} />
           <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
           <Route path="/invoice/:id" element={<Invoice />} />
