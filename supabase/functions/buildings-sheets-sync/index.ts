@@ -411,8 +411,15 @@ Deno.serve(async (req) => {
       const accPaid = new Map<string, number>();
       (accs||[]).forEach((a:any) => accPaid.set(a.id, Number(a.paid_amount) || 0));
       const unitPaid = new Map<string, number>();
+      const hasCollections = new Set<string>();
+      (collections||[]).forEach((c:any) => {
+        if (!c.unit_id || c.is_archived) return;
+        hasCollections.add(c.unit_id);
+        unitPaid.set(c.unit_id, (unitPaid.get(c.unit_id) || 0) + (Number(c.amount) || 0));
+      });
+      // fallback: units without recorded collections use their tenant account paid amount
       (tau||[]).forEach((l:any) => {
-        if (!l.unit_id) return;
+        if (!l.unit_id || hasCollections.has(l.unit_id)) return;
         const p = accPaid.get(l.tenant_account_id) || 0;
         unitPaid.set(l.unit_id, (unitPaid.get(l.unit_id) || 0) + p);
       });
