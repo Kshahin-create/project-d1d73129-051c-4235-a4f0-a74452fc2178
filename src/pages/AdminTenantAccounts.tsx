@@ -203,17 +203,19 @@ export default function AdminTenantAccounts() {
     );
   }
 
-  const filtered = rows.filter((r) => {
-    if (!matchesFilter(r, filterKey)) return false;
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      r.full_name.toLowerCase().includes(q) ||
-      (r.email ?? "").toLowerCase().includes(q) ||
-      (r.phone ?? "").toLowerCase().includes(q) ||
-      (r.business_name ?? "").toLowerCase().includes(q)
-    );
-  });
+  const filtered = rows
+    .filter((r) => {
+      if (!matchesFilter(r, filterKey)) return false;
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        r.full_name.toLowerCase().includes(q) ||
+        (r.email ?? "").toLowerCase().includes(q) ||
+        (r.phone ?? "").toLowerCase().includes(q) ||
+        (r.business_name ?? "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const filterChips: { id: FilterKey; label: string }[] = [
     { id: "all", label: "الكل" },
