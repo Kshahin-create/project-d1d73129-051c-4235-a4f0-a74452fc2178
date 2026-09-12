@@ -166,7 +166,7 @@ export default function AdminPaidTenants() {
           "إجمالي المحصل": t.collected_total ?? 0,
         });
       } else {
-        for (const u of units) {
+        units.forEach((u, idx) => {
           rows.push({
             "اسم المستأجر أو المنشأة": t.full_name,
             "العلامة التجارية": t.business_name || "",
