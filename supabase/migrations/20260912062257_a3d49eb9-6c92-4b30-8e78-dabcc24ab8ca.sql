@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_tenant_paid_from_collections() FROM PUBLIC, anon, authenticated;
