@@ -27,6 +27,7 @@ import {
   Database,
   Compass,
   Briefcase,
+  BadgeCheck,
   Settings2,
   Terminal,
 } from "lucide-react";
@@ -81,6 +82,7 @@ const groups: LinkGroup[] = [
     links: [
       { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
       { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
+      { to: "/admin/paid-tenants", label: "المسددون", Icon: BadgeCheck, managerOnly: true },
       { to: "/admin/interested", label: "المهتمون", Icon: MessageCircle, managerOnly: true },
       { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
     ],
