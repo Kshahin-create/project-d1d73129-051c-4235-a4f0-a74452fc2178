@@ -400,7 +400,7 @@ Deno.serve(async (req) => {
         admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").in("building_number", buildings).order("building_number").order("unit_number"),
         admin.from("tenants").select("id, unit_id, tenant_name, phone, business_name, activity_type, cr_number, start_date, end_date, notes, created_at"),
         admin.from("tenant_account_units").select("unit_id, tenant_account_id"),
-        admin.from("tenant_accounts").select("id, full_name, phone, email, business_name, activity_type, cr_number, total_price, paid_amount, notes, created_at"),
+        admin.from("tenant_accounts").select("id, full_name, phone, email, business_name, activity_type, cr_number, total_price, paid_amount, notes, created_at").is("merged_into", null),
         admin.from("bookings").select("id, customer_full_name, customer_phone, customer_email, business_name, cr_number, total_area, total_price, paid_amount, units_count, status, payment_plan, offer_number, notes, created_at, expires_at"),
         admin.from("booking_units").select("booking_id, building_number, unit_number, unit_type, area, price, activity"),
         admin.from("invoices").select("invoice_number, customer_name, customer_phone, customer_business, cr_number, amount, paid_amount, paid, paid_at, payment_method, notes, created_at"),
