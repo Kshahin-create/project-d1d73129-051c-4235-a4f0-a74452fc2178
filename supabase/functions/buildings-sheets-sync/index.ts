@@ -620,6 +620,7 @@ Deno.serve(async (req) => {
       if (accountsSid !== undefined) formatReqs.push(...buildDataTabRequests(accountsSid, ACCOUNTS_TAB, accountsHeader.length, accountsRows.length));
       if (invoicesSid !== undefined) formatReqs.push(...buildDataTabRequests(invoicesSid, INVOICES_TAB, invoicesHeader.length, invoicesRows.length));
       if (leadsSid !== undefined) formatReqs.push(...buildDataTabRequests(leadsSid, LEADS_TAB, leadsHeader.length, leadsRows.length));
+      if (collectionsSid !== undefined) formatReqs.push(...buildDataTabRequests(collectionsSid, COLLECTIONS_TAB, collectionsHeader.length, collectionsRows.length));
       if (dashSid !== undefined) {
         formatReqs.push(...buildDashboardRequests(dashSid, dash.rows.length, dash.sectionRows, dash.tableHeaderRows));
         // keep the dashboard as the first tab
