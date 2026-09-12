@@ -113,7 +113,7 @@ export default function AdminPaidTenants() {
 
       const all = (accRes.data as TenantRow[]) ?? [];
       setTenants(
-        all.filter((t) => Number(t.total_price) > 0 && Number(t.paid_amount) >= Number(t.total_price)),
+        all.filter((t) => Number(t.paid_amount) > 0),
       );
     } catch (e: any) {
       toast.error(e?.message ?? "تعذر تحميل البيانات");
