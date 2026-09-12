@@ -418,7 +418,7 @@ Deno.serve(async (req) => {
         admin.from("booking_units").select("booking_id, building_number, unit_number, unit_type, area, price, activity"),
         admin.from("invoices").select("invoice_number, customer_name, customer_phone, customer_business, cr_number, amount, paid_amount, paid, paid_at, payment_method, notes, created_at"),
         admin.from("leads").select("full_name, phone, status, notes, last_message_at, created_at"),
-        admin.from("unit_collections").select("unit_id, amount, is_archived"),
+        admin.from("unit_collections").select("unit_id, tenant_account_id, amount, is_archived"),
       ]);
 
       const unitStatus = new Map<string, string>();
@@ -534,22 +534,18 @@ Deno.serve(async (req) => {
       // === Tenant accounts tab ===
       const accountsHeader = ["الاسم","الجوال","البريد","الاسم التجاري","النشاط","السجل التجاري","إجمالي العقود","المدفوع","المتبقي","ملاحظات","تاريخ الإنشاء"];
       const accountsRows: (string|number)[][] = [accountsHeader];
-      // paid per account = sum of actual collections on its linked units (same source
-      // as the collections report). Stored paid_amount is used only for accounts that
-      // have no linked units at all.
+      // paid per account = sum of actual, non-archived collections recorded for that
+      // account. Never fall back to tenant_accounts.paid_amount, because legacy values
+      // there can exist without units or collection records and inflate the sheet total.
       const accCollected = new Map<string, number>();
-      const accHasUnits = new Set<string>();
-      (tau||[]).forEach((l:any) => {
-        if (!l.tenant_account_id || !l.unit_id) return;
-        accHasUnits.add(l.tenant_account_id);
-        const add = unitPaid.get(l.unit_id) || 0;
-        if (add) accCollected.set(l.tenant_account_id, (accCollected.get(l.tenant_account_id) || 0) + add);
+      (collections||[]).forEach((c:any) => {
+        if (!c.tenant_account_id || c.is_archived) return;
+        const amount = Number(c.amount) || 0;
+        accCollected.set(c.tenant_account_id, (accCollected.get(c.tenant_account_id) || 0) + amount);
       });
       for (const a of (accs||[])) {
         const total = Number(a.total_price)||0;
-        const paid = accHasUnits.has(a.id)
-          ? (accCollected.get(a.id) || 0)
-          : (Number(a.paid_amount)||0);
+        const paid = accCollected.get(a.id) || 0;
         accountsRows.push([
           a.full_name || "", fmtPhone(a.phone||""), a.email || "", a.business_name || "",
           a.activity_type || "", a.cr_number ? "'"+a.cr_number : "",
