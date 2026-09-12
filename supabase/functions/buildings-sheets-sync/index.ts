@@ -393,6 +393,7 @@ Deno.serve(async (req) => {
         { data: bookingUnits },
         { data: invoices },
         { data: leads },
+        { data: collections },
       ] = await Promise.all([
         admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").in("building_number", buildings).order("building_number").order("unit_number"),
         admin.from("tenants").select("id, unit_id, tenant_name, phone, business_name, activity_type, cr_number, start_date, end_date, notes, created_at"),
