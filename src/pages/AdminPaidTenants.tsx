@@ -217,7 +217,7 @@ export default function AdminPaidTenants() {
           <div>
             <h1 className="font-display text-2xl font-bold">المستأجرون المسددون</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              المستأجرون الذين سددوا كامل المستحق عليهم — مع تفاصيل الوحدات والتحصيلات والملفات
+              كل المستأجرين الذين سددوا أي دفعات — مع تفاصيل الوحدات والتحصيلات والملفات
             </p>
           </div>
           <button
@@ -277,9 +277,15 @@ export default function AdminPaidTenants() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="font-display text-lg font-bold">{t.full_name}</h2>
-                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
-                          مسدد بالكامل
-                        </span>
+                        {Number(t.paid_amount) >= Number(t.total_price) && Number(t.total_price) > 0 ? (
+                          <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+                            مسدد بالكامل
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
+                            مسدد جزئياً
+                          </span>
+                        )}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         {t.business_name && <span>العلامة التجارية: {t.business_name}</span>}
