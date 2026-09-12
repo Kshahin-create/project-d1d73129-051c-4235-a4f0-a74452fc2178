@@ -266,102 +266,155 @@ export default function AdminPaidTenants() {
             لا يوجد مستأجرون مسددون حالياً
           </div>
         ) : (
-          <div className="space-y-4">
-            {filtered.map((t) => {
-              const units = unitsByTenant.get(t.id) ?? [];
-              const files = filesByTenant.get(t.id) ?? [];
-              return (
-                <div key={t.id} className="rounded-2xl border border-border bg-card p-5">
-                  {/* Tenant header */}
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="font-display text-lg font-bold">{t.full_name}</h2>
-                        {Number(t.paid_amount) >= Number(t.total_price) && Number(t.total_price) > 0 ? (
-                          <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
-                            مسدد بالكامل
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
-                            مسدد جزئياً
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        {t.business_name && <span>العلامة التجارية: {t.business_name}</span>}
-                        {t.activity_type && <span>النشاط: {t.activity_type}</span>}
-                        {t.cr_number && <span>الرقم الوطني: {t.cr_number}</span>}
-                        {t.phone && <span dir="ltr">{t.phone}</span>}
-                        {t.email && <span dir="ltr">{t.email}</span>}
-                      </div>
-                    </div>
-                    <div className="text-left text-sm">
-                      <div className="text-xs text-muted-foreground">إجمالي المحصل</div>
-                      <div className="font-display text-lg font-bold text-primary">
-                        {fmt(Number(t.collected_total || 0))} ر.س
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        من أصل {fmt(Number(t.total_price || 0))} ر.س
-                      </div>
-                    </div>
-                  </div>
+          <div className="space-y-6">
+            {/* Unified exportable table */}
+            <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-secondary/50 text-xs text-muted-foreground">
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">المستأجر / المنشأة</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">العلامة التجارية</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">الرقم الوطني</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">النشاط</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">الجوال</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">المبنى</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">الوحدة</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">النوع</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">المساحة</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">سعر الوحدة</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">المسدد على الوحدة</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">الملفات</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">إجمالي المحصل</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.flatMap((t) => {
+                    const units = unitsByTenant.get(t.id) ?? [];
+                    const files = filesByTenant.get(t.id) ?? [];
+                    const filesText = files.join("، ");
+                    const isFullyPaid = Number(t.paid_amount) >= Number(t.total_price) && Number(t.total_price) > 0;
+                    if (units.length === 0) {
+                      return [
+                        <tr key={t.id} className="border-b border-border/50 last:border-0">
+                          <td className="px-3 py-3 font-medium">{t.full_name}</td>
+                          <td className="px-3 py-3">{t.business_name || "—"}</td>
+                          <td className="px-3 py-3">{t.cr_number || "—"}</td>
+                          <td className="px-3 py-3">{t.activity_type || "—"}</td>
+                          <td className="px-3 py-3" dir="ltr">{t.phone || "—"}</td>
+                          <td className="px-3 py-3">—</td>
+                          <td className="px-3 py-3">—</td>
+                          <td className="px-3 py-3">—</td>
+                          <td className="px-3 py-3">—</td>
+                          <td className="px-3 py-3">—</td>
+                          <td className="px-3 py-3">—</td>
+                          <td className="px-3 py-3 max-w-xs truncate">{filesText || "—"}</td>
+                          <td className="px-3 py-3 font-medium">{fmt(Number(t.collected_total || 0))} ر.س</td>
+                          <td className="px-3 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${isFullyPaid ? "bg-green-500/10 text-green-600" : "bg-amber-500/10 text-amber-600"}`}>
+                              {isFullyPaid ? "مسدد بالكامل" : "مسدد جزئياً"}
+                            </span>
+                          </td>
+                        </tr>,
+                      ];
+                    }
+                    return units.map((u, idx) => (
+                      <tr key={`${t.id}-${u.unit_id}`} className="border-b border-border/50 last:border-0">
+                        <td className="px-3 py-3 font-medium">{t.full_name}</td>
+                        <td className="px-3 py-3">{t.business_name || "—"}</td>
+                        <td className="px-3 py-3">{t.cr_number || "—"}</td>
+                        <td className="px-3 py-3">{t.activity_type || "—"}</td>
+                        <td className="px-3 py-3" dir="ltr">{t.phone || "—"}</td>
+                        <td className="px-3 py-3">{u.building_number}</td>
+                        <td className="px-3 py-3">{u.unit_number}</td>
+                        <td className="px-3 py-3">{u.unit_type || "—"}</td>
+                        <td className="px-3 py-3">{fmt(u.area)} م²</td>
+                        <td className="px-3 py-3">{fmt(u.price)} ر.س</td>
+                        <td className="px-3 py-3 font-medium text-green-600">
+                          {fmt(paidByTenantUnit.get(`${t.id}:${u.unit_id}`) ?? 0)} ر.س
+                        </td>
+                        <td className="px-3 py-3 max-w-xs truncate">{idx === 0 ? filesText || "—" : "—"}</td>
+                        <td className="px-3 py-3 font-medium">{idx === 0 ? `${fmt(Number(t.collected_total || 0))} ر.س` : "—"}</td>
+                        <td className="px-3 py-3">
+                          {idx === 0 ? (
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${isFullyPaid ? "bg-green-500/10 text-green-600" : "bg-amber-500/10 text-amber-600"}`}>
+                              {isFullyPaid ? "مسدد بالكامل" : "مسدد جزئياً"}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </tr>
+                    ));
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                  {/* Units table */}
-                  {units.length > 0 && (
-                    <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border bg-secondary/50 text-xs text-muted-foreground">
-                            <th className="px-3 py-2 text-right font-medium">المبنى</th>
-                            <th className="px-3 py-2 text-right font-medium">الوحدة</th>
-                            <th className="px-3 py-2 text-right font-medium">النوع</th>
-                            <th className="px-3 py-2 text-right font-medium">المساحة</th>
-                            <th className="px-3 py-2 text-right font-medium">النشاط</th>
-                            <th className="px-3 py-2 text-right font-medium">سعر الوحدة</th>
-                            <th className="px-3 py-2 text-right font-medium">المسدد على الوحدة</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {units.map((u) => (
-                            <tr key={u.unit_id} className="border-b border-border/50 last:border-0">
-                              <td className="px-3 py-2">{u.building_number}</td>
-                              <td className="px-3 py-2">{u.unit_number}</td>
-                              <td className="px-3 py-2">{u.unit_type || "—"}</td>
-                              <td className="px-3 py-2">{fmt(u.area)} م²</td>
-                              <td className="px-3 py-2">{u.activity || "—"}</td>
-                              <td className="px-3 py-2">{fmt(u.price)} ر.س</td>
-                              <td className="px-3 py-2 font-medium text-green-600">
-                                {fmt(paidByTenantUnit.get(`${t.id}:${u.unit_id}`) ?? 0)} ر.س
-                              </td>
-                            </tr>
+            {/* Cards view */}
+            <div className="space-y-4">
+              {filtered.map((t) => {
+                const units = unitsByTenant.get(t.id) ?? [];
+                const files = filesByTenant.get(t.id) ?? [];
+                return (
+                  <div key={t.id} className="rounded-2xl border border-border bg-card p-5">
+                    {/* Tenant header */}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="font-display text-lg font-bold">{t.full_name}</h2>
+                          {Number(t.paid_amount) >= Number(t.total_price) && Number(t.total_price) > 0 ? (
+                            <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+                              مسدد بالكامل
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
+                              مسدد جزئياً
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                          {t.business_name && <span>العلامة التجارية: {t.business_name}</span>}
+                          {t.activity_type && <span>النشاط: {t.activity_type}</span>}
+                          {t.cr_number && <span>الرقم الوطني: {t.cr_number}</span>}
+                          {t.phone && <span dir="ltr">{t.phone}</span>}
+                          {t.email && <span dir="ltr">{t.email}</span>}
+                        </div>
+                      </div>
+                      <div className="text-left text-sm">
+                        <div className="text-xs text-muted-foreground">إجمالي المحصل</div>
+                        <div className="font-display text-lg font-bold text-primary">
+                          {fmt(Number(t.collected_total || 0))} ر.س
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          من أصل {fmt(Number(t.total_price || 0))} ر.س
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Files */}
+                    {files.length > 0 && (
+                      <div className="mt-4">
+                        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <FolderOpen className="h-3.5 w-3.5" />
+                          الملفات ({files.length})
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {files.map((name, i) => (
+                            <span
+                              key={i}
+                              className="rounded-lg bg-secondary px-2 py-1 text-xs"
+                            >
+                              {name}
+                            </span>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* Files */}
-                  {files.length > 0 && (
-                    <div className="mt-4">
-                      <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <FolderOpen className="h-3.5 w-3.5" />
-                        الملفات ({files.length})
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {files.map((name, i) => (
-                          <span
-                            key={i}
-                            className="rounded-lg bg-secondary px-2 py-1 text-xs"
-                          >
-                            {name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </main>
