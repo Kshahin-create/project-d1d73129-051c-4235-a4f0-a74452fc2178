@@ -300,7 +300,7 @@ function buildDashboardRows(perBuilding: BStat[]): { rows: (string|number)[][]; 
   const tableHeaderRows: number[] = [];
 
   rows.push(["لوحة المعلومات — مدينة المعجار", "", "", "", ""]);
-  rows.push([`آخر تحديث: ${new Date().toLocaleString("ar-EG", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""]);
+  rows.push([`آخر تحديث: ${new Date().toLocaleString("en-GB", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""]);
   rows.push(["", "", "", "", ""]);
 
   sectionRows.push(rows.length);
@@ -400,7 +400,7 @@ Deno.serve(async (req) => {
         admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").in("building_number", buildings).order("building_number").order("unit_number"),
         admin.from("tenants").select("id, unit_id, tenant_name, phone, business_name, activity_type, cr_number, start_date, end_date, notes, created_at"),
         admin.from("tenant_account_units").select("unit_id, tenant_account_id"),
-        admin.from("tenant_accounts").select("id, full_name, phone, email, business_name, activity_type, cr_number, total_price, paid_amount, notes, created_at"),
+        admin.from("tenant_accounts").select("id, full_name, phone, email, business_name, activity_type, cr_number, total_price, paid_amount, notes, created_at").is("merged_into", null),
         admin.from("bookings").select("id, customer_full_name, customer_phone, customer_email, business_name, cr_number, total_area, total_price, paid_amount, units_count, status, payment_plan, offer_number, notes, created_at, expires_at"),
         admin.from("booking_units").select("booking_id, building_number, unit_number, unit_type, area, price, activity"),
         admin.from("invoices").select("invoice_number, customer_name, customer_phone, customer_business, cr_number, amount, paid_amount, paid, paid_at, payment_method, notes, created_at"),
@@ -408,8 +408,16 @@ Deno.serve(async (req) => {
         admin.from("unit_collections").select("unit_id, amount, is_archived"),
       ]);
 
+      const unitStatus = new Map<string, string>();
+      (units||[]).forEach((u:any) => unitStatus.set(u.id, u.status));
       const tenantMap = new Map<string, any>();
-      (tenants||[]).forEach((t:any) => { if (t.unit_id) tenantMap.set(t.unit_id, t); });
+      (tenants||[]).forEach((t:any) => {
+        if (!t.unit_id) return;
+        // never show tenant data on an available unit (stale historical rows)
+        if (unitStatus.get(t.unit_id) === "available") return;
+        const prev = tenantMap.get(t.unit_id);
+        if (!prev || new Date(t.created_at||0) > new Date(prev.created_at||0)) tenantMap.set(t.unit_id, t);
+      });
       const accPaid = new Map<string, number>();
       (accs||[]).forEach((a:any) => accPaid.set(a.id, Number(a.paid_amount) || 0));
       const unitPaid = new Map<string, number>();
@@ -419,34 +427,10 @@ Deno.serve(async (req) => {
         hasCollections.add(c.unit_id);
         unitPaid.set(c.unit_id, (unitPaid.get(c.unit_id) || 0) + (Number(c.amount) || 0));
       });
-      // fallback: distribute each account's paid amount across its units that have
-      // no recorded collections — capped per unit at its price, never exceeding the
-      // account's remaining paid balance (prevents duplicating the paid amount on
-      // every unit of a multi-unit account).
-      const unitPrice = new Map<string, number>();
-      (units||[]).forEach((u:any) => unitPrice.set(u.id, Number(u.price) || 0));
-      const accUnits = new Map<string, string[]>();
-      (tau||[]).forEach((l:any) => {
-        if (!l.unit_id || !l.tenant_account_id) return;
-        const arr = accUnits.get(l.tenant_account_id) || [];
-        arr.push(l.unit_id);
-        accUnits.set(l.tenant_account_id, arr);
-      });
-      accUnits.forEach((unitIds, accId) => {
-        let remaining = accPaid.get(accId) || 0;
-        // subtract what's already attributed via collections on this account's units
-        unitIds.forEach((uid) => { if (hasCollections.has(uid)) remaining -= (unitPaid.get(uid) || 0); });
-        if (remaining <= 0) return;
-        const targets = unitIds.filter((uid) => !hasCollections.has(uid))
-          .sort((a, b) => (unitPrice.get(a) || 0) - (unitPrice.get(b) || 0));
-        for (const uid of targets) {
-          if (remaining <= 0) break;
-          const alloc = Math.min(remaining, unitPrice.get(uid) || 0);
-          if (alloc <= 0) continue;
-          unitPaid.set(uid, (unitPaid.get(uid) || 0) + alloc);
-          remaining -= alloc;
-        }
-      });
+      // NOTE: paid per unit comes ONLY from unit_collections (the same source as the
+      // in-app collections report). No fallback from tenant_accounts.paid_amount —
+      // that used to duplicate an account's paid amount across its units.
+
       const buMap = new Map<string, any[]>();
       (bookingUnits||[]).forEach((bu:any) => {
         const arr = buMap.get(bu.booking_id) || [];
@@ -466,7 +450,7 @@ Deno.serve(async (req) => {
           const t = tenantMap.get(u.id) || {};
           const price = Number(u.price) || 0;
           const paid = unitPaid.get(u.id) || 0;
-          const remaining = price - paid;
+          const remaining = Math.max(0, price - paid);
           stat.total++; stat.priceTotal += price; stat.paid += paid;
           if (u.status === "available") stat.available++;
           else if (u.status === "reserved") { stat.reserved++; stat.priceReserved += price; }
@@ -502,8 +486,8 @@ Deno.serve(async (req) => {
           bk.payment_plan === "full" ? "كامل" : bk.payment_plan === "70" ? "70%" : bk.payment_plan === "50" ? "50%" : (bk.payment_plan||""),
           BOOKING_STATUS_AR[bk.status] || bk.status || "",
           bk.notes || "",
-          bk.created_at ? new Date(bk.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
-          bk.expires_at ? new Date(bk.expires_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          bk.created_at ? new Date(bk.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
+          bk.expires_at ? new Date(bk.expires_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: BOOKINGS_TAB, rows: bookingsRows });
@@ -528,7 +512,7 @@ Deno.serve(async (req) => {
           t.tenant_name || "", fmtPhone(t.phone || ""), t.business_name || "",
           t.activity_type || "", t.cr_number ? "'"+t.cr_number : "",
           t.start_date || "", t.end_date || "", t.notes || "",
-          t.created_at ? new Date(t.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          t.created_at ? new Date(t.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: TENANTS_TAB, rows: tenantsRows });
@@ -543,7 +527,7 @@ Deno.serve(async (req) => {
           a.full_name || "", fmtPhone(a.phone||""), a.email || "", a.business_name || "",
           a.activity_type || "", a.cr_number ? "'"+a.cr_number : "",
           total, paid, total - paid, a.notes || "",
-          a.created_at ? new Date(a.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          a.created_at ? new Date(a.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: ACCOUNTS_TAB, rows: accountsRows });
@@ -559,9 +543,9 @@ Deno.serve(async (req) => {
           i.customer_business || "", i.cr_number ? "'"+i.cr_number : "",
           amt, pd, amt - pd, i.paid ? "مدفوعة" : "غير مدفوعة",
           i.payment_method || "",
-          i.paid_at ? new Date(i.paid_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          i.paid_at ? new Date(i.paid_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
           i.notes || "",
-          i.created_at ? new Date(i.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          i.created_at ? new Date(i.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: INVOICES_TAB, rows: invoicesRows });
@@ -573,8 +557,8 @@ Deno.serve(async (req) => {
       for (const l of (leads||[])) {
         leadsRows.push([
           l.full_name || "", fmtPhone(l.phone||""), l.status || "", l.notes || "",
-          l.last_message_at ? new Date(l.last_message_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
-          l.created_at ? new Date(l.created_at).toLocaleString("ar-EG",{timeZone:"Asia/Riyadh"}) : "",
+          l.last_message_at ? new Date(l.last_message_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
+          l.created_at ? new Date(l.created_at).toLocaleString("en-GB",{timeZone:"Asia/Riyadh"}) : "",
         ]);
       }
       pendingWrites.push({ tab: LEADS_TAB, rows: leadsRows });
@@ -600,7 +584,7 @@ Deno.serve(async (req) => {
       });
       const collectionsHeader = ["المبنى","الوحدة","الحالة","المستأجر","المنشأة","سعر الوحدة","المحصّل","عدد الدفعات","المتبقي"];
       const collectionsData: (string|number)[][] = [];
-      const activeUnits = (units||[]).filter((u:any) => u.status === "rented" || u.status === "reserved" || u.status === "booked");
+      const activeUnits = (units||[]).filter((u:any) => u.status === "rented" || u.status === "reserved");
       for (const u of activeUnits) {
         const t = tenantMap.get(u.id) || {};
         const acc = accByUnit.get(u.id) || {};
