@@ -138,13 +138,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Mark consumed
-    await supabase
-      .from("phone_otps")
-      .update({ consumed_at: new Date().toISOString() })
-      .eq("id", otp.id);
+    const markConsumed = async () => {
+      await supabase
+        .from("phone_otps")
+        .update({ consumed_at: new Date().toISOString() })
+        .eq("id", otp.id);
+    };
+
+    // Map auth errors to friendly Arabic messages (returned with status 200
+    // so the client shows the message instead of a generic non-2xx error).
+    const authErrorMessage = (err: any): string => {
+      const code = err?.code || "";
+      const m = String(err?.message || "");
+      if (code === "weak_password" || /weak|pwned/i.test(m)) {
+        return "كلمة المرور ضعيفة أو مسربة في تسريبات معروفة، اختر كلمة مرور أقوى";
+      }
+      if (code === "email_exists" || /already registered|already been registered/i.test(m)) {
+        return "هذا الحساب مسجل مسبقاً، استخدم تسجيل الدخول";
+      }
+      if (code === "phone_exists") {
+        return "هذا الرقم مسجل مسبقاً، استخدم تسجيل الدخول";
+      }
+      return m || "تعذر إتمام العملية";
+    };
 
     const aliasEmail = phoneToEmail(normalized);
+
     const userEmail = (email && typeof email === "string" && email.includes("@"))
       ? email.trim().toLowerCase()
       : aliasEmail;
@@ -177,8 +196,19 @@ Deno.serve(async (req) => {
             phone: normalized,
           },
         });
-      if (createErr) throw createErr;
+      if (createErr) {
+        // keep the OTP usable so the user can retry with a stronger password
+        return new Response(
+          JSON.stringify({ error: authErrorMessage(createErr) }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
       const user = created.user!;
+      await markConsumed();
+
 
       await supabase.from("customer_profiles").upsert(
         {
@@ -219,7 +249,14 @@ Deno.serve(async (req) => {
       prof.user_id,
       { password },
     );
-    if (updErr) throw updErr;
+    if (updErr) {
+      return new Response(JSON.stringify({ error: authErrorMessage(updErr) }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    await markConsumed();
+
 
     return new Response(
       JSON.stringify({ ok: true, login_email: prof.email || aliasEmail }),
