@@ -35,8 +35,7 @@ export const customerSchema = z.object({
   crNumber: z
     .string()
     .trim()
-    .min(5, "يرجى إدخال الرقم الوطني الموحد")
-    .max(50, "الرقم الوطني الموحد طويل جداً"),
+    .regex(/^700\d{7}$/, "الرقم الوطني الموحد يجب أن يكون 10 أرقام ويبدأ بـ 700"),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
