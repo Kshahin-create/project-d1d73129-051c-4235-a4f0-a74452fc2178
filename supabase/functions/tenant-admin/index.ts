@@ -74,7 +74,10 @@ Deno.serve(async (req) => {
         return json({ error: "الاسم مطلوب" }, 400);
       }
       if (!cr_number || !String(cr_number).trim()) {
-        return json({ error: "الرقم الوطني الموحد أو رقم الهوية مطلوب" }, 400);
+        return json({ error: "الرقم الوطني الموحد مطلوب" }, 400);
+      }
+      if (!/^700\d{7}$/.test(String(cr_number).trim())) {
+        return json({ error: "الرقم الوطني الموحد يجب أن يكون 10 أرقام ويبدأ بـ 700" }, 400);
       }
       if (!activity_type || !String(activity_type).trim()) {
         return json({ error: "النشاط مطلوب" }, 400);
@@ -187,8 +190,11 @@ Deno.serve(async (req) => {
         .single();
       if (!ta) return json({ error: "حساب غير موجود" }, 404);
 
-      // Enforce CR uniqueness on update too (if changed)
+      // Enforce CR format + uniqueness on update too (if changed)
       if (cr_number !== undefined && String(cr_number).trim() !== "") {
+        if (!/^700\d{7}$/.test(String(cr_number).trim())) {
+          return json({ error: "الرقم الوطني الموحد يجب أن يكون 10 أرقام ويبدأ بـ 700" }, 400);
+        }
         const { data: dup } = await admin
           .from("tenant_accounts")
           .select("id")
