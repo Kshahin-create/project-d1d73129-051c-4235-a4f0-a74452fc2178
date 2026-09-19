@@ -196,8 +196,19 @@ Deno.serve(async (req) => {
             phone: normalized,
           },
         });
-      if (createErr) throw createErr;
+      if (createErr) {
+        // keep the OTP usable so the user can retry with a stronger password
+        return new Response(
+          JSON.stringify({ error: authErrorMessage(createErr) }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
       const user = created.user!;
+      await markConsumed();
+
 
       await supabase.from("customer_profiles").upsert(
         {
