@@ -249,7 +249,14 @@ Deno.serve(async (req) => {
       prof.user_id,
       { password },
     );
-    if (updErr) throw updErr;
+    if (updErr) {
+      return new Response(JSON.stringify({ error: authErrorMessage(updErr) }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    await markConsumed();
+
 
     return new Response(
       JSON.stringify({ ok: true, login_email: prof.email || aliasEmail }),
