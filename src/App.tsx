@@ -17,6 +17,7 @@ import AuthMobileStart from "./pages/AuthMobileStart.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
 import AdminAudit from "./pages/AdminAudit.tsx";
+import AdminAccessLog from "./pages/AdminAccessLog.tsx";
 import AdminTenants from "./pages/AdminTenants.tsx";
 import AdminBookings from "./pages/AdminBookings.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
@@ -63,6 +64,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/audit" element={<AdminAudit />} />
+          <Route path="/admin/access-log" element={<AdminAccessLog />} />
           <Route path="/admin/tenants" element={<AdminTenants />} />
           <Route path="/admin/bookings" element={<AdminBookings />} />
           <Route path="/dashboard" element={<Dashboard />} />

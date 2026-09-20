@@ -31,6 +31,7 @@ import {
   Banknote,
   Settings2,
   Terminal,
+  Globe2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +98,7 @@ const groups: LinkGroup[] = [
     links: [
       { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
       { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
+      { to: "/admin/access-log", label: "سجل الدخول والأجهزة", Icon: Globe2, adminOnly: true },
       { to: "/admin/backup", label: "نسخ احتياطي", Icon: Database, adminOnly: true },
     ],
   },

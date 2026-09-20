@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { toast } from "sonner";
+import { logAccess } from "@/lib/accessLog";
 
 // 3 modes: login with phone+password, signup (phone OTP -> set password), forgot (phone OTP -> new password)
 type Mode = "login" | "signup" | "forgot";
@@ -237,6 +238,7 @@ const Auth = () => {
         lastError = error;
       }
       if (!signedIn) {
+        logAccess("login_failed", { email: ident });
         throw lastError ?? new Error("Invalid credentials");
       }
       const needsMfa = await checkMfaChallenge();

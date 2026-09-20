@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logAccess } from "@/lib/accessLog";
 import type { Session, User } from "@supabase/supabase-js";
 
 export const useAuth = () => {
@@ -24,9 +25,20 @@ export const useAuth = () => {
       setIsTenant(roles.includes("tenant"));
     };
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
+      if (event === "SIGNED_IN" && sess?.user) {
+        const key = `access_logged_${sess.user.id}_${sess.access_token.slice(-12)}`;
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          logAccess("sign_in", {
+            user_id: sess.user.id,
+            email: sess.user.email ?? null,
+            phone: sess.user.phone ?? null,
+          });
+        }
+      }
       if (sess?.user) {
         setTimeout(() => fetchRoles(sess.user.id), 0);
       } else {
