@@ -35,7 +35,7 @@ export const customerSchema = z.object({
   crNumber: z
     .string()
     .trim()
-    .regex(/^700\d{7}$/, "الرقم الوطني الموحد يجب أن يكون 10 أرقام ويبدأ بـ 700"),
+    .regex(/^7\d{8,9}$/, "الرقم الوطني الموحد يجب أن يكون 9 أو 10 أرقام ويبدأ بـ 7"),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
@@ -100,7 +100,7 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
       </Field>
 
       <Field label="الرقم الوطني الموحد" required error={errors.crNumber?.message}>
-        <Input {...register("crNumber")} dir="ltr" className="text-left" placeholder="7000000000" />
+        <Input {...register("crNumber")} dir="ltr" inputMode="numeric" maxLength={10} className="text-left" />
       </Field>
 
       <Field label="ملاحظات إضافية (اختياري)" error={errors.notes?.message}>

@@ -547,13 +547,13 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
   }, [cr_number]);
 
   const validEmail = (s: string) => !s || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
-  const validCr = (s: string) => /^700\d{7}$/.test(s.trim());
+  const validCr = (s: string) => /^7\d{8,9}$/.test(s.trim());
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!full_name.trim()) return toast.error("اسم المستأجر أو المنشأة مطلوب");
     if (!cr_number.trim()) return toast.error("الرقم الوطني الموحد مطلوب");
-    if (!validCr(cr_number)) return toast.error("الرقم الوطني الموحد يجب أن يكون 10 أرقام ويبدأ بـ 700");
+    if (!validCr(cr_number)) return toast.error("الرقم الوطني الموحد يجب أن يكون 9 أو 10 أرقام ويبدأ بـ 7");
     if (!activity_type.trim()) return toast.error("النشاط مطلوب");
     if (!phone || !isValidPhoneNumber(phone)) return toast.error("رقم الجوال غير صحيح");
     if (!validEmail(email)) return toast.error("البريد الإلكتروني غير صحيح");
@@ -597,8 +597,9 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
             onChange={(e) => setCrNumber(e.target.value)}
             className={inp}
             dir="ltr"
+            inputMode="numeric"
+            maxLength={10}
             required
-            placeholder="7000000000"
           />
           {checking && <div className="mt-1 text-[11px] text-muted-foreground">جارٍ التحقق...</div>}
           {duplicate && (
@@ -799,12 +800,12 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
   const [busy, setBusy] = useState(false);
 
   const validEmail = (s: string) => !s || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
-  const validCr = (s: string) => /^700\d{7}$/.test(s.trim());
+  const validCr = (s: string) => /^7\d{8,9}$/.test(s.trim());
 
   const save = async () => {
     if (!full_name.trim()) return toast.error("اسم المستأجر أو المنشأة مطلوب");
     if (!cr_number.trim()) return toast.error("الرقم الوطني الموحد مطلوب");
-    if (!validCr(cr_number)) return toast.error("الرقم الوطني الموحد يجب أن يكون 10 أرقام ويبدأ بـ 700");
+    if (!validCr(cr_number)) return toast.error("الرقم الوطني الموحد يجب أن يكون 9 أو 10 أرقام ويبدأ بـ 7");
     if (!activity_type.trim()) return toast.error("النشاط مطلوب");
     if (!phone || !isValidPhoneNumber(phone)) return toast.error("رقم الجوال غير صحيح");
     if (!validEmail(email)) return toast.error("البريد الإلكتروني غير صحيح");
@@ -838,7 +839,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
         <input value={business_name} onChange={(e) => setBusiness(e.target.value)} className={inp} placeholder="اختياري" />
       </Field>
       <Field label="الرقم الوطني الموحد أو رقم الهوية *">
-        <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" />
+        <input value={cr_number} onChange={(e) => setCrNumber(e.target.value)} className={inp} dir="ltr" inputMode="numeric" maxLength={10} />
       </Field>
       <Field label="النشاط *">
         <input value={activity_type} onChange={(e) => setActivity(e.target.value)} className={inp} list="tenant-activities-edit" />
