@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_log: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          event: string
+          id: string
+          ip_address: string | null
+          isp: string | null
+          path: string | null
+          phone: string | null
+          region: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          event: string
+          id?: string
+          ip_address?: string | null
+          isp?: string | null
+          path?: string | null
+          phone?: string | null
+          region?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          event?: string
+          id?: string
+          ip_address?: string | null
+          isp?: string | null
+          path?: string | null
+          phone?: string | null
+          region?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       account_deletion_requests: {
         Row: {
           created_at: string
