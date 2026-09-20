@@ -237,6 +237,7 @@ const Auth = () => {
         lastError = error;
       }
       if (!signedIn) {
+        logAccess("login_failed", { email: ident });
         throw lastError ?? new Error("Invalid credentials");
       }
       const needsMfa = await checkMfaChallenge();
