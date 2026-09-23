@@ -12,7 +12,7 @@ export const COMPANY = {
 export const PROJECT = {
   nameAr: "المدينة الصناعية بشمال مكة المكرمة",
   nameEn: "Makkah North Industrial City",
-  owner: "شركة البلد الأمين للاستثمار والتطوير العقاري",
+  owner: "البلد الأمين، أمانة العاصمة المقدسة، بلدية محافظة الجموم",
   investor: "شركة القمة الهادفة الحديثة",
   operator: "نخبة تسكين العقارية",
   operatorRole: "مدير التشغيل والتأجير",
