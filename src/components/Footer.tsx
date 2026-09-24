@@ -73,7 +73,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-8 border-t border-border/60 pt-6">
-          <div className="flex flex-col items-center justify-between gap-5 sm:flex-row">
+          <div className="flex flex-col items-center justify-center gap-5 sm:flex-row">
             <div className="flex items-center gap-4 text-center sm:text-right">
               <img
                 src={madarLogo.url}
@@ -91,12 +91,12 @@ export const Footer = () => {
                   عقد وساطة رقم <span className="num font-medium text-foreground">7201145651</span>
                 </p>
               </div>
+              <img
+                src={licenseQr.url}
+                alt="رمز الاستجابة السريعة للترخيص الإعلاني"
+                className="h-16 w-16 shrink-0 object-contain"
+              />
             </div>
-            <img
-              src={licenseQr.url}
-              alt="رمز الاستجابة السريعة للترخيص الإعلاني"
-              className="h-24 w-24 shrink-0 object-contain"
-            />
           </div>
         </div>
 
