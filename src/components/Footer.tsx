@@ -94,7 +94,7 @@ export const Footer = () => {
               <img
                 src={licenseQr.url}
                 alt="رمز الاستجابة السريعة للترخيص الإعلاني"
-                className="h-16 w-16 shrink-0 object-contain"
+                className="h-16 w-16 shrink-0 rounded-md bg-background object-contain"
               />
             </div>
           </div>
