@@ -438,7 +438,7 @@ const Dashboard = () => {
               داشبورد المدينة الصناعية بشمال مكة المكرمة
             </h1>
             <p className="mt-1.5 text-xs opacity-85 sm:text-sm">
-              المستثمر: القمة الهادفة الحديثة · مدير التشغيل: نخبة تسكين العقارية
+              المستثمر: القمة الهادفة الحديثة · مدير الإدارة والتشغيل: نخبة تسكين العقارية
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm">

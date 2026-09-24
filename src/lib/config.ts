@@ -6,7 +6,7 @@
 export const COMPANY = {
   name: "نخبة تسكين العقارية",
   nameEn: "Nukhbat Taskeen Real Estate",
-  tagline: "مدير التشغيل والتأجير",
+  tagline: "مدير الإدارة والتشغيل",
 };
 
 export const PROJECT = {
@@ -15,7 +15,7 @@ export const PROJECT = {
   owner: "البلد الأمين، أمانة العاصمة المقدسة، بلدية محافظة الجموم",
   investor: "شركة القمة الهادفة الحديثة",
   operator: "نخبة تسكين العقارية",
-  operatorRole: "مدير التشغيل والتأجير",
+  operatorRole: "مدير الإدارة والتشغيل",
 };
 
 /**
@@ -27,7 +27,7 @@ export const WHATSAPP_NUMBER = "966595650716";
 
 export const CONTACT = {
   phone: "+966 59 565 0716",
-  email: "taskinaqaria@gmail.com",
+  email: "info@taskinaqaria.com",
 };
 
 /**

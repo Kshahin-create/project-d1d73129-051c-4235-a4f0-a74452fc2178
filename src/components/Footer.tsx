@@ -27,7 +27,7 @@ export const Footer = () => {
               <span className="font-display font-bold">{COMPANY.name}</span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              مدير التشغيل والتأجير لـ <strong className="text-foreground">{PROJECT.nameAr}</strong>
+              مدير الإدارة والتشغيل لـ <strong className="text-foreground">{PROJECT.nameAr}</strong>
             </p>
           </div>
 
@@ -35,7 +35,7 @@ export const Footer = () => {
             <h3 className="font-display font-bold text-foreground">الجهات المعنية</h3>
             <p className="text-muted-foreground"><span className="text-foreground">المالك:</span> {PROJECT.owner}</p>
             <p className="text-muted-foreground"><span className="text-foreground">المستثمر:</span> {PROJECT.investor}</p>
-            <p className="text-muted-foreground"><span className="text-foreground">مدير التشغيل والتأجير:</span> {PROJECT.operator}</p>
+            <p className="text-muted-foreground"><span className="text-foreground">مدير الإدارة والتشغيل:</span> {PROJECT.operator}</p>
           </div>
 
           <div className="space-y-2 text-sm">
@@ -85,7 +85,7 @@ export const Footer = () => {
                   مدار الخليج العقاري
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  مدير التشغيل والتأجير لـ المدينة الصناعية بشمال مكة المكرمة
+                  وسيط التسويق والتأجير لـ المدينة الصناعية بشمال مكة المكرمة
                 </p>
                 <p className="text-xs text-muted-foreground">
                   عقد وساطة رقم <span className="num font-medium text-foreground">7201145651</span>
