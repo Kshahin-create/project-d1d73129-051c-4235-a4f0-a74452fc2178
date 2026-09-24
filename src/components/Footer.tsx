@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, CONTACT, PROJECT, SOCIAL } from "@/lib/config";
 import logo from "@/assets/logo-nukhbat.png";
+import madarLogo from "@/assets/madar-al-khaleej-logo.png.asset.json";
+import licenseQr from "@/assets/advertising-license-qr.png.asset.json";
 
 /** أيقونة تيك توك (مخصّصة لأنها غير متوفّرة في lucide-react) */
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -67,6 +69,31 @@ export const Footer = () => {
                 <TikTokIcon className="h-4 w-4" />
               </a>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-8 border-t border-border/60 pt-6">
+          <div className="flex flex-col items-center justify-between gap-5 sm:flex-row">
+            <div className="flex items-center gap-4 text-center sm:text-right">
+              <img
+                src={madarLogo.url}
+                alt="شعار مدار الخليج العقاري"
+                className="h-16 w-16 shrink-0 object-contain"
+              />
+              <div className="space-y-1">
+                <p className="font-display font-bold text-foreground">
+                  وسيط التسويق والتأجير مدار الخليج العقاري
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  عقد وساطة رقم <span className="num font-medium text-foreground">7201145651</span>
+                </p>
+              </div>
+            </div>
+            <img
+              src={licenseQr.url}
+              alt="رمز الاستجابة السريعة للترخيص الإعلاني"
+              className="h-24 w-24 shrink-0 object-contain"
+            />
           </div>
         </div>
 
