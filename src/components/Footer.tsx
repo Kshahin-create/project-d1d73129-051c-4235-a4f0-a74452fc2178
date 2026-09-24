@@ -82,7 +82,7 @@ export const Footer = () => {
               />
               <div className="space-y-1">
                 <p className="font-display font-bold text-foreground">
-                  وسيط التسويق والتأجير مدار الخليج العقاري
+                  مدير التشغيل والتأجير لـ المدينة الصناعية بشمال مكة المكرمة مدار الخليج العقاري
                 </p>
                 <p className="text-sm text-muted-foreground">
                   عقد وساطة رقم <span className="num font-medium text-foreground">7201145651</span>
