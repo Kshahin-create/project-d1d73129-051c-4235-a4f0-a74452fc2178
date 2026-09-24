@@ -78,7 +78,7 @@ export const Footer = () => {
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-primary">الوسيط العقاري للتسويق والتأجير</p>
                 <p className="mt-1 text-sm font-bold text-foreground">مدار الخليج العقاري</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-1 whitespace-nowrap text-xs leading-relaxed text-muted-foreground">
                   رقم الترخيص الإعلاني <span className="num font-medium text-foreground">7201145651</span>
                   <span className="mx-1.5 text-border">|</span>
                   عقد وساطة رقم <span className="num font-medium text-foreground">6201095268</span>
