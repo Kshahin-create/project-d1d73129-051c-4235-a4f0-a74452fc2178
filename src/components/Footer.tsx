@@ -80,7 +80,8 @@ export const Footer = () => {
                 <p className="mt-1 text-sm font-bold text-foreground">مدار الخليج العقاري</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                   رقم الترخيص الإعلاني <span className="num font-medium text-foreground">7201145651</span>
-                  <span className="mx-1.5 text-border">|</span>
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                   عقد وساطة رقم <span className="num font-medium text-foreground">6201095268</span>
                 </p>
               </div>
