@@ -88,7 +88,10 @@ export const Footer = () => {
                   وسيط التسويق والتأجير لـ المدينة الصناعية بشمال مكة المكرمة
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  عقد وساطة رقم <span className="num font-medium text-foreground">7201145651</span>
+                  رقم الترخيص الإعلاني <span className="num font-medium text-foreground">7201145651</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  عقد وساطة رقم <span className="num font-medium text-foreground">6201095268</span>
                 </p>
               </div>
               <img
