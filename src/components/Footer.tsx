@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import { Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, CONTACT, PROJECT, SOCIAL } from "@/lib/config";
 import logo from "@/assets/logo-nukhbat.png";
-import madarLogo from "@/assets/madar-al-khaleej-logo.png.asset.json";
-import licenseQr from "@/assets/advertising-license-qr.png.asset.json";
-import alQimmahLogo from "@/assets/al-qimmah-logo.png.asset.json";
-import municipalityLogo from "@/assets/holy-makkah-municipality-logo.png.asset.json";
+import madarLogo from "@/assets/madar-al-khaleej-logo.png";
+import licenseQr from "@/assets/advertising-license-qr.png";
+import alQimmahLogo from "@/assets/al-qimmah-logo.png";
+import municipalityLogo from "@/assets/holy-makkah-municipality-logo.png";
 
 /** أيقونة تيك توك (مخصّصة لأنها غير متوفّرة في lucide-react) */
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -29,7 +29,7 @@ export const Footer = () => {
           <div className="grid gap-x-10 border-y border-border/60 sm:grid-cols-2">
             <div className="flex min-h-28 items-center gap-4 py-5 sm:border-l sm:border-border/60">
               <img
-                src={municipalityLogo.url}
+                src={municipalityLogo}
                 alt="شعار أمانة العاصمة المقدسة"
                 className="h-20 w-24 shrink-0 object-contain"
               />
@@ -43,7 +43,7 @@ export const Footer = () => {
 
             <div className="flex min-h-28 items-center gap-4 py-5">
               <img
-                src={alQimmahLogo.url}
+                src={alQimmahLogo}
                 alt="شعار شركة القمة الهادفة الحديثة"
                 className="h-20 w-20 shrink-0 object-contain"
               />
@@ -71,7 +71,7 @@ export const Footer = () => {
 
             <div className="flex min-h-28 items-center gap-3 border-t border-border/60 py-5">
               <img
-                src={madarLogo.url}
+                src={madarLogo}
                 alt="شعار مدار الخليج العقاري"
                 className="h-16 w-16 shrink-0 object-contain"
               />
@@ -86,7 +86,7 @@ export const Footer = () => {
                 </p>
               </div>
               <img
-                src={licenseQr.url}
+                src={licenseQr}
                 alt="رمز الاستجابة السريعة للترخيص الإعلاني"
                 className="h-16 w-16 shrink-0 rounded-md bg-background object-contain"
               />
