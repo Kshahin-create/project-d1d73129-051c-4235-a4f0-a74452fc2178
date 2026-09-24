@@ -78,7 +78,7 @@ export const Footer = () => {
               <img
                 src={madarLogo.url}
                 alt="شعار مدار الخليج العقاري"
-                className="h-16 w-16 shrink-0 object-contain"
+                className="h-12 w-12 shrink-0 object-contain"
               />
               <div className="space-y-0.5">
                 <p className="font-display text-sm font-bold text-foreground">
