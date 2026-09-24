@@ -101,7 +101,18 @@ export const Footer = () => {
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-center text-xs text-muted-foreground sm:flex-row sm:text-right">
-          <div>© {new Date().getFullYear()} {COMPANY.name}. جميع الحقوق محفوظة.</div>
+          <div>
+            © {new Date().getFullYear()}{" "}
+            <a
+              href="https://mnicity.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-primary"
+            >
+              {PROJECT.nameAr}
+            </a>{" "}
+            — جميع الحقوق محفوظة
+          </div>
           <div className="flex items-center gap-4">
             <Link to="/privacy" className="transition hover:text-primary">سياسة الخصوصية والأمان</Link>
             <span className="text-border">|</span>
