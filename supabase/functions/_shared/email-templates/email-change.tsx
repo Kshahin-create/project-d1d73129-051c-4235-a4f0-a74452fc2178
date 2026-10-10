@@ -22,10 +22,10 @@ export const EmailChangeEmail = ({
   oldEmail, newEmail, confirmationUrl,
 }: EmailChangeEmailProps) => (
   <Html lang="ar" dir="rtl">
-    <Head />
+    <Head><meta charSet="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
     <Preview>تأكيد تغيير البريد الإلكتروني — {SITE_NAME}</Preview>
-    <Body style={main}>
-      <Container style={container}>
+    <Body dir="rtl" style={main}>
+      <Container dir="rtl" style={container}>
         <Section style={header}>
           <Img src={LOGO_URL} width="72" height="72" alt={SITE_NAME} style={logo} />
           <Heading style={brandName}>{SITE_NAME}</Heading>
@@ -34,9 +34,9 @@ export const EmailChangeEmail = ({
           <Heading style={h1}>تأكيد تغيير البريد الإلكتروني</Heading>
           <Text style={text}>
             طلبت تغيير بريدك في {SITE_NAME} من{' '}
-            <Link href={`mailto:${oldEmail}`} style={link}>{oldEmail}</Link>
+            <Link href={`mailto:${oldEmail}`} style={link}><span dir="ltr" style={{ display: 'inline-block', direction: 'ltr', unicodeBidi: 'isolate' }}>{oldEmail}</span></Link>
             {' '}إلى{' '}
-            <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.
+            <Link href={`mailto:${newEmail}`} style={link}><span dir="ltr" style={{ display: 'inline-block', direction: 'ltr', unicodeBidi: 'isolate' }}>{newEmail}</span></Link>.
           </Text>
           <Text style={text}>اضغط الزر التالي لتأكيد التغيير:</Text>
           <Section style={{ textAlign: 'center', margin: '24px 0' }}>
@@ -53,14 +53,14 @@ export const EmailChangeEmail = ({
 
 export default EmailChangeEmail
 
-const main = { backgroundColor: '#f5f6f8', fontFamily: '-apple-system, "Segoe UI", Tahoma, Arial, sans-serif', padding: '24px 12px', direction: 'rtl' as const, textAlign: 'right' as const }
+const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, "Segoe UI", Tahoma, Arial, sans-serif', padding: '24px 12px', direction: 'rtl' as const, textAlign: 'right' as const }
 const container = { maxWidth: '560px', margin: '0 auto', direction: 'rtl' as const, textAlign: 'right' as const }
 const header = { textAlign: 'center' as const, padding: '24px', backgroundColor: BRAND, borderRadius: '12px 12px 0 0' }
 const logo = { margin: '0 auto 10px', borderRadius: '12px', display: 'block' }
 const brandName = { color: '#ffffff', fontSize: '20px', fontWeight: 'bold' as const, margin: 0 }
 const card = { backgroundColor: '#ffffff', padding: '28px 24px', borderRadius: '0 0 12px 12px', direction: 'rtl' as const, textAlign: 'right' as const }
 const h1 = { fontSize: '20px', fontWeight: 'bold' as const, color: BRAND, margin: '0 0 16px', direction: 'rtl' as const, textAlign: 'right' as const }
-const text = { fontSize: '14px', color: '#475569', lineHeight: '1.7', margin: '0 0 16px', direction: 'rtl' as const, textAlign: 'right' as const, unicodeBidi: 'plaintext' as const }
+const text = { fontSize: '14px', color: '#475569', lineHeight: '1.7', margin: '0 0 16px', direction: 'rtl' as const, textAlign: 'right' as const, unicodeBidi: 'embed' as const }
 const link = { color: BRAND, textDecoration: 'underline' }
 const button = { backgroundColor: BRAND, color: '#ffffff', fontSize: '14px', fontWeight: 'bold' as const, borderRadius: '8px', padding: '12px 28px', textDecoration: 'none', display: 'inline-block' }
 const footer = { fontSize: '12px', color: '#94a3b8', margin: '24px 0 0', direction: 'rtl' as const, textAlign: 'right' as const }
