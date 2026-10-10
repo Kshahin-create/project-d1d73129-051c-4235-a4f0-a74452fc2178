@@ -21,6 +21,6 @@ export function getEmailUnitArea(unit: EmailUnitArea): number | undefined {
   const description = `${unit.buildingType ?? ''} ${unit.activity ?? ''}`;
   const isWorkshop = /صيانة|ورشة|ورش/.test(description) ||
     (unit.buildingNumber !== undefined && unit.buildingNumber >= 1 && unit.buildingNumber <= 6);
-  if (isWorkshop && unit.area === 132) return 200;
+  if (isWorkshop && typeof unit.area === 'number' && unit.area > 0 && unit.area <= 132) return 200;
   return unit.area;
 }
