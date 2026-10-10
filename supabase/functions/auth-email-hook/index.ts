@@ -9,6 +9,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { encodeEmailHtml } from '../_shared/email-html.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -231,7 +232,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Render React Email to HTML and plain text
-  const html = await renderAsync(React.createElement(EmailTemplate, templateProps))
+  const html = encodeEmailHtml(await renderAsync(React.createElement(EmailTemplate, templateProps)))
   const text = await renderAsync(React.createElement(EmailTemplate, templateProps), {
     plainText: true,
   })
