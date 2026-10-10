@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { render } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { encodeEmailHtml } from '../_shared/email-html.ts'
@@ -284,10 +284,10 @@ Deno.serve(async (req) => {
   }
 
   // 4. Render React Email template to HTML and plain text
-  const html = encodeEmailHtml(await renderAsync(
+  const html = encodeEmailHtml(render(
     React.createElement(template.component, templateData)
   ))
-  const plainText = await renderAsync(
+  const plainText = render(
     React.createElement(template.component, templateData),
     { plainText: true }
   )
