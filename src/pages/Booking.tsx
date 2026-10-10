@@ -287,11 +287,9 @@ const Booking = () => {
     const recipientEmail = customer.email || user.email;
     if (recipientEmail) {
       supabase.functions
-        .invoke("send-transactional-email", {
+        .invoke("send-booking-confirmation", {
           body: {
-            templateName: "booking-confirmation",
-            recipientEmail,
-            idempotencyKey: `booking-confirm-${newId}`,
+            bookingId: newId,
             templateData: {
               customerName: customer.fullName,
               bookingId: newId,

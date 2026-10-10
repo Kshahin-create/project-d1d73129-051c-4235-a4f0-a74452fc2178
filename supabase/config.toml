@@ -1,19 +1,21 @@
 project_id = "wqzseofoerwevfebguse"
 
-[functions.mcp]
-verify_jwt = false
-
-[functions.tenant-magic-login]
-verify_jwt = false
-
-[functions.telegram-bot-webhook]
-verify_jwt = false
-
-[functions.telegram-audit-alert]
-verify_jwt = false
-
-[functions.telegram-cron]
-verify_jwt = false
-
-[functions.respond-cron]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.mcp]
+    verify_jwt = false
+  [functions.respond-cron]
+    verify_jwt = false
+  [functions.telegram-audit-alert]
+    verify_jwt = false
+  [functions.telegram-bot-webhook]
+    verify_jwt = false
+  [functions.telegram-cron]
+    verify_jwt = false
+  [functions.tenant-magic-login]
+    verify_jwt = false
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.send-booking-confirmation]
+    verify_jwt = true
