@@ -28,7 +28,6 @@ import ApiDocs from "./pages/ApiDocs.tsx";
 import Mcp from "./pages/Mcp.tsx";
 import ControlDashboard from "./pages/ControlDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import Unsubscribe from "./pages/Unsubscribe.tsx";
 import HowToBook from "./pages/HowToBook.tsx";
 import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
 import AdminPaidTenants from "./pages/AdminPaidTenants.tsx";
@@ -75,7 +74,6 @@ const App = () => (
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/mcp" element={<Mcp />} />
           <Route path="/control" element={<ControlDashboard />} />
-          <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/how-to-book" element={<HowToBook />} />
           <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
           <Route path="/admin/paid-tenants" element={<AdminPaidTenants />} />
