@@ -1,18 +1,14 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
+  Body, Button, Container, Head, Heading, Html, Img, Link, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
+
+const SITE_NAME = 'MNI City'
+const LOGO_URL =
+  'https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/logo.jpeg'
+const BRAND = '#0f3d2e'
 
 interface InviteEmailProps {
   siteName: string
@@ -20,34 +16,30 @@ interface InviteEmailProps {
   confirmationUrl: string
 }
 
-export const InviteEmail = ({
-  siteName,
-  siteUrl,
-  confirmationUrl,
-}: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>You've been invited to join {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
-        <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Accept Invitation
-        </Button>
-        <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
-        </Text>
+export const InviteEmail = ({ siteUrl, confirmationUrl }: InviteEmailProps) => (
+  <Html lang="ar" dir="rtl">
+    <Head><meta charSet="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
+    <Preview>دعوة للانضمام إلى {SITE_NAME}</Preview>
+    <Body dir="rtl" style={main}>
+      <Container dir="rtl" style={container}>
+        <Section style={header}>
+          <Img src={LOGO_URL} width="72" height="72" alt={SITE_NAME} style={logo} />
+          <Heading style={brandName}>{SITE_NAME}</Heading>
+        </Section>
+        <Section style={card}>
+          <Heading style={h1}>تم دعوتك للانضمام</Heading>
+          <Text style={text}>
+            تلقيت دعوة للانضمام إلى{' '}
+            <Link href={siteUrl} style={link}><strong>{SITE_NAME}</strong></Link>.
+            اضغط الزر بالأسفل لقبول الدعوة وإنشاء حسابك.
+          </Text>
+          <Section style={{ textAlign: 'center', margin: '24px 0' }}>
+            <Button style={button} href={confirmationUrl}>قبول الدعوة</Button>
+          </Section>
+          <Text style={footer}>
+            إذا لم تكن تتوقع هذه الدعوة، يمكنك تجاهل الرسالة بأمان.
+          </Text>
+        </Section>
       </Container>
     </Body>
   </Html>
@@ -55,36 +47,14 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #000000',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-`
+const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, "Segoe UI", Tahoma, Arial, sans-serif', padding: '24px 12px', direction: 'rtl' as const, textAlign: 'right' as const }
+const container = { maxWidth: '560px', margin: '0 auto', direction: 'rtl' as const, textAlign: 'right' as const }
+const header = { textAlign: 'center' as const, padding: '24px', backgroundColor: BRAND, borderRadius: '12px 12px 0 0' }
+const logo = { margin: '0 auto 10px', borderRadius: '12px', display: 'block' }
+const brandName = { color: '#ffffff', fontSize: '20px', fontWeight: 'bold' as const, margin: 0 }
+const card = { backgroundColor: '#ffffff', padding: '28px 24px', borderRadius: '0 0 12px 12px', direction: 'rtl' as const, textAlign: 'right' as const }
+const h1 = { fontSize: '20px', fontWeight: 'bold' as const, color: BRAND, margin: '0 0 16px', direction: 'rtl' as const, textAlign: 'right' as const }
+const text = { fontSize: '14px', color: '#475569', lineHeight: '1.7', margin: '0 0 16px', direction: 'rtl' as const, textAlign: 'right' as const, unicodeBidi: 'embed' as const }
+const link = { color: BRAND, textDecoration: 'underline' }
+const button = { backgroundColor: BRAND, color: '#ffffff', fontSize: '14px', fontWeight: 'bold' as const, borderRadius: '8px', padding: '12px 28px', textDecoration: 'none', display: 'inline-block' }
+const footer = { fontSize: '12px', color: '#94a3b8', margin: '24px 0 0', direction: 'rtl' as const, textAlign: 'right' as const }

@@ -1,25 +1,17 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
+  Body, Container, Head, Heading, Html, Img, Link, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
+
+const SITE_NAME = 'MNI City'
+const LOGO_URL =
+  'https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/logo.jpeg'
+const BRAND = '#0f3d2e'
 
 interface EmailChangeEmailProps {
   siteName: string
-  // oldEmail is the user's current address (HookData.OldEmail). For the
-  // NEW-recipient half of a secure email_change fanout, `email` equals the
-  // recipient (NEW), so the "from" line must render oldEmail to read
-  // "from OLD to NEW" instead of "from NEW to NEW".
   oldEmail: string
   email: string
   newEmail: string
@@ -27,40 +19,33 @@ interface EmailChangeEmailProps {
 }
 
 export const EmailChangeEmail = ({
-  siteName,
-  oldEmail,
-  newEmail,
-  confirmationUrl,
+  oldEmail, newEmail, confirmationUrl,
 }: EmailChangeEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>Confirm your email change for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm your email change</Heading>
-        <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
-          <Link href={`mailto:${oldEmail}`} style={link}>
-            {oldEmail}
-          </Link>{' '}
-          to{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>
-            {newEmail}
-          </Link>
-          .
-        </Text>
-        <Text style={text}>
-          Click the button below to confirm this change:
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Confirm Email Change
-        </Button>
-        <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
-        </Text>
+  <Html lang="ar" dir="rtl">
+    <Head><meta charSet="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
+    <Preview>تأكيد تغيير البريد الإلكتروني — {SITE_NAME}</Preview>
+    <Body dir="rtl" style={main}>
+      <Container dir="rtl" style={container}>
+        <Section style={header}>
+          <Img src={LOGO_URL} width="72" height="72" alt={SITE_NAME} style={logo} />
+          <Heading style={brandName}>{SITE_NAME}</Heading>
+        </Section>
+        <Section style={card}>
+          <Heading style={h1}>تأكيد تغيير البريد الإلكتروني</Heading>
+          <Text style={text}>
+            طلبت تغيير بريدك في {SITE_NAME} من{' '}
+            <Link href={`mailto:${oldEmail}`} style={link}><span dir="ltr" style={{ display: 'inline-block', direction: 'ltr', unicodeBidi: 'isolate' }}>{oldEmail}</span></Link>
+            {' '}إلى{' '}
+            <Link href={`mailto:${newEmail}`} style={link}><span dir="ltr" style={{ display: 'inline-block', direction: 'ltr', unicodeBidi: 'isolate' }}>{newEmail}</span></Link>.
+          </Text>
+          <Text style={text}>اضغط الزر التالي لتأكيد التغيير:</Text>
+          <Section style={{ textAlign: 'center', margin: '24px 0' }}>
+            <a style={button} href={confirmationUrl}>تأكيد التغيير</a>
+          </Section>
+          <Text style={footer}>
+            إذا لم تطلب التغيير، يرجى تأمين حسابك فوراً.
+          </Text>
+        </Section>
       </Container>
     </Body>
   </Html>
@@ -68,36 +53,14 @@ export const EmailChangeEmail = ({
 
 export default EmailChangeEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #000000',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-`
+const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, "Segoe UI", Tahoma, Arial, sans-serif', padding: '24px 12px', direction: 'rtl' as const, textAlign: 'right' as const }
+const container = { maxWidth: '560px', margin: '0 auto', direction: 'rtl' as const, textAlign: 'right' as const }
+const header = { textAlign: 'center' as const, padding: '24px', backgroundColor: BRAND, borderRadius: '12px 12px 0 0' }
+const logo = { margin: '0 auto 10px', borderRadius: '12px', display: 'block' }
+const brandName = { color: '#ffffff', fontSize: '20px', fontWeight: 'bold' as const, margin: 0 }
+const card = { backgroundColor: '#ffffff', padding: '28px 24px', borderRadius: '0 0 12px 12px', direction: 'rtl' as const, textAlign: 'right' as const }
+const h1 = { fontSize: '20px', fontWeight: 'bold' as const, color: BRAND, margin: '0 0 16px', direction: 'rtl' as const, textAlign: 'right' as const }
+const text = { fontSize: '14px', color: '#475569', lineHeight: '1.7', margin: '0 0 16px', direction: 'rtl' as const, textAlign: 'right' as const, unicodeBidi: 'embed' as const }
+const link = { color: BRAND, textDecoration: 'underline' }
+const button = { backgroundColor: BRAND, color: '#ffffff', fontSize: '14px', fontWeight: 'bold' as const, borderRadius: '8px', padding: '12px 28px', textDecoration: 'none', display: 'inline-block' }
+const footer = { fontSize: '12px', color: '#94a3b8', margin: '24px 0 0', direction: 'rtl' as const, textAlign: 'right' as const }
