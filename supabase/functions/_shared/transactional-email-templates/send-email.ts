@@ -1,5 +1,6 @@
 import * as React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { render } from 'npm:@react-email/components@0.0.22'
+import { encodeEmailHtml } from '../email-html.ts'
 import { EmailAPIError, sendLovableEmail } from 'npm:@lovable.dev/email-js@0.3.1'
 import { TEMPLATES } from './registry.ts'
 
@@ -59,8 +60,9 @@ export async function sendTemplateEmail(
 
   const templateData = options.templateData ?? {}
   const element = React.createElement(template.component, templateData)
-  const html = await renderAsync(element)
-  const text = await renderAsync(element, { plainText: true })
+  // Synchronous render + entity encoding keeps Arabic text intact.
+  const html = encodeEmailHtml(render(element))
+  const text = render(element, { plainText: true })
   const subject =
     typeof template.subject === 'function'
       ? template.subject(templateData)
