@@ -5,3 +5,4 @@
 - Use React Email's synchronous render for HTML and plain text because the pinned async renderer decodes UTF-8 chunks without streaming and corrupts Arabic characters at chunk boundaries.
 - Keep management-dashboard reads and pure aggregates in dashboard-specific modules, with independent query failure states and shared unit scopes; this isolates reporting from booking operations and prevents cross-page regressions.
 - Dashboard detail views are read-only and reuse existing plan coordinates without extending them; this preserves records and avoids unverified spatial claims.
+- Dashboard exports use the shared local Excel helper with a separate scope sheet and unpaginated filtered rows; availability gates prevent incomplete reports.

@@ -11,8 +11,10 @@ export type AccountUnitRow = { id: string; tenant_account_id: string; unit_id: s
 export type DashboardFilters = { building: string; activity: string; status: string; search: string };
 export type DateRange = { from: string; to: string };
 export const EMPTY_FILTERS: DashboardFilters = { building: 'all', activity: 'all', status: 'all', search: '' };
-export const STATUS_LABELS: Record<string, string> = { rented: 'مؤجر', reserved: 'محجوز', booked: 'حجز مسجل (booked)', available: 'متاح', maintenance: 'صيانة' };
-export const statusLabel = (status: string) => STATUS_LABELS[status] ?? `حالة غير معرّفة: ${status || 'فارغة'}`;
+export const STATUS_LABELS: Record<string, string> = { rented: 'مؤجر', reserved: 'محجوز', booked: 'حجز مسجل', available: 'متاح', maintenance: 'صيانة' };
+export const statusLabel = (status: string) => STATUS_LABELS[status] ?? 'حالة غير محددة';
+export const bookingStatusLabel = (status: string) => ({ pending: 'قيد الانتظار', confirmed: 'مؤكد', cancelled: 'ملغي', expired: 'منتهي' } as Record<string, string>)[status] ?? 'حالة غير محددة';
+export const clampDashboardPage = (page: number, total: number, pageSize: number) => Math.min(Math.max(1, page), Math.max(1, Math.ceil(total / pageSize)));
 export const statusClass = (status: string) => ({ rented: 'bg-primary/10 text-primary border-primary/20', reserved: 'bg-accent/15 text-accent-foreground border-accent/30', booked: 'bg-secondary text-secondary-foreground border-primary/30', available: 'bg-success/10 text-success border-success/25', maintenance: 'bg-destructive/10 text-destructive border-destructive/20' }[status] ?? 'bg-muted text-muted-foreground border-border');
 export const number = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) : 0;
 export const fmt = (value: number) => value.toLocaleString('en-US', { maximumFractionDigits: 2 });
