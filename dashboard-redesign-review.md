@@ -14,7 +14,7 @@
 - Authenticated real-data browser check matched four home counts, both rates and all-period collections to the permitted read responses; no fixed totals were embedded in code.
 - Verified default has four count cards and no table, search form, tabs or map; details open explicitly and return without altering home counts, building scope or cash period.
 - Filtered Excel download opened successfully with every matching unit and report-scope sheet; real unit details and optional plan opened successfully. Failed collection reads display unavailable, not zero.
-- Desktop 1280×1800 and mobile 390×844 inspected; no horizontal page overflow or runtime exceptions. Automatic build/typecheck is confirmed from the final observability entry; no manual build/typecheck or publishing.
+- Desktop 1280×1800 and mobile 390×844 inspected; no horizontal page overflow or runtime exceptions. Final automatic build/typecheck: `build OK` at 2026-10-13 23:45:11 UTC; no manual build/typecheck or publishing.
 
 ## Changed files
 - `src/pages/Dashboard.tsx`: Arabic RTL management workspace, six interactive KPIs, shared building/activity/status/search scope, real-date period filters, buildings comparison, paginated units/tenant-records/collections, follow-up and secondary analytics.

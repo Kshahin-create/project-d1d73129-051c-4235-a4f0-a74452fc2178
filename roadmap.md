@@ -15,6 +15,6 @@
 - [x] Explain generated type-file changes in the review; run tests and inspect desktop/mobile and automatic build, without publishing or record changes.
 
 # Executive summary redesign
-- [ ] Replace the default dashboard with four unit KPIs, status/rate summary, separate financial figures and compact building aggregates.
-- [ ] Move all filters, tables, plans and operations into explicit detail views with independent scope and a return control.
-- [ ] Verify formulas, home/detail independence, exports, automatic build and desktop/mobile presentation without record changes or publication.
+- [x] Replace the default dashboard with four unit KPIs, status/rate summary, separate financial figures and compact building aggregates.
+- [x] Move all filters, tables, plans and operations into explicit detail views with independent scope and a return control.
+- [x] Verify formulas, home/detail independence, exports, automatic build and desktop/mobile presentation without record changes or publication.
