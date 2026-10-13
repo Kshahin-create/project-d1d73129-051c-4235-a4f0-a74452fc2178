@@ -10,10 +10,12 @@ export function exportRowsToExcel<T extends Record<string, any>>(
   rows: T[],
   fileBase: string,
   sheetName = "Sheet1",
+  metadata?: Record<string, string | number>[],
 ) {
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+  if (metadata) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(metadata), "نطاق التقرير");
   XLSX.writeFile(wb, `${fileBase}_${stamp()}.xlsx`);
 }
 
