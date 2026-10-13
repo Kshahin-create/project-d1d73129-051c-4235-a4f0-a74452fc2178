@@ -209,3 +209,26 @@
 .phone-field .PhoneInputCountrySelect {
   color: hsl(var(--foreground));
 }
+
+/* Scoped management workspace: public booking presentation stays unchanged. */
+.dashboard-workspace {
+  background: hsl(195 18% 97%);
+  --foreground: 195 42% 15%;
+  --muted-foreground: 195 12% 40%;
+  --card: 0 0% 100%;
+  --border: 195 15% 88%;
+  font-family: 'Tajawal', sans-serif;
+}
+.dashboard-workspace h1, .dashboard-workspace h2, .dashboard-workspace h3 {
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.dashboard-workspace :focus-visible { outline-offset: 3px; }
+.dashboard-workspace td, .dashboard-workspace th { padding: 0.8rem 0.7rem; }
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-workspace *, .dashboard-workspace *::before, .dashboard-workspace *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
