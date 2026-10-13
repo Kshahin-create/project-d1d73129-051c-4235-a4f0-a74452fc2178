@@ -16,17 +16,15 @@ export function ManagementUnitDetails({ unit, onClose, userId }: { unit: Dashboa
   const detail = useQuery({ queryKey: ['dashboard-detail', userId, unit?.id], enabled: !!unit && !!userId, queryFn: async () => {
     if (!unit) throw new Error('No unit');
     const [tenants, collections, files, bookings, accounts] = await Promise.all([
-      supabase.from('tenants').select('id, unit_id, tenant_name, business_name, phone, activity_type').eq('unit_id', unit.id),
-      supabase.from('unit_collections').select('id, unit_id, amount, created_at, is_archived').eq('unit_id', unit.id).eq('is_archived', false),
-      supabase.from('unit_files').select('id, unit_id, file_name, storage_path').eq('unit_id', unit.id),
-      supabase.from('booking_units').select('booking_id, bookings:booking_id(id, status, customer_full_name, offer_number, created_at, expires_at, user_id, units_count)').eq('unit_id', unit.id),
-      supabase.from('tenant_account_units').select('tenant_account_id').eq('unit_id', unit.id),
+      readDashboardRows<TenantRow>('tenants', 'id, unit_id, tenant_name, business_name, phone, activity_type', {unit_id: unit.id}),
+      readDashboardRows<CollectionRow>('unit_collections', 'id, unit_id, amount, created_at, is_archived', {unit_id: unit.id, is_archived: false}),
+      readDashboardRows<UnitFile>('unit_files', 'id, unit_id, file_name, storage_path', {unit_id: unit.id}),
+      readDashboardRows<BookingLink>('booking_units', 'id, booking_id, bookings:booking_id(id, status, customer_full_name, offer_number, created_at, expires_at, user_id, units_count)', {unit_id: unit.id}),
+      readDashboardRows<{tenant_account_id: string}>('tenant_account_units', 'id, tenant_account_id', {unit_id: unit.id}),
     ]);
-    const errors = [tenants, collections, files, bookings, accounts].filter(r => r.error);
-    if (errors.length) throw new Error('تعذر قراءة بعض تفاصيل الوحدة');
-    const accountIds = new Set((accounts.data ?? []).map(a => a.tenant_account_id));
+    const accountIds = new Set(accounts.map(a => a.tenant_account_id));
     const accountFiles = accountIds.size ? (await readDashboardRows<AccountFile>('tenant_account_files', 'id, tenant_account_id, custom_name, storage_path, is_archived')).filter(f => !f.is_archived && accountIds.has(f.tenant_account_id)) : [];
-    return { tenants: tenants.data as TenantRow[], collections: collections.data as CollectionRow[], files: files.data as UnitFile[], bookings: (bookings.data as unknown as BookingLink[]).flatMap(b => b.bookings ? [b.bookings] : []), accountFiles };
+    return { tenants, collections, files, bookings: bookings.flatMap(b => b.bookings ? [b.bookings] : []), accountFiles };
   } });
   const download = async (bucket: string, path: string) => {
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 120);

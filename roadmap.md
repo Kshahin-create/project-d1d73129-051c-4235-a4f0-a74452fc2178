@@ -5,6 +5,6 @@
 - [x] Verify rendering and deploy affected email functions.
 
 # Dashboard redesign
-- [ ] Replace dashboard presentation with an Arabic management workspace and shared filters.
-- [ ] Add read-only, permission-gated data reads and verified map/detail views.
-- [ ] Verify financial/status aggregates, responsive layouts, and existing-data flows; do not publish.
+- [x] Replace dashboard presentation with an Arabic management workspace and shared filters.
+- [x] Add read-only, permission-gated data reads and verified map/detail views.
+- [x] Verify financial/status aggregates, responsive layouts, and existing-data flows; do not publish.

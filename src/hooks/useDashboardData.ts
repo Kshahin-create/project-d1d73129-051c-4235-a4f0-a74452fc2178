@@ -6,10 +6,12 @@ import type { DashboardUnit, CollectionRow, BookingRow, BookingUnitRow, TenantRo
 
 type TableName = keyof Database['public']['Tables'];
 // Read every permitted row without relying on API row caps. No RPC with side effects.
-export async function readDashboardRows<T>(table: TableName, select = '*'): Promise<T[]> {
+export async function readDashboardRows<T>(table: TableName, select = '*', filters: Record<string, string | boolean> = {}): Promise<T[]> {
   const rows: T[] = [];
   for (let offset = 0; ; offset += 500) {
-    const response = await supabase.from(table).select(select).order('id').range(offset, offset + 499);
+    let query = supabase.from(table).select(select).order('id').range(offset, offset + 499);
+    for (const [key, value] of Object.entries(filters)) query = query.eq(key, value);
+    const response = await query;
     if (response.error) throw response.error;
     const batch = (response.data ?? []) as unknown as T[];
     rows.push(...batch);
