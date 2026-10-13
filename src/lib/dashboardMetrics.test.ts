@@ -1,7 +1,29 @@
 import { describe, it, expect } from 'vitest';
-import { aggregateUnits, filterUnits, scopedCollections, scopedBookings, scopedInvoices, overdueInvoices, inPeriod, EMPTY_FILTERS, type DashboardUnit } from './dashboardMetrics';
+import { aggregateUnits, filterUnits, scopedCollections, scopedBookings, scopedInvoices, overdueInvoices, inPeriod, EMPTY_FILTERS, statusLabel, bookingStatusLabel, clampDashboardPage, type DashboardUnit } from './dashboardMetrics';
+import { dashboardUnitExport, dashboardTenantExport, dashboardCollectionExport, dashboardBuildingExport } from './dashboardExport';
 const unit = (id: string, status: string, price = 100, building = 1): DashboardUnit => ({ id, status, price, building_number: building, unit_number: Number(id), area: 200, activity: 'ورشة', unit_type: null });
 describe('dashboard integrity', () => {
+  it('uses Arabic labels without leaking unknown codes and keeps reservation states separate', () => {
+    expect(statusLabel('reserved')).toBe('محجوز'); expect(statusLabel('booked')).toBe('حجز مسجل');
+    expect(statusLabel('unexpected')).toBe('حالة غير محددة'); expect(bookingStatusLabel('unexpected')).toBe('حالة غير محددة');
+  });
+  it('clamps pagination when live datasets shrink, including empty results', () => {
+    expect(clampDashboardPage(4, 41, 20)).toBe(3); expect(clampDashboardPage(4, 0, 20)).toBe(1);
+    expect(clampDashboardPage(2, 100, 20)).toBe(2);
+  });
+  it('exports the entire shared filtered set with separate accurate annual and cash columns', () => {
+    const units = Array.from({length: 45}, (_, i) => unit(String(i), i === 0 ? 'booked' : 'rented', 12000));
+    const tenants = [{id:'t',unit_id:'0',tenant_name:'علي',phone:null,business_name:null,activity_type:null}];
+    expect(dashboardUnitExport(units, tenants)).toHaveLength(45);
+    expect(dashboardUnitExport(units, tenants)[0]['الحالة الحالية']).toBe('حجز مسجل');
+    expect(dashboardTenantExport(units.slice(1), tenants)).toEqual([]);
+    const cash = scopedCollections([{id:'c',unit_id:'1',amount:500,is_archived:false,created_at:'2026-10-01'}, {id:'d',unit_id:'1',amount:800,is_archived:true,created_at:'2026-10-01'}], units, {from:'',to:''});
+    expect(dashboardCollectionExport(units,cash)).toHaveLength(1);
+    const buildings = dashboardBuildingExport([{number:1,...aggregateUnits(units),cash:500}]);
+    expect(buildings[0]['قيمة الإيجار السنوي للمؤجر ر.س']).toBe(44 * 12000);
+    expect(buildings[0]['التحصيل الفعلي في الفترة ر.س']).toBe(500);
+    expect(buildings[0]['حجز مسجل']).toBe(1);
+  });
   it('reconciles all statuses without classifying unknown as available', () => {
     const s = aggregateUnits(['rented','reserved','available','maintenance','booked','unexpected'].map((status,i) => unit(String(i),status)));
     expect(s.total).toBe(6); expect(Object.values(s.counts).reduce((a,b) => a+b,0)).toBe(6);
