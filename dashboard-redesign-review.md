@@ -1,5 +1,21 @@
 # Dashboard redesign review
 
+## Executive presentation replacement
+- `src/pages/Dashboard.tsx`: permission gate and single shared data subscription; summary is the first view. Opening reports never changes summary filters.
+- `src/components/dashboard/ExecutiveSummary.tsx`: four unit-count cards, one reconciled status bar, two rates, separate annual/cash financial figures (all-period cash by default), small building progress summaries and anonymous follow-up totals. Only a building selector is present on home; period selection stays inside finance and explanations are in help.
+- `src/components/dashboard/DashboardDetails.tsx`: existing filtered reports, full-set exports, pagination, read-only files/unit details and optional real plan moved behind explicit choices. Clear return-to-summary control; dates appear only in relevant reports. No operations tab bar on home.
+- `src/lib/dashboardMetrics.ts` and `.test.ts`: executive building-only snapshot and rented-plus-reserved rate with all units as denominator. Booked remains logically separate; supplemental nonzero statuses reconcile counts.
+- `src/index.css`: restrained off-white executive canvas and readable RTL number alignment; public pages unchanged.
+- `AGENTS.md`, `roadmap.md`: isolated summary/detail state rule and completion checklist.
+- Unchanged: read APIs, query permissions, financial definitions, export helper/projections, original data and other routes. No schema, generated types, database writes or publication in this presentation replacement.
+
+### Executive checks
+- 16 tests passed across three files, including both percentage formulas, supplemental status reconciliation, empty denominators, annual versus cash definitions and home/detail filter independence.
+- Authenticated real-data browser check matched four home counts, both rates and all-period collections to the permitted read responses; no fixed totals were embedded in code.
+- Verified default has four count cards and no table, search form, tabs or map; details open explicitly and return without altering home counts, building scope or cash period.
+- Filtered Excel download opened successfully with every matching unit and report-scope sheet; real unit details and optional plan opened successfully. Failed collection reads display unavailable, not zero.
+- Desktop 1280×1800 and mobile 390×844 inspected; no horizontal page overflow or runtime exceptions. Automatic build/typecheck is confirmed from the final observability entry; no manual build/typecheck or publishing.
+
 ## Changed files
 - `src/pages/Dashboard.tsx`: Arabic RTL management workspace, six interactive KPIs, shared building/activity/status/search scope, real-date period filters, buildings comparison, paginated units/tenant-records/collections, follow-up and secondary analytics.
 - `src/hooks/useDashboardData.ts`: user-scoped, permission-gated paginated reads; independent error states; realtime invalidation, periodic refresh and successful-read timestamp.
