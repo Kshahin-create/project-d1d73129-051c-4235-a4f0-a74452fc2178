@@ -44,7 +44,12 @@ export function aggregateUnits(units: DashboardUnit[]) {
     if (unit.status === 'rented') rentedAnnual += number(unit.price);
     if (unit.status === 'available') availableAnnual += number(unit.price);
   }
-  return { total: units.length, counts, unknown, rentedAnnual, availableAnnual, annual, leasing: units.length ? counts.rented / units.length * 100 : 0 };
+  return { total: units.length, counts, unknown, rentedAnnual, availableAnnual, annual, leasing: units.length ? counts.rented / units.length * 100 : 0, rentedReservedRate: units.length ? (counts.rented + counts.reserved) / units.length * 100 : 0 };
+}
+// Executive scope deliberately cannot accept activity, status, search or detail filters.
+export function executiveSnapshot(units: DashboardUnit[], building = 'all') {
+  const scoped = units.filter(u => building === 'all' || String(u.building_number) === building);
+  return { units: scoped, ...aggregateUnits(scoped) };
 }
 export function scopedCollections(rows: CollectionRow[], units: DashboardUnit[], range: DateRange) {
   const ids = new Set(units.map(u => u.id));

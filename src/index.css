@@ -212,7 +212,8 @@
 
 /* Scoped management workspace: public booking presentation stays unchanged. */
 .dashboard-workspace {
-  background: hsl(195 18% 97%);
+  --background: 40 18% 98%;
+  background: hsl(var(--background));
   --foreground: 195 42% 15%;
   --muted-foreground: 195 12% 40%;
   --card: 0 0% 100%;
@@ -225,6 +226,9 @@
 }
 .dashboard-workspace :focus-visible { outline-offset: 3px; }
 .dashboard-workspace td, .dashboard-workspace th { padding: 0.8rem 0.7rem; }
+.executive-summary { --radius: 0.5rem; }
+.executive-summary h1 { font-family: 'Cairo', 'Tajawal', sans-serif; }
+.executive-summary .summary-number { font-family: 'Tajawal', sans-serif; font-weight: 700; line-height: 1.15; }
 @media (prefers-reduced-motion: reduce) {
   .dashboard-workspace *, .dashboard-workspace *::before, .dashboard-workspace *::after {
     animation: none !important;
