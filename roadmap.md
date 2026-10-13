@@ -18,3 +18,9 @@
 - [x] Replace the default dashboard with four unit KPIs, status/rate summary, separate financial figures and compact building aggregates.
 - [x] Move all filters, tables, plans and operations into explicit detail views with independent scope and a return control.
 - [x] Verify formulas, home/detail independence, exports, automatic build and desktop/mobile presentation without record changes or publication.
+
+# Final owner/investor first-phase dashboard
+- [x] Audit actual reservation/payment workflows, tax basis and available dated history using read-only evidence.
+- [ ] Resolve collection/invoice VAT basis with user: records lack tax fields and a collection-to-invoice identifier.
+- [ ] Implement approved owner presentation, dated progress, activity comparison and four optional detail destinations after financial clarification; preserve authoritative stored statuses.
+- [ ] Verify aggregate parity, meaningful tests, automatic build and desktop/mobile walkthrough after implementation.
