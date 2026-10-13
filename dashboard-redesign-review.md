@@ -9,6 +9,14 @@
 - `src/index.css`: scoped light petrol/gold workspace and reduced-motion handling.
 - `src/App.tsx`: hides floating marketing contact on `/dashboard` only; sidebar and public routes unchanged.
 - `AGENTS.md`, `roadmap.md`: engineering decisions and completion status.
+- `src/integrations/supabase/types.ts`: automatically generated type declarations also changed during the earlier work and should have been listed. The latest file-specific commit (`e7c2f6e`, 2026-10-13 23:13 UTC) removes declarations for six legacy email-queue functions: `delete_email`, `email_queue_dispatch`, `enqueue_email`, `move_to_dlq`, `read_email_batch` (five names; six removed declaration blocks including the grouped changes). These belong to the preceding email-sending upgrade, not dashboard data reads. The file describes the backend; changing declarations does not run a migration. It was not manually edited or regenerated in this follow-up, and no schema migration was created or executed for either dashboard review.
+
+## Follow-up changes
+- `src/pages/Dashboard.tsx`: business Arabic status labels, toolbar exports for the active buildings/units/tenant-records/collections tab, complete filtered sets, availability gates, degraded tenant-search warning and immediately clamped pagination after dataset shrink.
+- `src/lib/dashboardExport.ts`: dashboard-only row projections with translated columns and distinct annual versus period cash figures.
+- `src/lib/exportData.ts`: optional separate report-scope metadata worksheet; existing callers remain unchanged and downloads stay local.
+- `src/lib/dashboardMetrics.ts` and `.test.ts`: shared Arabic labels and pagination clamp, plus export/status/pagination regression tests.
+- `src/components/dashboard/ManagementUnitDetails.tsx`: unknown booking states no longer leak English codes.
 
 ## Checks
 - Vitest: all 11 tests passed across 3 files, including six dashboard aggregate/filter/period/obligation tests.

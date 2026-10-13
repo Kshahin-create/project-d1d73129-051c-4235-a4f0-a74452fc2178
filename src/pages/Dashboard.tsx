@@ -102,7 +102,7 @@ export default function Dashboard() {
     ];
     try {
       const rows = tab === 'units' ? dashboardUnitExport(filtered, tenants) : tab === 'tenants' ? dashboardTenantExport(filtered, tenants) : tab === 'financial' ? dashboardCollectionExport(filtered, cashRows) : dashboardBuildingExport(buildingRows);
-      exportRowsToExcel(rows, `لوحة_الإدارة_${exportTab}`, exportTab, [...metadata, { 'البند': 'عدد السجلات المصدرة', 'القيمة': String(rows.length) }]);
+      exportRowsToExcel<Record<string, string | number>>(rows, `لوحة_الإدارة_${exportTab}`, exportTab, [...metadata, { 'البند': 'عدد السجلات المصدرة', 'القيمة': String(rows.length) }]);
     } catch { toast.error('تعذر تنزيل التقرير؛ أعد المحاولة'); }
   };
   const selected = units.find(u => u.id === selectedId) ?? null;
