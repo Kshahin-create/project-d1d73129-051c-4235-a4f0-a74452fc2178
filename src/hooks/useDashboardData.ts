@@ -5,15 +5,23 @@ import type { Database } from '@/integrations/supabase/types';
 import type { DashboardUnit, CollectionRow, BookingRow, BookingUnitRow, TenantRow, InvoiceRow, AccountUnitRow } from '@/lib/dashboardMetrics';
 
 type TableName = keyof Database['public']['Tables'];
+// Dynamic column selections cannot retain the generated union of every table's
+// relationships during filtering. Bound the read-only builder at this boundary.
+type DashboardReadQuery<T> = PromiseLike<{
+  data: T[] | null;
+  error: { message: string } | null;
+}> & {
+  eq(column: string, value: string | boolean): DashboardReadQuery<T>;
+};
 // Read every permitted row without relying on API row caps. No RPC with side effects.
 export async function readDashboardRows<T>(table: TableName, select = '*', filters: Record<string, string | boolean> = {}): Promise<T[]> {
   const rows: T[] = [];
   for (let offset = 0; ; offset += 500) {
-    let query = supabase.from(table).select(select).order('id').range(offset, offset + 499);
+    let query = supabase.from(table).select(select).order('id').range(offset, offset + 499) as unknown as DashboardReadQuery<T>;
     for (const [key, value] of Object.entries(filters)) query = query.eq(key, value);
     const response = await query;
     if (response.error) throw response.error;
-    const batch = (response.data ?? []) as unknown as T[];
+    const batch = response.data ?? [];
     rows.push(...batch);
     if (batch.length < 500) return rows;
   }
