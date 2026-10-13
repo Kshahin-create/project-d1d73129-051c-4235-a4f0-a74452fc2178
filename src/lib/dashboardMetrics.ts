@@ -37,7 +37,7 @@ export function aggregateUnits(units: DashboardUnit[]) {
   let unknown = 0, rentedAnnual = 0, availableAnnual = 0, annual = 0;
   for (const unit of units) {
     counts[unit.status] = (counts[unit.status] ?? 0) + 1;
-    if (!(unit.status in STATUS_LABELS)) unknown++;
+    if (!Object.prototype.hasOwnProperty.call(STATUS_LABELS, unit.status)) unknown++;
     annual += number(unit.price);
     if (unit.status === 'rented') rentedAnnual += number(unit.price);
     if (unit.status === 'available') availableAnnual += number(unit.price);

@@ -19,7 +19,7 @@ export async function readDashboardRows<T>(table: TableName, select = '*'): Prom
 export function useDashboardData(enabled: boolean, userId?: string) {
   const client = useQueryClient();
   const prefix = ['management-dashboard', userId];
-  const options = { enabled, staleTime: 60_000, retry: 1 };
+  const options = { enabled, staleTime: 60_000, refetchInterval: 60_000, retry: 1 };
   const units = useQuery({ ...options, queryKey: [...prefix, 'units'], queryFn: () => readDashboardRows<DashboardUnit>('units', 'id, building_number, unit_number, status, price, area, activity, unit_type') });
   const buildings = useQuery({ ...options, queryKey: [...prefix, 'buildings'], queryFn: () => readDashboardRows<{ id: string; number: number; type: string }>('buildings', 'id, number, type') });
   const tenants = useQuery({ ...options, queryKey: [...prefix, 'tenants'], queryFn: () => readDashboardRows<TenantRow>('tenants', 'id, unit_id, tenant_name, business_name, phone, activity_type') });
@@ -46,5 +46,5 @@ export function useDashboardData(enabled: boolean, userId?: string) {
     refreshing: queries.some(q => q.isFetching),
     // Oldest successful dataset timestamp, not an optimistic clock on receive.
     updatedAt: successfulTimes.length ? Math.min(...successfulTimes) : 0,
-    refresh: () => client.invalidateQueries({ queryKey: prefix }) };
+    refresh: async () => { await Promise.all([client.invalidateQueries({ queryKey: prefix }), client.invalidateQueries({ queryKey: ['dashboard-detail', userId] })]); } };
 }
