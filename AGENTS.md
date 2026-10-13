@@ -6,3 +6,4 @@
 - Keep management-dashboard reads and pure aggregates in dashboard-specific modules, with independent query failure states and shared unit scopes; this isolates reporting from booking operations and prevents cross-page regressions.
 - Dashboard detail views are read-only and reuse existing plan coordinates without extending them; this preserves records and avoids unverified spatial claims.
 - Dashboard exports use the shared local Excel helper with a separate scope sheet and unpaginated filtered rows; availability gates prevent incomplete reports.
+- The executive dashboard owns only its building and financial-period scope; detailed reports mount separately with their own filters and reuse the same permission-gated query results, so detail exploration cannot change executive totals or duplicate realtime subscriptions.

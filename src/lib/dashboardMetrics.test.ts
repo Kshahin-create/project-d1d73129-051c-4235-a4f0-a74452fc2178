@@ -1,8 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { aggregateUnits, filterUnits, scopedCollections, scopedBookings, scopedInvoices, overdueInvoices, inPeriod, EMPTY_FILTERS, statusLabel, bookingStatusLabel, clampDashboardPage, type DashboardUnit } from './dashboardMetrics';
+import { aggregateUnits, filterUnits, scopedCollections, scopedBookings, scopedInvoices, overdueInvoices, inPeriod, EMPTY_FILTERS, statusLabel, bookingStatusLabel, clampDashboardPage, executiveSnapshot, type DashboardUnit } from './dashboardMetrics';
 import { dashboardUnitExport, dashboardTenantExport, dashboardCollectionExport, dashboardBuildingExport } from './dashboardExport';
 const unit = (id: string, status: string, price = 100, building = 1): DashboardUnit => ({ id, status, price, building_number: building, unit_number: Number(id), area: 200, activity: 'ورشة', unit_type: null });
 describe('dashboard integrity', () => {
+  it('calculates the two executive rates with all units as denominator, including supplemental statuses', () => {
+    const units = ['rented','rented','reserved','available','booked','maintenance','unexpected','available'].map((s,i) => unit(String(i),s));
+    const summary = executiveSnapshot(units);
+    expect(summary.leasing).toBe(25); expect(summary.rentedReservedRate).toBe(37.5);
+    expect(summary.counts.rented + summary.counts.reserved + summary.counts.available + summary.counts.booked + summary.counts.maintenance + summary.unknown).toBe(summary.total);
+    expect(executiveSnapshot([]).rentedReservedRate).toBe(0);
+  });
+  it('keeps executive totals and all-period cash independent from detail filters and dates', () => {
+    const units = [unit('1','rented',12000),unit('2','reserved',9000),unit('3','available',8000,2)];
+    const before = executiveSnapshot(units);
+    const details = filterUnits(units,{...EMPTY_FILTERS, building:'2', status:'available', search:'3'});
+    expect(details).toHaveLength(1); expect(executiveSnapshot(units)).toEqual(before);
+    expect(executiveSnapshot(units,'1').total).toBe(2); expect(before.total).toBe(3);
+    const rows = [{id:'c',unit_id:'1',amount:500,is_archived:false,created_at:'2025-01-01'}];
+    expect(scopedCollections(rows,details,{from:'2026-10-01',to:'2026-10-31'})).toEqual([]);
+    expect(scopedCollections(rows,before.units,{from:'',to:''})).toHaveLength(1);
+  });
   it('uses Arabic labels without leaking unknown codes and keeps reservation states separate', () => {
     expect(statusLabel('reserved')).toBe('محجوز'); expect(statusLabel('booked')).toBe('حجز مسجل');
     expect(statusLabel('unexpected')).toBe('حالة غير محددة'); expect(bookingStatusLabel('unexpected')).toBe('حالة غير محددة');
