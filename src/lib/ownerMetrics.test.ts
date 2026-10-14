@@ -35,4 +35,10 @@ describe('owner reporting',()=>{
  it('uses recorded expiry within next 24 hours, never already expired or confirmed',()=>{
   expect(nearingExpiry([b('1'),{...b('2'),status:'confirmed'},{...b('3'),expires_at:'invalid'}],Date.parse('2026-10-14T12:00:00Z'))).toHaveLength(1);
  });
+ it('assigns events to Riyadh dates and never synthesizes missing intermediate steps',()=>{
+  const event={...e('boundary'),before_status:'available',created_at:'2026-09-30T21:00:00Z'};
+  expect(statusTransitions([event],'units',new Set(['1']),{from:'2026-10-01',to:'2026-10-01'},'rented')).toHaveLength(1);
+  expect(statusTransitions([{...event,before_status:null}],'units',new Set(['1']),range)).toHaveLength(0);
+  expect(statusTransitions([{...event,created_at:'invalid'}],'units',new Set(['1']),range)).toHaveLength(0);
+ });
 });

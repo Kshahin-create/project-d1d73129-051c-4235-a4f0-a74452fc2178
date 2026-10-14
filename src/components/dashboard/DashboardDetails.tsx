@@ -17,7 +17,7 @@ import { exportRowsToExcel } from '@/lib/exportData';
 import { dashboardUnitExport, dashboardBuildingExport, dashboardCollectionExport, dashboardTenantExport } from '@/lib/dashboardExport';
 import { toast } from 'sonner';
 import { OwnerBookings, OwnerInvoices, OwnerEvents } from './OwnerRecords';
-import { ownerProgress, nearingExpiry, invoiceObligations, statusTransitions } from '@/lib/ownerMetrics';
+import { ownerProgress, nearingExpiry, invoiceObligations } from '@/lib/ownerMetrics';
 
 const todaySaudi = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const PAGE_SIZE = 20;
@@ -44,6 +44,7 @@ export function DashboardDetails({ data, userId, initialView, initialFilters = E
   const [sort, setSort] = useState<{ key: 'number' | 'total' | 'leasing' | 'rentedAnnual' | 'cash'; desc: boolean }>({ key: 'number', desc: false });
 
   useEffect(() => { setPage(1); }, [filters, tab, range, recordStatus]);
+  useEffect(() => { document.querySelector<HTMLElement>('[data-detail-title]')?.focus(); }, [tab]);
   const units = useMemo(() => [...(data.units.data ?? [])].sort((a,b) => a.building_number - b.building_number || a.unit_number - b.unit_number), [data.units.data]);
   const tenants = data.tenants.data ?? [];
   const filtered = useMemo(() => filterUnits(units, ['bookings','expiring','invoices'].includes(tab) ? {...filters,search:''} : filters, tenants), [units, filters, tenants, tab]);
