@@ -8,3 +8,4 @@
 - Dashboard exports use the shared local Excel helper with a separate scope sheet and unpaginated filtered rows; availability gates prevent incomplete reports.
 - The executive dashboard owns only its building and financial-period scope; detailed reports mount separately with their own filters and reuse the same permission-gated query results, so detail exploration cannot change executive totals or duplicate realtime subscriptions.
 - Owner period reporting uses projected automatic audit status transitions as its single event source, excluding insertion snapshots and duplicate manual logs; this avoids double-counting while making partial historical coverage explicit.
+- Dashboard report discovery and read-only evidence review reuse the executive query results and scoped detail exports; this keeps reconciliation inspectable without new reads or inferred payment eligibility.

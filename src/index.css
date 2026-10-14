@@ -231,6 +231,23 @@
 .executive-summary .summary-number { font-family: 'Tajawal', sans-serif; font-weight: 700; line-height: 1.15; text-align: right; }
 .owner-status { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); box-shadow: var(--shadow-elevated); }
 .owner-status .bg-primary { background: hsl(var(--primary-foreground)); }
+.executive-summary { --background: 195 12% 97%; }
+.owner-kpi { border-top: 3px solid hsl(var(--border)); box-shadow: var(--shadow-soft); }
+.owner-kpi:has([data-summary-count="rented"]) { border-top-color: hsl(var(--primary)); }
+.owner-kpi:has([data-summary-count="reserved"]) { border-top-color: hsl(var(--accent)); }
+.owner-kpi:has([data-summary-count="available"]) { border-top-color: hsl(var(--success)); }
+.owner-progress-item { border-inline-start: 2px solid hsl(var(--border)); }
+.owner-progress-item:last-child { border-inline-start-color: hsl(var(--accent)); }
+.owner-finance { background: hsl(var(--secondary) / .4); padding-inline: 1.25rem; }
+.owner-activity { box-shadow: var(--shadow-soft); }
+.owner-destinations a, .owner-destinations button { box-shadow: var(--shadow-soft); }
+.dashboard-workspace .num { overflow-wrap: anywhere; }
+.dashboard-workspace [role="tabpanel"] { min-width: 0; }
+.dashboard-workspace [data-detail-title] { letter-spacing: 0; }
+@media (max-width: 639px) {
+  .owner-progress-item { padding-inline: .75rem; }
+  .owner-finance { padding-inline: 1rem; }
+}
 @media (prefers-reduced-motion: reduce) {
   .dashboard-workspace *, .dashboard-workspace *::before, .dashboard-workspace *::after {
     animation: none !important;
