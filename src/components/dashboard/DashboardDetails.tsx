@@ -89,7 +89,7 @@ export function DashboardDetails({ data, userId, initialView, initialFilters = E
   const currentPage = clampDashboardPage(page, rowCount, PAGE_SIZE);
   useEffect(() => { setPage(p => clampDashboardPage(p, rowCount, PAGE_SIZE)); }, [rowCount]);
   const degradedSearch = !['bookings','invoices','expiring','review','reports'].includes(tab) && !!filters.search.trim() && !data.tenants.isSuccess;
-  const exportTab = ({ overview: 'مقارنة المباني', units: 'الوحدات', tenants: 'سجلات المستأجرين', financial: 'التحصيلات', bookings: 'الحجوزات', expiring: 'الحجوزات القريبة من الانتهاء', reports: 'التقارير', review: 'مراجعة البيانات', invoices: 'الفواتير', events: 'إنجاز الفترة', review: 'مراجعة البيانات' } as Record<string, string>)[tab];
+  const exportTab = ({ overview: 'مقارنة المباني', units: 'الوحدات', tenants: 'سجلات المستأجرين', financial: 'التحصيلات', bookings: 'الحجوزات', expiring: 'الحجوزات القريبة من الانتهاء', invoices: 'الفواتير', events: 'إنجاز الفترة', review: 'مراجعة البيانات' } as Record<string, string>)[tab];
   const exportAvailable = !!exportTab && ready && !degradedSearch && (tab === 'review' ? reviewReady : tab === 'bookings' || tab === 'expiring' ? bookingsReady && validRange : tab === 'invoices' ? obligationsReady : tab === 'events' ? bookingsReady && data.history.isSuccess && validRange : tab === 'units' || tab === 'tenants' ? data.tenants.isSuccess : collectionsReady && validRange) && rowCount > 0;
   const exportCurrent = () => {
     if (!exportAvailable) return;
