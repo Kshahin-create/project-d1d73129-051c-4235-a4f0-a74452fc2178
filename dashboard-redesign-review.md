@@ -1,5 +1,12 @@
 # Dashboard redesign review
 
+## Final owner/investor replacement, 2026-10-14
+- Latest implementation and user-confirmed historical VAT/manual-payment definitions are documented in `dashboard-owner-audit.md`.
+- Home now explicitly covers the first phase, with composed status reporting, month-default dated achievement, grouped VAT-exclusive finance, actual activity comparison, anonymous client/follow-up aggregates and four optional detail destinations.
+- Corrects earlier review statement: genuine booking and unit transitions exist in the automatic audit history; coverage is partial, not absent. Only genuine UPDATE before/after status changes are used, never insertion snapshots or updated timestamps.
+- Owner confirmed existing historical collections and invoice amounts exclude VAT; previous unverified-tax language is superseded. No tax transformation, workflow change, permission change or record mutation.
+- 24 tests passed, authenticated desktop/mobile and full local exports inspected; see audit for live parity and data limitations.
+
 ## Executive presentation replacement
 - `src/pages/Dashboard.tsx`: permission gate and single shared data subscription; summary is the first view. Opening reports never changes summary filters.
 - `src/components/dashboard/ExecutiveSummary.tsx`: four unit-count cards, one reconciled status bar, two rates, separate annual/cash financial figures (all-period cash by default), small building progress summaries and anonymous follow-up totals. Only a building selector is present on home; period selection stays inside finance and explanations are in help.

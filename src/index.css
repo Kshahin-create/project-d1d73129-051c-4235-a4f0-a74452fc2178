@@ -229,6 +229,8 @@
 .executive-summary { --radius: 0.5rem; }
 .executive-summary h1 { font-family: 'Cairo', 'Tajawal', sans-serif; }
 .executive-summary .summary-number { font-family: 'Tajawal', sans-serif; font-weight: 700; line-height: 1.15; text-align: right; }
+.owner-status { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); box-shadow: var(--shadow-elevated); }
+.owner-status .bg-primary { background: hsl(var(--primary-foreground)); }
 @media (prefers-reduced-motion: reduce) {
   .dashboard-workspace *, .dashboard-workspace *::before, .dashboard-workspace *::after {
     animation: none !important;

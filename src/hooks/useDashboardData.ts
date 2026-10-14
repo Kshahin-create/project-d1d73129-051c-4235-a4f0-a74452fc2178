@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import type { DashboardUnit, CollectionRow, BookingRow, BookingUnitRow, TenantRow, InvoiceRow, AccountUnitRow } from '@/lib/dashboardMetrics';
+import type { StatusEvent } from '@/lib/ownerMetrics';
 
 type TableName = keyof Database['public']['Tables'];
 // Dynamic column selections cannot retain the generated union of every table's
@@ -38,10 +39,18 @@ export function useDashboardData(enabled: boolean, userId?: string) {
   const bookingUnits = useQuery({ ...options, queryKey: [...prefix, 'booking_units'], queryFn: () => readDashboardRows<BookingUnitRow>('booking_units', 'id, booking_id, unit_id') });
   const invoices = useQuery({ ...options, queryKey: [...prefix, 'invoices'], queryFn: () => readDashboardRows<InvoiceRow>('invoices', 'id, unit_id, booking_id, tenant_account_id, due_date, paid, amount, paid_amount, invoice_number, customer_name') });
   const accountUnits = useQuery({ ...options, queryKey: [...prefix, 'tenant_account_units'], queryFn: () => readDashboardRows<AccountUnitRow>('tenant_account_units', 'id, tenant_account_id, unit_id') });
+  const history = useQuery({ ...options, queryKey: [...prefix, 'history'], queryFn: async () => {
+    const select = 'id, entity_table, entity_id, action, created_at, before_status:before_data->>status, after_status:after_data->>status';
+    const [unitEvents, bookingEvents] = await Promise.all([
+      readDashboardRows<StatusEvent>('audit_log', select, { entity_table: 'units', action: 'UPDATE' }),
+      readDashboardRows<StatusEvent>('audit_log', select, { entity_table: 'bookings', action: 'UPDATE' }),
+    ]);
+    return [...unitEvents, ...bookingEvents];
+  } });
   useEffect(() => {
     if (!enabled) return;
     const channel = supabase.channel(`management-dashboard-${userId}`);
-    for (const table of ['units', 'buildings', 'tenants', 'unit_collections', 'bookings', 'booking_units', 'invoices', 'tenant_account_units', 'unit_files', 'tenant_account_files']) {
+    for (const table of ['units', 'buildings', 'tenants', 'unit_collections', 'bookings', 'booking_units', 'invoices', 'tenant_account_units', 'unit_files', 'tenant_account_files', 'audit_log']) {
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
         void client.invalidateQueries({ queryKey: prefix });
         void client.invalidateQueries({ queryKey: ['dashboard-detail', userId] });
@@ -50,9 +59,9 @@ export function useDashboardData(enabled: boolean, userId?: string) {
     channel.subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [enabled, userId, client]);
-  const queries = [units, buildings, tenants, collections, bookings, bookingUnits, invoices, accountUnits];
+  const queries = [units, buildings, tenants, collections, bookings, bookingUnits, invoices, accountUnits, history];
   const successfulTimes = queries.filter(q => q.isSuccess).map(q => q.dataUpdatedAt);
-  return { units, buildings, tenants, collections, bookings, bookingUnits, invoices, accountUnits,
+  return { units, buildings, tenants, collections, bookings, bookingUnits, invoices, accountUnits, history,
     refreshing: queries.some(q => q.isFetching),
     // Oldest successful dataset timestamp, not an optimistic clock on receive.
     updatedAt: successfulTimes.length ? Math.min(...successfulTimes) : 0,
