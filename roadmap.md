@@ -26,6 +26,6 @@
 - [x] Verify aggregate parity, meaningful tests, automatic build and desktop/mobile walkthrough after implementation.
 
 # Owner reporting polish
-- [ ] Refine executive hierarchy, contextual activity/status drilldowns and independent building scope.
-- [ ] Add organized report destinations and read-only data review with full scoped exports.
-- [ ] Verify live drilldown parity, downloads, responsive layout, tests and automatic build without publication.
+- [x] Refine executive hierarchy, contextual activity/status drilldowns and independent building scope.
+- [x] Add organized report destinations and read-only data review with full scoped exports.
+- [x] Verify live drilldown parity, downloads, responsive layout, tests and automatic build without publication.

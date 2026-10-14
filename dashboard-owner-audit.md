@@ -45,3 +45,11 @@ Current phase inventory reconciles: 228 units = 36 rented + 75 reserved + 117 av
 - Downloaded and inspected complete local Excel sheets: 228 units, 142 phase-linked bookings, 36 collections, 16 scoped invoices and 135 distinct recorded rental transitions for all periods. Every workbook includes the Arabic report-scope sheet. These are observed data, not application constants.
 - Final automatic build/typecheck succeeded at 2026-10-14 00:08:00 UTC; all 24 tests passed again. Unit files tab verified after successful details loading. No manual build/typecheck or publication.
 - Limitations remain: partial history, current-ID phase linkage (no reconstructed deleted inventory), collection registration date rather than bank date, incomplete invoice schedule, account identities rather than unique people, and no phase-linked interested-customer aggregate. History read failures hide related indicators as unavailable, not a fabricated zero.
+
+## Owner reporting refinement, 2026-10-14 21:18 UTC
+- Added independent executive building scope; all contextual destinations retain that building without detail filters rewriting the home scope.
+- Activity status counts now open the exact activity/status unit list, including tyre-service reservations. Current read-only parity: 14 reserved tyre units in the list and 14 rows in the exported workbook, plus the scope sheet.
+- Four destinations appear before the main figures. Reports now have a dedicated directory instead of opening building comparison without context.
+- Added read-only review of conflicting pending-unit states, unknown statuses, missing activities, undated outstanding invoices and invalid collection dates. These are evidence checks, not full certification or balance-derived rental eligibility.
+- 26 targeted tests passed. Authenticated current SELECT-response parity remains 228 / 36 / 75 / 117 and 902,011.64 SAR collected; source amounts unchanged. Desktop and mobile inspected, no horizontal overflow or runtime errors; executive building selection and return independence exercised.
+- Automatic build is OK after correcting the report-label declaration. No database changes, workflow changes, access changes or publication.
