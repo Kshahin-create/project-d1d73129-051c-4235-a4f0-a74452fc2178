@@ -22,5 +22,5 @@
 # Final owner/investor first-phase dashboard
 - [x] Audit actual reservation/payment workflows, tax basis and available dated history using read-only evidence.
 - [x] Resolve collection/invoice VAT basis: user confirmed all existing historical amounts exclude VAT and manual rental confirmation follows qualifying payment.
-- [ ] Implement approved owner presentation, dated progress, activity comparison and four optional detail destinations after financial clarification; preserve authoritative stored statuses.
-- [ ] Verify aggregate parity, meaningful tests, automatic build and desktop/mobile walkthrough after implementation.
+- [x] Implement approved owner presentation, dated progress, activity comparison and four optional detail destinations; preserve authoritative stored statuses.
+- [x] Verify aggregate parity, meaningful tests, automatic build and desktop/mobile walkthrough after implementation.
