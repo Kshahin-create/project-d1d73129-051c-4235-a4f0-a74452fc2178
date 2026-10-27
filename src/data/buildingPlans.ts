@@ -260,6 +260,10 @@ export const BUILDING_PLANS: Record<number, PlanLayout> = {
   10: B10_LAYOUT,
   // مبنى 14 (نجارة) — الصف العلوي 712→723، الصف السفلي 700→711
   14: buildLayout(B6, 712, 700),
+  // مبنى 15: متاح حالياً الجزء ب فقط (772–795)
+  15: buildLayout(B6, 784, 772),
+  16: buildLayout(B6, 808, 796),
+  17: buildLayout(B6, 856, 844),
 };
 
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
@@ -272,5 +276,6 @@ export const EXTRA_SECTIONS: Record<number, { key: string; label: string; layout
   4: [{ key: "4b", label: "مبنى 4 - ب", layout: buildLayout(B4, 291, 279) }],
   5: [{ key: "5b", label: "مبنى 5 - ب", layout: buildLayout(B5, 243, 231) }],
   6: [{ key: "6b", label: "مبنى 6 - ب", layout: buildLayout(B6, 195, 183) }],
+  16: [{ key: "16b", label: "مبنى 16 - ب", layout: buildLayout(B6, 832, 820) }],
   14: [{ key: "14b", label: "مبنى 14 - ب", layout: buildLayout(B6, 736, 724) }],
 };
