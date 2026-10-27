@@ -3,7 +3,7 @@ import { Lock, CheckCircle2, ZoomIn, X } from "lucide-react";
 import { useState } from "react";
 import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
-import { getPlanLayout } from "@/data/buildingPlans";
+import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingPlans";
 import { useAuth } from "@/hooks/useAuth";
 
 interface UnitGridProps {
@@ -16,14 +16,61 @@ interface UnitGridProps {
   planImage?: string;
 }
 
-export const UnitGrid = ({ buildingNumber, units, selectedUnits = [], onSelect, planImage }: UnitGridProps) => {
+const sectionImages = import.meta.glob("@/assets/plans/section-*.svg", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
+
+const sectionImage = (key: string) =>
+  Object.entries(sectionImages).find(([k]) => k.endsWith(`section-${key}.svg`))?.[1];
+
+export const UnitGrid = (props: UnitGridProps) => {
+  const extras = EXTRA_SECTIONS[props.buildingNumber] ?? [];
+  if (extras.length === 0) return <UnitGridSection {...props} />;
+  const usedNumbers = new Set(extras.flatMap((s) => s.layout.units.map((u) => u.unitNumber)));
+  const mainUnits = props.units.filter((u) => !usedNumbers.has(u.unitNumber));
+  return (
+    <div className="space-y-10">
+      <section className="space-y-3">
+        <h3 className="font-display text-lg font-bold">مبنى {props.buildingNumber} - أ</h3>
+        <UnitGridSection {...props} units={mainUnits} />
+      </section>
+      {extras.map((s) => {
+        const nums = new Set(s.layout.units.map((u) => u.unitNumber));
+        return (
+          <section key={s.key} className="space-y-3">
+            <h3 className="font-display text-lg font-bold">{s.label}</h3>
+            <UnitGridSection
+              {...props}
+              units={props.units.filter((u) => nums.has(u.unitNumber))}
+              planImage={sectionImage(s.key)}
+              layoutOverride={s.layout}
+              planLabel={s.label}
+            />
+          </section>
+        );
+      })}
+    </div>
+  );
+};
+
+const UnitGridSection = ({
+  buildingNumber,
+  units,
+  selectedUnits = [],
+  onSelect,
+  planImage,
+  layoutOverride,
+  planLabel,
+}: UnitGridProps & { layoutOverride?: PlanLayout; planLabel?: string }) => {
   const [zoomed, setZoomed] = useState(false);
   const [hoveredUnit, setHoveredUnit] = useState<number | null>(null);
   const { isAdmin, isManager, isControl } = useAuth();
   const canDistinguish = isAdmin || isManager || isControl;
-  const layout = getPlanLayout(buildingNumber);
+  const layout = layoutOverride ?? getPlanLayout(buildingNumber);
   const unitsByNumber = new Map(units.map((u) => [u.unitNumber, u]));
   const selectedSet = new Set(selectedUnits);
+  void planLabel;
 
   const renderOverlay = (interactive: boolean) =>
     layout?.units.map((area) => {
