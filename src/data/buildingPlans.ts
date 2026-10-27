@@ -281,6 +281,8 @@ export const EXTRA_SECTIONS: Record<number, { key: string; label: string; layout
   6: [{ key: "6b", label: "مبنى 6 - ب", layout: buildLayout(B6, 195, 183) }],
   17: [{ key: "17b", label: "مبنى 17 - ب", layout: buildLayout(B6, 880, 868) }],
   18: [{ key: "18b", label: "مبنى 18 - ب", layout: buildLayout(B6, 928, 916) }],
+  // 19-ب: الرسم يكرر 962 و963 (موجودين في 19-أ) — مستبعدين لحين تأكيد المالك
+  19: [{ key: "19b", label: "مبنى 19 - ب", layout: (() => { const l = buildLayout(B6, 974, 962); return { ...l, units: l.units.filter((u) => u.unitNumber > 963) }; })() }],
   16: [{ key: "16b", label: "مبنى 16 - ب", layout: buildLayout(B6, 832, 820) }],
   14: [{ key: "14b", label: "مبنى 14 - ب", layout: buildLayout(B6, 736, 724) }],
 };
