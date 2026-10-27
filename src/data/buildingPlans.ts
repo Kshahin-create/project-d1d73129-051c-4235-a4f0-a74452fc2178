@@ -258,6 +258,8 @@ export const BUILDING_PLANS: Record<number, PlanLayout> = {
   8: B8_LAYOUT,
   9: B9_LAYOUT,
   10: B10_LAYOUT,
+  // مبنى 14 (نجارة) — الصف العلوي 712→723، الصف السفلي 700→711
+  14: buildLayout(B6, 712, 700),
 };
 
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
