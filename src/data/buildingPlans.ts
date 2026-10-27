@@ -263,3 +263,10 @@ export const BUILDING_PLANS: Record<number, PlanLayout> = {
 export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
   return BUILDING_PLANS[buildingNumber];
 }
+
+/** الجزء (ب) من مباني الورش — نفس هندسة الجزء (أ) بأرقام وحدات مختلفة. */
+export const EXTRA_SECTIONS: Record<number, { key: string; label: string; layout: PlanLayout }[]> = {
+  3: [{ key: "3b", label: "مبنى 3 - ب", layout: buildLayout(B3, 339, 327) }],
+  4: [{ key: "4b", label: "مبنى 4 - ب", layout: buildLayout(B4, 291, 279) }],
+  5: [{ key: "5b", label: "مبنى 5 - ب", layout: buildLayout(B5, 243, 231) }],
+};
