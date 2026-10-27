@@ -14,7 +14,8 @@ interface BuildingSelectorProps {
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   const service = buildings.filter((b) => b.type.includes("صيانة"));
   const carpentry = buildings.filter((b) => b.type.includes("نجارة"));
-  const parts = buildings.filter((b) => !b.type.includes("صيانة") && !b.type.includes("نجارة"));
+  const smithing = buildings.filter((b) => b.type.includes("حدادة"));
+  const parts = buildings.filter((b) => !b.type.includes("صيانة") && !b.type.includes("نجارة") && !b.type.includes("حدادة"));
 
   const showService = !activityFilter || activityFilter === "service";
   const showParts = !activityFilter || activityFilter === "parts";
@@ -47,9 +48,20 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
       {showCarpentry && (
         <Section
           title="ورش النجارة"
-          subtitle="مبنى 14"
+          subtitle="المباني من 14 إلى 16"
           icon={<Wrench className="h-5 w-5" />}
           buildings={carpentry}
+          units={units}
+          onSelect={onSelect}
+          selected={selected}
+        />
+      )}
+      {!activityFilter && smithing.length > 0 && (
+        <Section
+          title="ورش الألمنيوم والحدادة"
+          subtitle="مبنى 17"
+          icon={<Wrench className="h-5 w-5" />}
+          buildings={smithing}
           units={units}
           onSelect={onSelect}
           selected={selected}
