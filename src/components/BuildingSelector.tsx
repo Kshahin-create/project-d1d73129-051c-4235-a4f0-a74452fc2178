@@ -59,7 +59,7 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
       {!activityFilter && smithing.length > 0 && (
         <Section
           title="ورش الألمنيوم والحدادة"
-          subtitle="مبنى 17"
+          subtitle="المباني من 17 إلى 19"
           icon={<Wrench className="h-5 w-5" />}
           buildings={smithing}
           units={units}
