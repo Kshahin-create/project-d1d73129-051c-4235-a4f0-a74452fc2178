@@ -13,10 +13,12 @@ interface BuildingSelectorProps {
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   const service = buildings.filter((b) => b.type.includes("صيانة"));
-  const parts = buildings.filter((b) => !b.type.includes("صيانة"));
+  const carpentry = buildings.filter((b) => b.type.includes("نجارة"));
+  const parts = buildings.filter((b) => !b.type.includes("صيانة") && !b.type.includes("نجارة"));
 
   const showService = !activityFilter || activityFilter === "service";
   const showParts = !activityFilter || activityFilter === "parts";
+  const showCarpentry = !activityFilter && carpentry.length > 0;
 
   return (
     <div className="space-y-10">
@@ -37,6 +39,17 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
           subtitle="المباني من 7 إلى 10"
           icon={<Cog className="h-5 w-5" />}
           buildings={parts}
+          units={units}
+          onSelect={onSelect}
+          selected={selected}
+        />
+      )}
+      {showCarpentry && (
+        <Section
+          title="ورش النجارة"
+          subtitle="مبنى 14"
+          icon={<Wrench className="h-5 w-5" />}
+          buildings={carpentry}
           units={units}
           onSelect={onSelect}
           selected={selected}
