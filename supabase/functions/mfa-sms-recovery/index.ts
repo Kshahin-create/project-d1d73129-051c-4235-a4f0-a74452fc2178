@@ -10,7 +10,7 @@ const corsHeaders = {
 const OURSMS_API_KEY = Deno.env.get("OURSMS_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SMS_SRC = "RAWZ OTP";
+const SMS_SRC = "Authora";
 const OTP_TTL_MINUTES = 10;
 const PURPOSE = "mfa_recovery";
 
