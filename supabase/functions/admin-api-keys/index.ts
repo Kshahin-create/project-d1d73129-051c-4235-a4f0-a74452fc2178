@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       if (!name || name.length > 100)
         return json({ error: "name is required (max 100 chars)" }, 400);
       const validScopes = scopes.filter((s: string) =>
-        ["read", "write", "admin"].includes(s),
+        ["read", "write", "admin", "crm:read", "crm:pii", "crm:finance"].includes(s),
       );
       if (validScopes.length === 0)
         return json({ error: "at least one valid scope required" }, 400);
