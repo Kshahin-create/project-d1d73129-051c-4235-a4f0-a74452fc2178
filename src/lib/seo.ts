@@ -8,7 +8,7 @@ export const PUBLIC_PAGES = [
   { path: "/terms", title: "الشروط والأحكام | المدينة الصناعية بشمال مكة", description: "اطّلع على شروط استخدام منصة تأجير وحدات المدينة الصناعية بشمال مكة، وطبيعة طلبات الحجز والأسعار والمدفوعات وحقوق المستخدم والتواصل." },
 ] as const;
 
-export function pageSeo(pathname: string) {
+export function pageSeo(pathname: string): { title: string; description: string; indexable: boolean; canonical?: string } {
   const page = PUBLIC_PAGES.find((entry) => entry.path === pathname);
   return page ? { ...page, indexable: true, canonical: `${SITE_URL}${page.path}` } : { title: "منصة التأجير | المدينة الصناعية بشمال مكة", description: PUBLIC_PAGES[0].description, indexable: false };
 }
