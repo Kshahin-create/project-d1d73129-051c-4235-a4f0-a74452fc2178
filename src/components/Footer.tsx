@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { Instagram, Mail, MapPin, Phone } from "lucide-react";
-import { COMPANY, CONTACT, PROJECT, SOCIAL } from "@/lib/config";
-import logo from "@/assets/logo-nukhbat.png";
-import madarLogo from "@/assets/madar-al-khaleej-logo.png";
-import licenseQr from "@/assets/advertising-license-qr.png";
-import alQimmahLogo from "@/assets/al-qimmah-logo.png";
-import municipalityLogo from "@/assets/holy-makkah-municipality-logo.png";
+import { COMPANY, CONTACT, PROJECT, SOCIAL, LOCATION } from "@/lib/config";
+import logo from "@/assets/logo-nukhbat.webp";
+import madarLogo from "@/assets/madar-al-khaleej-logo.webp";
+import licenseQr from "@/assets/advertising-license-qr.webp";
+import alQimmahLogo from "@/assets/al-qimmah-logo.webp";
+import municipalityLogo from "@/assets/holy-makkah-municipality-logo.webp";
 
 /** أيقونة تيك توك (مخصّصة لأنها غير متوفّرة في lucide-react) */
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -30,6 +30,7 @@ export const Footer = () => {
             <div className="flex min-h-28 items-center gap-4 py-5 sm:border-l sm:border-border/60">
               <img
                 src={municipalityLogo}
+                width={1080} height={1080} loading="lazy" decoding="async"
                 alt="شعار أمانة العاصمة المقدسة"
                 className="h-20 w-24 shrink-0 object-contain"
               />
@@ -44,6 +45,7 @@ export const Footer = () => {
             <div className="flex min-h-28 items-center gap-4 py-5">
               <img
                 src={alQimmahLogo}
+                width={1350} height={1350} loading="lazy" decoding="async"
                 alt="شعار شركة القمة الهادفة الحديثة"
                 className="h-20 w-20 shrink-0 object-contain"
               />
@@ -58,6 +60,7 @@ export const Footer = () => {
             <div className="flex min-h-28 items-center gap-4 border-t border-border/60 py-5 sm:border-l sm:border-border/60">
               <img
                 src={logo}
+                width={1350} height={1350} loading="lazy" decoding="async"
                 alt="شعار شركة نخبة تسكين العقارية"
                 className="h-16 w-20 shrink-0 object-contain"
               />
@@ -72,6 +75,7 @@ export const Footer = () => {
             <div className="flex min-h-28 items-center gap-3 border-t border-border/60 py-5">
               <img
                 src={madarLogo}
+                width={438} height={410} loading="lazy" decoding="async"
                 alt="شعار مدار الخليج العقاري"
                 className="h-16 w-16 shrink-0 object-contain"
               />
@@ -87,6 +91,7 @@ export const Footer = () => {
               </div>
               <img
                 src={licenseQr}
+                width={1080} height={1080} loading="lazy" decoding="async"
                 alt="رمز الاستجابة السريعة للترخيص الإعلاني"
                 className="h-16 w-16 shrink-0 rounded-md bg-background object-contain"
               />
@@ -105,7 +110,7 @@ export const Footer = () => {
                 <Mail className="h-4 w-4" /> <span dir="ltr">{CONTACT.email}</span>
               </a>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" /> شمال مكة المكرمة
+                <MapPin className="h-4 w-4" /> {LOCATION.addressAr}
               </div>
             </div>
           </div>
@@ -146,6 +151,7 @@ export const Footer = () => {
             — جميع الحقوق محفوظة
           </div>
           <div className="flex items-center gap-4">
+            <a href="https://mnicity.com/" className="transition hover:text-primary">الموقع الرئيسي</a>
             <Link to="/privacy" className="transition hover:text-primary">سياسة الخصوصية والأمان</Link>
             <span className="text-border">|</span>
             <Link to="/terms" className="transition hover:text-primary">الشروط والأحكام</Link>

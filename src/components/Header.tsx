@@ -2,7 +2,7 @@ import { Phone, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { COMPANY, CONTACT } from "@/lib/config";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/logo-nukhbat.png";
+import logo from "@/assets/logo-nukhbat.webp";
 
 export const Header = () => {
   const { user, loading } = useAuth();
@@ -12,6 +12,7 @@ export const Header = () => {
         <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <img
             src={logo}
+            width={1350} height={1350} decoding="async"
             alt="شعار شركة نخبة تسكين العقارية"
             className="h-10 w-auto shrink-0 object-contain sm:h-14"
           />

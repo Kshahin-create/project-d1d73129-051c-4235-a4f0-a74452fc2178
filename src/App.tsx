@@ -1,3 +1,6 @@
+import { lazy, Suspense } from "react";
+import { HelmetProvider } from "react-helmet-async";
+import { PageMetadata } from "@/components/PageMetadata";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,39 +11,39 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { ReadOnlyBanner } from "@/components/ReadOnlyBanner";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import Index from "./pages/Index.tsx";
-import Booking from "./pages/Booking.tsx";
-import Privacy from "./pages/Privacy.tsx";
-import Terms from "./pages/Terms.tsx";
-import Auth from "./pages/Auth.tsx";
-import AuthMobileCallback from "./pages/AuthMobileCallback.tsx";
-import AuthMobileStart from "./pages/AuthMobileStart.tsx";
-import Admin from "./pages/Admin.tsx";
-import AdminUsers from "./pages/AdminUsers.tsx";
-import AdminAudit from "./pages/AdminAudit.tsx";
-import AdminAccessLog from "./pages/AdminAccessLog.tsx";
-import AdminTenants from "./pages/AdminTenants.tsx";
-import AdminBookings from "./pages/AdminBookings.tsx";
-import Dashboard from "./pages/Dashboard.tsx";
-import Profile from "./pages/Profile.tsx";
-import AdminApiKeys from "./pages/AdminApiKeys.tsx";
-import AdminStats from "./pages/AdminStats.tsx";
-import ApiDocs from "./pages/ApiDocs.tsx";
-import Mcp from "./pages/Mcp.tsx";
-import ControlDashboard from "./pages/ControlDashboard.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import HowToBook from "./pages/HowToBook.tsx";
-import AdminTenantAccounts from "./pages/AdminTenantAccounts.tsx";
-import AdminPaidTenants from "./pages/AdminPaidTenants.tsx";
-import AdminCollectionsReport from "./pages/AdminCollectionsReport.tsx";
-import TenantPortal from "./pages/TenantPortal.tsx";
-import TenantMagicLogin from "./pages/TenantMagicLogin.tsx";
-import Invoice from "./pages/Invoice.tsx";
-import TelegramSettings from "./pages/TelegramSettings.tsx";
-import Install from "./pages/Install.tsx";
-import AdminLeads from "./pages/AdminLeads.tsx";
-import AdminInterested from "./pages/AdminInterested.tsx";
-import AdminSheetsSync from "./pages/AdminSheetsSync.tsx";
-import AdminBackup from "./pages/AdminBackup.tsx";
+const Booking = lazy(() => import("./pages/Booking.tsx"));
+const Privacy = lazy(() => import("./pages/Privacy.tsx"));
+const Terms = lazy(() => import("./pages/Terms.tsx"));
+const Auth = lazy(() => import("./pages/Auth.tsx"));
+const AuthMobileCallback = lazy(() => import("./pages/AuthMobileCallback.tsx"));
+const AuthMobileStart = lazy(() => import("./pages/AuthMobileStart.tsx"));
+const Admin = lazy(() => import("./pages/Admin.tsx"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers.tsx"));
+const AdminAudit = lazy(() => import("./pages/AdminAudit.tsx"));
+const AdminAccessLog = lazy(() => import("./pages/AdminAccessLog.tsx"));
+const AdminTenants = lazy(() => import("./pages/AdminTenants.tsx"));
+const AdminBookings = lazy(() => import("./pages/AdminBookings.tsx"));
+const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
+const Profile = lazy(() => import("./pages/Profile.tsx"));
+const AdminApiKeys = lazy(() => import("./pages/AdminApiKeys.tsx"));
+const AdminStats = lazy(() => import("./pages/AdminStats.tsx"));
+const ApiDocs = lazy(() => import("./pages/ApiDocs.tsx"));
+const Mcp = lazy(() => import("./pages/Mcp.tsx"));
+const ControlDashboard = lazy(() => import("./pages/ControlDashboard.tsx"));
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const HowToBook = lazy(() => import("./pages/HowToBook.tsx"));
+const AdminTenantAccounts = lazy(() => import("./pages/AdminTenantAccounts.tsx"));
+const AdminPaidTenants = lazy(() => import("./pages/AdminPaidTenants.tsx"));
+const AdminCollectionsReport = lazy(() => import("./pages/AdminCollectionsReport.tsx"));
+const TenantPortal = lazy(() => import("./pages/TenantPortal.tsx"));
+const TenantMagicLogin = lazy(() => import("./pages/TenantMagicLogin.tsx"));
+const Invoice = lazy(() => import("./pages/Invoice.tsx"));
+const TelegramSettings = lazy(() => import("./pages/TelegramSettings.tsx"));
+const Install = lazy(() => import("./pages/Install.tsx"));
+const AdminLeads = lazy(() => import("./pages/AdminLeads.tsx"));
+const AdminInterested = lazy(() => import("./pages/AdminInterested.tsx"));
+const AdminSheetsSync = lazy(() => import("./pages/AdminSheetsSync.tsx"));
+const AdminBackup = lazy(() => import("./pages/AdminBackup.tsx"));
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
 
 const queryClient = new QueryClient();
@@ -51,12 +54,15 @@ function PublicFloatingContact() {
 }
 
 const App = () => (
+  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <PageMetadata />
         <MaintenanceGate>
+        <Suspense fallback={<div className="min-h-screen grid place-items-center bg-background text-muted-foreground" role="status">جارٍ تحميل الصفحة…</div>}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/booking" element={<Booking />} />
@@ -98,10 +104,12 @@ const App = () => (
         <AdminSidebar />
         <ReadOnlyBanner />
         <InstallPrompt />
+        </Suspense>
         </MaintenanceGate>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

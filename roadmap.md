@@ -38,3 +38,10 @@
 # SMS sender name change
 - [x] Send all verification SMS under the new sender name and retire the previous one.
 - [x] Deploy both SMS-sending functions and confirm no code still references the old name.
+
+# Ejar SEO and AI discovery
+- [x] Optimize homepage images and stabilize their dimensions; reduce initial application code.
+- [x] Add accurate public-page metadata, structured data, sitemap, robots reference and llms.txt without exposing private routes.
+- [x] Verify public pages, image loading, crawler files and regression tests; do not change booking records.
+- [ ] Complete Google Search Console verification and sitemap submission (blocked: connection request declined).
+- [ ] Verify real HTTP 404 and server-rendered content (blocked: requires hosting/template change, not a client-side fix).
