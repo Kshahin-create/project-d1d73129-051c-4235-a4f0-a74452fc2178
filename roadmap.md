@@ -31,6 +31,6 @@
 - [x] Verify live drilldown parity, downloads, responsive layout, tests and automatic build without publication.
 
 # Booking activity polish
-- [ ] Add independent carpentry and smithing activity choices and preserve them throughout building selection and sign-in.
-- [ ] Correct stale project counts and review expanded plan rendering without changing records.
-- [ ] Run relevant tests and verify actual booking selection on desktop/mobile without submitting a booking or publishing.
+- [x] Add independent carpentry and smithing activity choices and preserve them throughout building selection and sign-in.
+- [x] Correct stale project counts and review expanded plan rendering without changing records.
+- [x] Run relevant tests and verify actual booking selection on desktop/mobile without submitting a booking or publishing.
