@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decodeCursor, encodeCursor, parseLimit, redact, hasCrmAccess } from "./logic";
+import { decodeCursor, encodeCursor, parseLimit, redact, hasCrmAccess } from "../../../supabase/functions/crm-api/logic";
 
 describe("crm-api logic", () => {
   it("hides personal fields without crm:pii", () => {
