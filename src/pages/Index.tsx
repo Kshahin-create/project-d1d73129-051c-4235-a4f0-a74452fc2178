@@ -5,10 +5,11 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PROJECT, LOCATION } from "@/lib/config";
-import masterPlan from "@/assets/master-plan.png";
-import heroBg from "@/assets/hero-bg.jpg";
-import overviewBg from "@/assets/overview-city.png";
-const landSpaces = "/land-spaces.jpg";
+import masterPlan from "@/assets/master-plan-preview.webp";
+import fullMasterPlan from "@/assets/master-plan.webp";
+import heroBg from "@/assets/hero-bg.webp";
+import overviewBg from "@/assets/overview-city.webp";
+const landSpaces = "/land-spaces.webp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { BOOKING_ACTIVITIES, classifyBookingActivity } from "@/lib/bookingActivities";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ const Index = () => {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="" className="h-full w-full object-cover" width={1920} height={1080} />
+          <img src={heroBg} alt="" className="h-full w-full object-cover" width={1920} height={1080} fetchPriority="high" decoding="async" />
           <div className="absolute inset-0 bg-gradient-to-l from-primary/95 via-primary/90 to-primary/70" />
         </div>
 
@@ -90,7 +91,7 @@ const Index = () => {
       {/* Overview + Master plan */}
       <section id="overview" className="relative overflow-hidden py-12 sm:py-20">
         <div className="absolute inset-0 -z-10">
-          <img src={overviewBg} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <img src={overviewBg} width={1535} height={1024} decoding="async" alt="" className="h-full w-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-background/92 sm:bg-background/85 backdrop-blur-[3px]" />
         </div>
         <div className="container-tight grid items-start gap-8 sm:gap-10 lg:grid-cols-2">
@@ -152,8 +153,8 @@ const Index = () => {
                 src={masterPlan}
                 alt="الماستر بلان الشامل للمدينة الصناعية بشمال مكة المكرمة"
                 className="w-full bg-secondary object-contain"
-                width={1536}
-                height={2048}
+                width={850}
+                height={1195}
                 loading="lazy"
               />
             </button>
@@ -181,7 +182,9 @@ const Index = () => {
                 <motion.img
                   initial={{ scale: 0.9 }}
                   animate={{ scale: 1 }}
-                  src={masterPlan}
+                  src={fullMasterPlan}
+                  width={1074}
+                  height={1510}
                   alt="الماستر بلان الشامل"
                   onClick={(e) => e.stopPropagation()}
                   className="max-h-full max-w-full rounded-xl object-contain shadow-elevated"
@@ -207,6 +210,9 @@ const Index = () => {
             </div>
             <img
               src={landSpaces}
+              width={1673}
+              height={940}
+              decoding="async"
               alt="مساحات مرنة بأرض المشروع — ورش سيارات ومحلات قطع غيار ومحطة فحص فني دوري"
               className="w-full h-auto object-contain bg-secondary"
               loading="lazy"
@@ -276,7 +282,7 @@ const Index = () => {
 
 const Stat = ({ value, label, accent }: { value?: number; label: string; accent?: boolean }) => (
   <div className={`rounded-xl border p-3 backdrop-blur-sm sm:p-4 ${accent ? "border-accent/40 bg-accent/10" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
-    <div className={`font-display text-2xl font-extrabold num sm:text-3xl ${accent ? "text-accent" : "text-primary-foreground"}`}>
+    <div className={`min-h-9 font-display text-2xl font-extrabold num sm:text-3xl ${accent ? "text-accent" : "text-primary-foreground"}`}>
       {value ?? "—"}
     </div>
     <div className="text-[11px] text-primary-foreground/75 sm:text-xs">{label}</div>
