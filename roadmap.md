@@ -34,3 +34,7 @@
 - [x] Add independent carpentry and smithing activity choices and preserve them throughout building selection and sign-in.
 - [x] Correct stale project counts and review expanded plan rendering without changing records.
 - [x] Run relevant tests and verify actual booking selection on desktop/mobile without submitting a booking or publishing.
+
+# SMS sender name change
+- [x] Send all verification SMS under the new sender name and retire the previous one.
+- [x] Deploy both SMS-sending functions and confirm no code still references the old name.
