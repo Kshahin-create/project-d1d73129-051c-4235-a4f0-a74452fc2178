@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Building, Unit } from "@/data/types";
+import { BOOKING_ACTIVITIES, classifyBookingActivity, countAvailableUnits } from "@/lib/bookingActivities";
 
 export const useBuildingsAndUnits = () => {
   return useQuery({
@@ -75,7 +76,7 @@ export const useBuildingsAndUnits = () => {
             type: b.type,
             totalUnits: bu.length,
             rentedUnits: rented,
-            availableUnits: bu.length - rented - reserved,
+            availableUnits: countAvailableUnits(bu),
             expectedAnnualRevenue: Number(b.expected_annual_revenue),
           };
         });
@@ -88,17 +89,13 @@ export const useBuildingsAndUnits = () => {
           // Derive building type from the activity of its units so the
           // service/parts filter still works for unauthenticated users.
           const activity = bu[0]?.activity ?? "";
-          const derivedType = activity.includes("صيانة")
-            ? "مراكز صيانة سيارات"
-            : activity
-              ? "محلات قطع غيار السيارات وبناشر"
-              : "غير محدد";
+          const derivedType = BOOKING_ACTIVITIES.find((item) => item.key === classifyBookingActivity(activity))?.title ?? "غير محدد";
           return {
             number: bn,
             type: derivedType,
             totalUnits: bu.length,
             rentedUnits: rented,
-            availableUnits: bu.length - rented - reserved,
+            availableUnits: countAvailableUnits(bu),
             expectedAnnualRevenue: 0,
           };
         });

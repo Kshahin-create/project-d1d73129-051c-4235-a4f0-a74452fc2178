@@ -18,6 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
 import { fmtNum } from "@/lib/utils";
+import { bookingRedirect, parseBookingActivity } from "@/lib/bookingActivities";
+import { Button } from "@/components/ui/button";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{svg,png,jpg,jpeg}", {
   eager: true,
@@ -40,7 +42,7 @@ const FORM_ID = "customer-booking-form";
 const Booking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const activityFilter = searchParams.get("activity") as "service" | "parts" | null;
+  const activityFilter = parseBookingActivity(searchParams.get("activity"));
   const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -53,7 +55,7 @@ const Booking = () => {
   useEffect(() => {
     if (!authLoading && !user) {
       toast.info("سجّل دخولك أو أنشئ حساب لإتمام الحجز");
-      navigate("/auth?redirect=/booking" + (activityFilter ? `?activity=${activityFilter}` : ""));
+      navigate(bookingRedirect(activityFilter));
     }
   }, [user, authLoading, navigate, activityFilter]);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
@@ -64,7 +66,7 @@ const Booking = () => {
   const [paymentPlan, setPaymentPlan] = useState<"full" | "70" | "50">("full");
   const bookingContentRef = useRef<HTMLDivElement>(null);
 
-  const { data, isLoading } = useBuildingsAndUnits();
+  const { data, isLoading, isError, refetch } = useBuildingsAndUnits();
   const buildings = data?.buildings ?? [];
   const units = data?.units ?? [];
 
@@ -392,13 +394,13 @@ const Booking = () => {
           >
             {step === 1 && (
               <StepWrap title="اختر المبنى المناسب" desc="تصفح المباني المتاحة واختر المبنى الذي يناسب نشاطك.">
-                <BuildingSelector
+                {isLoading ? <p role="status" className="py-12 text-center text-muted-foreground">جارٍ تحميل المباني والوحدات…</p> : isError ? <div role="alert" className="py-12 text-center"><p>تعذّر تحميل المباني والوحدات.</p><Button variant="outline" className="mt-4" onClick={() => void refetch()}>إعادة المحاولة</Button></div> : <BuildingSelector
                   buildings={buildings}
                   units={units}
                   onSelect={handleBuildingSelect}
                   selected={selectedBuilding?.number}
                   activityFilter={activityFilter}
-                />
+                />}
               </StepWrap>
             )}
 
