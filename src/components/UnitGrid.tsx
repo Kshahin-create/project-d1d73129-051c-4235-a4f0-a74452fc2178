@@ -5,6 +5,7 @@ import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingPlans";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface UnitGridProps {
   buildingNumber: number;
@@ -31,10 +32,10 @@ export const UnitGrid = (props: UnitGridProps) => {
   const mainUnits = props.units.filter((u) => !usedNumbers.has(u.unitNumber));
   return (
     <div className="space-y-10">
-      <section className="space-y-3">
+      {mainUnits.length > 0 && <section className="space-y-3">
         <h3 className="font-display text-lg font-bold">مبنى {props.buildingNumber} - أ</h3>
         <UnitGridSection {...props} units={mainUnits} />
-      </section>
+      </section>}
       {extras.map((s) => {
         const nums = new Set(s.layout.units.map((u) => u.unitNumber));
         return (
@@ -70,7 +71,7 @@ const UnitGridSection = ({
   const layout = layoutOverride ?? getPlanLayout(buildingNumber);
   const unitsByNumber = new Map(units.map((u) => [u.unitNumber, u]));
   const selectedSet = new Set(selectedUnits);
-  void planLabel;
+  const displayLabel = planLabel ?? `مبنى ${buildingNumber}${buildingNumber === 15 ? " - ب" : ""}`;
 
   const renderOverlay = (interactive: boolean) =>
     layout?.units.map((area) => {
@@ -87,13 +88,13 @@ const UnitGridSection = ({
       const ringColor = isRented
         ? "hsl(var(--destructive))"
           : isReserved
-            ? "hsl(217 91% 60%)" // blue-500
+            ? "hsl(var(--primary))"
           : isSelected
             ? "hsl(var(--accent))"
             : "transparent";
 
       return (
-        <button
+        <Button
           key={area.unitNumber}
           type="button"
           disabled={isLocked || !interactive}
@@ -102,10 +103,10 @@ const UnitGridSection = ({
           onMouseLeave={() => interactive && setHoveredUnit(null)}
           aria-label={`وحدة ${area.unitNumber}${isRented ? " (مؤجرة)" : isReserved ? " (محجوزة)" : ""}`}
           className={cn(
-            "absolute box-border flex items-center justify-center border-0 p-0 text-[10px] font-bold transition-colors duration-200 sm:text-xs",
+            "absolute box-border flex min-h-0 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[10px] font-bold transition-colors duration-200 sm:text-xs",
             "focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
-            isRented && "cursor-not-allowed bg-destructive/55 text-white",
-            isReserved && "cursor-not-allowed bg-blue-500/55 text-white",
+            isRented && "cursor-not-allowed bg-destructive/55 text-primary-foreground",
+            isReserved && "cursor-not-allowed bg-primary/55 text-primary-foreground",
             !isLocked && !isSelected &&
               "bg-transparent text-transparent hover:bg-accent/25 hover:text-accent-foreground",
             !isLocked && isSelected && "bg-accent/55 text-accent-foreground",
@@ -120,7 +121,7 @@ const UnitGridSection = ({
           }}
         >
           <span className="num drop-shadow-sm">{area.unitNumber}</span>
-        </button>
+        </Button>
       );
     });
 
@@ -144,7 +145,7 @@ const UnitGridSection = ({
             >
               <img
                 src={planImage}
-                alt={`مخطط مبنى ${buildingNumber}`}
+                alt={`مخطط ${displayLabel}`}
                 className="block h-full w-full object-fill bg-secondary"
               />
               {/* Interactive unit overlay */}
@@ -155,12 +156,12 @@ const UnitGridSection = ({
               )}
             </div>
 
-            <button
+            <Button
               onClick={() => setZoomed(true)}
               className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1.5 text-xs font-medium text-primary-foreground backdrop-blur-sm hover:bg-primary"
             >
               <ZoomIn className="h-3.5 w-3.5" /> تكبير المخطط
-            </button>
+            </Button>
 
             {/* Hint */}
             {layout && (
@@ -172,10 +173,10 @@ const UnitGridSection = ({
         ) : (
           <div className="flex h-48 flex-col items-center justify-center gap-2 bg-secondary text-muted-foreground">
             <p className="text-sm">
-              مخطط المبنى <span className="num font-bold">{buildingNumber}</span> سيُعرض هنا
+              مخطط {displayLabel} غير متاح حاليًا
             </p>
             <p className="text-xs">
-              ارفع الصورة إلى <code className="rounded bg-background px-1.5 py-0.5 text-[10px]">src/assets/plans/building-{buildingNumber}.png</code>
+              يمكنك اختيار الوحدات من القائمة أدناه.
             </p>
           </div>
         )}
@@ -186,7 +187,7 @@ const UnitGridSection = ({
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
         {canDistinguish && (
-          <LegendDot colorClass="bg-blue-500/40 border-2 border-blue-500/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+          <LegendDot colorClass="bg-primary/40 border-2 border-primary/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
         )}
         <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label={canDistinguish ? "مؤجر" : "غير متاح"} icon={<Lock className="h-3 w-3" />} />
       </div>
@@ -211,11 +212,11 @@ const UnitGridSection = ({
                 disabled={isLocked}
                 onClick={() => onSelect(u)}
                 className={cn(
-                  "group relative flex aspect-square flex-col items-center justify-center rounded-xl border-2 p-1 text-center transition-all",
+                  "group relative flex h-auto w-full aspect-square flex-col items-center justify-center rounded-xl border-2 p-1 text-center transition-all",
                   isRented &&
                     "cursor-not-allowed border-destructive/40 bg-destructive/10 opacity-80",
                   isReserved &&
-                    "cursor-not-allowed border-blue-500/40 bg-blue-500/10 opacity-80",
+                    "cursor-not-allowed border-primary/40 bg-primary/10 opacity-80",
                   !isLocked && !isSelected &&
                     "border-border bg-card hover:border-primary hover:shadow-card",
                   isSelected &&
@@ -238,7 +239,7 @@ const UnitGridSection = ({
                     <Lock className="h-2.5 w-2.5" /> {canDistinguish ? "مؤجر" : "غير متاح"}
                   </div>
                 ) : isReserved ? (
-                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-blue-600">
+                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-primary">
                     <Lock className="h-2.5 w-2.5" /> محجوز
                   </div>
                 ) : isSelected ? (
@@ -260,12 +261,13 @@ const UnitGridSection = ({
             onClick={() => setZoomed(false)}
             className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
           >
-            <button
+            <Button
+              aria-label="إغلاق المخطط"
               onClick={() => setZoomed(false)}
               className="absolute left-4 top-4 z-10 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
             >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
             <motion.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
@@ -274,7 +276,7 @@ const UnitGridSection = ({
             >
               <img
                 src={planImage}
-                alt={`مخطط مبنى ${buildingNumber}`}
+                alt={`مخطط ${displayLabel}`}
                 className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-elevated"
               />
               {layout && (

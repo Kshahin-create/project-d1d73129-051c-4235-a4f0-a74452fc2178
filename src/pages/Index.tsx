@@ -305,7 +305,6 @@ const Feature = ({ icon, title, desc, to }: { icon: React.ReactNode; title: stri
   if (to) {
     return (
       <Button variant="outline" asChild
-        to={to}
         className="group h-auto whitespace-normal justify-start items-start gap-3 rounded-lg border-border bg-card p-4 text-right transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card"
       >
         <Link to={to}>{content}</Link>
