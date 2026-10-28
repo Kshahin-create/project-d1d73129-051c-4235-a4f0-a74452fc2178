@@ -10,9 +10,11 @@ import heroBg from "@/assets/hero-bg.jpg";
 import overviewBg from "@/assets/overview-city.png";
 const landSpaces = "/land-spaces.jpg";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
+import { BOOKING_ACTIVITIES, classifyBookingActivity } from "@/lib/bookingActivities";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const { data } = useBuildingsAndUnits();
+  const { data, isLoading, isError } = useBuildingsAndUnits();
   const buildings = data?.buildings ?? [];
   const totalUnits = buildings.reduce((s, b) => s + b.totalUnits, 0);
   const availableUnits = buildings.reduce((s, b) => s + b.availableUnits, 0);
@@ -49,9 +51,8 @@ const Index = () => {
             </p>
 
             <p className="mt-6 max-w-xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">
-              مشروع متكامل يضمّ <strong className="text-accent">مراكز صيانة سيارات</strong> و
-              <strong className="text-accent"> محلات قطع غيار وبناشر</strong>. احجز وحدتك في دقائق
-              عبر نموذج ذكي يربطك مباشرة بإدارة المشروع.
+              ورش صيانة السيارات، وقطع الغيار والبناشر، وورش النجارة والألمنيوم والحدادة.
+              اختر نشاطك وتصفّح المباني والوحدات المتاحة للتأجير.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -78,9 +79,9 @@ const Index = () => {
 
             {/* Stats */}
             <div className="mt-10 grid max-w-lg grid-cols-3 gap-3 sm:gap-6">
-              <Stat value={10} label="مباني" />
-              <Stat value={totalUnits} label="إجمالي الوحدات" />
-              <Stat value={availableUnits} label="وحدة متاحة" accent />
+              <Stat value={isLoading || isError ? undefined : buildings.length} label="مبانٍ على المنصة" />
+              <Stat value={isLoading || isError ? undefined : totalUnits} label="إجمالي الوحدات" />
+              <Stat value={isLoading || isError ? undefined : availableUnits} label="وحدة متاحة" accent />
             </div>
           </motion.div>
         </div>
@@ -108,16 +109,17 @@ const Index = () => {
               موقع استراتيجي لأنشطتك التجارية
             </h2>
             <p className="mt-4 text-sm leading-7 text-muted-foreground sm:text-base sm:leading-relaxed">
-              تضم <strong className="text-foreground">المرحلة الأولى</strong> للتأجير المبكر من المشروع
-              {" "}<strong className="text-foreground">10 مبانٍ</strong> مصمّمة خصيصاً لقطاع صيانة السيارات
-              وقطع الغيار. كل وحدة <strong className="text-foreground">جاهزة للتشغيل</strong> بمواصفات عالية
-              وتسهيلات تشغيلية، بجوار <strong className="text-foreground">محطة الفحص الفني الدوري</strong>،
-              تشغيل من أول يوم عمل.
+              تصفّح الأنشطة المتاحة على منصة الحجز، بجوار محطة الفحص الفني الدوري شمال مكة المكرمة.
+              لكل نشاط مبانيه ومخططاته وتفاصيل وحداته، مع عرض الإيجار السنوي والحالة الحالية.
             </p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Feature icon={<Wrench className="h-5 w-5" />} title="مراكز صيانة" desc="مباني 1-6 (144 وحدة)" to="/booking?activity=service" />
-              <Feature icon={<Cog className="h-5 w-5" />} title="قطع غيار وبناشر" desc="مباني 7-10 (84 وحدة)" to="/booking?activity=parts" />
+            <h3 className="mt-6 font-display text-lg font-bold">اختر نشاطك</h3>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {BOOKING_ACTIVITIES.map((activity) => {
+                const scoped = buildings.filter((building) => classifyBookingActivity(building.type) === activity.key);
+                const available = scoped.reduce((sum, building) => sum + building.availableUnits, 0);
+                return <Feature key={activity.key} icon={<Wrench className="h-5 w-5" />} title={activity.title} desc={isLoading ? "جارٍ تحميل الوحدات…" : isError ? "الأعداد غير متاحة حاليًا" : `${scoped.length} مبانٍ · ${available} وحدة متاحة`} to={`/booking?activity=${activity.key}`} />;
+              })}
             </div>
           </motion.div>
 
@@ -272,10 +274,10 @@ const Index = () => {
   );
 };
 
-const Stat = ({ value, label, accent }: { value: number; label: string; accent?: boolean }) => (
+const Stat = ({ value, label, accent }: { value?: number; label: string; accent?: boolean }) => (
   <div className={`rounded-xl border p-3 backdrop-blur-sm sm:p-4 ${accent ? "border-accent/40 bg-accent/10" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
     <div className={`font-display text-2xl font-extrabold num sm:text-3xl ${accent ? "text-accent" : "text-primary-foreground"}`}>
-      {value}
+      {value ?? "—"}
     </div>
     <div className="text-[11px] text-primary-foreground/75 sm:text-xs">{label}</div>
   </div>
@@ -302,12 +304,12 @@ const Feature = ({ icon, title, desc, to }: { icon: React.ReactNode; title: stri
 
   if (to) {
     return (
-      <Link
+      <Button variant="outline" asChild
         to={to}
-        className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card"
+        className="group h-auto whitespace-normal justify-start items-start gap-3 rounded-lg border-border bg-card p-4 text-right transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card"
       >
-        {content}
-      </Link>
+        <Link to={to}>{content}</Link>
+      </Button>
     );
   }
 
