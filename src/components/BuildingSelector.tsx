@@ -1,72 +1,33 @@
 import { motion } from "framer-motion";
-import { Wrench, Cog, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Building2, CheckCircle2, ArrowLeft } from "lucide-react";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { BOOKING_ACTIVITIES, classifyBookingActivity, type BookingActivity } from "@/lib/bookingActivities";
 
 interface BuildingSelectorProps {
   buildings: Building[];
   units: Unit[];
   onSelect: (b: Building) => void;
   selected?: number;
-  activityFilter?: "service" | "parts" | null;
+  activityFilter?: BookingActivity | null;
 }
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
-  const service = buildings.filter((b) => b.type.includes("صيانة"));
-  const carpentry = buildings.filter((b) => b.type.includes("نجارة"));
-  const smithing = buildings.filter((b) => b.type.includes("حدادة"));
-  const parts = buildings.filter((b) => !b.type.includes("صيانة") && !b.type.includes("نجارة") && !b.type.includes("حدادة"));
-
-  const showService = !activityFilter || activityFilter === "service";
-  const showParts = !activityFilter || activityFilter === "parts";
-  const showCarpentry = !activityFilter && carpentry.length > 0;
-
+  const groups = BOOKING_ACTIVITIES.filter((activity) => !activityFilter || activity.key === activityFilter);
   return (
-    <div className="space-y-10">
-      {showService && (
-        <Section
-          title="مراكز صيانة السيارات"
-          subtitle="المباني من 1 إلى 6"
-          icon={<Wrench className="h-5 w-5" />}
-          buildings={service}
-          units={units}
-          onSelect={onSelect}
-          selected={selected}
-        />
-      )}
-      {showParts && (
-        <Section
-          title="محلات قطع الغيار والبناشر"
-          subtitle="المباني من 7 إلى 10"
-          icon={<Cog className="h-5 w-5" />}
-          buildings={parts}
-          units={units}
-          onSelect={onSelect}
-          selected={selected}
-        />
-      )}
-      {showCarpentry && (
-        <Section
-          title="ورش النجارة"
-          subtitle="المباني من 14 إلى 16"
-          icon={<Wrench className="h-5 w-5" />}
-          buildings={carpentry}
-          units={units}
-          onSelect={onSelect}
-          selected={selected}
-        />
-      )}
-      {!activityFilter && smithing.length > 0 && (
-        <Section
-          title="ورش الألمنيوم والحدادة"
-          subtitle="المباني من 17 إلى 19"
-          icon={<Wrench className="h-5 w-5" />}
-          buildings={smithing}
-          units={units}
-          onSelect={onSelect}
-          selected={selected}
-        />
-      )}
+    <div className="space-y-8">
+      <nav aria-label="الأنشطة" className="flex flex-wrap gap-2">
+        <Button variant={!activityFilter ? "default" : "outline"} asChild><Link to="/booking">كل الأنشطة</Link></Button>
+        {BOOKING_ACTIVITIES.map((activity) => <Button key={activity.key} variant={activityFilter === activity.key ? "default" : "outline"} asChild><Link to={`/booking?activity=${activity.key}`}>{activity.title}</Link></Button>)}
+      </nav>
+      {groups.map((activity) => {
+        const scoped = buildings.filter((building) => classifyBookingActivity(building.type) === activity.key);
+        if (!scoped.length) return null;
+        return <Section key={activity.key} title={activity.title} subtitle={`${scoped.length} مبانٍ`} icon={<Building2 className="h-5 w-5" />} buildings={scoped} units={units} onSelect={onSelect} selected={selected} />;
+      })}
+      {buildings.length === 0 && <p className="py-8 text-center text-muted-foreground">لا توجد مبانٍ متاحة للعرض حاليًا.</p>}
     </div>
   );
 };
@@ -94,15 +55,16 @@ const Section = ({ title, subtitle, icon, buildings, onSelect, selected }: Secti
     </div>
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {buildings.map((b, idx) => (
-        <motion.button
+        <motion.div
           key={b.number}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: idx * 0.04 }}
           whileHover={{ y: -4 }}
-          onClick={() => onSelect(b)}
+        >
+          <Button variant="outline" onClick={() => onSelect(b)}
           className={cn(
-            "group relative overflow-hidden rounded-2xl border-2 bg-card p-4 text-right shadow-card transition-all",
+            "group relative h-auto w-full flex-col items-stretch whitespace-normal overflow-hidden rounded-lg border-2 bg-card p-4 text-right shadow-card transition-all",
             selected === b.number
               ? "border-primary ring-2 ring-primary/20"
               : "border-border hover:border-primary/50"
@@ -121,7 +83,7 @@ const Section = ({ title, subtitle, icon, buildings, onSelect, selected }: Secti
               </span>
             ) : (
               <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
-                مكتمل
+                لا وحدات متاحة
               </span>
             )}
           </div>
@@ -135,11 +97,11 @@ const Section = ({ title, subtitle, icon, buildings, onSelect, selected }: Secti
               <span className="font-bold text-success num">{b.availableUnits}</span>
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">
+          <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs font-semibold text-primary transition">
             اختر هذا المبنى
             <ArrowLeft className="h-4 w-4" />
           </div>
-        </motion.button>
+        </Button></motion.div>
       ))}
     </div>
   </section>
