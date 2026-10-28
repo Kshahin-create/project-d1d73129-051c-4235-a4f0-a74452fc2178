@@ -83,15 +83,12 @@ const NEEDS: Record<string, string> = { invoices: "crm:finance", collections: "c
 
 function shape(res: Resource, row: Record<string, unknown>, scopes: string[]) {
   let r = res.map ? res.map(row, scopes) : row;
-  if (Array.isArray(r.booking_units) && !scopes.includes("crm:finance")) {
-    r = { ...r, booking_units: (r.booking_units as any[]).map((u) => ({ ...u })) };
-  }
   r = redact(r, scopes, res.pii, res.finance);
   for (const k of Object.keys(r)) if (r[k] === undefined) delete r[k];
   return r;
 }
 
-function applyFilters(q: any, res: Resource, url: URL): string | null {
+function invalidFilter(res: Resource, url: URL): string | null {
   for (const [k, kind] of Object.entries(res.filters)) {
     const v = url.searchParams.get(k);
     if (v == null || v === "") continue;
@@ -99,8 +96,6 @@ function applyFilters(q: any, res: Resource, url: URL): string | null {
     if (kind === "uuid" && v !== "null" && !/^[0-9a-f-]{36}$/i.test(v)) return k;
     if (kind === "bool" && !["true", "false"].includes(v)) return k;
     if (kind === "text" && v.length > 100) return k;
-    if (kind === "uuid" && v === "null") q = q.is(k, null);
-    else q = q.eq(k, kind === "int" ? Number(v) : kind === "bool" ? v === "true" : v);
   }
   return null;
 }
@@ -156,9 +151,8 @@ Deno.serve(async (req) => {
       .order(res.ts, { ascending: true }).order("id", { ascending: true }).limit(limit + 1);
     if (since) q = q.gte(res.ts, new Date(since).toISOString());
     if (cursor) q = q.or(`${res.ts}.gt.${cursor.t},and(${res.ts}.eq.${cursor.t},id.gt.${cursor.id})`);
-    const bad = applyFilters(q, res, url);
+    const bad = invalidFilter(res, url);
     if (bad) return fail("bad_request", `Invalid value for filter '${bad}'`, 400);
-    // applyFilters returns a new builder via reassignment; rebuild with filters applied
     for (const [k2, kind] of Object.entries(res.filters)) {
       const v = url.searchParams.get(k2);
       if (v == null || v === "") continue;
