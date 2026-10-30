@@ -105,11 +105,11 @@ const UnitGridSection = ({
           className={cn(
             "absolute box-border flex min-h-0 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[10px] font-bold transition-colors duration-200 sm:text-xs",
             "focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
-            isRented && "cursor-not-allowed bg-destructive/55 text-primary-foreground",
-            isReserved && "cursor-not-allowed bg-primary/55 text-primary-foreground",
+            isRented && "cursor-not-allowed bg-destructive/75 text-primary-foreground",
+            isReserved && "cursor-not-allowed bg-foreground/80 text-background",
             !isLocked && !isSelected &&
               "bg-transparent text-transparent hover:bg-accent/25 hover:text-accent-foreground",
-            !isLocked && isSelected && "bg-accent/55 text-accent-foreground",
+            !isLocked && isSelected && "bg-accent/70 text-accent-foreground",
             isHovered && !isSelected && !isLocked && "z-10"
           )}
           style={{
@@ -117,10 +117,16 @@ const UnitGridSection = ({
             top: `${area.y}%`,
             width: `${area.w}%`,
             height: `${area.h}%`,
-            boxShadow: ringColor === "transparent" ? undefined : `inset 0 0 0 1px ${ringColor}`,
+            boxShadow: ringColor === "transparent" ? undefined : `inset 0 0 0 2px ${isLocked ? "hsl(var(--background))" : ringColor}`,
+            backgroundImage: isLocked
+              ? "repeating-linear-gradient(45deg, hsl(var(--background) / 0.28) 0 3px, transparent 3px 9px)"
+              : undefined,
           }}
         >
-          <span className="num drop-shadow-sm">{area.unitNumber}</span>
+          <span className="num flex flex-col items-center leading-none drop-shadow-sm">
+            {isLocked && <Lock className="mb-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />}
+            {area.unitNumber}
+          </span>
         </Button>
       );
     });
@@ -187,7 +193,7 @@ const UnitGridSection = ({
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
         {canDistinguish && (
-          <LegendDot colorClass="bg-primary/40 border-2 border-primary/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+          <LegendDot colorClass="bg-foreground/80 border-2 border-foreground text-background" label="محجوز" icon={<Lock className="h-3 w-3" />} />
         )}
         <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label={canDistinguish ? "مؤجر" : "غير متاح"} icon={<Lock className="h-3 w-3" />} />
       </div>
