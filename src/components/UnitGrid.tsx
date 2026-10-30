@@ -193,7 +193,7 @@ const UnitGridSection = ({
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
         {canDistinguish && (
-          <LegendDot colorClass="bg-primary/40 border-2 border-primary/70" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+          <LegendDot colorClass="bg-foreground/80 border-2 border-foreground text-background" label="محجوز" icon={<Lock className="h-3 w-3" />} />
         )}
         <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label={canDistinguish ? "مؤجر" : "غير متاح"} icon={<Lock className="h-3 w-3" />} />
       </div>
