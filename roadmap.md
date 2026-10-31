@@ -1,4 +1,10 @@
 # Email corrections
+# Respond.io marketing campaigns
+- [ ] Collect all customer phone sources and deduplicate securely.
+- [ ] Add admin campaign page, durable send tracking and explicit confirmation.
+- [ ] Test without sending real messages and deploy the campaign function.
+
+# Email corrections
 - [x] Correct Arabic rendering and RTL in email templates.
 - [x] Correct company roles in booking emails.
 - [x] Use total workshop area for each unit and the booking total.
