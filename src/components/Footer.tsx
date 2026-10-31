@@ -5,8 +5,8 @@ import logo from "@/assets/logo-nukhbat.webp";
 import madarLogo from "@/assets/madar-al-khaleej-logo.webp";
 import licenseQr from "@/assets/advertising-license-qr.webp";
 import alQimmahLogo from "@/assets/al-qimmah-logo.webp";
-import municipalityLogo from "@/assets/holy-makkah-municipality-logo.png.asset.json";
-import jamoumLogo from "@/assets/jamoum-municipality-logo.png.asset.json";
+import municipalityLogo from "@/assets/holy-makkah-municipality-logo.png";
+import jamoumLogo from "@/assets/jamoum-municipality-logo.png";
 
 /** أيقونة تيك توك (مخصّصة لأنها غير متوفّرة في lucide-react) */
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -31,13 +31,13 @@ export const Footer = () => {
             <div className="flex min-h-28 items-center gap-4 py-5 sm:border-l sm:border-border/60">
               <div className="flex shrink-0 flex-col items-center gap-2">
                 <img
-                  src={municipalityLogo.url}
+                  src={municipalityLogo}
                   width={586} height={341} loading="lazy" decoding="async"
                   alt="شعار أمانة العاصمة المقدسة"
                   className="h-16 w-auto object-contain"
                 />
                 <img
-                  src={jamoumLogo.url}
+                  src={jamoumLogo}
                   width={400} height={400} loading="lazy" decoding="async"
                   alt="شعار بلدية محافظة الجموم"
                   className="h-16 w-16 object-contain"
