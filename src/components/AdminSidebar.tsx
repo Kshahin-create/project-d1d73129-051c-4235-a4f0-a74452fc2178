@@ -89,6 +89,7 @@ const groups: LinkGroup[] = [
       { to: "/admin/interested", label: "المهتمون", Icon: MessageCircle, managerOnly: true },
       { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
       { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
+      { to: "/admin/campaigns", label: "الحملات الإعلانية", Icon: MessageCircle, adminOnly: true },
     ],
   },
   {

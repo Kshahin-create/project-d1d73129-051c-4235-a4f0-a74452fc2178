@@ -26,6 +26,7 @@ const AdminBookings = lazy(() => import("./pages/AdminBookings.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const Profile = lazy(() => import("./pages/Profile.tsx"));
 const AdminApiKeys = lazy(() => import("./pages/AdminApiKeys.tsx"));
+const AdminCampaigns = lazy(() => import("./pages/AdminCampaigns.tsx"));
 const AdminStats = lazy(() => import("./pages/AdminStats.tsx"));
 const ApiDocs = lazy(() => import("./pages/ApiDocs.tsx"));
 const Mcp = lazy(() => import("./pages/Mcp.tsx"));
@@ -81,6 +82,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/telegram" element={<TelegramSettings />} />
           <Route path="/admin/api-keys" element={<AdminApiKeys />} />
+          <Route path="/admin/campaigns" element={<AdminCampaigns />} />
           <Route path="/admin/stats" element={<AdminStats />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/mcp" element={<Mcp />} />
