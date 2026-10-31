@@ -741,6 +741,92 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaigns: {
+        Row: {
+          audience_summary: Json
+          channel_id: number
+          components: Json
+          created_at: string
+          created_by: string
+          id: string
+          language: string
+          name: string
+          status: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          audience_summary: Json
+          channel_id: number
+          components?: Json
+          created_at?: string
+          created_by: string
+          id?: string
+          language: string
+          name: string
+          status?: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          audience_summary?: Json
+          channel_id?: number
+          components?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          language?: string
+          name?: string
+          status?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_recipients: {
+        Row: {
+          attempted_at: string | null
+          campaign_id: string
+          error: string | null
+          id: string
+          phone: string
+          provider_response: Json | null
+          sources: string[]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          campaign_id: string
+          error?: string | null
+          id?: string
+          phone: string
+          provider_response?: Json | null
+          sources: string[]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempted_at?: string | null
+          campaign_id?: string
+          error?: string | null
+          id?: string
+          phone?: string
+          provider_response?: Json | null
+          sources?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       one_time_tokens: {
         Row: {
           access_token: string
@@ -1549,6 +1635,26 @@ export type Database = {
         Returns: undefined
       }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
+      claim_marketing_recipient: {
+        Args: { _campaign_id: string }
+        Returns: {
+          attempted_at: string | null
+          campaign_id: string
+          error: string | null
+          id: string
+          phone: string
+          provider_response: Json | null
+          sources: string[]
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "marketing_recipients"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       confirm_booking:
         | { Args: { _booking_id: string }; Returns: undefined }
         | {
