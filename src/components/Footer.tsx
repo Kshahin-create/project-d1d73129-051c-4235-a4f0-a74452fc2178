@@ -56,7 +56,7 @@ export const Footer = () => {
                 src={alQimmahLogo}
                 width={1350} height={1350} loading="lazy" decoding="async"
                 alt="شعار شركة القمة الهادفة الحديثة"
-                className="h-12 w-12 shrink-0 object-contain"
+                className="h-14 w-14 shrink-0 object-contain"
               />
               <div className="min-w-0">
                 <p className="text-xs font-medium text-primary">المستثمر والمطور</p>
@@ -71,7 +71,7 @@ export const Footer = () => {
                 src={logo}
                 width={1350} height={1350} loading="lazy" decoding="async"
                 alt="شعار شركة نخبة تسكين العقارية"
-                className="h-12 w-12 shrink-0 object-contain"
+                className="h-14 w-14 shrink-0 object-contain"
               />
               <div className="min-w-0">
                 <p className="text-xs font-medium text-primary">مدير الإدارة والتشغيل</p>
