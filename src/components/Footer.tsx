@@ -5,8 +5,8 @@ import logo from "@/assets/logo-nukhbat.webp";
 import madarLogo from "@/assets/madar-al-khaleej-logo.webp";
 import licenseQr from "@/assets/advertising-license-qr.webp";
 import alQimmahLogo from "@/assets/al-qimmah-logo.webp";
-import municipalityLogo from "@/assets/holy-makkah-municipality-logo.webp";
-import jamoumLogo from "@/assets/jamoum-municipality-logo.webp";
+import municipalityLogo from "@/assets/holy-makkah-municipality-logo.png.asset.json";
+import jamoumLogo from "@/assets/jamoum-municipality-logo.png.asset.json";
 
 /** أيقونة تيك توك (مخصّصة لأنها غير متوفّرة في lucide-react) */
 const TikTokIcon = ({ className }: { className?: string }) => (
