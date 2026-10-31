@@ -31,16 +31,16 @@ export const Footer = () => {
             <div className="flex min-h-28 items-center gap-4 py-5 sm:border-l sm:border-border/60">
               <div className="flex shrink-0 flex-col items-center gap-2">
                 <img
-                  src={municipalityLogo}
-                  width={384} height={71} loading="lazy" decoding="async"
+                  src={municipalityLogo.url}
+                  width={586} height={341} loading="lazy" decoding="async"
                   alt="شعار أمانة العاصمة المقدسة"
-                  className="h-12 w-auto object-contain"
+                  className="h-16 w-auto object-contain"
                 />
                 <img
-                  src={jamoumLogo}
+                  src={jamoumLogo.url}
                   width={400} height={400} loading="lazy" decoding="async"
                   alt="شعار بلدية محافظة الجموم"
-                  className="h-14 w-14 object-contain"
+                  className="h-16 w-16 object-contain"
                 />
               </div>
               <div className="min-w-0">
