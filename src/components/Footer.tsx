@@ -6,6 +6,7 @@ import madarLogo from "@/assets/madar-al-khaleej-logo.webp";
 import licenseQr from "@/assets/advertising-license-qr.webp";
 import alQimmahLogo from "@/assets/al-qimmah-logo.webp";
 import municipalityLogo from "@/assets/holy-makkah-municipality-logo.webp";
+import jamoumLogo from "@/assets/jamoum-municipality-logo.webp";
 
 /** أيقونة تيك توك (مخصّصة لأنها غير متوفّرة في lucide-react) */
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -28,12 +29,20 @@ export const Footer = () => {
 
           <div className="grid gap-x-10 border-y border-border/60 sm:grid-cols-2">
             <div className="flex min-h-28 items-center gap-4 py-5 sm:border-l sm:border-border/60">
-              <img
-                src={municipalityLogo}
-                width={1080} height={1080} loading="lazy" decoding="async"
-                alt="شعار أمانة العاصمة المقدسة"
-                className="h-20 w-24 shrink-0 object-contain"
-              />
+              <div className="flex shrink-0 flex-col items-center gap-2">
+                <img
+                  src={municipalityLogo}
+                  width={384} height={71} loading="lazy" decoding="async"
+                  alt="شعار أمانة العاصمة المقدسة"
+                  className="h-12 w-auto object-contain"
+                />
+                <img
+                  src={jamoumLogo}
+                  width={400} height={400} loading="lazy" decoding="async"
+                  alt="شعار بلدية محافظة الجموم"
+                  className="h-14 w-14 object-contain"
+                />
+              </div>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-primary">الجهات الحكومية</p>
                 <p className="mt-1 text-sm font-bold leading-relaxed text-foreground">
