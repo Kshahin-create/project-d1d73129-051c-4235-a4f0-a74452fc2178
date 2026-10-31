@@ -1,8 +1,7 @@
-# Email corrections
 # Respond.io marketing campaigns
-- [ ] Collect all customer phone sources and deduplicate securely.
-- [ ] Add admin campaign page, durable send tracking and explicit confirmation.
-- [ ] Test without sending real messages and deploy the campaign function.
+- [x] Collect all customer phone sources and deduplicate securely.
+- [x] Add admin campaign page, durable send tracking and explicit confirmation.
+- [x] Test normalization, audience rules and live authenticated preview without sending real messages; deploy the campaign function.
 
 # Email corrections
 - [x] Correct Arabic rendering and RTL in email templates.
