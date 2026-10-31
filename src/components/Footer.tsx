@@ -34,13 +34,13 @@ export const Footer = () => {
                   src={municipalityLogo}
                   width={586} height={341} loading="lazy" decoding="async"
                   alt="شعار أمانة العاصمة المقدسة"
-                  className="h-16 w-auto object-contain"
+                  className="h-12 w-12 shrink-0 object-contain"
                 />
                 <img
                   src={jamoumLogo}
                   width={400} height={400} loading="lazy" decoding="async"
                   alt="شعار بلدية محافظة الجموم"
-                  className="h-16 w-16 object-contain"
+                  className="h-12 w-12 shrink-0 object-contain"
                 />
               </div>
               <div className="min-w-0">
@@ -56,7 +56,7 @@ export const Footer = () => {
                 src={alQimmahLogo}
                 width={1350} height={1350} loading="lazy" decoding="async"
                 alt="شعار شركة القمة الهادفة الحديثة"
-                className="h-20 w-20 shrink-0 object-contain"
+                className="h-12 w-12 shrink-0 object-contain"
               />
               <div className="min-w-0">
                 <p className="text-xs font-medium text-primary">المستثمر والمطور</p>
@@ -71,7 +71,7 @@ export const Footer = () => {
                 src={logo}
                 width={1350} height={1350} loading="lazy" decoding="async"
                 alt="شعار شركة نخبة تسكين العقارية"
-                className="h-16 w-20 shrink-0 object-contain"
+                className="h-12 w-12 shrink-0 object-contain"
               />
               <div className="min-w-0">
                 <p className="text-xs font-medium text-primary">مدير الإدارة والتشغيل</p>
@@ -86,7 +86,7 @@ export const Footer = () => {
                 src={madarLogo}
                 width={438} height={410} loading="lazy" decoding="async"
                 alt="شعار مدار الخليج العقاري"
-                className="h-16 w-16 shrink-0 object-contain"
+                className="h-12 w-12 shrink-0 object-contain"
               />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-primary">الوسيط العقاري للتسويق والتأجير</p>
@@ -102,7 +102,7 @@ export const Footer = () => {
                 src={licenseQr}
                 width={1080} height={1080} loading="lazy" decoding="async"
                 alt="رمز الاستجابة السريعة للترخيص الإعلاني"
-                className="h-16 w-16 shrink-0 rounded-md bg-background object-contain"
+                className="h-12 w-12 shrink-0 rounded-md bg-background object-contain"
               />
             </div>
           </div>
