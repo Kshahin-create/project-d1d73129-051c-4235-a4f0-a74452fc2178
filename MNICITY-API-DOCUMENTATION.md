@@ -129,7 +129,7 @@ Single record: `{ "data": { ... } }`.
 | `contacts` | `customer_profiles` | `updated_at` | Registered platform users (phone, email, business). |
 | `whatsapp_leads` | `leads` | `updated_at` | WhatsApp conversations with last message text/time. |
 | `campaigns` | `marketing_campaigns` | `updated_at` | WhatsApp marketing campaigns: name, Respond.io `template_name`, `language`, `channel_id`, template `components` (variables), `status` (`paused`/`running`/`completed`), `audience_summary` (counts per source). |
-| `campaign_recipients` | `marketing_recipients` | `updated_at` | One row per phone per campaign: `phone` (E.164), `sources` (e.g. `auth`, `customer_profiles`, `tenant_accounts`, `bookings`, `leads`), `status`, `provider_response`, `error`, `attempted_at`. |
+| `campaign_recipients` | `marketing_recipients` | `updated_at` | One row per phone per campaign: `phone` (E.164), `sources` (Arabic source labels, e.g. `المستخدمون`), `status`, `provider_response`, `error`, `attempted_at`. |
 | `templates` | derived from `marketing_campaigns` | – | Distinct template_name + language used by the platform, with `campaigns_count`, `first_used_at`, `last_used_at`, last `components`. Template bodies/approval live in Respond.io, not in this platform. |
 | `email_logs` | `email_send_log` | `created_at` | Every app email: template, recipient, status (`pending`/`sent`/`failed`/`suppressed`/`bounced`...), error. Multiple rows per `message_id` — keep the latest. |
 | `booking_units` | `booking_units` | `created_at` | Units attached to each booking (also embedded in `/bookings`). |
@@ -157,7 +157,7 @@ Single record: `{ "data": { ... } }`.
     "channel_id": 123456,
     "components": [],
     "status": "completed",
-    "audience_summary": { "total": 500, "by_source": { "auth": 300, "tenant_accounts": 200 } },
+    "audience_summary": { "total": 500, "by_source": { "المستخدمون": 300 } },
     "created_at": "2026-11-01T10:00:00Z",
     "updated_at": "2026-11-01T10:20:00Z"
   }],
@@ -168,7 +168,7 @@ Single record: `{ "data": { ... } }`.
 
 ### Example — `GET /campaign_recipients?campaign_id=...&status=failed` (fictional)
 ```json
-{ "data": [{ "id": "9b...", "campaign_id": "7c1e...", "phone": "+966500000000", "sources": ["auth"], "status": "failed", "provider_response": { "code": 400 }, "error": "Contact not on WhatsApp", "attempted_at": "2026-11-01T10:05:00Z", "updated_at": "2026-11-01T10:05:00Z" }] }
+{ "data": [{ "id": "9b...", "campaign_id": "7c1e...", "phone": "+966500000000", "sources": ["المستخدمون"], "status": "failed", "provider_response": { "code": 400 }, "error": "Contact not on WhatsApp", "attempted_at": "2026-11-01T10:05:00Z", "updated_at": "2026-11-01T10:05:00Z" }] }
 ```
 
 ### Building a unified phone book in the CRM
