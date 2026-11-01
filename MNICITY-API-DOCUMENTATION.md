@@ -1,4 +1,4 @@
-# MNICITY Booking Platform — CRM Integration API (v1.0, Read-Only)
+# MNICITY Booking Platform — CRM Integration API (v1.1, Read-Only)
 
 > Audience: engineers (and Claude Code) building an external, independent CRM (e.g. Django) that pulls data from the MNICITY industrial-city booking platform.
 > All examples use **fictional data**. No real customer data or secrets appear in this file.
@@ -86,6 +86,17 @@ All endpoints: `GET` only. Any other method → `405`.
 | GET | `/invoices` , `/invoices/{id}` | `crm:finance` | `paid` (true/false), `tenant_account_id`, `booking_id` |
 | GET | `/collections` , `/collections/{id}` | `crm:finance` | `unit_id`, `tenant_account_id`, `is_archived` |
 | GET | `/leads` , `/leads/{id}` | `crm:pii` | `status`, `source` |
+| GET | `/booking_units` , `/booking_units/{id}` | – | `booking_id`, `unit_id`, `building_number` |
+| GET | `/unit_status_history` , `/{id}` | – (email/reason need `crm:pii`) | `unit_id`, `building_number`, `new_status`, `action` |
+| GET | `/contacts` , `/contacts/{id}` | `crm:pii` | `activity_type`, `user_id` |
+| GET | `/whatsapp_leads` , `/whatsapp_leads/{id}` | `crm:pii` | `status` |
+| GET | `/campaigns` , `/campaigns/{id}` | – | `status`, `template_name`, `language` |
+| GET | `/campaign_recipients` , `/{id}` | `crm:pii` | `campaign_id`, `status` |
+| GET | `/templates` | – | – (not paginated) |
+| GET | `/email_logs` , `/email_logs/{id}` | `crm:pii` | `template_name`, `status` |
+| GET | `/tenant_files` , `/tenant_files/{id}` | – (names need `crm:pii`) | `tenant_account_id`, `is_archived` |
+| GET | `/unit_files` , `/unit_files/{id}` | – | `unit_id` |
+| GET | `/access_log` , `/access_log/{id}` | `crm:pii` | `event`, `user_id` |
 
 `{id}` is a UUID.
 
@@ -110,6 +121,61 @@ Lists are ordered by `(updated_at ASC, id ASC)` — stable for incremental sync.
 ```
 
 Single record: `{ "data": { ... } }`.
+
+## 4b. Messaging, contacts & activity resources (added in v1.1)
+
+| Resource | Source table | Sync field | Meaning |
+|---|---|---|---|
+| `contacts` | `customer_profiles` | `updated_at` | Registered platform users (phone, email, business). |
+| `whatsapp_leads` | `leads` | `updated_at` | WhatsApp conversations with last message text/time. |
+| `campaigns` | `marketing_campaigns` | `updated_at` | WhatsApp marketing campaigns: name, Respond.io `template_name`, `language`, `channel_id`, template `components` (variables), `status` (`paused`/`running`/`completed`), `audience_summary` (counts per source). |
+| `campaign_recipients` | `marketing_recipients` | `updated_at` | One row per phone per campaign: `phone` (E.164), `sources` (e.g. `auth`, `customer_profiles`, `tenant_accounts`, `bookings`, `leads`), `status`, `provider_response`, `error`, `attempted_at`. |
+| `templates` | derived from `marketing_campaigns` | – | Distinct template_name + language used by the platform, with `campaigns_count`, `first_used_at`, `last_used_at`, last `components`. Template bodies/approval live in Respond.io, not in this platform. |
+| `email_logs` | `email_send_log` | `created_at` | Every app email: template, recipient, status (`pending`/`sent`/`failed`/`suppressed`/`bounced`...), error. Multiple rows per `message_id` — keep the latest. |
+| `booking_units` | `booking_units` | `created_at` | Units attached to each booking (also embedded in `/bookings`). |
+| `unit_status_history` | `unit_audit_log` | `created_at` | Every unit status change (previous → new). Append-only. |
+| `tenant_files`, `unit_files` | file metadata | – | Document metadata only; file contents/storage paths are not exposed. |
+| `access_log` | `access_log` | `created_at` | Sign-in/sign-up events with IP, country/city, ISP, device. |
+
+### Recipient status values
+| status | Meaning |
+|---|---|
+| `queued` | Not attempted yet |
+| `sending` | Claimed by a sender, in progress |
+| `accepted` | Respond.io accepted the message (NOT proof of delivery/read) |
+| `failed` | Provider rejected; see `error` |
+| `unknown` | Result uncertain (timeout); never auto-retried |
+
+### Example — `GET /campaigns?status=completed&limit=1` (fictional)
+```json
+{
+  "data": [{
+    "id": "7c1e0c3a-0000-4000-8000-000000000001",
+    "name": "عرض نوفمبر",
+    "template_name": "november_offer",
+    "language": "ar",
+    "channel_id": 123456,
+    "components": [],
+    "status": "completed",
+    "audience_summary": { "total": 500, "by_source": { "auth": 300, "tenant_accounts": 200 } },
+    "created_at": "2026-11-01T10:00:00Z",
+    "updated_at": "2026-11-01T10:20:00Z"
+  }],
+  "pagination": { "limit": 1, "has_more": false, "next_cursor": null },
+  "sync": { "timestamp_field": "updated_at", "server_time": "2026-11-01T12:00:00Z" }
+}
+```
+
+### Example — `GET /campaign_recipients?campaign_id=...&status=failed` (fictional)
+```json
+{ "data": [{ "id": "9b...", "campaign_id": "7c1e...", "phone": "+966500000000", "sources": ["auth"], "status": "failed", "provider_response": { "code": 400 }, "error": "Contact not on WhatsApp", "attempted_at": "2026-11-01T10:05:00Z", "updated_at": "2026-11-01T10:05:00Z" }] }
+```
+
+### Building a unified phone book in the CRM
+Union phones from `contacts.phone`, `customers.phone`, `tenancies.phone`, `bookings.customer_phone`, `leads.phone`, `whatsapp_leads.phone`, normalize to E.164 (`+9665XXXXXXXX`) and dedupe on that key. `campaign_recipients` already contains deduplicated E.164 phones per campaign.
+
+### Never exposed
+OTP codes, login/one-time tokens, API keys, Telegram bot memory, backups, file storage paths, Respond.io/API secrets. Sending messages is NOT possible through this API (read-only).
 
 ## 5. Examples (fictional data)
 
