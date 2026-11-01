@@ -11,7 +11,7 @@ const cors = {
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-const API_VERSION = "1.0";
+const API_VERSION = "1.1";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -25,7 +25,7 @@ async function sha256Hex(s: string) {
 interface Resource {
   table: string;
   select: string;
-  ts: "updated_at" | "created_at";
+  ts: "updated_at" | "created_at" | "attempted_at";
   pii: string[];
   finance: string[];
   filters: Record<string, "text" | "int" | "uuid" | "bool">;
@@ -77,9 +77,52 @@ const R: Record<string, Resource> = {
     select: "id,full_name,phone,business_name,requested_activity,requested_building,requested_unit,customer_source,source,status,notes,created_at,updated_at",
     ts: "updated_at", pii: ["full_name", "phone", "business_name", "notes"], finance: [], filters: { status: "text", source: "text" },
   },
+  booking_units: {
+    table: "booking_units", select: "id,booking_id,unit_id,building_number,unit_number,unit_type,area,price,activity,created_at", ts: "created_at",
+    pii: [], finance: [], filters: { booking_id: "uuid", unit_id: "uuid", building_number: "int" },
+  },
+  unit_status_history: {
+    table: "unit_audit_log", select: "id,unit_id,building_number,unit_number,action,previous_status,new_status,reason,performed_by_email,created_at", ts: "created_at",
+    pii: ["performed_by_email", "reason"], finance: [], filters: { unit_id: "uuid", building_number: "int", new_status: "text", action: "text" },
+  },
+  contacts: {
+    table: "customer_profiles", select: "id,user_id,full_name,phone,email,business_name,activity_type,notes,created_at,updated_at", ts: "updated_at",
+    pii: ["full_name", "phone", "email", "business_name", "notes"], finance: [], filters: { activity_type: "text", user_id: "uuid" },
+  },
+  whatsapp_leads: {
+    table: "leads", select: "id,full_name,phone,notes,status,last_message_at,last_message_text,created_at,updated_at", ts: "updated_at",
+    pii: ["full_name", "phone", "notes", "last_message_text"], finance: [], filters: { status: "text" },
+  },
+  campaigns: {
+    table: "marketing_campaigns", select: "id,name,template_name,language,channel_id,components,status,audience_summary,created_at,updated_at", ts: "updated_at",
+    pii: [], finance: [], filters: { status: "text", template_name: "text", language: "text" },
+  },
+  campaign_recipients: {
+    table: "marketing_recipients", select: "id,campaign_id,phone,sources,status,provider_response,error,attempted_at,updated_at", ts: "updated_at",
+    pii: ["phone", "provider_response"], finance: [], filters: { campaign_id: "uuid", status: "text" },
+  },
+  email_logs: {
+    table: "email_send_log", select: "id,message_id,template_name,recipient_email,status,error_message,created_at", ts: "created_at",
+    pii: ["recipient_email"], finance: [], filters: { template_name: "text", status: "text" },
+  },
+  tenant_files: {
+    table: "tenant_account_files", select: "id,tenant_account_id,custom_name,original_name,mime_type,size_bytes,notes,is_archived,archived_at,created_at,updated_at", ts: "updated_at",
+    pii: ["custom_name", "original_name", "notes"], finance: [], filters: { tenant_account_id: "uuid", is_archived: "bool" },
+  },
+  unit_files: {
+    table: "unit_files", select: "id,unit_id,file_name,mime_type,size_bytes,notes,created_at", ts: "created_at",
+    pii: ["notes"], finance: [], filters: { unit_id: "uuid" },
+  },
+  access_log: {
+    table: "access_log", select: "id,user_id,phone,email,event,ip_address,country,region,city,isp,user_agent,path,created_at", ts: "created_at",
+    pii: [], finance: [], filters: { event: "text", user_id: "uuid" },
+  },
 };
 // Whole resources that require extra scopes.
-const NEEDS: Record<string, string> = { invoices: "crm:finance", collections: "crm:finance", leads: "crm:pii" };
+const NEEDS: Record<string, string> = {
+  invoices: "crm:finance", collections: "crm:finance", leads: "crm:pii", contacts: "crm:pii", whatsapp_leads: "crm:pii",
+  campaign_recipients: "crm:pii", email_logs: "crm:pii", access_log: "crm:pii",
+};
 
 function shape(res: Resource, row: Record<string, unknown>, scopes: string[]) {
   let r = res.map ? res.map(row, scopes) : row;
@@ -123,11 +166,23 @@ Deno.serve(async (req) => {
           api_version: API_VERSION,
           project: { code: "MNICITY", name_ar: "المدينة الصناعية بشمال مكة المكرمة" },
           phase: { code: "phase-1", name_ar: "المرحلة الأولى", note: "Single phase; no phases table exists." },
-          scopes, resources: Object.keys(R), server_time: new Date().toISOString(),
+          scopes, resources: [...Object.keys(R), "templates"], server_time: new Date().toISOString(),
         },
       });
     }
-    const m = path.match(/^\/([a-z]+)(?:\/([0-9a-f-]{36}))?$/i);
+    if (path === "/templates") {
+      const { data, error } = await admin.from("marketing_campaigns").select("template_name,language,components,created_at").order("created_at", { ascending: true });
+      if (error) throw error;
+      const map = new Map<string, any>();
+      for (const c of (data ?? []) as any[]) {
+        const k2 = `${c.template_name}|${c.language}`;
+        const e = map.get(k2) ?? { template_name: c.template_name, language: c.language, components: c.components, campaigns_count: 0, first_used_at: c.created_at, last_used_at: c.created_at };
+        e.campaigns_count++; e.last_used_at = c.created_at; e.components = c.components;
+        map.set(k2, e);
+      }
+      return json({ data: [...map.values()], note: "Templates as used in campaigns sent from the platform; template bodies live in Respond.io/WhatsApp." });
+    }
+    const m = path.match(/^\/([a-z_]+)(?:\/([0-9a-f-]{36}))?$/i);
     const res = m && R[m[1]];
     if (!m || !res) return fail("not_found", `Unknown route ${path}`, 404);
     const need = NEEDS[m[1]];
