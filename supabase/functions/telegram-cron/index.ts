@@ -19,12 +19,20 @@ async function broadcast(admin: any, token: string, topic: string, text: string)
       if (v) targets.push({ chat_id: Number(v) });
     }
   }
-  await Promise.all(targets.map((t: any) =>
-    fetch(TG(token, "sendMessage"), {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: t.chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
-    }).catch(() => {}),
-  ));
+  await Promise.all(targets.map(async (t: any) => {
+    try {
+      const r = await fetch(TG(token, "sendMessage"), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: t.chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
+      });
+      if (!r.ok) {
+        const body = await r.text().catch(() => "");
+        console.error(`telegram sendMessage failed chat=${t.chat_id} status=${r.status}: ${body.slice(0, 300)}`);
+      }
+    } catch (e) {
+      console.error(`telegram sendMessage error chat=${t.chat_id}:`, e);
+    }
+  }));
   return targets.length;
 }
 
@@ -139,6 +147,14 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const job = url.searchParams.get("job") || "daily";
   try {
+    if (job === "ping") {
+      const me = await fetch(TG(token, "getMe")).then((r) => r.json()).catch((e) => ({ error: String(e) }));
+      const probe = await fetch(TG(token, "sendMessage"), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: Deno.env.get("TELEGRAM_CHAT_ID_1"), text: "🔧 اختبار اتصال البوت — لو وصلتك الرسالة دي يبقى الإرسال شغال ✅" }),
+      }).then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) })).catch((e) => ({ error: String(e) }));
+      return new Response(JSON.stringify({ getMe: me, probe }), { headers: { "Content-Type": "application/json" } });
+    }
     if (job === "daily") await jobDaily(admin, token);
     else if (job === "expiring") await jobExpiring(admin, token);
     else if (job === "overdue") await jobOverdue(admin, token);
