@@ -184,6 +184,36 @@ const Booking = () => {
     setStep(5);
   };
 
+  const notifyTelegramStage = (stage: "summary" | "failed", errorMsg?: string) => {
+    if (!customer || selectedUnits.length === 0) return;
+    supabase.functions
+      .invoke("telegram-notify", {
+        body: {
+          stage,
+          error: errorMsg,
+          customer: {
+            fullName: customer.fullName,
+            phone: customer.phone,
+            email: customer.email || user?.email || undefined,
+            business: customer.business || undefined,
+            notes: customer.notes || undefined,
+          },
+          units: selectedUnits.map((u) => ({
+            buildingNumber: u.buildingNumber,
+            buildingType: u.buildingType,
+            unitNumber: u.unitNumber,
+            unitType: u.unitType,
+            area: u.area,
+            activity: u.activity,
+            price: u.price,
+          })),
+        },
+      })
+      .then(({ error: e }) => {
+        if (e) console.error("telegram stage notify error:", e);
+      });
+  };
+
   // إنشاء الحجز في قاعدة البيانات (تغيير حالة الوحدات إلى محجوزة)
   const createBookingInDb = async (): Promise<string | null> => {
     if (!user || !customer || selectedUnits.length === 0) return null;
@@ -201,11 +231,15 @@ const Booking = () => {
     } as any);
     setCreatingBooking(false);
     if (error || !newId) {
-      toast.error(error?.message || "تعذّر إنشاء الحجز");
+      const msg = error?.message || "تعذّر إنشاء الحجز";
+      setBookingError(msg);
+      toast.error(msg);
+      notifyTelegramStage("failed", msg);
       return null;
     }
     setBookingId(newId as string);
-    toast.success("تم تسجيل حجزك ✅ — أكمل لإرسال البيانات على واتساب");
+    setBookingError(null);
+    toast.success("تم تأكيد حجزك ✅");
 
     // إشعار تيليجرام (لا نوقف التدفق لو فشل)
     supabase.functions
@@ -328,13 +362,16 @@ const Booking = () => {
     return () => window.clearTimeout(timeout);
   }, [activityFilter, isLoading, step]);
 
-  // إنشاء الحجز في DB تلقائياً عند الدخول لخطوة الإرسال
+  // تنبيه تيليجرام فور وصول العميل لصفحة الملخص (قبل التأكيد)
+  const summaryNotifiedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (step === 5 && customer && selectedUnits.length > 0 && !bookingId && !creatingBooking) {
-      createBookingInDb();
-    }
+    if (step !== 5 || !customer || selectedUnits.length === 0 || bookingId) return;
+    const key = `${customer.phone}|${selectedUnits.map((u) => u.id).join(",")}`;
+    if (summaryNotifiedRef.current === key) return;
+    summaryNotifiedRef.current = key;
+    notifyTelegramStage("summary");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, customer, selectedUnits.length]);
+  }, [step, customer, selectedUnits.length, bookingId]);
 
   const goBack = () => {
     if (step === 1) {
