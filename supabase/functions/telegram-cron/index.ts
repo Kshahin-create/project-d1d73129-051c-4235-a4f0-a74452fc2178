@@ -147,6 +147,14 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const job = url.searchParams.get("job") || "daily";
   try {
+    if (job === "ping") {
+      const me = await fetch(TG(token, "getMe")).then((r) => r.json()).catch((e) => ({ error: String(e) }));
+      const probe = await fetch(TG(token, "sendMessage"), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: Deno.env.get("TELEGRAM_CHAT_ID_1"), text: "🔧 اختبار اتصال البوت — لو وصلتك الرسالة دي يبقى الإرسال شغال ✅" }),
+      }).then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) })).catch((e) => ({ error: String(e) }));
+      return new Response(JSON.stringify({ getMe: me, probe }), { headers: { "Content-Type": "application/json" } });
+    }
     if (job === "daily") await jobDaily(admin, token);
     else if (job === "expiring") await jobExpiring(admin, token);
     else if (job === "overdue") await jobOverdue(admin, token);
