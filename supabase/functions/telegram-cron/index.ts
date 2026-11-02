@@ -19,12 +19,20 @@ async function broadcast(admin: any, token: string, topic: string, text: string)
       if (v) targets.push({ chat_id: Number(v) });
     }
   }
-  await Promise.all(targets.map((t: any) =>
-    fetch(TG(token, "sendMessage"), {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: t.chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
-    }).catch(() => {}),
-  ));
+  await Promise.all(targets.map(async (t: any) => {
+    try {
+      const r = await fetch(TG(token, "sendMessage"), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: t.chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
+      });
+      if (!r.ok) {
+        const body = await r.text().catch(() => "");
+        console.error(`telegram sendMessage failed chat=${t.chat_id} status=${r.status}: ${body.slice(0, 300)}`);
+      }
+    } catch (e) {
+      console.error(`telegram sendMessage error chat=${t.chat_id}:`, e);
+    }
+  }));
   return targets.length;
 }
 
