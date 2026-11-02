@@ -604,7 +604,7 @@ const Booking = () => {
                         form={FORM_ID}
                         className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3.5 font-display font-bold text-primary-foreground shadow-card transition hover:shadow-elevated"
                       >
-                        متابعة إلى الإرسال
+                        متابعة لمراجعة الحجز
                         <ArrowLeft className="h-4 w-4" />
                       </button>
                     </div>
