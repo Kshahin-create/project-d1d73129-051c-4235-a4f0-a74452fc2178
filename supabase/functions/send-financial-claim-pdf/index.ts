@@ -224,6 +224,9 @@ function buildHtml(p: Payload): string {
   }
   .footer .right .stamp-row img.sig { height: 58px; object-fit: contain; }
   .footer .right .stamp-row img.stamp { height: 88px; object-fit: contain; }
+  .broker-box { display:flex; align-items:center; gap:12px; margin-top:10px; padding:8px 12px; border:1px solid #c9a961; border-radius:8px; font-size:11px; color:#333; line-height:1.7; background:#fff; }
+  .broker-box img { height:46px; object-fit:contain; }
+  .broker-title { font-weight:900; font-size:12.5px; color:#1a1a1a; }
 </style>
 </head>
 <body>
@@ -271,6 +274,14 @@ function buildHtml(p: Payload): string {
     </div>
 
     <div class="closing-title">مع أطيب التحيات ،،،</div>
+
+    <div class="broker-box">
+      <img src="https://wqzseofoerwevfebguse.supabase.co/storage/v1/object/public/email-assets/logo-madar-al-khaleej.png" alt="مدار الخليج العقاري" />
+      <div class="broker-info">
+        <div class="broker-title">الوسيط العقاري للتسويق والتأجير: مدار الخليج العقاري</div>
+        <div>رقم الترخيص الإعلاني: <span dir="ltr">7201145651</span> &nbsp;|&nbsp; عقد وساطة رقم: <span dir="ltr">6201095268</span> &nbsp;|&nbsp; رخصة فال: <span dir="ltr">1200041182</span></div>
+      </div>
+    </div>
 
     <div class="footer">
       <div class="left">
