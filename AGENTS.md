@@ -14,3 +14,4 @@
 - Keep public SEO routes and structured entity data in the shared SEO module; sitemap generation consumes the same whitelist to exclude session, account and management surfaces.
 - Keep static homepage metadata and schema in index.html with route metadata through Helmet; client metadata cannot provide server-rendered social previews or real HTTP status codes.
 - Serve compressed WebP renditions on public pages and retain a detailed plan for zoom; explicit intrinsic dimensions reserve layout space without altering source drawings.- External CRM integration goes through the read-only crm-api function with crm:* scoped, field-redacting keys; the legacy api function stays separate so CRM keys can never write.
+- Unit availability is enforced in the database: a unit with a tenant or an active booking can never be 'available' (triggers block it and auto-reserve), so the public booking page can trust unit status.
