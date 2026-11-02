@@ -47,6 +47,7 @@ const Booking = () => {
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [creatingBooking, setCreatingBooking] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
   const [noticeAcknowledged, setNoticeAcknowledged] = useState(
     () => typeof window !== "undefined" && sessionStorage.getItem("booking_notice_ack") === "1"
   );
@@ -619,16 +620,16 @@ const Booking = () => {
             )}
 
             {step === 5 && selectedUnits.length > 0 && customer && (
-              <StepWrap title="إرسال الطلب" desc="ستفتح محادثة واتساب جاهزة بكل تفاصيل طلبك.">
+              <StepWrap title="مراجعة وتأكيد الحجز" desc="راجع بياناتك ثم اضغط «تأكيد الحجز» لتثبيت الوحدات باسمك.">
                 <div className="mx-auto max-w-xl space-y-5">
                   {submitted ? (
                     <div className="rounded-2xl border border-success/30 bg-success/5 p-8 text-center">
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success text-success-foreground">
                         <CheckCircle2 className="h-8 w-8" />
                       </div>
-                      <h3 className="mt-4 font-display text-xl font-bold">تم فتح واتساب</h3>
+                      <h3 className="mt-4 font-display text-xl font-bold">تم تأكيد حجزك</h3>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        إذا لم يُفتح تلقائياً، يمكنك الضغط على الزر مرة أخرى.
+                        وصلنا طلبك وسيتواصل معك فريقنا قريباً لإتمام السداد.
                       </p>
                       <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
                         <Link
@@ -667,64 +668,83 @@ const Booking = () => {
                           />
                         </dl>
                       </div>
-                      {creatingBooking && (
-                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-center text-sm text-primary">
-                          جاري تثبيت حجزك في النظام...
-                        </div>
-                      )}
-                      {bookingId && !creatingBooking && (
-                        <div className="rounded-xl border border-success/30 bg-success/5 p-3 text-center text-sm">
-                          ✅ تم تثبيت حجزك — رقم الحجز:{" "}
-                          <span className="font-mono font-bold">{bookingId.slice(0, 8)}</span>
-                          {" — "} الآن أرسل التفاصيل عبر واتساب
-                        </div>
-                      )}
                       <div className="rounded-xl border border-amber-500/40 bg-amber-50 p-3 text-center text-xs font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
-                        ⏰ تنبيه: الحجز ساري لمدة <span className="num">48</span> ساعة فقط من وقت إتمامه.
+                        ⏰ تنبيه: الحجز ساري لمدة <span className="num">48</span> ساعة فقط من وقت تأكيده.
                         لتأكيد الحجز نهائياً يجب التواصل معنا وسداد المبلغ خلال هذه المدة، وإلا سيتم إلغاء الحجز تلقائياً وإتاحة الوحدات لغيرك.
                       </div>
-                      <WhatsAppButton
-                        href={whatsapp?.appUrl ?? "#"}
-                        webHref={whatsapp?.webUrl}
-                        message={whatsapp?.message}
-                        disabled={creatingBooking || !bookingId}
-                        onClick={() => {
-                          if (!bookingId || !customer) return;
-                          // إرسال webhook + تحديث حالة الحجز
-                          supabase.functions
-                            .invoke("booking-webhook", {
-                              body: {
-                                booking_id: bookingId,
-                                customer: {
-                                  fullName: customer.fullName,
-                                  phone: customer.phone,
-                                  email: customer.email || undefined,
-                                  business: customer.business,
-                                  notes: customer.notes || undefined,
-                                },
-                                units: selectedUnits.map((u) => ({
-                                  buildingNumber: u.buildingNumber,
-                                  buildingType: u.buildingType,
-                                  unitNumber: u.unitNumber,
-                                  unitType: u.unitType,
-                                  area: u.area,
-                                  activity: u.activity,
-                                  price: u.price,
-                                })),
-                                message: whatsapp?.message,
-                              },
-                            })
-                            .then(({ error }) => {
-                              if (error) console.error("n8n webhook error:", error);
-                            });
-                          // تحديث الحجز إلى تم إرسال واتساب
-                          supabase.rpc("mark_booking_whatsapp_sent", { _booking_id: bookingId });
-                          setTimeout(() => setSubmitted(true), 600);
-                        }}
-                      />
-                      <p className="text-center text-xs text-muted-foreground">
-                        سيتم نسخ الرسالة تلقائياً وفتح واتساب. إذا لم يكن التطبيق مثبّتاً، استخدم رابط واتساب ويب البديل.
-                      </p>
+                      {!bookingId ? (
+                        <>
+                          {bookingError && (
+                            <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-center text-sm text-destructive">
+                              تعذّر تأكيد الحجز: {bookingError}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => createBookingInDb()}
+                            disabled={creatingBooking}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-4 font-display text-lg font-bold text-primary-foreground shadow-card transition hover:shadow-elevated disabled:opacity-60"
+                          >
+                            <CheckCircle2 className="h-5 w-5" />
+                            {creatingBooking ? "جاري تأكيد الحجز..." : bookingError ? "إعادة المحاولة" : "تأكيد الحجز"}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="rounded-2xl border border-success/30 bg-success/5 p-6 text-center">
+                            <CheckCircle2 className="mx-auto h-10 w-10 text-success" />
+                            <h3 className="mt-3 font-display text-xl font-bold">تم تأكيد حجزك</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              رقم الحجز: <span className="font-mono font-bold" dir="ltr">{bookingId.slice(0, 8)}</span>
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">سيتواصل معك فريقنا قريباً لإتمام السداد.</p>
+                            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                              <Link to="/profile" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition hover:border-primary/40">
+                                حجوزاتي
+                              </Link>
+                              <Link to="/" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition hover:border-primary/40">
+                                العودة للرئيسية
+                              </Link>
+                            </div>
+                          </div>
+                          <p className="text-center text-xs text-muted-foreground">اختياري: تواصل معنا مباشرة عبر واتساب</p>
+                          <WhatsAppButton
+                            href={whatsapp?.appUrl ?? "#"}
+                            webHref={whatsapp?.webUrl}
+                            message={whatsapp?.message}
+                            onClick={() => {
+                              if (!bookingId || !customer) return;
+                              supabase.functions
+                                .invoke("booking-webhook", {
+                                  body: {
+                                    booking_id: bookingId,
+                                    customer: {
+                                      fullName: customer.fullName,
+                                      phone: customer.phone,
+                                      email: customer.email || undefined,
+                                      business: customer.business,
+                                      notes: customer.notes || undefined,
+                                    },
+                                    units: selectedUnits.map((u) => ({
+                                      buildingNumber: u.buildingNumber,
+                                      buildingType: u.buildingType,
+                                      unitNumber: u.unitNumber,
+                                      unitType: u.unitType,
+                                      area: u.area,
+                                      activity: u.activity,
+                                      price: u.price,
+                                    })),
+                                    message: whatsapp?.message,
+                                  },
+                                })
+                                .then(({ error }) => {
+                                  if (error) console.error("n8n webhook error:", error);
+                                });
+                              supabase.rpc("mark_booking_whatsapp_sent", { _booking_id: bookingId });
+                            }}
+                          />
+                        </>
+                      )}
                     </>
                   )}
                 </div>
