@@ -20,6 +20,8 @@ interface Payload {
     notes?: string;
   };
   units: Unit[];
+  stage?: "summary" | "failed";
+  error?: string;
 }
 
 Deno.serve(async (req) => {
@@ -60,7 +62,15 @@ Deno.serve(async (req) => {
       String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     const lines: string[] = [];
-    lines.push("🏢 <b>طلب حجز جديد - المدينة الصناعية شمال مكة</b>");
+    if (body.stage === "summary") {
+      lines.push("👀 <b>عميل وصل لصفحة ملخص الحجز (لم يؤكد بعد)</b>");
+      lines.push("تابع معه لإتمام الحجز");
+    } else if (body.stage === "failed") {
+      lines.push("⚠️ <b>فشل تسجيل حجز عميل</b>");
+      if (body.error) lines.push(`السبب: ${esc(body.error)}`);
+    } else {
+      lines.push("🏢 <b>طلب حجز جديد - المدينة الصناعية شمال مكة</b>");
+    }
     if (body.booking_id) lines.push(`🆔 <code>${esc(body.booking_id)}</code>`);
     lines.push("");
     lines.push("👤 <b>بيانات العميل</b>");
