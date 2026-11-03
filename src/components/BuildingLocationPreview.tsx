@@ -13,7 +13,7 @@ export function BuildingLocationPreview({ buildingNumber, section }: { buildingN
   if (!image) return null;
 
   return (
-    <div className="flex justify-end" dir="rtl">
+    <div className="flex justify-start" dir="rtl">
       <Dialog>
         <DialogTrigger asChild>
           <Button
