@@ -1,5 +1,5 @@
+import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, Store, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
 import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
 import carpentryMap from "@/assets/activity-map-carpentry.png.asset.json";
@@ -19,7 +19,7 @@ interface BuildingSelectorProps {
 }
 
 const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
-  service: Wrench, parts: Cog, tires: Droplets, food: UtensilsCrossed,
+  service: Wrench, parts: Cog, tires: Droplets, shops: Store,
   carpentry: Hammer, smithing: Flame, "warehouse-a": Warehouse, "warehouse-b": Package,
 };
 
