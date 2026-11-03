@@ -25,6 +25,20 @@ const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   service: serviceMap,
 };
 
+// مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
+interface MapHotspot { number: number; x: number; y: number; w: number; h: number }
+const ACTIVITY_HOTSPOTS: Partial<Record<BookingActivity, MapHotspot[]>> = {
+  service: [
+    { number: 11, x: 3.5, y: 25.5, w: 21.7, h: 3.6 },
+    { number: 1, x: 8.6, y: 31.8, w: 13.4, h: 3.7 },
+    { number: 2, x: 8.6, y: 38.1, w: 13.3, h: 4.3 },
+    { number: 3, x: 8.7, y: 44.2, w: 13.3, h: 3.7 },
+    { number: 4, x: 8.6, y: 50.4, w: 13.4, h: 3.7 },
+    { number: 5, x: 8.6, y: 57.2, w: 13.5, h: 3.8 },
+    { number: 6, x: 8.4, y: 63.3, w: 13.7, h: 3.3 },
+  ],
+};
+
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   if (!activityFilter) {
     return (
@@ -78,11 +92,31 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></div>
             <div>
               <h3 className="font-display text-base font-bold text-foreground">مخطط المشروع — {activity.title}</h3>
-              <p className="text-xs text-muted-foreground">المباني المتخصصة في النشاط ده معلّم عليها بالأخضر على المخطط</p>
+              <p className="text-xs text-muted-foreground">اضغط على أي مبنى معلّم بالأخضر على المخطط لاختياره</p>
             </div>
             <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><MapPin className="h-3.5 w-3.5" /> {scoped.length} مبانٍ</span>
           </div>
-          <img src={activityMap} alt={`مخطط المشروع الكامل مع تعليم مباني ${activity.title}`} className="w-full" loading="lazy" />
+          <div className="relative">
+            <img src={activityMap} alt={`مخطط المشروع الكامل مع تعليم مباني ${activity.title}`} className="w-full" loading="lazy" />
+            {(ACTIVITY_HOTSPOTS[activity.key] ?? []).map((hs) => {
+              const building = scoped.find((b) => b.number === hs.number);
+              if (!building) return null;
+              return (
+                <button
+                  key={hs.number}
+                  type="button"
+                  aria-label={`اختيار مبنى ${hs.number}`}
+                  onClick={() => onSelect(building)}
+                  style={{ left: `${hs.x}%`, top: `${hs.y}%`, width: `${hs.w}%`, height: `${hs.h}%` }}
+                  className="group absolute cursor-pointer rounded-md border-2 border-primary/50 bg-primary/0 transition hover:border-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+                    <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-bold text-primary-foreground shadow-md">اختر مبنى <span className="num">{hs.number}</span></span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </section>
       )}
       {scoped.length
