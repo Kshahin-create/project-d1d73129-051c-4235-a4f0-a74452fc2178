@@ -67,7 +67,7 @@ const Section = ({ title, subtitle, icon, buildings, onSelect, selected }: Secti
         >
           <Button variant="outline" onClick={() => onSelect(b)}
           className={cn(
-            "group relative h-auto w-full flex-col items-stretch whitespace-normal overflow-hidden rounded-lg border-2 bg-card p-4 text-right shadow-card transition-all",
+            "group relative h-auto w-full flex-col items-stretch whitespace-normal overflow-hidden rounded-lg border-2 bg-card p-4 text-right text-foreground shadow-card transition-all hover:bg-card hover:text-foreground hover:shadow-lg",
             selected === b.number
               ? "border-primary ring-2 ring-primary/20"
               : "border-border hover:border-primary/50"
