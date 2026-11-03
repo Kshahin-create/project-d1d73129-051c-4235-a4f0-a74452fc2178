@@ -280,13 +280,15 @@ async function deleteTenant(id: string) {
     .maybeSingle();
   const { error } = await admin.from("tenants").delete().eq("id", id);
   if (error) return err(error.message, 400);
+  let unit_released = false;
   if (tenant?.unit_id) {
-    await admin
+    const { error: uErr } = await admin
       .from("units")
       .update({ status: "available" })
       .eq("id", tenant.unit_id);
+    unit_released = !uErr;
   }
-  return json({ success: true });
+  return json({ success: true, unit_released });
 }
 
 // ---------- Tenant Accounts (consolidated) ----------

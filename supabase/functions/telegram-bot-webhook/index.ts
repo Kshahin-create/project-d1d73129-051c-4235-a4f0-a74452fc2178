@@ -1545,10 +1545,16 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     if (!args.confirm) return { error: "confirm=true required — استخدم cancel_booking بدلاً منها إن أمكن" };
     const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", args.booking_id);
     const ids = (bus || []).map((x: any) => x.unit_id);
-    if (ids.length) await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).in("id", ids).eq("status", "reserved");
     const { error } = await admin.from("bookings").delete().eq("id", args.booking_id);
     if (error) return { error: error.message };
-    return { ok: true, deleted: args.booking_id };
+    // Free units after the booking is gone; units with a tenant or another active booking stay reserved.
+    const freed: string[] = [];
+    const kept: string[] = [];
+    for (const id of ids) {
+      const { error: uErr } = await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).eq("id", id).eq("status", "reserved");
+      (uErr ? kept : freed).push(id);
+    }
+    return { ok: true, deleted: args.booking_id, freed_units: freed.length, kept_reserved: kept.length };
   }
   if (name === "send_booking_pdfs") {
     if (!args.booking_id) return { error: "booking_id required" };
