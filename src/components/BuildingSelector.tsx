@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
 import serviceMap from "@/assets/activity-map-service.png";
+import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -23,6 +24,7 @@ const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
 // مخطط المشروع الكامل لكل نشاط، والمباني تبع النشاط معلّم عليها في الصورة نفسها
 const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   service: serviceMap,
+  smithing: smithingMap.url,
 };
 
 // مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
@@ -36,6 +38,11 @@ const ACTIVITY_HOTSPOTS: Partial<Record<BookingActivity, MapHotspot[]>> = {
     { number: 4, x: 8.6, y: 50.4, w: 13.4, h: 3.7 },
     { number: 5, x: 8.6, y: 57.2, w: 13.5, h: 3.8 },
     { number: 6, x: 8.4, y: 63.3, w: 13.7, h: 3.3 },
+  ],
+  smithing: [
+    { number: 19, x: 29.9, y: 32.1, w: 13.4, h: 3.9 },
+    { number: 18, x: 29.7, y: 38.3, w: 13.5, h: 4.0 },
+    { number: 17, x: 29.8, y: 44.5, w: 13.4, h: 3.9 },
   ],
 };
 
@@ -92,7 +99,7 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></div>
             <div>
               <h3 className="font-display text-base font-bold text-foreground">مخطط المشروع — {activity.title}</h3>
-              <p className="text-xs text-muted-foreground">اضغط على أي مبنى معلّم بالأخضر على المخطط لاختياره</p>
+              <p className="text-xs text-muted-foreground">اضغط على أي مبنى معلّم على المخطط لاختياره</p>
             </div>
             <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><MapPin className="h-3.5 w-3.5" /> {scoped.length} مبانٍ</span>
           </div>
