@@ -39,6 +39,11 @@ const ACTIVITY_HOTSPOTS: Partial<Record<BookingActivity, MapHotspot[]>> = {
     { number: 5, x: 8.6, y: 57.2, w: 13.5, h: 3.8 },
     { number: 6, x: 8.4, y: 63.3, w: 13.7, h: 3.3 },
   ],
+  smithing: [
+    { number: 19, x: 29.9, y: 32.1, w: 13.4, h: 3.9 },
+    { number: 18, x: 29.7, y: 38.3, w: 13.5, h: 4.0 },
+    { number: 17, x: 29.8, y: 44.5, w: 13.4, h: 3.9 },
+  ],
 };
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
