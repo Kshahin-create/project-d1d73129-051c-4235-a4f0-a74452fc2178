@@ -15,6 +15,13 @@
       "when": 1793618489623,
       "tag": "0001_unit_availability_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793701468136,
+      "tag": "0002_guard_only_pending_bookings",
+      "breakpoints": true
     }
   ]
 }
