@@ -11,7 +11,7 @@ import heroBg from "@/assets/hero-bg.webp";
 import overviewBg from "@/assets/overview-city.webp";
 const landSpaces = "/land-spaces.webp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
-import { BOOKING_ACTIVITIES, classifyBookingActivity } from "@/lib/bookingActivities";
+import { BOOKING_ACTIVITIES, buildingInActivity, classifyBookingActivity } from "@/lib/bookingActivities";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -117,9 +117,9 @@ const Index = () => {
             <h3 className="mt-6 font-display text-lg font-bold">اختر نشاطك</h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {BOOKING_ACTIVITIES.map((activity) => {
-                const scoped = buildings.filter((building) => classifyBookingActivity(building.type) === activity.key);
+                const scoped = buildings.filter((building) => buildingInActivity(building, activity.key));
                 const available = scoped.reduce((sum, building) => sum + building.availableUnits, 0);
-                return <Feature key={activity.key} icon={<Wrench className="h-5 w-5" />} title={activity.title} desc={isLoading ? "جارٍ تحميل الوحدات…" : isError ? "الأعداد غير متاحة حاليًا" : `${scoped.length} مبانٍ · ${available} وحدة متاحة`} to={`/booking?activity=${activity.key}`} />;
+                return <Feature key={activity.key} icon={<Wrench className="h-5 w-5" />} title={activity.title} desc={isLoading ? "جارٍ تحميل الوحدات…" : isError ? "الأعداد غير متاحة حاليًا" : scoped.length ? `${scoped.length} مبانٍ · ${available} وحدة متاحة` : "قريبًا"} to={`/booking?activity=${activity.key}`} />;
               })}
             </div>
           </motion.div>

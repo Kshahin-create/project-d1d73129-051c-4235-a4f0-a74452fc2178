@@ -19,3 +19,16 @@ describe("booking activity scopes", () => {
     expect(countAvailableUnits([{ status: "available" }, { status: "maintenance" }, { status: "booked" }, { status: "rented" }, { status: "reserved" }])).toBe(1);
   });
 });
+import { buildingInActivity } from "./bookingActivities";
+describe("owner activity-to-building mapping", () => {
+  it("maps buildings per the owner list", () => {
+    expect(buildingInActivity({ number: 11, type: "" }, "service")).toBe(true);
+    expect(buildingInActivity({ number: 7, type: "" }, "service")).toBe(false);
+    expect(buildingInActivity({ number: 12, type: "" }, "parts")).toBe(true);
+    expect(buildingInActivity({ number: 12, type: "" }, "food")).toBe(true);
+    expect(buildingInActivity({ number: 9, type: "" }, "tires")).toBe(true);
+    expect(buildingInActivity({ number: 32, type: "" }, "warehouse-a")).toBe(true);
+    expect(buildingInActivity({ number: 31, type: "" }, "warehouse-b")).toBe(true);
+    expect(buildingInActivity({ number: 14, type: "ورش نجارة" }, "carpentry")).toBe(true);
+  });
+});
