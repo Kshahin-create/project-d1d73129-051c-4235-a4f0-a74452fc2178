@@ -68,9 +68,23 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
   const activity = BOOKING_ACTIVITIES.find((a) => a.key === activityFilter)!;
   const scoped = buildings.filter((b) => buildingInActivity(b, activity.key));
   const Icon = ACTIVITY_ICONS[activity.key];
+  const activityMap = ACTIVITY_MAPS[activity.key];
   return (
     <div className="space-y-6">
       <Button variant="outline" size="sm" className="rounded-full" asChild><Link to="/booking"><ArrowRight className="h-4 w-4" /> كل الأنشطة</Link></Button>
+      {activityMap && (
+        <section className="overflow-hidden rounded-2xl border-2 border-border bg-card shadow-card">
+          <div className="flex flex-wrap items-center gap-3 border-b border-border bg-accent-soft px-5 py-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></div>
+            <div>
+              <h3 className="font-display text-base font-bold text-foreground">مخطط المشروع — {activity.title}</h3>
+              <p className="text-xs text-muted-foreground">المباني المتخصصة في النشاط ده معلّم عليها بالأخضر على المخطط</p>
+            </div>
+            <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><MapPin className="h-3.5 w-3.5" /> {scoped.length} مبانٍ</span>
+          </div>
+          <img src={activityMap} alt={`مخطط المشروع الكامل مع تعليم مباني ${activity.title}`} className="w-full" loading="lazy" />
+        </section>
+      )}
       {scoped.length
         ? <Section title={activity.title} subtitle={`${scoped.length} مبانٍ · ${activity.description}`} icon={<Icon className="h-5 w-5" />} buildings={scoped} units={units} onSelect={onSelect} selected={selected} />
         : <section className="rounded-2xl border border-dashed border-border bg-card p-8 text-center"><h3 className="font-display text-lg font-bold">{activity.title}</h3><p className="mt-2 text-sm text-muted-foreground">{activity.description}</p><p className="mt-3 text-sm font-semibold text-primary">الوحدات تُطرح قريبًا</p></section>}
