@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
 import carpentryMap from "@/assets/activity-map-carpentry.png.asset.json";
+import shopsMap from "@/assets/activity-map-shops.png.asset.json";
 import partsMap from "@/assets/activity-map-parts.png.asset.json";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   parts: partsMap.url,
   tires: partsMap.url,
   carpentry: carpentryMap.url,
+  shops: shopsMap.url,
 };
 
 // مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
@@ -66,6 +68,13 @@ ACTIVITY_HOTSPOTS.carpentry = [
   { number: 16, x: 29.6, y: 50.4, w: 13.6, h: 4.2 },
   { number: 15, x: 29.6, y: 56.6, w: 13.5, h: 3.9 },
   { number: 14, x: 29.7, y: 62.6, w: 13.4, h: 4.1 },
+];
+// المحلات التجارية: مباني 12 و13 (طولية) و21 و22 (عرضية)
+ACTIVITY_HOTSPOTS.shops = [
+  { number: 12, x: 23.0, y: 31.3, w: 2.2, h: 35.9 },
+  { number: 13, x: 26.4, y: 31.6, w: 2.4, h: 35.5 },
+  { number: 21, x: 3.5, y: 68.9, w: 21.7, h: 2.8 },
+  { number: 22, x: 26.4, y: 68.9, w: 19.9, h: 2.8 },
 ];
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
