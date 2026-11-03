@@ -412,9 +412,11 @@ const Booking = () => {
             <ArrowRight className="h-4 w-4" />
             {step === 1 ? "الرئيسية" : "السابق"}
           </button>
-          <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-            <Home className="h-3.5 w-3.5" /> الرئيسية
-          </Link>
+          {step > 1 && (
+            <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
+              <Home className="h-3.5 w-3.5" /> الرئيسية
+            </Link>
+          )}
         </div>
 
         <div className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
