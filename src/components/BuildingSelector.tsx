@@ -16,14 +16,17 @@ interface BuildingSelectorProps {
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   const groups = BOOKING_ACTIVITIES.filter((activity) => !activityFilter || activity.key === activityFilter);
+  const shown = new Set<number>();
   return (
     <div className="space-y-8">
-      <nav aria-label="الأنشطة" className="flex flex-wrap gap-2">
-        <Button variant={!activityFilter ? "default" : "outline"} asChild><Link to="/booking">كل الأنشطة</Link></Button>
-        {BOOKING_ACTIVITIES.map((activity) => <Button key={activity.key} variant={activityFilter === activity.key ? "default" : "outline"} asChild><Link to={`/booking?activity=${activity.key}`}>{activity.title}</Link></Button>)}
+      <nav aria-label="الأنشطة" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
+        <Button size="sm" className="shrink-0 rounded-full" variant={!activityFilter ? "default" : "outline"} asChild><Link to="/booking">كل الأنشطة</Link></Button>
+        {BOOKING_ACTIVITIES.map((activity) => <Button key={activity.key} size="sm" className="shrink-0 rounded-full" variant={activityFilter === activity.key ? "default" : "outline"} asChild><Link to={`/booking?activity=${activity.key}`}>{activity.short}{buildings.some((b) => buildingInActivity(b, activity.key)) ? "" : " · قريبًا"}</Link></Button>)}
       </nav>
       {groups.map((activity) => {
-        const scoped = buildings.filter((building) => buildingInActivity(building, activity.key));
+        // In "all" view, list each building once under its first activity.
+        const scoped = buildings.filter((building) => buildingInActivity(building, activity.key) && (activityFilter || !shown.has(building.number)));
+        scoped.forEach((b) => shown.add(b.number));
         if (!scoped.length) return activityFilter ? <section key={activity.key} className="rounded-lg border border-border bg-card p-6 text-center"><h3 className="font-display text-lg font-bold">{activity.title}</h3><p className="mt-2 text-sm text-muted-foreground">{activity.description}</p><p className="mt-3 text-sm font-semibold text-primary">قريبًا — الوحدات لم تُطرح للحجز بعد</p></section> : null;
         return <Section key={activity.key} title={activity.title} subtitle={`${scoped.length} مبانٍ · ${activity.description}`} icon={<Building2 className="h-5 w-5" />} buildings={scoped} units={units} onSelect={onSelect} selected={selected} />;
       })}
