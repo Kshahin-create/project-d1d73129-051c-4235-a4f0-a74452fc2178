@@ -23,8 +23,10 @@ export const MaintenanceGate = ({ children }: { children: React.ReactNode }) => 
       setMessage(row?.maintenance_message ?? null);
     };
     load();
-    // Poll every 30s for maintenance updates (replaces realtime which required public table access)
-    const interval = setInterval(load, 30000);
+    // Poll every 5 min, only while the tab is visible
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 300000);
     return () => {
       mounted = false;
       clearInterval(interval);
