@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
 import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
+import carpentryMap from "@/assets/activity-map-carpentry.png.asset.json";
 import partsMap from "@/assets/activity-map-parts.png.asset.json";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   // قطع الغيار والبناشر عليهم نفس المباني (7 إلى 10) فالمخطط واحد للاثنين
   parts: partsMap.url,
   tires: partsMap.url,
+  carpentry: carpentryMap.url,
 };
 
 // مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
@@ -59,6 +61,12 @@ const partsHotspots: MapHotspot[] = [
 ];
 ACTIVITY_HOTSPOTS.parts = partsHotspots;
 ACTIVITY_HOTSPOTS.tires = partsHotspots;
+// ورش النجارة: مباني 14 و15 و16 على المخطط
+ACTIVITY_HOTSPOTS.carpentry = [
+  { number: 16, x: 29.6, y: 50.4, w: 13.6, h: 4.2 },
+  { number: 15, x: 29.6, y: 56.6, w: 13.5, h: 3.9 },
+  { number: 14, x: 29.7, y: 62.6, w: 13.4, h: 4.1 },
+];
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   if (!activityFilter) {
