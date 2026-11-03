@@ -92,11 +92,31 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></div>
             <div>
               <h3 className="font-display text-base font-bold text-foreground">مخطط المشروع — {activity.title}</h3>
-              <p className="text-xs text-muted-foreground">المباني المتخصصة في النشاط ده معلّم عليها بالأخضر على المخطط</p>
+              <p className="text-xs text-muted-foreground">اضغط على أي مبنى معلّم بالأخضر على المخطط لاختياره</p>
             </div>
             <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><MapPin className="h-3.5 w-3.5" /> {scoped.length} مبانٍ</span>
           </div>
-          <img src={activityMap} alt={`مخطط المشروع الكامل مع تعليم مباني ${activity.title}`} className="w-full" loading="lazy" />
+          <div className="relative">
+            <img src={activityMap} alt={`مخطط المشروع الكامل مع تعليم مباني ${activity.title}`} className="w-full" loading="lazy" />
+            {(ACTIVITY_HOTSPOTS[activity.key] ?? []).map((hs) => {
+              const building = scoped.find((b) => b.number === hs.number);
+              if (!building) return null;
+              return (
+                <button
+                  key={hs.number}
+                  type="button"
+                  aria-label={`اختيار مبنى ${hs.number}`}
+                  onClick={() => onSelect(building)}
+                  style={{ left: `${hs.x}%`, top: `${hs.y}%`, width: `${hs.w}%`, height: `${hs.h}%` }}
+                  className="group absolute cursor-pointer rounded-md border-2 border-primary/50 bg-primary/0 transition hover:border-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+                    <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-bold text-primary-foreground shadow-md">اختر مبنى <span className="num">{hs.number}</span></span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </section>
       )}
       {scoped.length
