@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
 import serviceMap from "@/assets/activity-map-service.png";
+import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -23,6 +24,7 @@ const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
 // مخطط المشروع الكامل لكل نشاط، والمباني تبع النشاط معلّم عليها في الصورة نفسها
 const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   service: serviceMap,
+  smithing: smithingMap.url,
 };
 
 // مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
