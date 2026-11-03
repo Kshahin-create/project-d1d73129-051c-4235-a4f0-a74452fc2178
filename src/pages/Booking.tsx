@@ -433,7 +433,7 @@ const Booking = () => {
             transition={{ duration: 0.25 }}
           >
             {step === 1 && (
-              <StepWrap title="اختر المبنى المناسب" desc="تصفح المباني المتاحة واختر المبنى الذي يناسب نشاطك.">
+              <StepWrap title={activityFilter ? "اختر المبنى المناسب" : "اختر نشاطك"} desc={activityFilter ? "تصفح المباني المتاحة واختر المبنى الذي يناسب نشاطك." : "اختر النشاط التجاري لتظهر لك المباني والوحدات المخصصة له."}>
                 {isLoading ? <p role="status" className="py-12 text-center text-muted-foreground">جارٍ تحميل المباني والوحدات…</p> : isError ? <div role="alert" className="py-12 text-center"><p>تعذّر تحميل المباني والوحدات.</p><Button variant="outline" className="mt-4" onClick={() => void refetch()}>إعادة المحاولة</Button></div> : <BuildingSelector
                   buildings={buildings}
                   units={units}
