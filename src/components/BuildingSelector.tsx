@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
+import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
 import partsMap from "@/assets/activity-map-parts.png.asset.json";
 import type { Building, Unit } from "@/data/types";
