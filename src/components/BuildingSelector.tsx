@@ -4,7 +4,7 @@ import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BOOKING_ACTIVITIES, classifyBookingActivity, type BookingActivity } from "@/lib/bookingActivities";
+import { BOOKING_ACTIVITIES, buildingInActivity, classifyBookingActivity, type BookingActivity } from "@/lib/bookingActivities";
 
 interface BuildingSelectorProps {
   buildings: Building[];
@@ -23,9 +23,9 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
         {BOOKING_ACTIVITIES.map((activity) => <Button key={activity.key} variant={activityFilter === activity.key ? "default" : "outline"} asChild><Link to={`/booking?activity=${activity.key}`}>{activity.title}</Link></Button>)}
       </nav>
       {groups.map((activity) => {
-        const scoped = buildings.filter((building) => classifyBookingActivity(building.type) === activity.key);
-        if (!scoped.length) return null;
-        return <Section key={activity.key} title={activity.title} subtitle={`${scoped.length} مبانٍ`} icon={<Building2 className="h-5 w-5" />} buildings={scoped} units={units} onSelect={onSelect} selected={selected} />;
+        const scoped = buildings.filter((building) => buildingInActivity(building, activity.key));
+        if (!scoped.length) return activityFilter ? <section key={activity.key} className="rounded-lg border border-border bg-card p-6 text-center"><h3 className="font-display text-lg font-bold">{activity.title}</h3><p className="mt-2 text-sm text-muted-foreground">{activity.description}</p><p className="mt-3 text-sm font-semibold text-primary">قريبًا — الوحدات لم تُطرح للحجز بعد</p></section> : null;
+        return <Section key={activity.key} title={activity.title} subtitle={`${scoped.length} مبانٍ · ${activity.description}`} icon={<Building2 className="h-5 w-5" />} buildings={scoped} units={units} onSelect={onSelect} selected={selected} />;
       })}
       {buildings.length === 0 && <p className="py-8 text-center text-muted-foreground">لا توجد مبانٍ متاحة للعرض حاليًا.</p>}
     </div>
