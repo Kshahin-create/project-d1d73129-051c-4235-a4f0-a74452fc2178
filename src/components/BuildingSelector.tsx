@@ -20,6 +20,11 @@ const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
   carpentry: Hammer, smithing: Flame, "warehouse-a": Warehouse, "warehouse-b": Package,
 };
 
+// مخطط المشروع الكامل لكل نشاط، والمباني تبع النشاط معلّم عليها في الصورة نفسها
+const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
+  service: serviceMap,
+};
+
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   if (!activityFilter) {
     return (
