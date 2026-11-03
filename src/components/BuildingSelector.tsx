@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
-import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
+import partsMap from "@/assets/activity-map-parts.png.asset.json";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -25,6 +25,9 @@ const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
 const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   service: serviceMap,
   smithing: smithingMap.url,
+  // قطع الغيار والبناشر عليهم نفس المباني (7 إلى 10) فالمخطط واحد للاثنين
+  parts: partsMap.url,
+  tires: partsMap.url,
 };
 
 // مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
@@ -45,6 +48,16 @@ const ACTIVITY_HOTSPOTS: Partial<Record<BookingActivity, MapHotspot[]>> = {
     { number: 17, x: 29.8, y: 44.5, w: 13.4, h: 3.9 },
   ],
 };
+
+// مباني قطع الغيار والبناشر مشتركة، فمناطق الضغط واحدة للنشاطين
+const partsHotspots: MapHotspot[] = [
+  { number: 9, x: 3.3, y: 31.3, w: 1.7, h: 8.5 },
+  { number: 10, x: 5.9, y: 31.3, w: 1.6, h: 8.5 },
+  { number: 7, x: 3.1, y: 58.3, w: 1.8, h: 8.9 },
+  { number: 8, x: 5.6, y: 58.3, w: 1.9, h: 8.9 },
+];
+ACTIVITY_HOTSPOTS.parts = partsHotspots;
+ACTIVITY_HOTSPOTS.tires = partsHotspots;
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   if (!activityFilter) {
