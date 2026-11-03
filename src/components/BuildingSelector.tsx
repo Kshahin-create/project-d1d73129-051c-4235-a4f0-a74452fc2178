@@ -1,9 +1,10 @@
-import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, Store, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
+import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, Store, Car, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
 import carpentryMap from "@/assets/activity-map-carpentry.png.asset.json";
 import shopsMap from "@/assets/activity-map-shops.png.asset.json";
+import carShowroomsMap from "@/assets/activity-map-car-showrooms.png.asset.json";
 import partsMap from "@/assets/activity-map-parts.png.asset.json";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ interface BuildingSelectorProps {
 
 const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
   service: Wrench, parts: Cog, tires: Droplets, shops: Store,
+  "car-showrooms": Car,
   carpentry: Hammer, smithing: Flame, "warehouse-a": Warehouse, "warehouse-b": Package,
 };
 
@@ -33,6 +35,7 @@ const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   tires: partsMap.url,
   carpentry: carpentryMap.url,
   shops: shopsMap.url,
+  "car-showrooms": carShowroomsMap.url,
 };
 
 // مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
@@ -76,6 +79,10 @@ ACTIVITY_HOTSPOTS.shops = [
   { number: 21, x: 3.5, y: 68.9, w: 21.7, h: 2.8 },
   { number: 22, x: 26.4, y: 68.9, w: 19.9, h: 2.8 },
 ];
+ACTIVITY_HOTSPOTS["car-showrooms"] = [
+  { number: 21, x: 3.5, y: 71.7, w: 21.7, h: 3.3 },
+  { number: 22, x: 26.4, y: 71.7, w: 19.9, h: 3.3 },
+];
 
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   if (!activityFilter) {
@@ -101,14 +108,14 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
               <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-muted-foreground">{activity.description}</p>
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-sm">
                 <span className="text-muted-foreground">{ready ? <><span className="num">{scoped.length}</span> مبانٍ · <span className="num">{total}</span> وحدة</> : "الوحدات تُطرح قريبًا"}</span>
-                {ready && <span className="inline-flex items-center gap-1 font-semibold text-primary">تصفّح<ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" /></span>}
+                {(ready || ACTIVITY_MAPS[activity.key]) && <span className="inline-flex items-center gap-1 font-semibold text-primary">{ready ? "تصفّح" : "المخطط"}<ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" /></span>}
               </div>
             </>
           );
           const cls = "group flex h-full flex-col rounded-2xl border-2 bg-card p-6 text-right shadow-card transition-all";
           return (
             <motion.div key={activity.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: idx * 0.04 }}>
-              {ready
+              {(ready || ACTIVITY_MAPS[activity.key])
                 ? <Link to={`/booking?activity=${activity.key}`} className={cn(cls, "border-border hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg")}>{body}</Link>
                 : <div aria-disabled className={cn(cls, "border-dashed border-border opacity-80")}>{body}</div>}
             </motion.div>
@@ -117,7 +124,8 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
       </div>
     );
   }
-  const activity = BOOKING_ACTIVITIES.find((a) => a.key === activityFilter)!;
+  const activity = BOOKING_ACTIVITIES.find((a) => a.key === activityFilter);
+  if (!activity) return null;
   const scoped = buildings.filter((b) => buildingInActivity(b, activity.key));
   const Icon = ACTIVITY_ICONS[activity.key];
   const activityMap = ACTIVITY_MAPS[activity.key];

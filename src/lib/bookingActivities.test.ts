@@ -21,6 +21,11 @@ describe("booking activity scopes", () => {
 });
 import { buildingInActivity } from "./bookingActivities";
 describe("owner activity-to-building mapping", () => {
+  it("offers car showrooms only in buildings 21 and 22 without replacing commercial shops", () => {
+    expect(parseBookingActivity("car-showrooms")).toBe("car-showrooms");
+    expect([12, 13, 21, 22].filter(number => buildingInActivity({ number, type: "" }, "car-showrooms"))).toEqual([21, 22]);
+    expect([12, 13, 21, 22].filter(number => buildingInActivity({ number, type: "" }, "shops"))).toEqual([12, 13, 21, 22]);
+  });
   it("maps buildings per the owner list", () => {
     expect(buildingInActivity({ number: 11, type: "" }, "service")).toBe(true);
     expect(buildingInActivity({ number: 7, type: "" }, "service")).toBe(false);
