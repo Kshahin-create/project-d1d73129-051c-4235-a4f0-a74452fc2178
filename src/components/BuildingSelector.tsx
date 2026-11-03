@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, type LucideIcon } from "lucide-react";
+import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, MapPin, type LucideIcon } from "lucide-react";
+import serviceMap from "@/assets/activity-map-service.png";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
