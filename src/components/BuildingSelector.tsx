@@ -99,7 +99,7 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></div>
             <div>
               <h3 className="font-display text-base font-bold text-foreground">مخطط المشروع — {activity.title}</h3>
-              <p className="text-xs text-muted-foreground">اضغط على أي مبنى معلّم بالأخضر على المخطط لاختياره</p>
+              <p className="text-xs text-muted-foreground">اضغط على أي مبنى معلّم على المخطط لاختياره</p>
             </div>
             <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success"><MapPin className="h-3.5 w-3.5" /> {scoped.length} مبانٍ</span>
           </div>
