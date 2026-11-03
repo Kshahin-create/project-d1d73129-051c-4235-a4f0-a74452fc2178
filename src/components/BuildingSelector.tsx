@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Building2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, UtensilsCrossed, Hammer, Flame, Warehouse, Package, type LucideIcon } from "lucide-react";
 import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -14,23 +14,60 @@ interface BuildingSelectorProps {
   activityFilter?: BookingActivity | null;
 }
 
+const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
+  service: Wrench, parts: Cog, tires: Droplets, food: UtensilsCrossed,
+  carpentry: Hammer, smithing: Flame, "warehouse-a": Warehouse, "warehouse-b": Package,
+};
+
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
-  const groups = BOOKING_ACTIVITIES.filter((activity) => !activityFilter || activity.key === activityFilter);
-  const shown = new Set<number>();
+  if (!activityFilter) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {BOOKING_ACTIVITIES.map((activity, idx) => {
+          const scoped = buildings.filter((b) => buildingInActivity(b, activity.key));
+          const available = scoped.reduce((s, b) => s + b.availableUnits, 0);
+          const total = scoped.reduce((s, b) => s + b.totalUnits, 0);
+          const Icon = ACTIVITY_ICONS[activity.key];
+          const ready = scoped.length > 0;
+          const body = (
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-foreground transition group-hover:scale-105">
+                  <Icon className="h-7 w-7" />
+                </div>
+                <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", ready ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}>
+                  {ready ? <><span className="num">{available}</span> وحدة متاحة</> : "قريبًا"}
+                </span>
+              </div>
+              <h3 className="mt-5 font-display text-xl font-bold text-foreground">{activity.title}</h3>
+              <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-muted-foreground">{activity.description}</p>
+              <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-sm">
+                <span className="text-muted-foreground">{ready ? <><span className="num">{scoped.length}</span> مبانٍ · <span className="num">{total}</span> وحدة</> : "الوحدات تُطرح قريبًا"}</span>
+                {ready && <span className="inline-flex items-center gap-1 font-semibold text-primary">تصفّح<ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" /></span>}
+              </div>
+            </>
+          );
+          const cls = "group flex h-full flex-col rounded-2xl border-2 bg-card p-6 text-right shadow-card transition-all";
+          return (
+            <motion.div key={activity.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: idx * 0.04 }}>
+              {ready
+                ? <Link to={`/booking?activity=${activity.key}`} className={cn(cls, "border-border hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg")}>{body}</Link>
+                : <div aria-disabled className={cn(cls, "border-dashed border-border opacity-80")}>{body}</div>}
+            </motion.div>
+          );
+        })}
+      </div>
+    );
+  }
+  const activity = BOOKING_ACTIVITIES.find((a) => a.key === activityFilter)!;
+  const scoped = buildings.filter((b) => buildingInActivity(b, activity.key));
+  const Icon = ACTIVITY_ICONS[activity.key];
   return (
-    <div className="space-y-8">
-      <nav aria-label="الأنشطة" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
-        <Button size="sm" className="shrink-0 rounded-full" variant={!activityFilter ? "default" : "outline"} asChild><Link to="/booking">كل الأنشطة</Link></Button>
-        {BOOKING_ACTIVITIES.map((activity) => <Button key={activity.key} size="sm" className="shrink-0 rounded-full" variant={activityFilter === activity.key ? "default" : "outline"} asChild><Link to={`/booking?activity=${activity.key}`}>{activity.short}{buildings.some((b) => buildingInActivity(b, activity.key)) ? "" : " · قريبًا"}</Link></Button>)}
-      </nav>
-      {groups.map((activity) => {
-        // In "all" view, list each building once under its first activity.
-        const scoped = buildings.filter((building) => buildingInActivity(building, activity.key) && (activityFilter || !shown.has(building.number)));
-        scoped.forEach((b) => shown.add(b.number));
-        if (!scoped.length) return activityFilter ? <section key={activity.key} className="rounded-lg border border-border bg-card p-6 text-center"><h3 className="font-display text-lg font-bold">{activity.title}</h3><p className="mt-2 text-sm text-muted-foreground">{activity.description}</p><p className="mt-3 text-sm font-semibold text-primary">قريبًا — الوحدات لم تُطرح للحجز بعد</p></section> : null;
-        return <Section key={activity.key} title={activity.title} subtitle={`${scoped.length} مبانٍ · ${activity.description}`} icon={<Building2 className="h-5 w-5" />} buildings={scoped} units={units} onSelect={onSelect} selected={selected} />;
-      })}
-      {buildings.length === 0 && <p className="py-8 text-center text-muted-foreground">لا توجد مبانٍ متاحة للعرض حاليًا.</p>}
+    <div className="space-y-6">
+      <Button variant="outline" size="sm" className="rounded-full" asChild><Link to="/booking"><ArrowRight className="h-4 w-4" /> كل الأنشطة</Link></Button>
+      {scoped.length
+        ? <Section title={activity.title} subtitle={`${scoped.length} مبانٍ · ${activity.description}`} icon={<Icon className="h-5 w-5" />} buildings={scoped} units={units} onSelect={onSelect} selected={selected} />
+        : <section className="rounded-2xl border border-dashed border-border bg-card p-8 text-center"><h3 className="font-display text-lg font-bold">{activity.title}</h3><p className="mt-2 text-sm text-muted-foreground">{activity.description}</p><p className="mt-3 text-sm font-semibold text-primary">الوحدات تُطرح قريبًا</p></section>}
     </div>
   );
 };
