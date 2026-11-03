@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingPlans";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
 
 interface UnitGridProps {
   buildingNumber: number;
@@ -133,6 +134,7 @@ const UnitGridSection = ({
 
   return (
     <div className="space-y-6">
+      <BuildingLocationPreview buildingNumber={buildingNumber} section={layoutOverride ? "extra" : "a"} />
       {/* Plan image with interactive overlay */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         {planImage ? (
