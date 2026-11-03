@@ -25,6 +25,20 @@ const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   service: serviceMap,
 };
 
+// مناطق الضغط على المخطط (نسب مئوية من أبعاد الصورة) لكل مبنى معلّم بالأخضر
+interface MapHotspot { number: number; x: number; y: number; w: number; h: number }
+const ACTIVITY_HOTSPOTS: Partial<Record<BookingActivity, MapHotspot[]>> = {
+  service: [
+    { number: 11, x: 3.5, y: 25.5, w: 21.7, h: 3.6 },
+    { number: 1, x: 8.6, y: 31.8, w: 13.4, h: 3.7 },
+    { number: 2, x: 8.6, y: 38.1, w: 13.3, h: 4.3 },
+    { number: 3, x: 8.7, y: 44.2, w: 13.3, h: 3.7 },
+    { number: 4, x: 8.6, y: 50.4, w: 13.4, h: 3.7 },
+    { number: 5, x: 8.6, y: 57.2, w: 13.5, h: 3.8 },
+    { number: 6, x: 8.4, y: 63.3, w: 13.7, h: 3.3 },
+  ],
+};
+
 export const BuildingSelector = ({ buildings, units, onSelect, selected, activityFilter }: BuildingSelectorProps) => {
   if (!activityFilter) {
     return (
