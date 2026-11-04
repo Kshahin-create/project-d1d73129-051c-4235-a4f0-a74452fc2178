@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ProgressSteps } from "@/components/ProgressSteps";
 import { BuildingSelector } from "@/components/BuildingSelector";
 import { UnitGrid } from "@/components/UnitGrid";
+import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
 import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
 import { TenantNoticeScreen } from "@/components/TenantNotice";
@@ -448,6 +449,7 @@ const Booking = () => {
               <StepWrap
                 title={`المبنى رقم ${selectedBuilding.number} — ${selectedBuilding.type}`}
                 desc="يمكنك اختيار وحدة واحدة أو أكثر. اضغط على الوحدة لإضافتها/إزالتها، ثم اضغط متابعة."
+                aside={<BuildingLocationPreview buildingNumber={selectedBuilding.number} section="a" />}
               >
                 <UnitGrid
                   buildingNumber={selectedBuilding.number}
