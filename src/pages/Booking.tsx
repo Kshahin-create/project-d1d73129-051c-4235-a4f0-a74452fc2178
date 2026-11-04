@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ProgressSteps } from "@/components/ProgressSteps";
 import { BuildingSelector } from "@/components/BuildingSelector";
 import { UnitGrid } from "@/components/UnitGrid";
+import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
 import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
 import { TenantNoticeScreen } from "@/components/TenantNotice";
@@ -448,6 +449,7 @@ const Booking = () => {
               <StepWrap
                 title={`المبنى رقم ${selectedBuilding.number} — ${selectedBuilding.type}`}
                 desc="يمكنك اختيار وحدة واحدة أو أكثر. اضغط على الوحدة لإضافتها/إزالتها، ثم اضغط متابعة."
+                aside={<BuildingLocationPreview buildingNumber={selectedBuilding.number} section="a" />}
               >
                 <UnitGrid
                   buildingNumber={selectedBuilding.number}
@@ -765,16 +767,27 @@ const Booking = () => {
 const StepWrap = ({
   title,
   desc,
+  aside,
   children,
 }: {
   title: string;
   desc: string;
+  aside?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <div>
-    <div className="mb-6 text-center sm:text-right">
-      <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{title}</h2>
-      <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
+    <div
+      className={
+        aside
+          ? "mb-6 flex flex-wrap items-start justify-between gap-4"
+          : "mb-6 text-center sm:text-right"
+      }
+    >
+      <div>
+        <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{title}</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
+      </div>
+      {aside}
     </div>
     {children}
   </div>
