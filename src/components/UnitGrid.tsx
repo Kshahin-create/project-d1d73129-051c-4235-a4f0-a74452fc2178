@@ -134,7 +134,7 @@ const UnitGridSection = ({
 
   return (
     <div className="space-y-6">
-      <BuildingLocationPreview buildingNumber={buildingNumber} section={layoutOverride ? "extra" : "a"} />
+      {layoutOverride && <BuildingLocationPreview buildingNumber={buildingNumber} section="extra" />}
       {/* Plan image with interactive overlay */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         {planImage ? (

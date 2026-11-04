@@ -765,16 +765,27 @@ const Booking = () => {
 const StepWrap = ({
   title,
   desc,
+  aside,
   children,
 }: {
   title: string;
   desc: string;
+  aside?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <div>
-    <div className="mb-6 text-center sm:text-right">
-      <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{title}</h2>
-      <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
+    <div
+      className={
+        aside
+          ? "mb-6 flex flex-wrap items-start justify-between gap-4"
+          : "mb-6 text-center sm:text-right"
+      }
+    >
+      <div>
+        <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{title}</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
+      </div>
+      {aside}
     </div>
     {children}
   </div>
