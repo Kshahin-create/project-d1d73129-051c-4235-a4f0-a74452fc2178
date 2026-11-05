@@ -1,3 +1,9 @@
+# Phase 2 / Prompt 9 — Roles, permissions, security
+- [x] Review existing roles, policies, writers, account flows and private documents; resolve dynamic roles and admin approvals.
+- [ ] Present complete affected tables/functions/edge files and additive migration plan; wait for approval.
+- [ ] Implement approved permissions foundation and sales boundaries first, then privacy, staff MFA/lifecycle, approvals, tenant access and guide.
+- [ ] Verify direct database/edge/storage denial, ownership and session/MFA behavior for each role; preserve previous workflows.
+
 # Phase 2 / Prompt 8 — Dashboard and metrics
 - [x] Inspect current reporting sources and clarify grace days=3, period installment allocation ratio and independent investor access.
 - [x] Present affected tables/functions/edge functions/files and additive migration plan; approved.
