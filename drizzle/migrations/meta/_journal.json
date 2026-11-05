@@ -442,6 +442,13 @@
       "when": 1793921698959,
       "tag": "0062_permission_guarded_crm_reads_and_writers",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1793921771468,
+      "tag": "0063_dynamic_directory_and_staff_lifecycle",
+      "breakpoints": true
     }
   ]
 }

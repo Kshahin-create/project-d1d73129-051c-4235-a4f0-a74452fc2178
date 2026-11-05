@@ -2485,6 +2485,50 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invitations_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -4754,6 +4798,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_prepare_staff_invitation: {
+        Args: { _email: string; _reason: string; _role: string }
+        Returns: string
+      }
       admin_save_role: {
         Args: {
           _active: boolean
@@ -4785,6 +4833,16 @@ export type Database = {
           _level: string
           _reason: string
           _role: string
+        }
+        Returns: undefined
+      }
+      admin_set_staff_state: {
+        Args: {
+          _active: boolean
+          _leave_unassigned: boolean
+          _reason: string
+          _reassign_to: string
+          _user: string
         }
         Returns: undefined
       }
@@ -5509,6 +5567,15 @@ export type Database = {
           ref_id?: string
           ref_type: string
           unit_id: string
+        }
+        Returns: undefined
+      }
+      staff_service_result: {
+        Args: {
+          _id: string
+          _invitation: boolean
+          _success: boolean
+          _user: string
         }
         Returns: undefined
       }
