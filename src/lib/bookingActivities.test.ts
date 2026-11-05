@@ -72,3 +72,19 @@ describe("red tyre and car-wash units", () => {
     expect(unitAllowedForActivity({ buildingNumber: 7, unitNumber: 87 }, null)).toBe(true);
   });
 });
+
+import { applyActivityRegistry, BOOKING_ACTIVITIES } from "./bookingActivities";
+describe("activity registry", () => {
+  it("public site shows exactly the registry: inactive activities disappear and unit restrictions follow the registry", () => {
+    applyActivityRegistry({
+      activities: [{ code: "tires", name_ar: "البناشر", short_name: null, description: null, marker: null, unit_type: "service", risk_class: null }],
+      buildingActivities: [{ building_number: 8, activity_code: "tires" }],
+      unitActivities: [{ building_number: 8, unit_number: 97, activity_code: "tires" }],
+    });
+    expect(BOOKING_ACTIVITIES.map((a) => a.key)).toEqual(["tires"]);
+    expect(parseBookingActivity("service")).toBeNull();
+    expect(buildingInActivity({ number: 7, type: "" }, "tires")).toBe(false);
+    expect(unitAllowedForActivity({ buildingNumber: 8, unitNumber: 97 }, "tires")).toBe(true);
+    expect(unitAllowedForActivity({ buildingNumber: 8, unitNumber: 98 }, "tires")).toBe(false);
+  });
+});
