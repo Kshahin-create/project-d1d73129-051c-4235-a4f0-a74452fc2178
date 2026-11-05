@@ -201,6 +201,7 @@ const AdminLeads = () => {
   if (!isAdmin && !isManager) return <Navigate to="/" replace />;
 
   const handleSave = async () => {
+    if (!isAdmin) return;
     if (!editing) return;
     const name = (editing.full_name || "").trim();
     const phone = (editing.phone || "").trim();
@@ -300,6 +301,7 @@ const AdminLeads = () => {
   };
 
   const handleImport = async (file: File) => {
+    if (!isAdmin) return;
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf);

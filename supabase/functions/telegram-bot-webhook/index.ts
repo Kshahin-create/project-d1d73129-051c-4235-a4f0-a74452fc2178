@@ -604,6 +604,10 @@ async function cmdOverdue(admin: any, token: string, chat_id: number) {
 
 
 async function cmdInterested(admin: any, token: string, chat_id: number, arg: string, sub: any) {
+  if (!(await canWrite(admin, sub.user_id))) {
+    await send(token, chat_id, "🚫 صلاحية المدير للعرض فقط؛ تسجيل العملاء للأدمن");
+    return;
+  }
   // Format examples:
   //  /interested أحمد | 0555555555 | مطعم | مطعم الذواق | 3 | 12 | إعلان | يفضل وحدة كبيرة
   //  Or labeled lines (الاسم: ... / الجوال: ...)

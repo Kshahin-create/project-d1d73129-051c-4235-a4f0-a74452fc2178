@@ -1,5 +1,6 @@
 // Admin endpoint for managing tenant accounts (create, set password, magic link)
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { hasAdministrativeWriteAccess } from "../_shared/admin-permissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", userRes.user.id);
     const roleSet = new Set((roles ?? []).map((r: any) => r.role));
-    if (!roleSet.has("admin")) {
+    if (!hasAdministrativeWriteAccess(Array.from(roleSet) as string[])) {
       return json({ error: "Not authorized" }, 403);
     }
 
