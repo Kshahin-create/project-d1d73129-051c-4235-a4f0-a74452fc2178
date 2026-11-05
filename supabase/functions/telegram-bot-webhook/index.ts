@@ -1348,7 +1348,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
 
 async function runAIWriteTool(admin: any, userId: string, name: string, args: any, chat_id?: number): Promise<any> {
   const allowed = await canWrite(admin, userId);
-  if (!allowed) return { error: "forbidden: صلاحية المدير للعرض فقط؛ التعديل للأدمن" };
+  if (!allowed && name !== "extend_booking_expiry") return { error: "forbidden: صلاحية المدير للعرض فقط؛ التعديل للأدمن" };
 
   if (["confirm_booking", "cancel_booking", "extend_booking_expiry"].includes(name)) {
     const { data, error } = await admin.rpc("telegram_unit_status_action", { _actor: userId, _action: name, _args: args });

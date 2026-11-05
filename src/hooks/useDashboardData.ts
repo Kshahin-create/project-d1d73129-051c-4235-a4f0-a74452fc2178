@@ -42,11 +42,12 @@ export function useDashboardData(enabled: boolean, userId?: string) {
   const accountUnits = useQuery({ ...options, queryKey: [...prefix, 'tenant_account_units'], queryFn: () => readDashboardRows<AccountUnitRow>('tenant_account_units', 'id, tenant_account_id, unit_id') });
   const history = useQuery({ ...options, queryKey: [...prefix, 'history'], queryFn: async () => {
     const select = 'id, entity_table, entity_id, action, created_at, before_status:before_data->>status, after_status:after_data->>status';
-    const [unitEvents, bookingEvents] = await Promise.all([
+    const [unitEvents, bookingEvents, legacyEvents] = await Promise.all([
       readDashboardRows<StatusEvent>('audit_log', 'id, entity_table, entity_id, action, created_at, before_status:before_data->>leasing_status, after_status:after_data->>leasing_status', { entity_table: 'units', action: 'UNIT_STATUS_TRANSITION' }).then(rows => rows.map(r => ({ ...r, action: 'UPDATE', before_status: r.before_status === null ? null : legacyUnitStatus(r.before_status), after_status: r.after_status === null ? null : legacyUnitStatus(r.after_status) }))),
       readDashboardRows<StatusEvent>('audit_log', select, { entity_table: 'bookings', action: 'UPDATE' }),
+      readDashboardRows<StatusEvent>('audit_log', select, { entity_table: 'units', action: 'UPDATE' }),
     ]);
-    return [...unitEvents, ...bookingEvents];
+    return [...unitEvents, ...bookingEvents, ...legacyEvents];
   } });
   useEffect(() => {
     if (!enabled) return;
