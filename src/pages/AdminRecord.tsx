@@ -8,6 +8,8 @@ import { AdminServerList } from "@/components/admin/AdminServerList";
 import { adminClient, adminLists, canReadFinance, displayAdminValue, type AdminRow, type ListSpec } from "@/lib/adminData";
 import { recordHref, type RecordKind } from "@/lib/adminNavigation";
 import { money } from "@/lib/finance";
+import { statementTotals } from "@/lib/statement";
+import type { StatementInstallment,StatementReceipt,StatementAllocation } from "@/lib/statement";
 import { toast } from "sonner";
 
 const tabs:Record<string,string[]>={units:["نظرة عامة","الحجوزات","العقد","الأقساط والسندات","المستندات","السجل"],parties:["البيانات","الوحدات","الفرص","الحجوزات","العقود","كشف الحساب","التواصل","المستندات","السجل"],contracts:["نظرة عامة","الوحدات","الأقساط والسندات","المستندات","السجل"],receipts:["نظرة عامة","التخصيصات","المستندات","السجل"],bookings:["نظرة عامة","الوحدات","العقود","السجل"]};
@@ -69,5 +71,15 @@ function LinkedUnits({kind,id}:{kind:RecordKind;id:string}){
  return <section className="space-y-4">{q.isError&&<p role="alert" className="text-destructive">تعذر تحميل الوحدات</p>}<div className="flex flex-wrap gap-3">{units.filter(Boolean).map(unit=><Button key={String(unit.id)} asChild variant="outline"><Link to={recordHref("units",String(unit.id))}>وحدة {String(unit.unit_number)} · مبنى {String(unit.building_number)}</Link></Button>)}</div>{!units.length&&<p className="text-muted-foreground">لا وحدات مرتبطة متاحة</p>}<Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></section>;
 }
 function PartyStatement({id}:{id:string}){
- return <div className="space-y-8"><p className="border-r-4 border-primary pr-3 text-sm">المصادر التاريخية قيد المراجعة ليست تحصيلًا معتمدًا. الرصيد يُراجع من الأقساط والتخصيصات الفعلية، وليس من سعر الوحدة.</p><AdminServerList spec={{...adminLists.receipts,table:"receipt_cash_read"}} filters={{party_id:id}}/><AdminServerList spec={adminLists.contracts} filters={{party_id:id}}/></div>;
+ const q=useQuery({queryKey:["party-statement",id],queryFn:async()=>{
+   const all=async(table:string,filter:(request:ReturnType<typeof adminClient.from>)=>unknown)=>{const rows:AdminRow[]=[];for(let offset=0;;offset+=500){let request=adminClient.from(table).select("*").order("id");const filtered=filter(request) as typeof request;const r=await filtered.range(offset,offset+499);if(r.error)throw r.error;rows.push(...r.data as AdminRow[]);if(r.data.length<500)break;}return rows;};
+   const contracts=await all("contracts",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").eq("party_id",id));
+   const ids=contracts.map(c=>String(c.id));
+   const receipts=await all("receipt_cash_read",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").eq("party_id",id));
+   const installments=ids.length?await all("installments_read",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").in("contract_id",ids)):[];
+   const allocations:AdminRow[]=[];
+   for(let chunk=0;chunk<receipts.length;chunk+=100){const receiptIds=receipts.slice(chunk,chunk+100).map(r=>String(r.id));allocations.push(...await all("receipt_allocations",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").in("receipt_id",receiptIds)));}
+   return statementTotals(installments as unknown as StatementInstallment[],receipts as unknown as StatementReceipt[],allocations as unknown as StatementAllocation[]);
+ }});
+ return <div className="space-y-8">{q.isError?<p role="alert" className="text-destructive">تعذر حساب كشف الحساب</p>:<dl className="grid gap-5 border-b border-border pb-5 sm:grid-cols-4">{[["المستحق شامل الضريبة",q.data?.due],["المخصص المتحقق شامل الضريبة",q.data?.allocated],["الرصيد المتبقي شامل الضريبة",q.data?.balance],["متحقق غير مخصص شامل الضريبة",q.data?.unallocated]].map(([label,value])=><div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-2 text-xl font-bold">{value==null?"—":money(value)} ريال</dd></div>)}</dl>}<p className="border-r-4 border-primary pr-3 text-sm">المصادر التاريخية قيد المراجعة ليست تحصيلًا معتمدًا.</p><AdminServerList spec={{...adminLists.receipts,table:"receipt_cash_read"}} filters={{party_id:id}}/><AdminServerList spec={adminLists.contracts} filters={{party_id:id}}/></div>;
 }
