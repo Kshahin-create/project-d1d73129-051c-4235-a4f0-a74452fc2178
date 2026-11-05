@@ -122,6 +122,7 @@ const AdminLeads = () => {
   }
 
   const handleSaveSheet = async () => {
+    if (!isAdmin) return;
     setSyncing("save");
     const id = extractSheetId(sheetId);
     const { error } = await supabase
@@ -135,6 +136,7 @@ const AdminLeads = () => {
   };
 
   const runSync = async (action: "push" | "pull" | "sync") => {
+    if (!isAdmin) return;
     setSyncing(action);
     const { data, error } = await supabase.functions.invoke("leads-sheets-sync", {
       body: { action },
@@ -230,6 +232,7 @@ const AdminLeads = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isAdmin) return;
     if (!confirm("هل تريد حذف هذا المستهدف؟")) return;
     const { error } = await supabase.from("leads").delete().eq("id", id);
     if (error) return toast({ title: "خطأ", description: error.message, variant: "destructive" });
@@ -238,12 +241,14 @@ const AdminLeads = () => {
   };
 
   const handleSetStatus = async (id: string, status: string) => {
+    if (!isAdmin) return;
     const { error } = await supabase.from("leads").update({ status }).eq("id", id);
     if (error) return toast({ title: "خطأ", description: error.message, variant: "destructive" });
     fetchLeads();
   };
 
   const handleSendWA = async (lead: Lead) => {
+    if (!isAdmin) return;
     const text = renderTemplate(template, lead);
     const to = normalizePhone(lead.phone);
     if (!to) return toast({ title: "رقم غير صالح", variant: "destructive" });
@@ -348,7 +353,7 @@ const AdminLeads = () => {
       </div>
 
       {/* Message template */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+      {isAdmin && <> <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
         <Label className="mb-2 block text-sm font-bold">قالب الرسالة</Label>
         <Textarea
           value={template}
@@ -439,12 +444,13 @@ const AdminLeads = () => {
         </p>
       </div>
 
+      </>}
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={() => setEditing({ status: "new" })} className="gap-2">
+        <Button disabled={!isAdmin} onClick={() => setEditing({ status: "new" })} className="gap-2">
           <Plus className="h-4 w-4" /> إضافة مستهدف
         </Button>
-        <Button variant="outline" onClick={() => fileRef.current?.click()} className="gap-2">
+        <Button disabled={!isAdmin} variant="outline" onClick={() => fileRef.current?.click()} className="gap-2">
           <Upload className="h-4 w-4" /> استيراد Excel
         </Button>
         <Button variant="outline" onClick={handleExport} className="gap-2">
@@ -527,7 +533,7 @@ const AdminLeads = () => {
                     {l.notes || "—"}
                   </TableCell>
                   <TableCell>
-                    <Select
+                    <Select disabled={!isAdmin}
                       value={l.status}
                       onValueChange={(v) => handleSetStatus(l.id, v)}
                     >
@@ -552,7 +558,7 @@ const AdminLeads = () => {
                       : "—"}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
+                    {isAdmin && <div className="flex items-center gap-1">
                       <Button
                         size="sm"
                         onClick={() => handleSendWA(l)}
@@ -587,7 +593,7 @@ const AdminLeads = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
+                    </div>}
                   </TableCell>
                 </TableRow>
               );
@@ -600,7 +606,7 @@ const AdminLeads = () => {
         إجمالي: {filtered.length} من {leads.length}
       </div>
 
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+      <Dialog open={isAdmin && !!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "تعديل مستهدف" : "إضافة مستهدف"}</DialogTitle>

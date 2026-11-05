@@ -105,6 +105,7 @@ const AdminInterested = () => {
   }, [rows]);
 
   const saveForm = async () => {
+    if (!isAdmin) return;
     if (!form.full_name.trim() || !form.phone.trim()) {
       toast.error("الاسم والجوال إجباريان");
       return;
@@ -144,6 +145,7 @@ const AdminInterested = () => {
   };
 
   const updateStatus = async (id: string, status: string) => {
+    if (!isAdmin) return;
     const { error } = await supabase
       .from("interested_customers" as any)
       .update({ status })
@@ -153,6 +155,7 @@ const AdminInterested = () => {
   };
 
   const remove = async (id: string) => {
+    if (!isAdmin) return;
     if (!confirm("حذف بيانات المهتم؟")) return;
     const { error } = await supabase.from("interested_customers" as any).delete().eq("id", id);
     if (error) toast.error("فشل الحذف: " + error.message);
@@ -211,12 +214,12 @@ const AdminInterested = () => {
             <Link to="/admin" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm">
               <ArrowRight className="h-4 w-4" /> رجوع
             </Link>
-            <button
+            {isAdmin && <button
               onClick={() => setShowForm((s) => !s)}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 sm:text-sm"
             >
               <Plus className="h-4 w-4" /> {showForm ? "إغلاق" : "إضافة مهتم"}
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -234,7 +237,7 @@ const AdminInterested = () => {
           ))}
         </div>
 
-        {showForm && (
+        {isAdmin && showForm && (
           <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-card">
             <h3 className="mb-3 font-display text-lg font-bold">إضافة مهتم جديد</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -312,15 +315,15 @@ const AdminInterested = () => {
                         </div>
                       </td>
                       <td className="px-3 py-2">
-                        <select value={r.status} onChange={(e) => updateStatus(r.id, e.target.value)} className={`rounded-md px-2 py-1 text-[10px] font-semibold ${STATUS_CLS[r.status] ?? ""}`}>
+                        <select disabled={!isAdmin} value={r.status} onChange={(e) => updateStatus(r.id, e.target.value)} className={`rounded-md px-2 py-1 text-[10px] font-semibold ${STATUS_CLS[r.status] ?? ""}`}>
                           {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                         </select>
                       </td>
                       <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("ar-EG-u-nu-latn")}</td>
                       <td className="px-3 py-2">
-                        <button onClick={() => remove(r.id)} className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20" title="حذف">
+                        {isAdmin && <button onClick={() => remove(r.id)} className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20" title="حذف">
                           <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        </button>}
                       </td>
                     </tr>
                   ))}

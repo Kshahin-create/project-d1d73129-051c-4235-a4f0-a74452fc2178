@@ -80,6 +80,7 @@ const AdminBookingControl = () => {
   };
 
   const resend = async (bk: Bk) => {
+    if (!isAdmin) return;
     setBusy(bk.id);
     const { data: bu } = await supabase.from("booking_units").select("building_number,unit_number,unit_type,area,price,activity").eq("booking_id", bk.id);
     const { error } = await supabase.functions.invoke("telegram-notify", {
@@ -226,9 +227,9 @@ const AdminBookingControl = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{STATUS[bk.status] ?? bk.status}</span>
-                        <button disabled={busy === bk.id} onClick={() => resend(bk)} className="inline-flex items-center gap-1 rounded-xl border border-border px-3 py-1.5 text-xs hover:bg-secondary disabled:opacity-50">
+                        {isAdmin && <button disabled={busy === bk.id} onClick={() => resend(bk)} className="inline-flex items-center gap-1 rounded-xl border border-border px-3 py-1.5 text-xs hover:bg-secondary disabled:opacity-50">
                           {busy === bk.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} تنبيه تيليجرام
-                        </button>
+                        </button>}
                         <Link to="/admin/bookings" className="rounded-xl border border-border px-3 py-1.5 text-xs hover:bg-secondary">التفاصيل</Link>
                       </div>
                     </div>
