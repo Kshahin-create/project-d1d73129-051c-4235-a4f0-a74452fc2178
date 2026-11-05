@@ -8,6 +8,7 @@ export interface Unit {
   activity: string | null;
   price: number;
   status: "available" | "rented" | "reserved";
+  leasingStatus?: string | null;
   tenant: string | null;
 }
 
