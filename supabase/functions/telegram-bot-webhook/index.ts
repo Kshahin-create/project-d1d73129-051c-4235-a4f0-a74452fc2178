@@ -198,7 +198,7 @@ async function cmdStats(admin: any, token: string, chat_id: number) {
   const [bookingsRes, invoicesRes, unitsRes, unpaidRes] = await Promise.all([
     admin.from("bookings").select("id,status,total_price,paid_amount,created_at").gte("created_at", iso),
     admin.from("invoices").select("id,amount,paid_amount,paid,paid_at,created_at"),
-    admin.from("units").select("status").eq("is_test", false),
+    admin.from("units_status_read").select("status").eq("is_test", false),
     admin.from("invoices").select("amount,paid_amount").eq("paid", false),
   ]);
   const bookings = bookingsRes.data || [];
@@ -243,7 +243,7 @@ async function cmdUnpaid(admin: any, token: string, chat_id: number) {
 }
 
 async function cmdUnits(admin: any, token: string, chat_id: number) {
-  const { data } = await admin.from("units").select("status,building_number").eq("is_test", false);
+  const { data } = await admin.from("units_status_read").select("status,building_number").eq("is_test", false);
   const byStatus: Record<string, number> = {};
   const byBuilding: Record<string, { rented: number; available: number; reserved: number }> = {};
   for (const u of data || []) {
@@ -449,7 +449,7 @@ async function generateFinancialClaimFromText(admin: any, chat_id: number, text:
   const paymentPlan = (overrides.payment_plan || extractPaymentPlan(text)) as "full" | "70" | "50";
   if (!building || unitNumbers.length === 0) return { error: "محتاج رقم المبنى وأرقام الوحدات" };
 
-  const { data: units, error: unitErr } = await admin.from("units")
+  const { data: units, error: unitErr } = await admin.from("units_status_read")
     .select("id,building_number,unit_number,activity,price,status")
     .eq("building_number", building)
     .in("unit_number", unitNumbers);
@@ -1174,7 +1174,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     const [b, inv, units] = await Promise.all([
       admin.from("bookings").select("status,total_price,paid_amount,created_at"),
       admin.from("invoices").select("amount,paid_amount,paid,paid_at,due_date"),
-      admin.from("units").select("status,price").eq("is_test", false),
+      admin.from("units_status_read").select("status,price").eq("is_test", false),
     ]);
     const B = b.data || [], I = inv.data || [], U = units.data || [];
     return {
@@ -1216,7 +1216,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     return { results: await searchTenantAccountsSmart(admin, String(args.query || ""), lim(args.limit)) };
   }
   if (name === "units_breakdown") {
-    let q = admin.from("units").select("building_number,unit_number,status,price,area,activity,unit_type").limit(lim(args.limit, 30));
+    let q = admin.from("units_status_read").select("building_number,unit_number,status,price,area,activity,unit_type").limit(lim(args.limit, 30));
     if (args.building_number) q = q.eq("building_number", args.building_number);
     if (args.status) q = q.eq("status", args.status);
     const { data } = await q;
@@ -1249,7 +1249,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     return { results: await searchBookingsSmart(admin, q, 8) };
   }
   if (name === "lookup_unit") {
-    const { data: unit } = await admin.from("units")
+    const { data: unit } = await admin.from("units_status_read")
       .select("id,building_number,unit_number,status,price,area,activity,unit_type")
       .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number))
       .maybeSingle();
@@ -1272,7 +1272,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     };
   }
   if (name === "resolve_unit_id") {
-    const { data } = await admin.from("units").select("id,building_number,unit_number,status,price")
+    const { data } = await admin.from("units_status_read").select("id,building_number,unit_number,status,price")
       .eq("building_number", args.building_number).eq("unit_number", String(args.unit_number)).limit(5);
     return { results: data || [] };
   }
@@ -1320,9 +1320,9 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
   if (name === "get_building_report") {
     const bn = Number(args.building_number);
     const [units, ts] = await Promise.all([
-      admin.from("units").select("id,unit_number,status,price,area,activity,unit_type").eq("building_number", bn).order("unit_number"),
+      admin.from("units_status_read").select("id,unit_number,status,price,area,activity,unit_type").eq("building_number", bn).order("unit_number"),
       admin.from("tenants").select("tenant_name,phone,unit_id,start_date,end_date,business_name,activity_type").in("unit_id",
-        (await admin.from("units").select("id").eq("building_number", bn)).data?.map((u: any) => u.id) || []
+        (await admin.from("units_status_read").select("id").eq("building_number", bn)).data?.map((u: any) => u.id) || []
       ),
     ]);
     const U = units.data || [];
@@ -1439,7 +1439,7 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     const bn = Number(args.building_number);
     const nums = (args.unit_numbers || []).map(Number).filter(Boolean);
     if (!bn || !nums.length) return { error: "building_number + unit_numbers required" };
-    const { data: units } = await admin.from("units").select("id,unit_number,status").eq("building_number", bn).in("unit_number", nums);
+    const { data: units } = await admin.from("units_status_read").select("id,unit_number,status").eq("building_number", bn).in("unit_number", nums);
     if (!units || units.length !== nums.length) {
       const found = new Set((units || []).map((u: any) => Number(u.unit_number)));
       return { error: `وحدات غير موجودة: ${nums.filter((n: number) => !found.has(n)).join("، ")}` };
@@ -1658,7 +1658,7 @@ async function buildPreContext(admin: any, question: string): Promise<string> {
       }));
     }
     if (req.building_number && req.unit_numbers.length) {
-      const { data: units } = await admin.from("units")
+      const { data: units } = await admin.from("units_status_read")
         .select("id,building_number,unit_number,status,price,activity")
         .eq("building_number", req.building_number)
         .in("unit_number", req.unit_numbers);

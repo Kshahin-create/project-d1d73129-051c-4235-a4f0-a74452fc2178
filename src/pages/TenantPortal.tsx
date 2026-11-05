@@ -59,7 +59,7 @@ export default function TenantPortal() {
         const { data: tau } = await supabase.from("tenant_account_units").select("unit_id").eq("tenant_account_id", ta.id);
         const ids = ((tau as any[]) ?? []).map((x) => x.unit_id);
         if (ids.length > 0) {
-          const { data: us } = await supabase.from("units").select("*").in("id", ids);
+          const { data: us } = await supabase.from("units_status_read").select("*").in("id", ids);
           setUnits((us as any) ?? []);
         }
         const { data: inv } = await supabase

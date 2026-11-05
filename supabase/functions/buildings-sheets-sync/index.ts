@@ -419,7 +419,7 @@ Deno.serve(async (req) => {
         { data: leads },
         { data: collections },
       ] = await Promise.all([
-        admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").eq("is_test", false).in("building_number", buildings).order("building_number").order("unit_number"),
+        admin.from("units_status_read").select("id, building_number, unit_number, unit_type, area, activity, price, status").eq("is_test", false).in("building_number", buildings).order("building_number").order("unit_number"),
         admin.from("tenants").select("id, unit_id, tenant_name, phone, business_name, activity_type, cr_number, start_date, end_date, notes, created_at"),
         admin.from("tenant_account_units").select("unit_id, tenant_account_id"),
         admin.from("tenant_accounts").select("id, full_name, phone, email, business_name, activity_type, cr_number, total_price, paid_amount, notes, created_at").is("merged_into", null),
@@ -529,7 +529,7 @@ Deno.serve(async (req) => {
       const tenantUnitIds = (tenants||[]).map((t:any)=>t.unit_id).filter(Boolean);
       const missing = tenantUnitIds.filter((id:string)=>!unitById.has(id));
       if (missing.length) {
-        const { data: extra } = await admin.from("units").select("id, building_number, unit_number").in("id", missing);
+        const { data: extra } = await admin.from("units_status_read").select("id, building_number, unit_number").in("id", missing);
         (extra||[]).forEach((u:any)=>unitById.set(u.id, u));
       }
       for (const t of (tenants||[])) {

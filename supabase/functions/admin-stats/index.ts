@@ -184,7 +184,7 @@ async function fetchUserStats() {
 
 async function fetchUnitStats() {
   const { data: units } = await admin
-    .from("units")
+    .from("units_status_read")
     .select("status, price")
     .eq("is_test", false)
     .limit(5000);
@@ -192,7 +192,7 @@ async function fetchUnitStats() {
   const total = u.length;
   const rented = u.filter((x) => x.status === "rented").length;
   const reserved = u.filter((x) => x.status === "reserved").length;
-  const available = total - rented - reserved;
+  const available = u.filter((x) => x.status === "available").length;
   const actualRevenue = u
     .filter((x) => x.status === "rented")
     .reduce((s, x) => s + Number(x.price), 0);

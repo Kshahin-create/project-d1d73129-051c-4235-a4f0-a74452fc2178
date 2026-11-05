@@ -44,7 +44,7 @@ async function jobDaily(admin: any, token: string) {
     admin.from("bookings").select("status,total_price,created_at").gte("created_at", yesterday.toISOString()).lt("created_at", today.toISOString()),
     admin.from("bookings").select("total_price,created_at").gte("created_at", monthStart.toISOString()),
     admin.from("invoices").select("amount,paid_amount,paid,paid_at,due_date"),
-    admin.from("units").select("status").eq("is_test", false),
+    admin.from("units_status_read").select("status").eq("is_test", false),
     admin.from("invoices").select("invoice_number").eq("paid", false).lt("due_date", today.toISOString().slice(0,10)),
     admin.from("bookings").select("id").eq("status","pending").lte("expires_at", new Date(Date.now()+86400000).toISOString()),
   ]);

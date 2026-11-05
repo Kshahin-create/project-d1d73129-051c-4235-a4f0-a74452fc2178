@@ -102,7 +102,7 @@ const ControlDashboard = () => {
     enabled: !!user && (isControl || isAdmin || isManager),
     queryFn: async (): Promise<UnitRow[]> => {
       const { data, error } = await supabase
-        .from("units")
+        .from("units_status_read")
         .select(
           "id,building_number,unit_number,unit_type,activity,area,price,status,status_before_maintenance,updated_at",
         )

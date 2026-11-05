@@ -126,7 +126,7 @@ const Admin = () => {
     mode: "rent" | "reserve" = "rent",
   ) => {
     const { data: u } = await supabase
-      .from("units")
+      .from("units_status_read")
       .select("id")
       .eq("building_number", buildingNumber)
       .eq("unit_number", unitNumber)
@@ -215,7 +215,7 @@ const Admin = () => {
     setSaving(true);
     try {
       const { data: u } = await supabase
-        .from("units").select("id")
+        .from("units_status_read").select("id")
         .eq("building_number", releaseTarget.buildingNumber)
         .eq("unit_number", releaseTarget.unitNumber)
         .maybeSingle();

@@ -93,7 +93,7 @@ mcp.tool("list_units", {
   }),
   handler: async (args) => {
     let q = admin
-      .from("units")
+      .from("units_status_read")
       .select(
         "id,building_number,unit_number,unit_type,area,activity,price,status",
       )
@@ -117,7 +117,7 @@ mcp.tool("get_unit", {
   }),
   handler: async (args) => {
     const { data, error } = await admin
-      .from("units")
+      .from("units_status_read")
       .select("*")
       .eq("building_number", args.building_number)
       .eq("unit_number", args.unit_number)
@@ -138,7 +138,7 @@ mcp.tool("search_units", {
   }),
   handler: async (args) => {
     let q = admin
-      .from("units")
+      .from("units_status_read")
       .select(
         "id,building_number,unit_number,unit_type,area,activity,price,status",
       )
@@ -160,7 +160,7 @@ mcp.tool("stats_overview", {
   inputSchema: z.object({}),
   handler: async () => {
     const [units, bookings, buildings] = await Promise.all([
-      admin.from("units").select("status,price,area").eq("is_test", false),
+      admin.from("units_status_read").select("status,price,area").eq("is_test", false),
       admin.from("bookings").select("status,total_price,units_count"),
       admin.from("buildings").select("expected_annual_revenue"),
     ]);
