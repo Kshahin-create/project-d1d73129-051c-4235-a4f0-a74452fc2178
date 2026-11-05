@@ -97,7 +97,7 @@ const AdminBookings = () => {
   const load = async () => {
     setFetching(true);
     // قبل التحميل، شغّل تنظيف الحجوزات منتهية الصلاحية (48 ساعة)
-    await supabase.rpc("expire_pending_bookings" as any);
+    if (isAdmin) await supabase.rpc("expire_pending_bookings" as any);
     const { data, error } = await supabase
       .from("bookings")
       .select("*, booking_units(building_number,unit_number,unit_type,area,price)")
@@ -126,6 +126,7 @@ const AdminBookings = () => {
   }, [rows, search, statusFilter]);
 
   const toggleReturning = async (b: BookingRow) => {
+    if (!isAdmin) return;
     const next = !b.is_returning_customer;
     const { error } = await supabase
       .from("bookings")
@@ -548,13 +549,13 @@ const AdminBookings = () => {
                       )}
                       <div className="mt-0.5 flex items-center gap-2">
                         <div className="font-mono text-[10px] text-muted-foreground">#{b.id.slice(0, 8)}</div>
-                        <button
+                        {isAdmin && <button
                           onClick={() => toggleReturning(b)}
                           className="rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-secondary"
                           title="تبديل وضع العميل السابق"
                         >
                           {b.is_returning_customer ? "إلغاء تعليم" : "تعليم كعميل سابق"}
-                        </button>
+                        </button>}
                       </div>
                     </div>
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${st.cls}`}>

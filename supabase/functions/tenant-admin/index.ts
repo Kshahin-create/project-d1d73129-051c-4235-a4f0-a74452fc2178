@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller is admin/manager
+    // All actions mutate accounts or generate login credentials: admin only.
     const userClient = createClient(SUPABASE_URL, ANON, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", userRes.user.id);
     const roleSet = new Set((roles ?? []).map((r: any) => r.role));
-    if (!roleSet.has("admin") && !roleSet.has("manager")) {
+    if (!roleSet.has("admin")) {
       return json({ error: "Not authorized" }, 403);
     }
 
