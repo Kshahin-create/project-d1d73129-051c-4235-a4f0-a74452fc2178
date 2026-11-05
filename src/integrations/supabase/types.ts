@@ -2608,6 +2608,10 @@ export type Database = {
         Args: { _booking_id: string; _hours: number }
         Returns: string
       }
+      extend_booking_hold: {
+        Args: { _booking_id: string; _reason: string }
+        Returns: string
+      }
       find_tenant_by_cr: {
         Args: { _cr: string }
         Returns: {
