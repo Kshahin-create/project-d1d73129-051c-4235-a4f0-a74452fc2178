@@ -76,6 +76,10 @@ const AdminUsers = () => {
   const [rows, setRows] = useState<UserRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
+  const [sort,setSort]=useState("created_at");
+  const [updated,setUpdated]=useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | AppRole>("all");
   const [pendingChange, setPendingChange] = useState<{ row: UserRow; newRole: AppRole } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -86,17 +90,17 @@ const AdminUsers = () => {
   const load = async () => {
     setFetching(true);
     setLoadError(false);
-    const { data, error } = await supabase.rpc("admin_user_directory");
+    const { data, error } = await supabase.rpc("admin_user_directory_page", {_search:search,_role:roleFilter==="all"?"":roleFilter,_sort:sort,_ascending:sort!=="created_at",_limit:25,_offset:page*25});
     if (error) {
       setLoadError(true);
       toast.error("تعذّر تحميل بيانات المستخدمين");
-    } else setRows((data as unknown as UserRow[]) ?? []);
+    } else {const result=data as unknown as {rows:UserRow[];count:number};setRows(result.rows??[]);setTotal(result.count??0);setUpdated(new Date().toLocaleString("ar-SA"));}
     setFetching(false);
   };
 
   useEffect(() => {
-    if (!loading && isAdmin) load();
-  }, [loading, isAdmin]);
+    if (!loading && isAdmin) {const timer=setTimeout(()=>void load(),300);return()=>clearTimeout(timer);}
+  }, [loading, isAdmin,search,roleFilter,page,sort]);
 
   const stats = useMemo(() => {
     const scoped = roleFilter === "all" ? rows : rows.filter((r) => r.role === roleFilter);
@@ -185,7 +189,7 @@ const AdminUsers = () => {
             </div>
             <div className="min-w-0">
               <h1 className="font-display text-xl font-bold sm:text-2xl">إدارة المستخدمين</h1>
-              <p className="text-xs text-muted-foreground sm:text-sm">{rows.length} مستخدم مسجّل</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">{total} مستخدم مسجّل · آخر تحديث: {updated||"—"}</p>
             </div>
           </div>
           <Link
@@ -323,7 +327,7 @@ const AdminUsers = () => {
         </div>
 
         {/* Stats */}
-        {!fetching && rows.length > 0 && (
+        {false && !fetching && rows.length > 0 && (
           <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             {roleFilter === "all" ? (
               <>
@@ -357,7 +361,7 @@ const AdminUsers = () => {
             <Search className="mr-2 h-4 w-4 text-muted-foreground" />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {setSearch(e.target.value);setPage(0);}}
               placeholder="ابحث بالاسم، الجوال، المنشأة، IP أو الدولة..."
               aria-label="البحث في المستخدمين"
               className="flex-1 bg-transparent text-sm outline-none"
@@ -367,7 +371,7 @@ const AdminUsers = () => {
             {filterChips.map((c) => (
               <button
                 key={c.id}
-                onClick={() => setRoleFilter(c.id)}
+                onClick={() => {setRoleFilter(c.id);setPage(0);}}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                   roleFilter === c.id ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                 }`}
@@ -378,6 +382,7 @@ const AdminUsers = () => {
           </div>
         </div>
 
+        <div className="mb-4 flex flex-wrap gap-2"><select aria-label="ترتيب المستخدمين" className="border border-input rounded-md bg-background px-3 py-2" value={sort} onChange={e=>{setSort(e.target.value);setPage(0);}}><option value="created_at">الأحدث أولًا</option><option value="full_name">الاسم</option><option value="email">البريد</option><option value="role">الدور</option></select></div>
         {/* List */}
         {fetching ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">جارِ التحميل...</div>
@@ -401,7 +406,7 @@ const AdminUsers = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="font-display text-base font-bold break-words [overflow-wrap:anywhere]">
-                          {directoryName(r)}
+                          <Button variant="link" className="h-auto whitespace-normal p-0 text-right" onClick={()=>setSelectedUser(r)}>{directoryName(r)}</Button>
                           {isSelf && <span className="mr-1 text-[10px] font-normal text-muted-foreground">(أنت)</span>}
                         </div>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
@@ -454,6 +459,7 @@ const AdminUsers = () => {
             })}
           </div>
         )}
+        <div className="mt-5 flex gap-3 items-center"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1} من {Math.max(1,Math.ceil(total/25))}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
       </main>
 
       <ConfirmDialog

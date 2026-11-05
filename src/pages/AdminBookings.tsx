@@ -8,9 +8,11 @@ import { ShowArchivedToggle } from "@/components/ArchiveActionDialog";
 import { toast } from "sonner";
 import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass, MessageCircle, Download, UserCheck } from "lucide-react";
 import { fmtNum } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { exportRowsToExcel } from "@/lib/exportData";
 
 interface BookingUnitRow {
+  unit_id?: string;
   building_number: number;
   unit_number: number;
   unit_type: string | null;
@@ -20,6 +22,7 @@ interface BookingUnitRow {
 
 interface BookingRow {
   id: string;
+  party_id?: string;
   user_id: string;
   customer_full_name: string;
   customer_phone: string;
@@ -93,24 +96,29 @@ const AdminBookings = () => {
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
   const [showArchived, setShowArchived] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired">("all");
 
   const load = async () => {
     setFetching(true);
     // انتهاء الحجوزات بيتم تلقائيًا في قاعدة البيانات كل 5 دقائق (مش مرتبط بفتح الصفحة).
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*, booking_units(building_number,unit_number,unit_type,area,price)")
-      .order("created_at", { ascending: false });
+    let request=supabase.from("bookings").select("*, booking_units(unit_id,building_number,unit_number,unit_type,area,price)",{count:"exact"});
+    if(!showArchived)request=request.is("archived_at",null);
+    if(statusFilter!=="all")request=request.eq("status",statusFilter);
+    const term=search.trim().replace(/[,()%]/g,"");
+    if(term)request=request.or(`customer_full_name.ilike.%${term}%,customer_phone.ilike.%${term}%,business_name.ilike.%${term}%`);
+    const {data,error,count}=await request.order("created_at",{ascending:false}).order("id").range(page*25,page*25+24);
+    setTotal(count??0);
     if (error) toast.error("تعذر التحميل: " + error.message);
     else setRows((data as any) ?? []);
     setFetching(false);
   };
 
   useEffect(() => {
-    if (!loading && canAccess) load();
-  }, [loading, canAccess]);
+    if (!loading && canAccess) {const timer=setTimeout(()=>void load(),300);return()=>clearTimeout(timer);}
+  }, [loading, canAccess,page,search,showArchived,statusFilter]);
 
   const filtered = useMemo(() => {
     let list = showArchived ? rows : rows.filter((r: any) => !r.archived_at);
@@ -498,7 +506,7 @@ const AdminBookings = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="font-display text-lg font-bold">{b.customer_full_name}</div>
+                        <Link className="font-display text-lg font-bold text-primary hover:underline" to={b.party_id?`/admin/parties/${b.party_id}`:`/admin/bookings/${b.id}`}>{b.customer_full_name}</Link>
                         {b.is_returning_customer && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                             <UserCheck className="h-3 w-3" /> عميل سابق
@@ -509,7 +517,7 @@ const AdminBookings = () => {
                         <div className="text-sm text-muted-foreground">{b.business_name}</div>
                       )}
                       <div className="mt-0.5 flex items-center gap-2">
-                        <div className="font-mono text-[10px] text-muted-foreground">#{b.id.slice(0, 8)}</div>
+                        <Link className="font-mono text-[10px] text-primary hover:underline" to={`/admin/bookings/${b.id}`}>#{b.id.slice(0, 8)}</Link>
                         {isAdmin && <button
                           onClick={() => toggleReturning(b)}
                           className="rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-secondary"
@@ -583,7 +591,7 @@ const AdminBookings = () => {
                       {b.booking_units.map((u, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <Building2 className="h-3 w-3 text-muted-foreground" />
-                          <span>مبنى {u.building_number} - وحدة {u.unit_number}{u.unit_type ? ` (${u.unit_type})` : ""}</span>
+                          <Link to={u.unit_id?`/admin/units/${u.unit_id}`:`/admin/bookings/${b.id}`} className="text-primary hover:underline">مبنى {u.building_number} - وحدة {u.unit_number}{u.unit_type ? ` (${u.unit_type})` : ""}</Link>
                         </div>
                       ))}
                     </div>
@@ -675,6 +683,7 @@ const AdminBookings = () => {
             })}
           </div>
         )}
+        <div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} حجز · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
       </main>
       <Footer />
     </div>
