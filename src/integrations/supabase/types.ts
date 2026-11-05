@@ -3559,6 +3559,7 @@ export type Database = {
         Returns: Json
       }
       create_telegram_link_token: { Args: never; Returns: string }
+      crm_backfill_parties: { Args: never; Returns: Json }
       crm_ensure_party: {
         Args: {
           _email: string
