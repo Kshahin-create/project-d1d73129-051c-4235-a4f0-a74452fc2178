@@ -1,5 +1,6 @@
 # Architecture rules
 - Contracts and accounting use audited database writers and a receipt/allocation ledger; preserve legacy source precision and provenance, and do not cut over reporting until duplicate review and reconciliation succeed.
+- Financial and enclosing booking/status writers acquire the same transaction advisory lock before row locks to serialize receipt reversals with manual leasing confirmation; legacy financial tables remain immutable, including service-role writes.
 - Marketing campaigns collect customer and auth phone sources server-side, deduplicate into a durable audience snapshot, and atomically claim recipients; admin-only sends distinguish provider acceptance from delivery and never retry uncertain results automatically.
 - Resolve booking-email unit areas through the shared email area helper, preferring explicit total area over floor area, so current and older clients produce consistent emails.
 - Encode non-ASCII email HTML as numeric entities in the shared send helper before sending, to protect Arabic copy from downstream charset conversion; keep plain text as Unicode.
