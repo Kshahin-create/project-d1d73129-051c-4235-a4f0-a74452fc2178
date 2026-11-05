@@ -21,7 +21,13 @@ export const useBuildingsAndUnits = () => {
       if (uRes.error) throw uRes.error;
       if (tRes.error) throw tRes.error;
 
-      const unitsRaw = uRes.data ?? [];
+      // Buildings closed to booking (booking_enabled = false) are hidden from
+      // the public booking flow entirely; the database still rejects their
+      // units inside create_booking as a second guard.
+      const disabledBuildingNumbers = new Set(
+        buildingsRaw.filter((b) => b.booking_enabled === false).map((b) => b.number),
+      );
+      const unitsRaw = (uRes.data ?? []).filter((u) => !disabledBuildingNumbers.has(u.building_number));
       const buildingsRaw = bRes.error ? [] : (bRes.data ?? []);
       const tenantsRaw = tRes.data ?? [];
       const bookingUnitsRaw = (buRes.error ? [] : (buRes.data ?? [])) as any[];
