@@ -1,3 +1,5 @@
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -135,6 +137,7 @@ const AdminAudit = () => {
           </Link>
         </div>
 
+<details className="my-4"><summary className="cursor-pointer text-primary">خيارات القائمة والتصدير</summary><AdminServerList spec={adminLists.audit_log}/></details>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-2">
             <Search className="mr-2 h-4 w-4 text-muted-foreground" />

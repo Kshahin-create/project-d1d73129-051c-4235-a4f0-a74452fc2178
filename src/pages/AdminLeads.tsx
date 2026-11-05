@@ -1,3 +1,5 @@
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -593,6 +595,7 @@ const AdminLeads = () => {
         </Table>
       </div>
 
+<details className="my-4"><summary className="cursor-pointer text-primary">خيارات القائمة والتصدير</summary><AdminServerList spec={adminLists.leads}/></details>
       <div className="text-xs text-muted-foreground">
         إجمالي: {total} · صفحة {page+1}
       </div>

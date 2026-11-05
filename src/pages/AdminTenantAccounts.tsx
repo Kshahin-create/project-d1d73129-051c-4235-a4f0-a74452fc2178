@@ -1,3 +1,5 @@
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -279,6 +281,7 @@ export default function AdminTenantAccounts() {
     <div className="min-h-screen bg-background" dir="rtl">
       <Header />
       <main className="container-tight py-8">
+        <details className="my-4"><summary className="cursor-pointer text-primary">بحث متقدم وتصدير الحسابات</summary><AdminServerList spec={adminLists.tenant_accounts}/></details>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground shadow-card">
