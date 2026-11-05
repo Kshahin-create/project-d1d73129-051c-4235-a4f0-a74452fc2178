@@ -615,7 +615,7 @@ const Admin = () => {
       <ConfirmDialog
         open={!!releaseTarget}
         title={`تأكيد إخلاء الوحدة ${releaseTarget?.unitNumber ?? ""}`}
-        description={`سيتم تغيير حالة الوحدة إلى "متاحة" وحذف بيانات المستأجر الحالي. سيُحفظ نسخة من بياناته في سجل التدقيق.`}
+        description={`سيتم تغيير حالة الوحدة إلى "متاحة" وأرشفة بيانات المستأجر الحالي مع السبب (لا تُحذف نهائياً).`}
         confirmLabel="تأكيد الإخلاء"
         variant="destructive"
         loading={saving}
