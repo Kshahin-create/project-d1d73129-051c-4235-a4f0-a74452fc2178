@@ -181,7 +181,7 @@ export function UnitCollectionsPanel({
                   <td className="p-2 text-muted-foreground">{r.creator_name || "—"}</td>
                   {canEdit && (
                     <td className="p-2">
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-nowrap items-center gap-1">
                         {r.proof_path && (
                           <>
                             <IconBtn title="عرض" onClick={() => openProof(r)}><Eye className="h-3.5 w-3.5" /></IconBtn>
