@@ -5496,6 +5496,7 @@ export type Database = {
         Args: { _granted: string; _requested: string }
         Returns: boolean
       }
+      permission_safety_checks: { Args: never; Returns: Json }
       permissions_bootstrap: { Args: { _reason: string }; Returns: undefined }
       prepare_contract_draft: {
         Args: {

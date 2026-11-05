@@ -456,6 +456,13 @@
       "when": 1793921818278,
       "tag": "0064_staff_invitation_acceptance_and_draft_access",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1793921965021,
+      "tag": "0065_permission_matrix_safety_and_invitation_projection",
+      "breakpoints": true
     }
   ]
 }
