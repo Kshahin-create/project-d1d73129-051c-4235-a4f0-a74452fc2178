@@ -3402,6 +3402,38 @@ export type Database = {
         Returns: undefined
       }
       assign_next_agent: { Args: never; Returns: string }
+      assign_opportunity: {
+        Args: { _opportunity_id: string; _reason: string; _to_user: string }
+        Returns: {
+          activity_id: string | null
+          area_needed_m2: number | null
+          booking_id: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lost_to: string | null
+          next_action: string | null
+          next_action_at: string | null
+          no_answer_attempts: number
+          notes: string | null
+          outcome: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason: string | null
+          owner_user_id: string | null
+          party_id: string
+          preferred_unit_ids: string[] | null
+          revisit_at: string | null
+          source: Database["public"]["Enums"]["opportunity_source"]
+          stage: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "opportunities"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       bulk_reassign_opportunities: {
         Args: { _from_user: string; _reason: string; _to_user: string }
         Returns: number
