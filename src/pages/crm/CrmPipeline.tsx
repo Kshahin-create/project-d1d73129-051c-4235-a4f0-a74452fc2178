@@ -29,7 +29,7 @@ type OppRow = {
 };
 
 const PAGE_SIZE = 25;
-const BOARD_STAGES = [...OPEN_STAGES, ...PARKED_STAGES] as const;
+const BOARD_STAGES = [...OPEN_STAGES, "won", ...PARKED_STAGES] as const;
 
 async function fetchOwnerNames(ownerIds: string[]): Promise<Record<string, string>> {
   if (ownerIds.length === 0) return {};
@@ -70,6 +70,7 @@ export default function CrmPipeline() {
   if (!allowed) return <Navigate to="/" replace />;
 
   const move = async (oppId: string, toStage: string) => {
+    if(isManager)return;
     const reason = window.prompt(`سبب النقل إلى «${stageLabel(toStage)}» (5 أحرف على الأقل)`)?.trim();
     if (!reason || reason.length < 5) return;
     let revisitAt: string | null = null;
@@ -143,7 +144,7 @@ export default function CrmPipeline() {
               {(byStage[stage] ?? []).map((o) => (
                 <button
                   key={o.id}
-                  draggable
+                  draggable={!isManager}
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", o.id)}
                   onClick={() => navigate(`/admin/opportunities/${o.id}`)}
                   className={cn(
