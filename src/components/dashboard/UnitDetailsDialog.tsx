@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -192,7 +193,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
               </Badge>
             </div>
             <DialogTitle className="font-display text-2xl font-extrabold text-white text-right">
-              مبنى <span className="num">{unit.buildingNumber}</span> · وحدة <span className="num">{unit.unitNumber}</span>
+              مبنى <span className="num">{unit.buildingNumber}</span> · <Link to={`/admin/units/${unit.id}`} onClick={()=>onOpenChange(false)} className="underline underline-offset-4">وحدة <span className="num">{unit.unitNumber}</span></Link>
             </DialogTitle>
             <div className="flex flex-wrap justify-start gap-x-5 gap-y-1 text-xs opacity-90">
               <span className="flex items-center gap-1"><Ruler className="h-3.5 w-3.5" /> <span className="num">{unit.area}</span> م²</span>

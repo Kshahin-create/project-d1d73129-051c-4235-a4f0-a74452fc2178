@@ -120,19 +120,7 @@ const AdminBookings = () => {
     if (!loading && canAccess) {const timer=setTimeout(()=>void load(),300);return()=>clearTimeout(timer);}
   }, [loading, canAccess,page,search,showArchived,statusFilter]);
 
-  const filtered = useMemo(() => {
-    let list = showArchived ? rows : rows.filter((r: any) => !r.archived_at);
-    if (statusFilter !== "all") list = list.filter((r) => r.status === statusFilter);
-    const q = search.trim().toLowerCase();
-    if (q) {
-      list = list.filter((r) =>
-        [r.customer_full_name, r.customer_phone, r.customer_email, r.business_name, r.id]
-          .filter(Boolean)
-          .some((v) => v!.toLowerCase().includes(q))
-      );
-    }
-    return list;
-  }, [rows, search, statusFilter, showArchived]);
+  const filtered = rows;
 
   const toggleReturning = async (b: BookingRow) => {
     if (!isAdmin) return;
@@ -148,8 +136,13 @@ const AdminBookings = () => {
     }
   };
 
-  const exportBookings = () => {
-    const data = filtered.map((b) => ({
+  const exportBookings = async () => {
+    const start=await supabase.rpc("request_admin_export",{_list:"bookings",_format:"xlsx",_scope:{search,statusFilter,showArchived}});
+    if(start.error)return toast.error(start.error.message);
+    const all:BookingRow[]=[];
+    try{for(let offset=0;;offset+=500){let request=supabase.from("bookings").select("*, booking_units(building_number,unit_number,unit_type,area,price)");if(!showArchived)request=request.is("archived_at",null);if(statusFilter!=="all")request=request.eq("status",statusFilter);const term=search.trim().replace(/[,()%]/g,"");if(term)request=request.or(`customer_full_name.ilike.%${term}%,customer_phone.ilike.%${term}%,business_name.ilike.%${term}%`);const r=await request.order("created_at",{ascending:false}).order("id").range(offset,offset+499);if(r.error)throw r.error;all.push(...r.data as unknown as BookingRow[]);if(r.data.length<500)break;}}
+    catch(e){await supabase.rpc("complete_admin_export",{_id:String(start.data),_status:"failed",_count:0});return toast.error((e as Error).message);}
+    const data = all.map((b) => ({
       "رقم العرض": b.offer_number ?? "",
       "العميل": b.customer_full_name,
       "الجوال": b.customer_phone,
@@ -172,7 +165,9 @@ const AdminBookings = () => {
       toast.error("لا يوجد بيانات للتصدير");
       return;
     }
-    exportRowsToExcel(data, "bookings", "الحجوزات");
+    const done=await supabase.rpc("complete_admin_export",{_id:String(start.data),_status:"generated",_count:data.length});
+    if(done.error)return toast.error(done.error.message);
+    exportRowsToExcel(data, "bookings", "الحجوزات",[{النطاق:"المرحلة الأولى — الفلاتر الحالية",التحديث:new Date().toISOString()}]);
     toast.success("تم التصدير");
   };
 
@@ -376,7 +371,7 @@ const AdminBookings = () => {
             </div>
             <div className="min-w-0">
               <h1 className="font-display text-xl font-bold sm:text-2xl">الحجوزات</h1>
-              <p className="text-xs text-muted-foreground sm:text-sm">{rows.length} حجز</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">{total} حجز · حسب الفلاتر الحالية</p>
             </div>
           </div>
           {isAdmin && (
@@ -389,7 +384,7 @@ const AdminBookings = () => {
           )}
         </div>
 
-        {!fetching && rows.length > 0 && (
+        {false && !fetching && rows.length > 0 && (
           <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             <StatCard
               title="إجمالي الحجوزات"
@@ -463,7 +458,7 @@ const AdminBookings = () => {
               <Search className="mr-2 h-4 w-4 text-muted-foreground" />
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {setSearch(e.target.value);setPage(0);}}
                 placeholder="ابحث بالاسم، الهاتف، الإيميل، المعرّف..."
                 className="flex-1 bg-transparent text-sm outline-none"
               />
@@ -481,7 +476,7 @@ const AdminBookings = () => {
                 </button>
               ))}
             </div>
-            <ShowArchivedToggle checked={showArchived} onChange={setShowArchived} />
+            <ShowArchivedToggle checked={showArchived} onChange={value=>{setShowArchived(value);setPage(0);}} />
             <button
               onClick={exportBookings}
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm"
