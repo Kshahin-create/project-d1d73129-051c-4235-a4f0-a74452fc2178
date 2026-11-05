@@ -682,6 +682,71 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_draft_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          opportunity_id: string
+          party_id: string
+          prepared_by: string
+          status: string
+          unit_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_id: string
+          party_id: string
+          prepared_by: string
+          status?: string
+          unit_ids: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_id?: string
+          party_id?: string
+          prepared_by?: string
+          status?: string
+          unit_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_draft_requests_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_draft_requests_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_draft_requests_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_draft_requests_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_units: {
         Row: {
           annual_rent_excl_vat: number | null
@@ -4703,6 +4768,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      accept_my_staff_invitation: { Args: never; Returns: boolean }
       activate_contract: {
         Args: { _id: string; _reason: string }
         Returns: undefined
@@ -5431,6 +5497,15 @@ export type Database = {
         Returns: boolean
       }
       permissions_bootstrap: { Args: { _reason: string }; Returns: undefined }
+      prepare_contract_draft: {
+        Args: {
+          _notes: string
+          _opportunity: string
+          _reason: string
+          _units: string[]
+        }
+        Returns: string
+      }
       publish_unit: {
         Args: { _reason: string; _state: string; _unit_id: string }
         Returns: string
