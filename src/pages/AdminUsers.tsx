@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { DirectoryAvatar, UserDirectoryDetails } from "@/components/admin/UserDirectoryDetails";
 import { directoryName, matchesDirectorySearch, type DirectoryDetails } from "@/lib/userDirectory";
 import { PermissionsWorkspace } from '@/components/admin/PermissionsWorkspace';
+import { StaffControls,StaffStateButton } from '@/components/admin/StaffControls';
 
 type AppRole = "admin" | "control" | "manager" | "tenant" | "user" | "leasing_manager" | "sales_agent" | "accountant" | "investor";
 
@@ -208,6 +209,7 @@ const AdminUsers = () => {
           </Link>
         </div>
 
+        <StaffControls />
         <PermissionsWorkspace />
 
 
@@ -313,6 +315,7 @@ const AdminUsers = () => {
                     <div><dt className="text-muted-foreground">آخر دخول</dt><dd className="mt-1">{r.last_sign_in_at ? new Date(r.last_sign_in_at).toLocaleDateString("ar-EG") : "غير مسجّل"}</dd></div>
                   </dl>
                   <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => setSelectedUser(r)}><UserIcon className="ml-2 h-4 w-4" />كل بيانات المستخدم</Button>
+                  {!isSelf&&<div className="mt-2"><StaffStateButton userId={r.user_id} onChanged={()=>void load()}/></div>}
 
                   <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
                     <span className="text-[11px] text-muted-foreground">تغيير الدور</span>
