@@ -211,6 +211,48 @@
       "when": 1793896179978,
       "tag": "0029_crm_contact_masking_enforcement",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793907980837,
+      "tag": "0030_accountant_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793908028725,
+      "tag": "0031_contracts_receipts_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793908063277,
+      "tag": "0032_receipt_writers_and_legacy_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793908099583,
+      "tag": "0033_finance_private_documents_and_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793908193638,
+      "tag": "0034_structured_contract_status_gate",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793908248228,
+      "tag": "0035_finance_regression_rollback",
+      "breakpoints": true
     }
   ]
 }

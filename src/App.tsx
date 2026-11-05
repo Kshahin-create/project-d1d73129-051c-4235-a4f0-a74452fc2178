@@ -36,6 +36,7 @@ const HowToBook = lazy(() => import("./pages/HowToBook.tsx"));
 const AdminTenantAccounts = lazy(() => import("./pages/AdminTenantAccounts.tsx"));
 const AdminPaidTenants = lazy(() => import("./pages/AdminPaidTenants.tsx"));
 const AdminCollectionsReport = lazy(() => import("./pages/AdminCollectionsReport.tsx"));
+const FinanceWorkspace = lazy(() => import("./pages/FinanceWorkspace.tsx"));
 const TenantPortal = lazy(() => import("./pages/TenantPortal.tsx"));
 const TenantMagicLogin = lazy(() => import("./pages/TenantMagicLogin.tsx"));
 const Invoice = lazy(() => import("./pages/Invoice.tsx"));
@@ -103,6 +104,11 @@ const App = () => (
           <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
           <Route path="/admin/paid-tenants" element={<AdminPaidTenants />} />
           <Route path="/admin/collections-report" element={<AdminCollectionsReport />} />
+          <Route path="/admin/contracts" element={<FinanceWorkspace />} />
+          <Route path="/admin/settings/payment-plans" element={<FinanceWorkspace />} />
+          <Route path="/admin/receipts" element={<FinanceWorkspace />} />
+          <Route path="/admin/receipt-reconciliation" element={<FinanceWorkspace />} />
+          <Route path="/admin/receipt-review" element={<FinanceWorkspace />} />
           <Route path="/tenant" element={<TenantPortal />} />
           <Route path="/tenant-login/:token" element={<TenantMagicLogin />} />
           <Route path="/invoice/:id" element={<Invoice />} />

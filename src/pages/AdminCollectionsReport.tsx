@@ -48,9 +48,9 @@ export default function AdminCollectionsReport() {
       const [unitsRes, tenantsRes, collRes, linksRes, accRes] = await Promise.all([
         supabase
           .from("units_status_read")
-          .select("id, building_number, unit_number, unit_type, area, price, status")
+          .select("id, building_number, unit_number, unit_type, area, price, status, leasing_status")
           .eq("is_test", false)
-          .in("status", ["rented", "booked"])
+          .in("leasing_status", ["leased", "pending_contract", "on_hold"])
           .limit(5000),
         supabase
           .from("tenants")

@@ -592,6 +592,155 @@ export type Database = {
           },
         ]
       }
+      contract_units: {
+        Row: {
+          annual_rent_excl_vat: number | null
+          contract_id: string
+          id: string
+          unit_id: string
+        }
+        Insert: {
+          annual_rent_excl_vat?: number | null
+          contract_id: string
+          id?: string
+          unit_id: string
+        }
+        Update: {
+          annual_rent_excl_vat?: number | null
+          contract_id?: string
+          id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_units_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units_status_read"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          annual_rent_excl_vat: number | null
+          booking_id: string | null
+          contract_no: string
+          created_at: string
+          created_by: string | null
+          documents: Json
+          end_date: string | null
+          id: string
+          legacy_contract_id: string | null
+          needs_review: boolean
+          party_id: string | null
+          payment_plan_id: string | null
+          reason: string
+          signed_at: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          vat_rate: number | null
+        }
+        Insert: {
+          annual_rent_excl_vat?: number | null
+          booking_id?: string | null
+          contract_no: string
+          created_at?: string
+          created_by?: string | null
+          documents?: Json
+          end_date?: string | null
+          id?: string
+          legacy_contract_id?: string | null
+          needs_review?: boolean
+          party_id?: string | null
+          payment_plan_id?: string | null
+          reason: string
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Update: {
+          annual_rent_excl_vat?: number | null
+          booking_id?: string | null
+          contract_no?: string
+          created_at?: string
+          created_by?: string | null
+          documents?: Json
+          end_date?: string | null
+          id?: string
+          legacy_contract_id?: string | null
+          needs_review?: boolean
+          party_id?: string | null
+          payment_plan_id?: string | null
+          reason?: string
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_legacy_contract_id_fkey"
+            columns: ["legacy_contract_id"]
+            isOneToOne: true
+            referencedRelation: "unit_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_profiles: {
         Row: {
           activity_type: string | null
@@ -854,6 +1003,80 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      finance_cutover: {
+        Row: {
+          enabled: boolean
+          enabled_at: string | null
+          enabled_by: string | null
+          id: number
+        }
+        Insert: {
+          enabled?: boolean
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: number
+        }
+        Update: {
+          enabled?: boolean
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: number
+        }
+        Relationships: []
+      }
+      installments: {
+        Row: {
+          amount_excl_vat: number
+          amount_incl_vat: number
+          contract_id: string
+          created_at: string
+          due_date: string
+          id: string
+          sequence_no: number
+          status: string
+          vat_amount: number
+          waived_at: string | null
+          waived_by: string | null
+          waiver_reason: string | null
+        }
+        Insert: {
+          amount_excl_vat: number
+          amount_incl_vat: number
+          contract_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          sequence_no: number
+          status?: string
+          vat_amount: number
+          waived_at?: string | null
+          waived_by?: string | null
+          waiver_reason?: string | null
+        }
+        Update: {
+          amount_excl_vat?: number
+          amount_incl_vat?: number
+          contract_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          sequence_no?: number
+          status?: string
+          vat_amount?: number
+          waived_at?: string | null
+          waived_by?: string | null
+          waiver_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       interested_customers: {
         Row: {
@@ -1609,6 +1832,39 @@ export type Database = {
           },
         ]
       }
+      payment_plans: {
+        Row: {
+          created_at: string
+          due_day: number | null
+          id: string
+          installments_count: number
+          interval_months: number
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_day?: number | null
+          id?: string
+          installments_count: number
+          interval_months: number
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_day?: number | null
+          id?: string
+          installments_count?: number
+          interval_months?: number
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       phone_otps: {
         Row: {
           attempts: number
@@ -1668,6 +1924,249 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      receipt_allocations: {
+        Row: {
+          amount_excl_vat: number
+          amount_incl_vat: number
+          created_at: string
+          id: string
+          installment_id: string
+          receipt_id: string
+          reverses_id: string | null
+          vat_amount: number
+        }
+        Insert: {
+          amount_excl_vat: number
+          amount_incl_vat: number
+          created_at?: string
+          id?: string
+          installment_id: string
+          receipt_id: string
+          reverses_id?: string | null
+          vat_amount: number
+        }
+        Update: {
+          amount_excl_vat?: number
+          amount_incl_vat?: number
+          created_at?: string
+          id?: string
+          installment_id?: string
+          receipt_id?: string
+          reverses_id?: string | null
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_allocations_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "installments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_allocations_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_allocations_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: true
+            referencedRelation: "receipt_allocations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipt_legacy_sources: {
+        Row: {
+          id: string
+          original_amount: number
+          receipt_id: string
+          resolution: string
+          resolution_reason: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          rounded_amount: number
+          source_archived: boolean
+          source_id: string
+          source_recorded_at: string
+          source_table: string
+          unit_id: string | null
+        }
+        Insert: {
+          id?: string
+          original_amount: number
+          receipt_id: string
+          resolution?: string
+          resolution_reason?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          rounded_amount: number
+          source_archived?: boolean
+          source_id: string
+          source_recorded_at: string
+          source_table: string
+          unit_id?: string | null
+        }
+        Update: {
+          id?: string
+          original_amount?: number
+          receipt_id?: string
+          resolution?: string
+          resolution_reason?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          rounded_amount?: number
+          source_archived?: boolean
+          source_id?: string
+          source_recorded_at?: string
+          source_table?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_legacy_sources_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units_status_read"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          amount_excl_vat: number
+          amount_incl_vat: number | null
+          archived_at: string | null
+          booking_id: string | null
+          contract_id: string | null
+          id: string
+          idempotency_key: string | null
+          method: string
+          paid_at: string | null
+          party_id: string | null
+          proof_bucket: string
+          proof_file: string | null
+          reason: string
+          receipt_no: string
+          recorded_at: string
+          recorded_by: string | null
+          reverses_id: string | null
+          status: string
+          vat_amount: number | null
+          vat_documented: boolean
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount_excl_vat: number
+          amount_incl_vat?: number | null
+          archived_at?: string | null
+          booking_id?: string | null
+          contract_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          method: string
+          paid_at?: string | null
+          party_id?: string | null
+          proof_bucket?: string
+          proof_file?: string | null
+          reason: string
+          receipt_no?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          reverses_id?: string | null
+          status?: string
+          vat_amount?: number | null
+          vat_documented?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount_excl_vat?: number
+          amount_incl_vat?: number | null
+          archived_at?: string | null
+          booking_id?: string | null
+          contract_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          method?: string
+          paid_at?: string | null
+          party_id?: string | null
+          proof_bucket?: string
+          proof_file?: string | null
+          reason?: string
+          receipt_no?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          reverses_id?: string | null
+          status?: string
+          vat_amount?: number | null
+          vat_documented?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: true
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {
@@ -3132,6 +3631,44 @@ export type Database = {
           },
         ]
       }
+      receipt_reconciliation: {
+        Row: {
+          month: string | null
+          original_total: number | null
+          pending_review: number | null
+          precision_difference: number | null
+          receipt_total: number | null
+          rounded_total: number | null
+          rows: number | null
+          source_archived: boolean | null
+          source_table: string | null
+          unexplained_difference: number | null
+          unit_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units_status_read"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units_status_read: {
         Row: {
           activity: string | null
@@ -3243,6 +3780,10 @@ export type Database = {
           _reason: string
           _table: string
         }
+        Returns: undefined
+      }
+      activate_contract: {
+        Args: { _id: string; _reason: string }
         Returns: undefined
       }
       adjust_payment: {
@@ -3368,6 +3909,16 @@ export type Database = {
         Returns: string
       }
       admin_user_directory: { Args: never; Returns: Json }
+      allocate_receipt: {
+        Args: {
+          _amount_excl_vat: number
+          _installment: string
+          _reason: string
+          _receipt: string
+          _vat_amount: number
+        }
+        Returns: string
+      }
       approve_transfer: {
         Args: { _approve: boolean; _notes?: string; _request_id: string }
         Returns: {
@@ -3535,6 +4086,10 @@ export type Database = {
             }
             Returns: string
           }
+      create_contract: {
+        Args: { _data: Json; _reason: string }
+        Returns: string
+      }
       create_opportunity: {
         Args: {
           _activity_id?: string
@@ -3603,6 +4158,7 @@ export type Database = {
         }
         Returns: string
       }
+      enable_finance_cutover: { Args: { _reason: string }; Returns: undefined }
       ensure_tenant_account_for_tenant: {
         Args: { _tenant_id: string }
         Returns: string
@@ -3616,6 +4172,20 @@ export type Database = {
         Args: { _booking_id: string; _reason: string }
         Returns: string
       }
+      finance_assert_writer: { Args: never; Returns: undefined }
+      finance_audit: {
+        Args: {
+          _action: string
+          _after: Json
+          _before: Json
+          _id: string
+          _reason: string
+          _table: string
+        }
+        Returns: undefined
+      }
+      finance_can_read: { Args: never; Returns: boolean }
+      finance_regression_tests: { Args: never; Returns: Json }
       find_tenant_by_cr: {
         Args: { _cr: string }
         Returns: {
@@ -3795,6 +4365,11 @@ export type Database = {
         }
         Returns: string
       }
+      record_receipt: {
+        Args: { _data: Json; _reason: string }
+        Returns: string
+      }
+      refresh_installments: { Args: { _contract?: string }; Returns: undefined }
       register_unit_contract: {
         Args: {
           _booking_id: string
@@ -3837,6 +4412,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      resolve_legacy_receipt: {
+        Args: { _reason: string; _resolution: string; _source: string }
+        Returns: undefined
+      }
       reverse_collection: {
         Args: { _collection_id: string; _reason: string }
         Returns: string
@@ -3845,8 +4424,27 @@ export type Database = {
         Args: { _invoice_id: string; _reason: string }
         Returns: string
       }
+      reverse_receipt: {
+        Args: { _id: string; _reason: string }
+        Returns: string
+      }
+      save_payment_plan: {
+        Args: {
+          _count: number
+          _day: number
+          _id: string
+          _interval: number
+          _name: string
+          _reason: string
+        }
+        Returns: string
+      }
       set_booking_paid_amount: {
         Args: { _booking_id: string; _paid_amount: number }
+        Returns: undefined
+      }
+      set_contract_state: {
+        Args: { _id: string; _reason: string; _status: string }
         Returns: undefined
       }
       set_tenant_account_paid_amount: {
@@ -3896,6 +4494,10 @@ export type Database = {
           scopes: string[]
         }[]
       }
+      verify_receipt: {
+        Args: { _id: string; _reason: string }
+        Returns: undefined
+      }
       verify_unit_first_payment: {
         Args: {
           _contract_id: string
@@ -3904,6 +4506,10 @@ export type Database = {
           _receipt_type: string
         }
         Returns: string
+      }
+      waive_installment: {
+        Args: { _id: string; _reason: string }
+        Returns: undefined
       }
     }
     Enums: {
@@ -3915,6 +4521,7 @@ export type Database = {
         | "tenant"
         | "leasing_manager"
         | "sales_agent"
+        | "accountant"
       opportunity_activity_outcome: "answered" | "no_answer" | "follow_up"
       opportunity_activity_type:
         | "call"
@@ -4097,6 +4704,7 @@ export const Constants = {
         "tenant",
         "leasing_manager",
         "sales_agent",
+        "accountant",
       ],
       opportunity_activity_outcome: ["answered", "no_answer", "follow_up"],
       opportunity_activity_type: [
