@@ -661,6 +661,92 @@ export type Database = {
           },
         ]
       }
+      capabilities: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          name_ar: string
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string
+          name_ar: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          name_ar?: string
+        }
+        Relationships: []
+      }
+      contract_draft_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          opportunity_id: string
+          party_id: string
+          prepared_by: string
+          status: string
+          unit_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_id: string
+          party_id: string
+          prepared_by: string
+          status?: string
+          unit_ids: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_id?: string
+          party_id?: string
+          prepared_by?: string
+          status?: string
+          unit_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_draft_requests_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_draft_requests_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_draft_requests_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_draft_requests_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_units: {
         Row: {
           annual_rent_excl_vat: number | null
@@ -2359,6 +2445,155 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          capability: string
+          level: string
+          role: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          capability: string
+          level?: string
+          role: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          capability?: string
+          level?: string
+          role?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_capability_fkey"
+            columns: ["capability"]
+            isOneToOne: false
+            referencedRelation: "capabilities"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          is_active: boolean
+          is_system: boolean
+          name_ar: string
+          retired_by: string | null
+          retired_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string
+          is_active?: boolean
+          is_system?: boolean
+          name_ar: string
+          retired_by?: string | null
+          retired_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          is_active?: boolean
+          is_system?: boolean
+          name_ar?: string
+          retired_by?: string | null
+          retired_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_accounts: {
+        Row: {
+          auth_sync_status: string
+          deactivated_at: string | null
+          deactivated_by: string | null
+          reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth_sync_status?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth_sync_status?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      staff_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invitations_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -3713,6 +3948,44 @@ export type Database = {
           },
         ]
       }
+      user_role_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          is_active: boolean
+          reason: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_role_assignments_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -4495,6 +4768,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      accept_my_staff_invitation: { Args: never; Returns: boolean }
       activate_contract: {
         Args: { _id: string; _reason: string }
         Returns: undefined
@@ -4502,6 +4776,10 @@ export type Database = {
       adjust_payment: {
         Args: { _amount: number; _notes?: string; _tenant_account_id: string }
         Returns: string
+      }
+      admin_assign_dynamic_role: {
+        Args: { _reason: string; _role: string; _user: string }
+        Returns: undefined
       }
       admin_auto_merge_duplicate_tenants: { Args: never; Returns: Json }
       admin_link_tenant_units: {
@@ -4586,6 +4864,20 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_prepare_staff_invitation: {
+        Args: { _email: string; _reason: string; _role: string }
+        Returns: string
+      }
+      admin_save_role: {
+        Args: {
+          _active: boolean
+          _code: string
+          _description: string
+          _name: string
+          _reason: string
+        }
+        Returns: undefined
+      }
       admin_set_building_registry: {
         Args: {
           _building_number: number
@@ -4599,6 +4891,25 @@ export type Database = {
       }
       admin_set_role: {
         Args: { _make_admin: boolean; _target_user: string }
+        Returns: undefined
+      }
+      admin_set_role_permission: {
+        Args: {
+          _capability: string
+          _level: string
+          _reason: string
+          _role: string
+        }
+        Returns: undefined
+      }
+      admin_set_staff_state: {
+        Args: {
+          _active: boolean
+          _leave_unassigned: boolean
+          _reason: string
+          _reassign_to: string
+          _user: string
+        }
         Returns: undefined
       }
       admin_set_unit_test: {
@@ -4753,6 +5064,7 @@ export type Database = {
         Args: { _from_user: string; _reason: string; _to_user: string }
         Returns: number
       }
+      can_read_party_contact: { Args: { _party: string }; Returns: boolean }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
       cancel_booking_with_reason: {
         Args: { _booking_id: string; _reason: string }
@@ -4993,6 +5305,10 @@ export type Database = {
           maintenance_mode: boolean
         }[]
       }
+      has_permission: {
+        Args: { _capability: string; _level?: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5173,8 +5489,24 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      my_permissions: { Args: never; Returns: Json }
       next_invoice_number: { Args: never; Returns: string }
       next_offer_number: { Args: { _booking_id?: string }; Returns: string }
+      permission_levels_allow: {
+        Args: { _granted: string; _requested: string }
+        Returns: boolean
+      }
+      permission_safety_checks: { Args: never; Returns: Json }
+      permissions_bootstrap: { Args: { _reason: string }; Returns: undefined }
+      prepare_contract_draft: {
+        Args: {
+          _notes: string
+          _opportunity: string
+          _reason: string
+          _units: string[]
+        }
+        Returns: string
+      }
       publish_unit: {
         Args: { _reason: string; _state: string; _unit_id: string }
         Returns: string
@@ -5311,6 +5643,15 @@ export type Database = {
           ref_id?: string
           ref_type: string
           unit_id: string
+        }
+        Returns: undefined
+      }
+      staff_service_result: {
+        Args: {
+          _id: string
+          _invitation: boolean
+          _success: boolean
+          _user: string
         }
         Returns: undefined
       }

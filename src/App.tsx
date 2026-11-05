@@ -22,6 +22,7 @@ const AuthMobileStart = lazy(() => import("./pages/AuthMobileStart.tsx"));
 const MetricsHome = lazy(() => import("./pages/MetricsDashboard.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers.tsx"));
+const PermissionsGuide = lazy(() => import('./pages/PermissionsGuide.tsx'));
 const AdminAudit = lazy(() => import("./pages/AdminAudit.tsx"));
 const AdminAccessLog = lazy(() => import("./pages/AdminAccessLog.tsx"));
 const AdminTenants = lazy(() => import("./pages/AdminTenants.tsx"));
@@ -103,6 +104,8 @@ const App = () => (
           <Route path="/admin/maintenance" element={<ControlDashboard />} />
           <Route path="/admin/legacy-units" element={<Admin />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/settings/permissions" element={<AdminOnly><AdminUsers /></AdminOnly>} />
+          <Route path="/admin/permissions-guide" element={<PermissionsGuide />} />
           <Route path="/admin/audit" element={<AdminAudit />} />
           <Route path="/admin/access-log" element={<AdminAccessLog />} />
           <Route path="/admin/tenants" element={<AdminTenants />} />

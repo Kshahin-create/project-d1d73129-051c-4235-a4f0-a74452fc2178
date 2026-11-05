@@ -414,6 +414,55 @@
       "when": 1793918899541,
       "tag": "0058_metrics_inventory_server_status_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1793921541897,
+      "tag": "0059_dynamic_permissions_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793921580806,
+      "tag": "0060_permissions_audited_role_writers",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1793921614423,
+      "tag": "0061_permissions_active_role_and_assignment_boundary",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1793921698959,
+      "tag": "0062_permission_guarded_crm_reads_and_writers",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1793921771468,
+      "tag": "0063_dynamic_directory_and_staff_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1793921818278,
+      "tag": "0064_staff_invitation_acceptance_and_draft_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1793921965021,
+      "tag": "0065_permission_matrix_safety_and_invitation_projection",
+      "breakpoints": true
     }
   ]
 }
