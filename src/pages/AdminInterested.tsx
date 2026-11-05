@@ -5,11 +5,14 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowRight, Lock, MessageCircle, Plus, Search, Trash2, Download, Phone, Building2, Tag, Activity } from "lucide-react";
+import { ArrowRight, Lock, MessageCircle, Plus, Search, Archive, RotateCcw, Download, Phone, Building2, Tag, Activity } from "lucide-react";
+import { ArchiveActionDialog, ShowArchivedToggle, type ArchiveTarget } from "@/components/ArchiveActionDialog";
 import { exportRowsToExcel, exportRowsToCSV } from "@/lib/exportData";
 
 interface InterestedRow {
   id: string;
+  archived_at?: string | null;
+  archive_reason?: string | null;
   full_name: string;
   phone: string;
   requested_activity: string | null;
@@ -59,6 +62,8 @@ const AdminInterested = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...empty });
   const [saving, setSaving] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<ArchiveTarget>(null);
 
   const load = async () => {
     setFetching(true);
@@ -85,13 +90,14 @@ const AdminInterested = () => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
+    const visible = showArchived ? rows : rows.filter((r) => !r.archived_at);
+    if (!q) return visible;
+    return visible.filter((r) =>
       [r.full_name, r.phone, r.business_name, r.requested_activity, r.requested_building, r.requested_unit, r.customer_source, r.notes]
         .filter(Boolean)
         .some((v) => v!.toString().toLowerCase().includes(q))
     );
-  }, [rows, search]);
+  }, [rows, search, showArchived]);
 
   const stats = useMemo(() => {
     const by = (s: string) => rows.filter((r) => r.status === s).length;
@@ -154,14 +160,6 @@ const AdminInterested = () => {
     else toast.success("تم تحديث الحالة");
   };
 
-  const remove = async (id: string) => {
-    if (!isAdmin) return;
-    if (!confirm("حذف بيانات المهتم؟")) return;
-    const { error } = await supabase.from("interested_customers" as any).delete().eq("id", id);
-    if (error) toast.error("فشل الحذف: " + error.message);
-    else toast.success("تم الحذف");
-  };
-
   const exportRows = (fmt: "xlsx" | "csv") => {
     const data = filtered.map((r) => ({
       "اسم العميل": r.full_name,
@@ -211,6 +209,7 @@ const AdminInterested = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ShowArchivedToggle checked={showArchived} onChange={setShowArchived} />
             <Link to="/admin" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm">
               <ArrowRight className="h-4 w-4" /> رجوع
             </Link>
@@ -299,7 +298,7 @@ const AdminInterested = () => {
                 </thead>
                 <tbody>
                   {filtered.map((r) => (
-                    <tr key={r.id} className="border-t border-border">
+                    <tr key={r.id} className={`border-t border-border ${r.archived_at ? "opacity-60" : ""}`} title={r.archive_reason ? `مؤرشف: ${r.archive_reason}` : undefined}>
                       <td className="px-3 py-2 font-semibold">{r.full_name}</td>
                       <td className="px-3 py-2 font-mono text-xs" dir="ltr">{r.phone}</td>
                       <td className="px-3 py-2 text-xs">{r.requested_activity ?? "—"}</td>
@@ -321,8 +320,8 @@ const AdminInterested = () => {
                       </td>
                       <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("ar-EG-u-nu-latn")}</td>
                       <td className="px-3 py-2">
-                        {isAdmin && <button onClick={() => remove(r.id)} className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20" title="حذف">
-                          <Trash2 className="h-3.5 w-3.5" />
+                        {isAdmin && <button onClick={() => setArchiveTarget({ id: r.id, label: r.full_name, restore: !!r.archived_at })} className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20" title={r.archived_at ? "استرجاع" : "أرشفة"}>
+                          {r.archived_at ? <RotateCcw className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                         </button>}
                       </td>
                     </tr>
@@ -333,6 +332,7 @@ const AdminInterested = () => {
           </div>
         )}
       </main>
+      <ArchiveActionDialog table="interested_customers" target={archiveTarget} onClose={() => setArchiveTarget(null)} onDone={load} />
       <Footer />
     </div>
   );
