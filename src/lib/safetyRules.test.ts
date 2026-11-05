@@ -19,9 +19,11 @@ describe("control role", () => {
   it("can put a unit into maintenance", () => {
     expect(controlCanSetStatus("available", "maintenance", null)).toBe(true);
   });
-  it("can only return a unit to its previous status", () => {
-    expect(controlCanSetStatus("maintenance", "rented", "rented")).toBe(true);
-    expect(controlCanSetStatus("maintenance", "available", "rented")).toBe(false);
+  it("can only return maintenance to available, never restore leased", () => {
+    expect(controlCanSetStatus("maintenance", "rented", "rented")).toBe(false);
+    expect(controlCanSetStatus("maintenance", "available", "rented")).toBe(true);
+    expect(controlCanSetStatus("rented", "maintenance", null)).toBe(false);
+    expect(controlCanSetStatus("reserved", "maintenance", null)).toBe(false);
   });
   it("cannot set available, reserved or rented directly", () => {
     expect(controlCanSetStatus("reserved", "available", null)).toBe(false);

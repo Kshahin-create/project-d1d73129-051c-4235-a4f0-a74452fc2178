@@ -440,6 +440,7 @@ const AdminUsers = () => {
                         <option value="tenant">مستأجر</option>
                         <option value="control">Control (دعم/صيانة)</option>
                         <option value="manager">مدير</option>
+                        <option value="leasing_manager">مدير التأجير (تمديد فقط)</option>
                         <option value="admin">أدمن</option>
                       </select>
                     )}

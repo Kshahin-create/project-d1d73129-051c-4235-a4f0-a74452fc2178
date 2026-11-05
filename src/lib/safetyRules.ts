@@ -13,13 +13,12 @@ export function reversalAmount(original: number): number {
 
 export type UnitStatus = "available" | "rented" | "reserved" | "maintenance";
 
-/** Control role: may only put a unit into maintenance, or return it to the status it had before. */
+/** Control role may only move available to maintenance and back. */
 export function controlCanSetStatus(
   current: UnitStatus,
   next: UnitStatus,
   statusBeforeMaintenance: UnitStatus | null,
 ): boolean {
   if (current === next) return false;
-  if (next === "maintenance") return true;
-  return current === "maintenance" && statusBeforeMaintenance !== null && next === statusBeforeMaintenance;
+  return (current === "available" && next === "maintenance") || (current === "maintenance" && next === "available");
 }
