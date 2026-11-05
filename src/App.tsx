@@ -49,6 +49,12 @@ const AdminUnitImport = lazy(() => import("./pages/AdminUnitImport.tsx"));
 const AdminUnitsIncomplete = lazy(() => import("./pages/AdminUnitsIncomplete.tsx"));
 const AdminUnitStatusReview = lazy(() => import("./pages/AdminUnitStatusReview.tsx"));
 const LeasingHolds = lazy(() => import("./pages/LeasingHolds.tsx"));
+const CrmPipeline = lazy(() => import("./pages/crm/CrmPipeline.tsx"));
+const CrmParty = lazy(() => import("./pages/crm/CrmParty.tsx"));
+const CrmOpportunity = lazy(() => import("./pages/crm/CrmOpportunity.tsx"));
+const CrmUnassigned = lazy(() => import("./pages/crm/CrmUnassigned.tsx"));
+const CrmTeamPerformance = lazy(() => import("./pages/crm/CrmTeamPerformance.tsx"));
+const CrmImportTargets = lazy(() => import("./pages/crm/CrmImportTargets.tsx"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup.tsx"));
 const AdminBookingControl = lazy(() => import("./pages/AdminBookingControl.tsx"));
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
@@ -109,6 +115,12 @@ const App = () => (
           <Route path="/admin/units-incomplete" element={<AdminUnitsIncomplete />} />
           <Route path="/admin/unit-status-review" element={<AdminUnitStatusReview />} />
           <Route path="/leasing/holds" element={<LeasingHolds />} />
+          <Route path="/crm" element={<CrmPipeline />} />
+          <Route path="/crm/party/:id" element={<CrmParty />} />
+          <Route path="/crm/opportunity/:id" element={<CrmOpportunity />} />
+          <Route path="/crm/unassigned" element={<CrmUnassigned />} />
+          <Route path="/crm/team" element={<CrmTeamPerformance />} />
+          <Route path="/crm/import" element={<CrmImportTargets />} />
           <Route path="/admin/backup" element={<AdminBackup />} />
           <Route path="/admin/booking-control" element={<AdminBookingControl />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

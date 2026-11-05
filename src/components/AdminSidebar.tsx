@@ -48,6 +48,8 @@ type ExtLink = {
   managerOnly?: boolean;
   tenantOnly?: boolean;
   leasingOnly?: boolean;
+  crmOnly?: boolean;
+  crmManagerOnly?: boolean;
 };
 
 type LinkGroup = {
@@ -97,6 +99,17 @@ const groups: LinkGroup[] = [
     ],
   },
   {
+    id: "crm",
+    label: "المبيعات والعملاء",
+    Icon: Users,
+    links: [
+      { to: "/crm", label: "لوحة الفرص", Icon: Briefcase, crmOnly: true },
+      { to: "/crm/import", label: "استيراد قائمة مستهدفة", Icon: FileSpreadsheet, crmOnly: true },
+      { to: "/crm/unassigned", label: "غير موزّعة وطلبات النقل", Icon: ClipboardList, crmManagerOnly: true },
+      { to: "/crm/team", label: "أداء الفريق", Icon: Activity, crmManagerOnly: true },
+    ],
+  },
+  {
     id: "system",
     label: "النظام",
     Icon: Settings2,
@@ -125,7 +138,7 @@ const groups: LinkGroup[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, isControl, isManager, isTenant, isLeasingManager, user, loading } = useAuth();
+  const { isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -166,11 +179,13 @@ export const AdminSidebar = () => {
       (!l.managerOnly || isManager || isAdmin) &&
       (!l.tenantOnly || isTenant) &&
       (!l.leasingOnly || isLeasingManager) &&
+      (!l.crmOnly || isAdmin || isManager || isLeasingManager || isSalesAgent) &&
+      (!l.crmManagerOnly || isAdmin || isLeasingManager) &&
       (!l.authOnly || !!user);
     return groups
       .map((g) => ({ ...g, links: g.links.filter(canSee) }))
       .filter((g) => g.links.length > 0);
-  }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, user]);
+  }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, user]);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   useEffect(() => {
@@ -197,7 +212,9 @@ export const AdminSidebar = () => {
       ? "لوحة المدير"
       : isControl
         ? "لوحة الكنترول"
-        : "القائمة";
+        : isSalesAgent
+          ? "لوحة المبيعات"
+          : "القائمة";
 
   return (
     <>
