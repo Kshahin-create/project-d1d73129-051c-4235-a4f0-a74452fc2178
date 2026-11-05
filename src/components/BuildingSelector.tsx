@@ -10,7 +10,7 @@ import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BOOKING_ACTIVITIES, buildingInActivity, classifyBookingActivity, type BookingActivity } from "@/lib/bookingActivities";
+import { BOOKING_ACTIVITIES, buildingInActivity, classifyBookingActivity, countActivityAvailableUnits, type BookingActivity } from "@/lib/bookingActivities";
 
 interface BuildingSelectorProps {
   buildings: Building[];
@@ -105,7 +105,7 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {BOOKING_ACTIVITIES.map((activity, idx) => {
           const scoped = buildings.filter((b) => buildingInActivity(b, activity.key));
-          const available = scoped.reduce((s, b) => s + b.availableUnits, 0);
+          const available = countActivityAvailableUnits(units.filter((u) => scoped.some((b) => b.number === u.buildingNumber)), activity.key);
           const total = scoped.reduce((s, b) => s + b.totalUnits, 0);
           const Icon = ACTIVITY_ICONS[activity.key];
           const ready = scoped.length > 0;
@@ -141,7 +141,10 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
   }
   const activity = BOOKING_ACTIVITIES.find((a) => a.key === activityFilter);
   if (!activity) return null;
-  const scoped = buildings.filter((b) => buildingInActivity(b, activity.key));
+  const scoped = buildings.filter((b) => buildingInActivity(b, activity.key)).map((b) => ({
+    ...b,
+    availableUnits: countActivityAvailableUnits(units.filter((u) => u.buildingNumber === b.number), activity.key),
+  }));
   const Icon = ACTIVITY_ICONS[activity.key];
   const activityMap = ACTIVITY_MAPS[activity.key];
   return (
