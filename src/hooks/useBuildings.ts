@@ -73,7 +73,9 @@ export const useBuildingsAndUnits = () => {
       // Otherwise derive minimal building list from units (public data).
       let buildings: Building[];
       if (buildingsRaw.length > 0) {
-        buildings = buildingsRaw.map((b) => {
+        buildings = buildingsRaw
+          .filter((b) => !disabledBuildingNumbers.has(b.number))
+          .map((b) => {
           const bu = units.filter((u) => u.buildingNumber === b.number);
           const rented = bu.filter((u) => u.status === "rented").length;
           const reserved = bu.filter((u) => u.status === "reserved").length;
