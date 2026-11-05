@@ -1,0 +1,2 @@
+DO $$ DECLARE d text;BEGIN SELECT pg_get_functiondef('public.register_unit_contract(uuid,uuid,uuid,text,date,date,text)'::regprocedure) INTO d;d:=replace(d,'DECLARE id uuid;','DECLARE contract_uuid uuid;');d:=replace(d,'INTO id;','INTO contract_uuid;');d:=replace(d,'id::text,NULL','contract_uuid::text,NULL');d:=replace(d,'WHERE c.id=id','WHERE c.id=contract_uuid');d:=replace(d,'RETURN id;','RETURN contract_uuid;');EXECUTE d;END $$;
+SELECT exists(SELECT 1 FROM pg_proc WHERE proname='register_unit_contract');

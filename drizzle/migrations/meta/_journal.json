@@ -134,6 +134,13 @@
       "when": 1793892544167,
       "tag": "0018_booking_confirm_unambiguous_dispatch",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793892566357,
+      "tag": "0019_contract_record_identifier_scope",
+      "breakpoints": true
     }
   ]
 }
