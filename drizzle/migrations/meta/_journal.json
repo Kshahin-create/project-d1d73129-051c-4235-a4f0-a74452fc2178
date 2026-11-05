@@ -50,6 +50,13 @@
       "when": 1793885701221,
       "tag": "0006_safety_lock_archive_reversal",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793885960985,
+      "tag": "0007_restore_status_amount_checks",
+      "breakpoints": true
     }
   ]
 }
