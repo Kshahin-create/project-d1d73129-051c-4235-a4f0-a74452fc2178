@@ -1,8 +1,10 @@
 # Phase 1 / Prompt 6 — Contracts, installments, receipts
-- [ ] Approve the plan, separate accountant role and historical precision reconciliation.
-- [ ] Add audited contracts, payment plans, installments, receipts and allocations with private documents and single status-writer integration.
-- [ ] Backfill with provenance, reconcile monthly/per-unit amounts and make legacy money records read-only without losing invoice-only payments.
-- [ ] Update financial screens, existing callers and canonical collections statuses; verify permissions, reversals, schedules, reconciliation and complete leasing flow.
+- [x] Approve the plan, separate accountant role and historical precision reconciliation.
+- [x] Add audited contracts, plans, installments, receipts, allocations and private documents; integrate manual leasing-manager confirmation and first-installment gate.
+- [x] Preserve 37 collection and 17 invoice payment sources with precision provenance; verify zero unexplained differences and live source integrity; make legacy sources immutable including service-role paths.
+- [x] Add financial lists and canonical unit report; route booking payments to receipts, retire legacy UI mutations and Telegram payment/proof mutations; verify 35 unit tests and 11 database rollback assertions, desktop/mobile and automatic build.
+- [ ] Approve duplicate provenance and historical cash/date/VAT links — blocked: 54 source records require human review; final cash-ledger adoption stays disabled.
+- [ ] Verify accountant/manager/sales-agent dedicated sessions, real concurrency and private-file expiry; complete ergonomic contract/receipt editors, notification and all legacy report integrations before claiming Prompt 6 finished.
 
 # Phase 1 / Prompt 5 — CRM inside the platform
 - [x] Parties/opportunities/ownership tables, sales_agent role, backfill (954 parties, 49 won opportunities, 157 linked bookings), round-robin assignment, hourly reopen cron.
