@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { isTrustedBackupCron,allowsBackupAction } from '../_shared/backup-security.ts';
 
 // Order matters for restore: parents before children
 const TABLES = [
@@ -38,13 +39,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+    if(!SUPABASE_URL||!SERVICE_KEY||!ANON)return json({error:'تعذر الوصول للنسخ الاحتياطي'},500);
 
-    const CRON_SECRET = Deno.env.get("BACKUP_CRON_SECRET") ?? "bkp_2k9m4xz8qr1vp7nlh3sj6";
-    const cronHeader = req.headers.get("x-cron-secret") ?? "";
-    const isCron = cronHeader && cronHeader === CRON_SECRET;
+    const isCron = isTrustedBackupCron(Deno.env.get('BACKUP_CRON_SECRET'),req.headers.get('x-cron-secret'));
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     let userData: any = { user: null };
@@ -61,19 +61,15 @@ Deno.serve(async (req) => {
       if (got.error || !got.data.user) return json({ error: "Unauthorized" }, 401);
       userData = got.data;
 
-      const { data: roleRow } = await admin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userData.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!roleRow) return json({ error: "Admin only" }, 403);
+      const permission=await userClient.rpc('has_permission',{_capability:'security.roles',_level:'edit'});
+      if(permission.error||!permission.data)return json({error:'غير مسموح بإدارة النسخ الاحتياطي'},403);
     } else {
       userData = { user: { id: null, email: "cron@system" } };
     }
 
     const body = await req.json().catch(() => ({}));
     const action = body.action as string;
+    if(!allowsBackupAction(action,isCron))return json({error:'الاستعادة بالحذف وحذف تاريخ النسخ متوقفان لحماية السجلات؛ المهام المجدولة تنشئ نسخة فقط'},403);
 
     if (action === "create") {
       const name = (body.name as string) || `backup-${new Date().toISOString().replace(/[:.]/g, "-")}`;
