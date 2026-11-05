@@ -5080,6 +5080,7 @@ export type Database = {
         Args: { _denominator: number; _numerator: number }
         Returns: number
       }
+      metrics_regression_tests: { Args: never; Returns: Json }
       metrics_scope_match: {
         Args: {
           _scope: Json
