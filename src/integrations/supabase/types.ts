@@ -263,6 +263,21 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_state: {
+        Row: {
+          id: number
+          last_assigned_index: number
+        }
+        Insert: {
+          id?: number
+          last_assigned_index?: number
+        }
+        Update: {
+          id?: number
+          last_assigned_index?: number
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -391,6 +406,7 @@ export type Database = {
           offer_image_url: string | null
           offer_number: string | null
           paid_amount: number
+          party_id: string | null
           payment_plan: string
           previous_tenant_account_id: string | null
           reminder_12h_sent_at: string | null
@@ -423,6 +439,7 @@ export type Database = {
           offer_image_url?: string | null
           offer_number?: string | null
           paid_amount?: number
+          party_id?: string | null
           payment_plan?: string
           previous_tenant_account_id?: string | null
           reminder_12h_sent_at?: string | null
@@ -455,6 +472,7 @@ export type Database = {
           offer_image_url?: string | null
           offer_number?: string | null
           paid_amount?: number
+          party_id?: string | null
           payment_plan?: string
           previous_tenant_account_id?: string | null
           reminder_12h_sent_at?: string | null
@@ -468,6 +486,20 @@ export type Database = {
           whatsapp_sent?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_previous_tenant_account_id_fkey"
             columns: ["previous_tenant_account_id"]
@@ -574,6 +606,7 @@ export type Database = {
           id: string
           id_type: string | null
           notes: string | null
+          party_id: string | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -591,6 +624,7 @@ export type Database = {
           id?: string
           id_type?: string | null
           notes?: string | null
+          party_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -608,11 +642,98 @@ export type Database = {
           id?: string
           id_type?: string | null
           notes?: string | null
+          party_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profiles_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      duplicate_candidates: {
+        Row: {
+          candidate_party_id: string | null
+          created_at: string
+          id: string
+          match_reason: string
+          party_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          source_id: string | null
+          source_table: string | null
+          status: string
+        }
+        Insert: {
+          candidate_party_id?: string | null
+          created_at?: string
+          id?: string
+          match_reason: string
+          party_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          status?: string
+        }
+        Update: {
+          candidate_party_id?: string | null
+          created_at?: string
+          id?: string
+          match_reason?: string
+          party_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duplicate_candidates_candidate_party_id_fkey"
+            columns: ["candidate_party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "duplicate_candidates_candidate_party_id_fkey"
+            columns: ["candidate_party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "duplicate_candidates_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "duplicate_candidates_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_otps: {
         Row: {
@@ -746,6 +867,7 @@ export type Database = {
           full_name: string
           id: string
           notes: string | null
+          party_id: string | null
           phone: string
           requested_activity: string | null
           requested_building: string | null
@@ -767,6 +889,7 @@ export type Database = {
           full_name: string
           id?: string
           notes?: string | null
+          party_id?: string | null
           phone: string
           requested_activity?: string | null
           requested_building?: string | null
@@ -788,6 +911,7 @@ export type Database = {
           full_name?: string
           id?: string
           notes?: string | null
+          party_id?: string | null
           phone?: string
           requested_activity?: string | null
           requested_building?: string | null
@@ -798,7 +922,22 @@ export type Database = {
           telegram_message_id?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "interested_customers_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interested_customers_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
@@ -938,6 +1077,7 @@ export type Database = {
           last_message_at: string | null
           last_message_text: string | null
           notes: string | null
+          party_id: string | null
           phone: string
           status: string
           updated_at: string
@@ -953,6 +1093,7 @@ export type Database = {
           last_message_at?: string | null
           last_message_text?: string | null
           notes?: string | null
+          party_id?: string | null
           phone: string
           status?: string
           updated_at?: string
@@ -968,11 +1109,27 @@ export type Database = {
           last_message_at?: string | null
           last_message_text?: string | null
           notes?: string | null
+          party_id?: string | null
           phone?: string
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_campaigns: {
         Row: {
@@ -1098,6 +1255,359 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      opportunities: {
+        Row: {
+          activity_id: string | null
+          area_needed_m2: number | null
+          booking_id: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lost_to: string | null
+          next_action: string | null
+          next_action_at: string | null
+          no_answer_attempts: number
+          notes: string | null
+          outcome: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason: string | null
+          owner_user_id: string | null
+          party_id: string
+          preferred_unit_ids: string[] | null
+          revisit_at: string | null
+          source: Database["public"]["Enums"]["opportunity_source"]
+          stage: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at: string
+        }
+        Insert: {
+          activity_id?: string | null
+          area_needed_m2?: number | null
+          booking_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lost_to?: string | null
+          next_action?: string | null
+          next_action_at?: string | null
+          no_answer_attempts?: number
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason?: string | null
+          owner_user_id?: string | null
+          party_id: string
+          preferred_unit_ids?: string[] | null
+          revisit_at?: string | null
+          source?: Database["public"]["Enums"]["opportunity_source"]
+          stage?: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at?: string
+        }
+        Update: {
+          activity_id?: string | null
+          area_needed_m2?: number | null
+          booking_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lost_to?: string | null
+          next_action?: string | null
+          next_action_at?: string | null
+          no_answer_attempts?: number
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason?: string | null
+          owner_user_id?: string | null
+          party_id?: string
+          preferred_unit_ids?: string[] | null
+          revisit_at?: string | null
+          source?: Database["public"]["Enums"]["opportunity_source"]
+          stage?: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_activities: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["opportunity_activity_type"]
+          actor_id: string | null
+          created_at: string
+          id: string
+          next_action: string | null
+          next_action_at: string | null
+          notes: string | null
+          opportunity_id: string
+          outcome: Database["public"]["Enums"]["opportunity_activity_outcome"]
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["opportunity_activity_type"]
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          opportunity_id: string
+          outcome: Database["public"]["Enums"]["opportunity_activity_outcome"]
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["opportunity_activity_type"]
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          opportunity_id?: string
+          outcome?: Database["public"]["Enums"]["opportunity_activity_outcome"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_activities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_activities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_owner_history: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          from_owner: string | null
+          id: string
+          opportunity_id: string
+          reason: string
+          to_owner: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          from_owner?: string | null
+          id?: string
+          opportunity_id: string
+          reason: string
+          to_owner?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          from_owner?: string | null
+          id?: string
+          opportunity_id?: string
+          reason?: string
+          to_owner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_owner_history_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_owner_history_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parties: {
+        Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          id_number: string | null
+          id_type: string | null
+          merged_into_id: string | null
+          name_ar: string
+          name_en: string | null
+          party_type: Database["public"]["Enums"]["party_type"]
+          phone: string | null
+          source: string | null
+          tenant_code: string
+          tenant_lifecycle:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+          updated_at: string
+        }
+        Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          id_number?: string | null
+          id_type?: string | null
+          merged_into_id?: string | null
+          name_ar: string
+          name_en?: string | null
+          party_type?: Database["public"]["Enums"]["party_type"]
+          phone?: string | null
+          source?: string | null
+          tenant_code: string
+          tenant_lifecycle?:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+          updated_at?: string
+        }
+        Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          id_number?: string | null
+          id_type?: string | null
+          merged_into_id?: string | null
+          name_ar?: string
+          name_en?: string | null
+          party_type?: Database["public"]["Enums"]["party_type"]
+          phone?: string | null
+          source?: string | null
+          tenant_code?: string
+          tenant_lifecycle?:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parties_merged_into_id_fkey"
+            columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parties_merged_into_id_fkey"
+            columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      party_code_counter: {
+        Row: {
+          id: number
+          next_value: number
+        }
+        Insert: {
+          id?: number
+          next_value?: number
+        }
+        Update: {
+          id?: number
+          next_value?: number
+        }
+        Relationships: []
+      }
+      party_contacts: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          party_id: string
+          phone: string | null
+          role_label: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          party_id: string
+          phone?: string | null
+          role_label?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          party_id?: string
+          phone?: string | null
+          role_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_contacts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_contacts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       phone_otps: {
         Row: {
@@ -1441,6 +1951,7 @@ export type Database = {
           merged_into_id: string | null
           notes: string | null
           paid_amount: number
+          party_id: string | null
           phone: string | null
           total_price: number
           unmerged_at: string | null
@@ -1467,6 +1978,7 @@ export type Database = {
           merged_into_id?: string | null
           notes?: string | null
           paid_amount?: number
+          party_id?: string | null
           phone?: string | null
           total_price?: number
           unmerged_at?: string | null
@@ -1493,6 +2005,7 @@ export type Database = {
           merged_into_id?: string | null
           notes?: string | null
           paid_amount?: number
+          party_id?: string | null
           phone?: string | null
           total_price?: number
           unmerged_at?: string | null
@@ -1513,6 +2026,20 @@ export type Database = {
             columns: ["merged_into_id"]
             isOneToOne: false
             referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_accounts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_accounts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
             referencedColumns: ["id"]
           },
         ]
@@ -1569,6 +2096,7 @@ export type Database = {
           id: string
           notes: string | null
           offer_image_url: string | null
+          party_id: string | null
           phone: string | null
           start_date: string | null
           tenant_name: string
@@ -1588,6 +2116,7 @@ export type Database = {
           id?: string
           notes?: string | null
           offer_image_url?: string | null
+          party_id?: string | null
           phone?: string | null
           start_date?: string | null
           tenant_name: string
@@ -1607,6 +2136,7 @@ export type Database = {
           id?: string
           notes?: string | null
           offer_image_url?: string | null
+          party_id?: string | null
           phone?: string | null
           start_date?: string | null
           tenant_name?: string
@@ -1614,6 +2144,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tenants_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tenants_unit_id_fkey"
             columns: ["unit_id"]
@@ -1633,6 +2177,60 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units_status_read"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transfer_requests: {
+        Row: {
+          created_at: string
+          current_owner: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_notes: string | null
+          id: string
+          opportunity_id: string
+          reason: string
+          requested_by: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          current_owner?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          id?: string
+          opportunity_id: string
+          reason: string
+          requested_by: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          current_owner?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          id?: string
+          opportunity_id?: string
+          reason?: string
+          requested_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_requests_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_requests_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_alerts"
             referencedColumns: ["id"]
           },
         ]
@@ -2325,6 +2923,111 @@ export type Database = {
       }
     }
     Views: {
+      opportunity_alerts: {
+        Row: {
+          alert_kind: string | null
+          id: string | null
+          next_action: string | null
+          next_action_at: string | null
+          owner_user_id: string | null
+          party_id: string | null
+          stage: Database["public"]["Enums"]["opportunity_stage"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          alert_kind?: never
+          id?: string | null
+          next_action?: string | null
+          next_action_at?: string | null
+          owner_user_id?: string | null
+          party_id?: string | null
+          stage?: Database["public"]["Enums"]["opportunity_stage"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          alert_kind?: never
+          id?: string | null
+          next_action?: string | null
+          next_action_at?: string | null
+          owner_user_id?: string | null
+          party_id?: string | null
+          stage?: Database["public"]["Enums"]["opportunity_stage"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parties_crm: {
+        Row: {
+          archived_at: string | null
+          city: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          id_number: string | null
+          id_type: string | null
+          name_ar: string | null
+          name_en: string | null
+          party_type: Database["public"]["Enums"]["party_type"] | null
+          phone: string | null
+          source: string | null
+          tenant_code: string | null
+          tenant_lifecycle:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+        }
+        Insert: {
+          archived_at?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          id_number?: never
+          id_type?: never
+          name_ar?: string | null
+          name_en?: string | null
+          party_type?: Database["public"]["Enums"]["party_type"] | null
+          phone?: never
+          source?: string | null
+          tenant_code?: string | null
+          tenant_lifecycle?:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+        }
+        Update: {
+          archived_at?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: never
+          id?: string | null
+          id_number?: never
+          id_type?: never
+          name_ar?: string | null
+          name_en?: string | null
+          party_type?: Database["public"]["Enums"]["party_type"] | null
+          phone?: never
+          source?: string | null
+          tenant_code?: string | null
+          tenant_lifecycle?:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+        }
+        Relationships: []
+      }
       public_activities: {
         Row: {
           code: string | null
@@ -2665,6 +3368,27 @@ export type Database = {
         Returns: string
       }
       admin_user_directory: { Args: never; Returns: Json }
+      approve_transfer: {
+        Args: { _approve: boolean; _notes?: string; _request_id: string }
+        Returns: {
+          created_at: string
+          current_owner: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_notes: string | null
+          id: string
+          opportunity_id: string
+          reason: string
+          requested_by: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "transfer_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       archive_record: {
         Args: { _id: string; _reason: string; _table: string }
         Returns: undefined
@@ -2676,6 +3400,43 @@ export type Database = {
       archive_tenant_account: {
         Args: { _reason: string; _tenant_account_id: string }
         Returns: undefined
+      }
+      assign_next_agent: { Args: never; Returns: string }
+      assign_opportunity: {
+        Args: { _opportunity_id: string; _reason: string; _to_user: string }
+        Returns: {
+          activity_id: string | null
+          area_needed_m2: number | null
+          booking_id: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lost_to: string | null
+          next_action: string | null
+          next_action_at: string | null
+          no_answer_attempts: number
+          notes: string | null
+          outcome: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason: string | null
+          owner_user_id: string | null
+          party_id: string
+          preferred_unit_ids: string[] | null
+          revisit_at: string | null
+          source: Database["public"]["Enums"]["opportunity_source"]
+          stage: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "opportunities"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      bulk_reassign_opportunities: {
+        Args: { _from_user: string; _reason: string; _to_user: string }
+        Returns: number
       }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
       cancel_booking_with_reason: {
@@ -2774,7 +3535,74 @@ export type Database = {
             }
             Returns: string
           }
+      create_opportunity: {
+        Args: {
+          _activity_id?: string
+          _area_needed_m2?: number
+          _next_action?: string
+          _next_action_at?: string
+          _notes?: string
+          _owner_user_id?: string
+          _party_id: string
+          _source?: Database["public"]["Enums"]["opportunity_source"]
+        }
+        Returns: {
+          activity_id: string | null
+          area_needed_m2: number | null
+          booking_id: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lost_to: string | null
+          next_action: string | null
+          next_action_at: string | null
+          no_answer_attempts: number
+          notes: string | null
+          outcome: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason: string | null
+          owner_user_id: string | null
+          party_id: string
+          preferred_unit_ids: string[] | null
+          revisit_at: string | null
+          source: Database["public"]["Enums"]["opportunity_source"]
+          stage: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "opportunities"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_party: {
+        Args: {
+          _city?: string
+          _email?: string
+          _id_number?: string
+          _id_type?: string
+          _name_ar: string
+          _name_en?: string
+          _party_type?: Database["public"]["Enums"]["party_type"]
+          _phone?: string
+          _source?: string
+        }
+        Returns: Json
+      }
       create_telegram_link_token: { Args: never; Returns: string }
+      crm_backfill_parties: { Args: never; Returns: Json }
+      crm_ensure_party: {
+        Args: {
+          _email: string
+          _id_number: string
+          _id_type: string
+          _name: string
+          _phone: string
+          _source: string
+        }
+        Returns: string
+      }
       ensure_tenant_account_for_tenant: {
         Args: { _tenant_id: string }
         Returns: string
@@ -2856,6 +3684,45 @@ export type Database = {
           subscriptions: string[]
         }[]
       }
+      log_opportunity_activity: {
+        Args: {
+          _activity_type: Database["public"]["Enums"]["opportunity_activity_type"]
+          _next_action?: string
+          _next_action_at?: string
+          _notes?: string
+          _opportunity_id: string
+          _outcome: Database["public"]["Enums"]["opportunity_activity_outcome"]
+        }
+        Returns: {
+          activity_id: string | null
+          area_needed_m2: number | null
+          booking_id: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lost_to: string | null
+          next_action: string | null
+          next_action_at: string | null
+          no_answer_attempts: number
+          notes: string | null
+          outcome: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason: string | null
+          owner_user_id: string | null
+          party_id: string
+          preferred_unit_ids: string[] | null
+          revisit_at: string | null
+          source: Database["public"]["Enums"]["opportunity_source"]
+          stage: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "opportunities"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       lookup_login_email: { Args: { _identifier: string }; Returns: string }
       mark_booking_whatsapp_sent: {
         Args: { _booking_id: string }
@@ -2867,6 +3734,46 @@ export type Database = {
           deleted_accounts: number
           merged_groups: number
         }[]
+      }
+      move_opportunity: {
+        Args: {
+          _lost_to?: string
+          _opportunity_id: string
+          _outcome?: Database["public"]["Enums"]["opportunity_outcome"]
+          _outcome_reason?: string
+          _reason: string
+          _revisit_at?: string
+          _to_stage: Database["public"]["Enums"]["opportunity_stage"]
+        }
+        Returns: {
+          activity_id: string | null
+          area_needed_m2: number | null
+          booking_id: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lost_to: string | null
+          next_action: string | null
+          next_action_at: string | null
+          no_answer_attempts: number
+          notes: string | null
+          outcome: Database["public"]["Enums"]["opportunity_outcome"] | null
+          outcome_reason: string | null
+          owner_user_id: string | null
+          party_id: string
+          preferred_unit_ids: string[] | null
+          revisit_at: string | null
+          source: Database["public"]["Enums"]["opportunity_source"]
+          stage: Database["public"]["Enums"]["opportunity_stage"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "opportunities"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       next_invoice_number: { Args: never; Returns: string }
       next_offer_number: { Args: { _booking_id?: string }; Returns: string }
@@ -2907,6 +3814,28 @@ export type Database = {
           _reason: string
         }
         Returns: Json
+      }
+      reopen_due_postponed: { Args: never; Returns: number }
+      request_transfer: {
+        Args: { _opportunity_id: string; _reason: string }
+        Returns: {
+          created_at: string
+          current_owner: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_notes: string | null
+          id: string
+          opportunity_id: string
+          reason: string
+          requested_by: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "transfer_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       reverse_collection: {
         Args: { _collection_id: string; _reason: string }
@@ -2985,6 +3914,47 @@ export type Database = {
         | "manager"
         | "tenant"
         | "leasing_manager"
+        | "sales_agent"
+      opportunity_activity_outcome: "answered" | "no_answer" | "follow_up"
+      opportunity_activity_type:
+        | "call"
+        | "whatsapp"
+        | "visit"
+        | "meeting"
+        | "note"
+      opportunity_outcome:
+        | "no_answer"
+        | "not_interested"
+        | "not_suitable"
+        | "chose_other"
+        | "duplicate"
+      opportunity_source:
+        | "platform"
+        | "target_list"
+        | "whatsapp"
+        | "call"
+        | "referral"
+        | "campaign"
+        | "walk_in"
+        | "agent"
+      opportunity_stage:
+        | "new"
+        | "contacted"
+        | "qualified"
+        | "offer_sent"
+        | "booking_request"
+        | "on_hold"
+        | "pending_contract"
+        | "won"
+        | "postponed"
+        | "waitlist"
+      party_type: "company" | "individual"
+      tenant_lifecycle:
+        | "active"
+        | "renewal_due"
+        | "renewed"
+        | "ended"
+        | "terminated"
       unit_leasing_status:
         | "available"
         | "on_hold"
@@ -3126,6 +4096,52 @@ export const Constants = {
         "manager",
         "tenant",
         "leasing_manager",
+        "sales_agent",
+      ],
+      opportunity_activity_outcome: ["answered", "no_answer", "follow_up"],
+      opportunity_activity_type: [
+        "call",
+        "whatsapp",
+        "visit",
+        "meeting",
+        "note",
+      ],
+      opportunity_outcome: [
+        "no_answer",
+        "not_interested",
+        "not_suitable",
+        "chose_other",
+        "duplicate",
+      ],
+      opportunity_source: [
+        "platform",
+        "target_list",
+        "whatsapp",
+        "call",
+        "referral",
+        "campaign",
+        "walk_in",
+        "agent",
+      ],
+      opportunity_stage: [
+        "new",
+        "contacted",
+        "qualified",
+        "offer_sent",
+        "booking_request",
+        "on_hold",
+        "pending_contract",
+        "won",
+        "postponed",
+        "waitlist",
+      ],
+      party_type: ["company", "individual"],
+      tenant_lifecycle: [
+        "active",
+        "renewal_due",
+        "renewed",
+        "ended",
+        "terminated",
       ],
       unit_leasing_status: [
         "available",

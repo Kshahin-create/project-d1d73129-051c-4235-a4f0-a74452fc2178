@@ -169,6 +169,48 @@
       "when": 1793892811883,
       "tag": "0023_unit_status_single_audit_event",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793895903906,
+      "tag": "0024_crm_add_sales_agent_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793895932375,
+      "tag": "0025_crm_parties_opportunities",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793896029126,
+      "tag": "0026_crm_functions_and_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793896074653,
+      "tag": "0027_crm_booking_stage_hooks",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793896104323,
+      "tag": "0028_crm_backfill_and_cron",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793896179978,
+      "tag": "0029_crm_contact_masking_enforcement",
+      "breakpoints": true
     }
   ]
 }
