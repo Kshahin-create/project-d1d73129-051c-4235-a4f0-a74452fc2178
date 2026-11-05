@@ -6,6 +6,6 @@ export function statementTotals(installments:StatementInstallment[],receipts:Sta
  const payable=new Set(installments.filter(i=>i.status!=="waived").map(i=>i.id));
  const due=installments.filter(i=>payable.has(i.id)).reduce((sum,i)=>sum+Number(i.amount_incl_vat),0);
  const paid=allocations.filter(a=>valid.has(a.receipt_id)&&payable.has(a.installment_id)).reduce((sum,a)=>sum+Number(a.amount_incl_vat),0);
- const cash=receipts.filter(r=>r.status==="verified").reduce((sum,r)=>sum+Number(r.amount_incl_vat),0);
+ const cash=receipts.filter(r=>r.status==="verified"||r.status==="reversed").reduce((sum,r)=>sum+Number(r.amount_incl_vat),0);
  return{due:Math.round(due*100)/100,allocated:Math.round(paid*100)/100,balance:Math.round((due-paid)*100)/100,unallocated:Math.round((cash-paid)*100)/100};
 }
