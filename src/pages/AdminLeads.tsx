@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { Archive, RotateCcw } from "lucide-react";
 import {
   Download,
   Upload,
@@ -49,8 +50,11 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { PhoneField } from "@/components/PhoneField";
 import { copyToClipboard } from "@/lib/whatsapp";
+import { ArchiveActionDialog, ShowArchivedToggle, type ArchiveTarget } from "@/components/ArchiveActionDialog";
 
 type Lead = {
+  archived_at?: string | null;
+  archive_reason?: string | null;
   id: string;
   full_name: string;
   phone: string;
@@ -89,6 +93,8 @@ function renderTemplate(tpl: string, lead: Lead) {
 
 const AdminLeads = () => {
   const { isAdmin, isManager, loading } = useAuth();
+  const [showArchived, setShowArchived] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<ArchiveTarget>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
@@ -187,6 +193,7 @@ const AdminLeads = () => {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     return leads.filter((l) => {
+      if (!showArchived && l.archived_at) return false;
       if (statusFilter !== "all" && l.status !== statusFilter) return false;
       if (!s) return true;
       return (
@@ -195,7 +202,7 @@ const AdminLeads = () => {
         (l.notes || "").toLowerCase().includes(s)
       );
     });
-  }, [leads, q, statusFilter]);
+  }, [leads, q, statusFilter, showArchived]);
 
   if (loading) return <div className="p-8 text-center">جاري التحميل...</div>;
   if (!isAdmin && !isManager) return <Navigate to="/" replace />;
@@ -229,15 +236,6 @@ const AdminLeads = () => {
       toast({ title: "تمت الإضافة" });
     }
     setEditing(null);
-    fetchLeads();
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!isAdmin) return;
-    if (!confirm("هل تريد حذف هذا المستهدف؟")) return;
-    const { error } = await supabase.from("leads").delete().eq("id", id);
-    if (error) return toast({ title: "خطأ", description: error.message, variant: "destructive" });
-    toast({ title: "تم الحذف" });
     fetchLeads();
   };
 
@@ -458,6 +456,7 @@ const AdminLeads = () => {
         <Button variant="outline" onClick={handleExport} className="gap-2">
           <Download className="h-4 w-4" /> تصدير Excel
         </Button>
+        <ShowArchivedToggle checked={showArchived} onChange={setShowArchived} />
         <Button variant="ghost" onClick={handleDownloadTemplate} className="gap-2">
           <FileSpreadsheet className="h-4 w-4" /> نموذج فارغ
         </Button>
@@ -526,7 +525,7 @@ const AdminLeads = () => {
             {filtered.map((l) => {
               const st = STATUSES.find((s) => s.value === l.status);
               return (
-                <TableRow key={l.id}>
+                <TableRow key={l.id} className={l.archived_at ? "opacity-60" : undefined} title={l.archive_reason ? `مؤرشف: ${l.archive_reason}` : undefined}>
                   <TableCell className="font-medium">{l.full_name}</TableCell>
                   <TableCell dir="ltr" className="text-right text-sm">
                     {l.phone}
@@ -590,10 +589,10 @@ const AdminLeads = () => {
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 text-destructive"
-                        title="حذف"
-                        onClick={() => handleDelete(l.id)}
+                        title={l.archived_at ? "استرجاع" : "أرشفة"}
+                        onClick={() => setArchiveTarget({ id: l.id, label: l.full_name, restore: !!l.archived_at })}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {l.archived_at ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
                       </Button>
                     </div>}
                   </TableCell>
@@ -667,6 +666,7 @@ const AdminLeads = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ArchiveActionDialog table="leads" target={archiveTarget} onClose={() => setArchiveTarget(null)} onDone={fetchLeads} />
     </div>
   );
 };

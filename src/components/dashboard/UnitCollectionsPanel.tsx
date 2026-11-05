@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Download, Eye, Pencil, RefreshCcw, Paperclip, X, Upload } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
+import { MIN_REASON_LENGTH } from "@/lib/safetyRules";
 
 const BUCKET = "unit-collection-proofs";
 
@@ -22,6 +23,8 @@ export type UnitCollection = {
   created_by: string | null;
   created_at: string;
   creator_name?: string | null;
+  reverses_id?: string | null;
+  reversal_reason?: string | null;
 };
 
 const fmt = (n: number | null | undefined) =>
@@ -91,18 +94,18 @@ export function UnitCollectionsPanel({
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
 
-  const doDelete = async () => {
+  // Wrong payments are corrected with a negative reversal entry; the original is never edited or deleted.
+  const doReverse = async (reason: string) => {
     if (!confirmDel) return;
-    if (confirmDel.proof_path) {
-      await supabase.storage.from(BUCKET).remove([confirmDel.proof_path]);
-    }
-    const { error } = await supabase.from("unit_collections" as any).delete().eq("id", confirmDel.id);
+    const { error } = await supabase.rpc("reverse_collection" as any, { _collection_id: confirmDel.id, _reason: reason });
     if (error) { toast.error(error.message); return; }
-    toast.success("تم حذف الدفعة");
+    toast.success("تم تسجيل قيد عكسي للدفعة");
     setConfirmDel(null);
     load();
     onChanged?.();
   };
+
+  const reversedIds = new Set(rows.filter((r) => r.reverses_id).map((r) => r.reverses_id as string));
 
   return (
     <div className="space-y-3">
@@ -168,7 +171,11 @@ export function UnitCollectionsPanel({
               {rows.map((r, idx) => (
                 <tr key={r.id} className="border-t">
                   <td className="p-2 num">{rows.length - idx}</td>
-                  <td className="p-2 font-bold num">{fmt(r.amount)} ر.س</td>
+                  <td className={cn("p-2 font-bold num", Number(r.amount) < 0 && "text-destructive")}>
+                    {fmt(r.amount)} ر.س
+                    {r.reverses_id && <div className="text-[10px] font-normal text-destructive">قيد عكسي — {r.reversal_reason}</div>}
+                    {reversedIds.has(r.id) && <div className="text-[10px] font-normal text-muted-foreground">تم عكسها</div>}
+                  </td>
                   <td className="p-2">
                     {r.proof_path ? (
                       <div className="flex items-center gap-1.5">
@@ -188,8 +195,10 @@ export function UnitCollectionsPanel({
                             <IconBtn title="تنزيل" onClick={() => downloadProof(r)}><Download className="h-3.5 w-3.5" /></IconBtn>
                           </>
                         )}
-                        <IconBtn title="تعديل" onClick={() => setEditing(r)}><Pencil className="h-3.5 w-3.5" /></IconBtn>
-                        <IconBtn title="حذف" tone="destructive" onClick={() => setConfirmDel(r)}><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+                        {!r.reverses_id && <IconBtn title="تعديل الإثبات" onClick={() => setEditing(r)}><Pencil className="h-3.5 w-3.5" /></IconBtn>}
+                        {!r.reverses_id && !reversedIds.has(r.id) && (
+                          <IconBtn title="قيد عكسي" tone="destructive" onClick={() => setConfirmDel(r)}><RefreshCcw className="h-3.5 w-3.5" /></IconBtn>
+                        )}
                       </div>
                     </td>
                   )}
@@ -219,12 +228,14 @@ export function UnitCollectionsPanel({
 
       <ConfirmDialog
         open={!!confirmDel}
-        title="حذف الدفعة"
-        description={confirmDel ? `سيتم حذف الدفعة (${fmt(confirmDel.amount)} ر.س) نهائياً مع إثبات الدفع المرفق.` : ""}
-        confirmLabel="حذف نهائي"
+        title="قيد عكسي للدفعة"
+        description={confirmDel ? `هيتسجل سطر سالب (${fmt(-confirmDel.amount)} ر.س) مرتبط بالدفعة الأصلية، والأصل يفضل زي ما هو.` : ""}
+        confirmLabel="تسجيل قيد عكسي"
         variant="destructive"
-        reasonRequired={false}
-        onConfirm={doDelete}
+        reasonRequired
+        minReasonLength={MIN_REASON_LENGTH}
+        reasonPlaceholder="سبب التصحيح..."
+        onConfirm={doReverse}
         onCancel={() => setConfirmDel(null)}
       />
     </div>
@@ -373,7 +384,7 @@ function EditCollectionDialog({ row, onClose, onSaved }: { row: UnitCollection; 
     if (!amt || amt <= 0) return toast.error("أدخل مبلغاً صحيحاً");
     setBusy(true);
     try {
-      const patch: any = { amount: amt };
+      const patch: any = {};
       if (file) {
         // replace file
         const ext = file.name.includes(".") ? file.name.split(".").pop() : "";
@@ -388,6 +399,7 @@ function EditCollectionDialog({ row, onClose, onSaved }: { row: UnitCollection; 
       } else if (row.proof_path && name.trim() && name.trim() !== row.proof_name) {
         patch.proof_name = name.trim();
       }
+      if (Object.keys(patch).length === 0) { onSaved(); return; }
       const { error } = await supabase.from("unit_collections" as any).update(patch).eq("id", row.id);
       if (error) throw error;
       toast.success("تم الحفظ");
@@ -409,7 +421,8 @@ function EditCollectionDialog({ row, onClose, onSaved }: { row: UnitCollection; 
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-medium">المبلغ (ر.س)</label>
-            <Input type="number" min={1} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} dir="ltr" />
+            <Input type="number" value={amount} disabled readOnly dir="ltr" />
+            <p className="mt-1 text-[10px] text-muted-foreground">المبلغ لا يُعدّل؛ لتصحيحه سجّل قيدًا عكسيًا ثم دفعة جديدة.</p>
           </div>
           {row.proof_path && (
             <div>

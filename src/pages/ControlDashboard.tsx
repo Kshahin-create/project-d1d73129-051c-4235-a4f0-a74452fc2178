@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { controlCanSetStatus, type UnitStatus } from "@/lib/safetyRules";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Wrench,
@@ -103,7 +104,7 @@ const ControlDashboard = () => {
       const { data, error } = await supabase
         .from("units")
         .select(
-          "id,building_number,unit_number,unit_type,activity,area,price,status,updated_at",
+          "id,building_number,unit_number,unit_type,activity,area,price,status,status_before_maintenance,updated_at",
         )
         .order("building_number")
         .order("unit_number")
@@ -158,10 +159,12 @@ const ControlDashboard = () => {
   const updateStatus = async (unit: UnitRow, next: StatusKey) => {
     if (unit.status === next) return;
     setUpdatingId(unit.id);
-    const { error } = await supabase
-      .from("units")
-      .update({ status: next })
-      .eq("id", unit.id);
+    // Maintenance changes go through the database function; the database also blocks
+    // the control role from setting available / reserved / rented.
+    const viaMaintenance = next === "maintenance" || (unit.status === "maintenance" && !isAdmin);
+    const { error } = viaMaintenance
+      ? await supabase.rpc("control_set_maintenance" as any, { _unit_id: unit.id, _on: next === "maintenance" })
+      : await supabase.from("units").update({ status: next }).eq("id", unit.id);
     setUpdatingId(null);
     if (error) {
       toast.error("تعذّر تحديث الحالة: " + error.message);
@@ -340,17 +343,20 @@ const ControlDashboard = () => {
                       {(Object.keys(STATUS_META) as StatusKey[]).map((k) => {
                         const meta = STATUS_META[k];
                         const active = u.status === k;
+                        const allowed =
+                          isAdmin ||
+                          controlCanSetStatus(u.status as UnitStatus, k as UnitStatus, ((u as any).status_before_maintenance ?? null) as UnitStatus | null);
                         return (
                           <button
                             key={k}
-                            disabled={isUpdating || active}
+                            disabled={isUpdating || active || !allowed}
                             onClick={() => updateStatus(u, k)}
                             className={cn(
                               "inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[11px] font-medium transition",
                               active
                                 ? "cursor-default border-foreground/20 bg-foreground/5 text-foreground opacity-70"
                                 : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-secondary",
-                              isUpdating && "opacity-50",
+                              (isUpdating || (!allowed && !active)) && "opacity-40",
                             )}
                             title={meta.label}
                           >

@@ -260,16 +260,23 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
-      const { tenant_account_id } = body;
+      // Never hard-delete: archive the account with a reason and block its login.
+      const { tenant_account_id, reason } = body;
+      if (typeof reason !== "string" || reason.trim().length < 5) {
+        return json({ error: "السبب مطلوب (5 أحرف على الأقل)" }, 400);
+      }
       const { data: ta } = await admin
         .from("tenant_accounts")
         .select("user_id")
         .eq("id", tenant_account_id)
         .single();
       if (!ta) return json({ error: "حساب غير موجود" }, 404);
-      await admin.from("tenant_accounts").delete().eq("id", tenant_account_id);
-      await admin.auth.admin.deleteUser(ta.user_id);
-      return json({ ok: true });
+      const { error: aErr } = await userClient.rpc("archive_tenant_account", {
+        _tenant_account_id: tenant_account_id, _reason: reason.trim(),
+      });
+      if (aErr) return json({ error: aErr.message }, 400);
+      if (ta.user_id) await admin.auth.admin.updateUserById(ta.user_id, { ban_duration: "876000h" });
+      return json({ ok: true, archived: true });
     }
 
     return json({ error: "إجراء غير معروف" }, 400);

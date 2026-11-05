@@ -1065,8 +1065,8 @@ const AI_TOOLS = [
     type: "function",
     function: {
       name: "delete_invoice",
-      description: "حذف فاتورة (احرص أنها غير مدفوعة أو تأكد أولاً).",
-      parameters: { type: "object", properties: { invoice_id: { type: "string" } }, required: ["invoice_id"], additionalProperties: false },
+      description: "تصحيح فاتورة خاطئة بقيد عكسي (سطر سالب مرتبط بالأصل). الحذف النهائي ممنوع. لازم سبب واضح 5 أحرف على الأقل.",
+      parameters: { type: "object", properties: { invoice_id: { type: "string" }, reason: { type: "string", description: "سبب القيد العكسي" } }, required: ["invoice_id","reason"], additionalProperties: false },
     },
   },
   {
@@ -1117,8 +1117,8 @@ const AI_TOOLS = [
     type: "function",
     function: {
       name: "delete_booking",
-      description: "حذف حجز نهائياً من قاعدة البيانات (خطر — استخدم cancel_booking بدلاً منها إن أمكن).",
-      parameters: { type: "object", properties: { booking_id: { type: "string" }, confirm: { type: "boolean" } }, required: ["booking_id","confirm"], additionalProperties: false },
+      description: "إلغاء وأرشفة حجز (الحذف النهائي ممنوع). يحتاج سبب 5 أحرف على الأقل.",
+      parameters: { type: "object", properties: { booking_id: { type: "string" }, confirm: { type: "boolean" }, reason: { type: "string" } }, required: ["booking_id","confirm","reason"], additionalProperties: false },
     },
   },
   {
@@ -1148,8 +1148,9 @@ const AI_TOOLS = [
           unit_numbers: { type: "array", items: { type: "number" }, description: "أرقام الوحدات المراد إلغاؤها" },
           building_number: { type: "number", description: "رقم المبنى (لو الوحدات في مبنى واحد)" },
           unit_ids: { type: "array", items: { type: "string" }, description: "بديل: UUIDs مباشرة" },
+          reason: { type: "string", description: "سبب الإلغاء (5 أحرف على الأقل)" },
         },
-        required: ["booking_id"], additionalProperties: false,
+        required: ["booking_id","reason"], additionalProperties: false,
       },
     },
   },
@@ -1506,9 +1507,9 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     return { ok: true, invoice_id: data.id, invoice_number: data.invoice_number, amount: amt };
   }
   if (name === "delete_invoice") {
-    const { error } = await admin.from("invoices").delete().eq("id", args.invoice_id);
+    const { data, error } = await admin.rpc("reverse_payment", { _invoice_id: args.invoice_id, _reason: String(args.reason || "") });
     if (error) return { error: error.message };
-    return { ok: true, deleted: args.invoice_id };
+    return { ok: true, reversed: args.invoice_id, reversal_invoice_id: data };
   }
   if (name === "send_invoice_reminder") {
     const supaUrl = Deno.env.get("SUPABASE_URL")!;
@@ -1546,19 +1547,10 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     return { ok: true, id: data.id };
   }
   if (name === "delete_booking") {
-    if (!args.confirm) return { error: "confirm=true required — استخدم cancel_booking بدلاً منها إن أمكن" };
-    const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", args.booking_id);
-    const ids = (bus || []).map((x: any) => x.unit_id);
-    const { error } = await admin.from("bookings").delete().eq("id", args.booking_id);
+    if (!args.confirm) return { error: "confirm=true required" };
+    const { error } = await admin.rpc("cancel_booking_with_reason", { _booking_id: args.booking_id, _reason: String(args.reason || "") });
     if (error) return { error: error.message };
-    // Free units after the booking is gone; units with a tenant or another active booking stay reserved.
-    const freed: string[] = [];
-    const kept: string[] = [];
-    for (const id of ids) {
-      const { error: uErr } = await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).eq("id", id).eq("status", "reserved");
-      (uErr ? kept : freed).push(id);
-    }
-    return { ok: true, deleted: args.booking_id, freed_units: freed.length, kept_reserved: kept.length };
+    return { ok: true, cancelled_and_archived: args.booking_id };
   }
   if (name === "send_booking_pdfs") {
     if (!args.booking_id) return { error: "booking_id required" };
@@ -1608,19 +1600,10 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
       return { error: "حدد unit_numbers أو unit_ids" };
     }
     if (!targets.length) return { error: "لم أجد الوحدات المطلوبة داخل هذا الحجز" };
-    const targetIds = targets.map((x: any) => x.unit_id);
     const targetBuIds = targets.map((x: any) => x.id);
-    await admin.from("booking_units").delete().in("id", targetBuIds);
-    await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).in("id", targetIds).eq("status", "reserved");
-    const remaining = bus.filter((x: any) => !targetBuIds.includes(x.id));
-    if (!remaining.length) {
-      await admin.from("bookings").update({ status: "cancelled", total_price: 0, total_area: 0, units_count: 0, updated_at: new Date().toISOString() }).eq("id", bookingId);
-      return { ok: true, booking_id: bookingId, removed: targets.length, remaining: 0, booking_status: "cancelled" };
-    }
-    const total_price = remaining.reduce((s: number, x: any) => s + Number(x.price || 0), 0);
-    const total_area = remaining.reduce((s: number, x: any) => s + Number(x.area || 0), 0);
-    await admin.from("bookings").update({ total_price, total_area, units_count: remaining.length, updated_at: new Date().toISOString() }).eq("id", bookingId);
-    return { ok: true, booking_id: bookingId, removed: targets.length, remaining: remaining.length, new_total_price: total_price };
+    const { data: res, error: rErr } = await admin.rpc("remove_booking_units", { _booking_id: bookingId, _booking_unit_ids: targetBuIds, _reason: String(args.reason || "") });
+    if (rErr) return { error: rErr.message };
+    return { ok: true, booking_id: bookingId, ...(res || {}) };
   }
   return { error: "unknown write tool" };
 }
@@ -1713,7 +1696,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
     "",
     "🧰 أدواتك الكاملة (استخدمها بدل ما ترفض):",
     "- قراءة: get_overview / search_bookings / search_invoices / search_tenants / units_breakdown / revenue_report / lookup_unit / list_recent_activity / list_interested_customers / get_tenant_full / get_building_report / list_bookings_for_tenant",
-    "- كتابة: create_booking / update_booking / delete_booking / confirm_booking / cancel_booking / remove_booking_units / extend_booking_expiry / set_booking_paid_amount / update_tenant_account / update_unit / set_unit_status / create_invoice / delete_invoice / mark_invoice_paid / record_payment / send_invoice_reminder / generate_financial_claim / send_booking_pdfs / update_interested_status / create_interested_customer",
+    "- كتابة: create_booking / update_booking / delete_booking (إلغاء وأرشفة بسبب) / confirm_booking / cancel_booking / remove_booking_units / extend_booking_expiry / set_booking_paid_amount / update_tenant_account / update_unit / set_unit_status / create_invoice / delete_invoice (قيد عكسي بسبب) / mark_invoice_paid / record_payment / send_invoice_reminder / generate_financial_claim / send_booking_pdfs / update_interested_status / create_interested_customer",
     "",
     "📄 لإرسال ملفات PDF (عرض التأجير / المطالبة المالية) لحجز موجود: نادِ send_booking_pdfs بـ booking_id — هي بترسل الملفات مباشرة للشات. ممنوع منعاً باتاً ترسل روابط أو URLs للملفات نيابةً عنها.",
     "✂️ لإلغاء جزء من حجز (مثلاً عميل حجز 6 وحدات وعاوز يلغي 4)، نادِ remove_booking_units مع unit_numbers + building_number — ماتستخدمش cancel_booking إلا لو المستخدم عاوز يلغي الحجز كله.",

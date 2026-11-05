@@ -223,13 +223,9 @@ const Admin = () => {
 
       const { data: tenantSnap } = await supabase.from("tenants").select("*").eq("unit_id", u.id).maybeSingle();
 
-      await supabase.from("tenants").delete().eq("unit_id", u.id);
-      const { error } = await supabase.from("units").update({ status: "available" }).eq("id", u.id);
-      if (error) {
-        // Put the tenant back so a refused release never loses tenant details.
-        if (tenantSnap) await supabase.from("tenants").insert(tenantSnap as any);
-        throw error;
-      }
+      // Archives the tenant row (kept with the reason) and frees the unit in one database step.
+      const { error } = await supabase.rpc("archive_tenant" as any, { _unit_id: u.id, _reason: reason });
+      if (error) throw error;
 
       await writeAuditLog({
         unit_id: u.id,
@@ -619,10 +615,11 @@ const Admin = () => {
       <ConfirmDialog
         open={!!releaseTarget}
         title={`تأكيد إخلاء الوحدة ${releaseTarget?.unitNumber ?? ""}`}
-        description={`سيتم تغيير حالة الوحدة إلى "متاحة" وحذف بيانات المستأجر الحالي. سيُحفظ نسخة من بياناته في سجل التدقيق.`}
+        description={`سيتم تغيير حالة الوحدة إلى "متاحة" وأرشفة بيانات المستأجر الحالي مع السبب (لا تُحذف نهائياً).`}
         confirmLabel="تأكيد الإخلاء"
         variant="destructive"
         loading={saving}
+        minReasonLength={5}
         reasonPlaceholder="مثال: انتهاء العقد / فسخ بناءً على طلب المستأجر..."
         reasonSuggestions={["انتهاء العقد", "فسخ من المستأجر", "إخلال بشروط العقد", "تصحيح إدخال خاطئ"]}
         onConfirm={handleReleaseConfirmed}

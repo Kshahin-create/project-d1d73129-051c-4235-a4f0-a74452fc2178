@@ -274,23 +274,14 @@ async function updateTenant(id: string, body: any) {
   return json({ data });
 }
 
-async function deleteTenant(id: string) {
-  const { data: tenant } = await admin
-    .from("tenants")
-    .select("unit_id")
-    .eq("id", id)
-    .maybeSingle();
-  const { error } = await admin.from("tenants").delete().eq("id", id);
+// Hard delete is not allowed: the tenant row is archived (preserved) with a required reason.
+async function deleteTenant(id: string, reason: string | null) {
+  if (!reason || reason.trim().length < 5) return err("reason query parameter required (min 5 chars)", 400);
+  const { data: tenant } = await admin.from("tenants").select("unit_id").eq("id", id).maybeSingle();
+  if (!tenant?.unit_id) return err("Tenant not found", 404);
+  const { error } = await admin.rpc("archive_tenant", { _unit_id: tenant.unit_id, _reason: reason.trim() });
   if (error) return err(error.message, 400);
-  let unit_released = false;
-  if (tenant?.unit_id) {
-    const { error: uErr } = await admin
-      .from("units")
-      .update({ status: "available" })
-      .eq("id", tenant.unit_id);
-    unit_released = !uErr;
-  }
-  return json({ success: true, unit_released });
+  return json({ success: true, archived: true, unit_released: true });
 }
 
 // ---------- Tenant Accounts (consolidated) ----------
@@ -348,11 +339,8 @@ async function linkTenantAccountUnits(id: string, body: any) {
 }
 
 async function unlinkTenantAccountUnit(id: string, unitId: string) {
-  const { error } = await admin
-    .from("tenant_account_units")
-    .delete()
-    .eq("tenant_account_id", id)
-    .eq("unit_id", unitId);
+  // Goes through the database function, which preserves the link row before removing it.
+  const { error } = await admin.rpc("admin_unlink_tenant_unit", { _tenant_account_id: id, _unit_id: unitId });
   if (error) return err(error.message, 400);
   return json({ success: true });
 }
@@ -738,7 +726,7 @@ Deno.serve(async (req) => {
     }
     if (tenantMatch && req.method === "DELETE") {
       const g = requireScope(ctx, "admin");
-      return g ?? (await deleteTenant(tenantMatch[1]));
+      return g ?? (await deleteTenant(tenantMatch[1], url.searchParams.get("reason")));
     }
     // /tenant-accounts (consolidated)
     if (path === "/tenant-accounts" && req.method === "GET") {
