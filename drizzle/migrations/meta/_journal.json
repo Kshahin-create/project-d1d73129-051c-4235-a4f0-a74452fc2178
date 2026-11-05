@@ -428,6 +428,13 @@
       "when": 1793921580806,
       "tag": "0060_permissions_audited_role_writers",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1793921614423,
+      "tag": "0061_permissions_active_role_and_assignment_boundary",
+      "breakpoints": true
     }
   ]
 }

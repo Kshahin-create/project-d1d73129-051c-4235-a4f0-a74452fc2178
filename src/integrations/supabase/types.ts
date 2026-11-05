@@ -4667,6 +4667,10 @@ export type Database = {
         Args: { _amount: number; _notes?: string; _tenant_account_id: string }
         Returns: string
       }
+      admin_assign_dynamic_role: {
+        Args: { _reason: string; _role: string; _user: string }
+        Returns: undefined
+      }
       admin_auto_merge_duplicate_tenants: { Args: never; Returns: Json }
       admin_link_tenant_units: {
         Args: { _tenant_account_id: string; _unit_ids: string[] }
