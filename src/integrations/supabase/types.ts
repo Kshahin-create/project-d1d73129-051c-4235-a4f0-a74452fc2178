@@ -5128,6 +5128,10 @@ export type Database = {
       metrics_section: { Args: { _name: string; _scope: Json }; Returns: Json }
       metrics_service_snapshot: { Args: { _scope?: Json }; Returns: Json }
       metrics_snapshot: { Args: { _scope?: Json }; Returns: Json }
+      metrics_telegram_snapshot: {
+        Args: { _actor: string; _scope?: Json }
+        Returns: Json
+      }
       move_opportunity: {
         Args: {
           _lost_to?: string
