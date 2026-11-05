@@ -281,6 +281,13 @@
       "when": 1793910671943,
       "tag": "0039_finance_unit_report",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793910765392,
+      "tag": "0040_finance_precision_and_flow_regression",
+      "breakpoints": true
     }
   ]
 }
