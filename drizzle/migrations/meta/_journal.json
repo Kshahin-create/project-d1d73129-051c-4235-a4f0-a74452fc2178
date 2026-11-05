@@ -113,6 +113,13 @@
       "when": 1793892162334,
       "tag": "0015_unit_status_read_compatibility",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793892364452,
+      "tag": "0016_leasing_role_assignment_and_telegram_dispatch",
+      "breakpoints": true
     }
   ]
 }

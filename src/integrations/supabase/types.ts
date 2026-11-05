@@ -2303,18 +2303,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
@@ -2932,6 +2935,10 @@ export type Database = {
         Returns: undefined
       }
       sync_all_rented_units_to_accounts: { Args: never; Returns: number }
+      telegram_unit_status_action: {
+        Args: { _action: string; _actor: string; _args: Json }
+        Returns: Json
+      }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
       unarchive_record: {
         Args: { _id: string; _reason: string; _table: string }
