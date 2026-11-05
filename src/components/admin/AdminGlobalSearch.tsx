@@ -1,0 +1,20 @@
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Command,CommandInput,CommandList,CommandGroup,CommandItem } from "@/components/ui/command";
+import { useAuth } from "@/hooks/useAuth";
+import { adminLists,canReadFinance,listQuery,rowHref,displayAdminValue,type AdminRow } from "@/lib/adminData";
+
+export function AdminGlobalSearch(){
+ const auth=useAuth(),navigate=useNavigate();const [open,setOpen]=useState(false),[search,setSearch]=useState(""),[term,setTerm]=useState(""),[pages,setPages]=useState<Record<string,number>>({});
+ const allowed=auth.isAdmin||auth.isManager||auth.isControl||auth.isLeasingManager||auth.isSalesAgent||auth.isAccountant;
+ useEffect(()=>{const handler=(event:KeyboardEvent)=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="k"&&allowed){event.preventDefault();setOpen(value=>!value);}};window.addEventListener("keydown",handler);return()=>window.removeEventListener("keydown",handler);},[allowed]);
+ useEffect(()=>{const timer=setTimeout(()=>{setTerm(search);setPages({});},300);return()=>clearTimeout(timer);},[search]);
+ const types=["units",...(!auth.isControl?["parties"]:[]),...(auth.isAdmin||auth.isManager?["bookings"]:[]),...(canReadFinance(auth)?["contracts","receipts"]:[])];
+ const q=useQuery({queryKey:["admin-global-search",auth.user?.id,term,pages],enabled:open&&allowed&&term.trim().length>0,queryFn:async({signal})=>Promise.all(types.map(async key=>{const spec=adminLists[key];const offset=(pages[key]??0)*6;const r=await listQuery(spec,term,spec.order,true,false,{},signal).range(offset,offset+5);return{key,title:spec.title,rows:(r.data??[]) as AdminRow[],count:r.count??0,error:r.error?.message};}))});
+ if(!allowed)return null;
+ return <><Button variant="outline" size="icon" aria-label="البحث العام" title="البحث العام" onClick={()=>setOpen(true)}><Search className="h-4 w-4"/></Button><Dialog open={open} onOpenChange={setOpen}><DialogContent dir="rtl" className="max-w-2xl p-0"><DialogTitle className="px-5 pt-5">البحث العام</DialogTitle><DialogDescription className="sr-only">البحث في السجلات المسموح بها</DialogDescription><Command shouldFilter={false}><CommandInput aria-label="بحث في السجلات" placeholder="رقم الوحدة، العميل، الجوال، الهوية، العقد أو الإيصال" value={search} onValueChange={setSearch}/><CommandList className="max-h-[60vh]">{q.isFetching&&<p className="p-4 text-sm text-muted-foreground">جارٍ البحث…</p>}{q.data?.map(group=><CommandGroup key={group.key} heading={group.title}>{group.error?<p className="p-2 text-sm text-destructive">غير متاح</p>:group.rows.length===0?<p className="p-2 text-xs text-muted-foreground">لا نتائج</p>:group.rows.map(row=><CommandItem key={String(row.id)} value={`${group.key}-${row.id}`} onSelect={()=>{const href=rowHref(adminLists[group.key],row);if(href){setOpen(false);navigate(href);}}}><span className="min-w-0 break-words">{displayAdminValue(adminLists[group.key].columns[0],row[adminLists[group.key].columns[0].key])}</span><span className="mr-auto text-xs text-muted-foreground">{group.key==="units"?`مبنى ${row.building_number}`:String(row.tenant_code??row.id).slice(0,12)}</span></CommandItem>)}{group.count>6&&<div className="flex justify-between p-2"><Button size="sm" variant="ghost" disabled={!pages[group.key]} onClick={()=>setPages(p=>({...p,[group.key]:Math.max(0,(p[group.key]??0)-1)}))}>السابق</Button><Button size="sm" variant="ghost" disabled={((pages[group.key]??0)+1)*6>=group.count} onClick={()=>setPages(p=>({...p,[group.key]:(p[group.key]??0)+1}))}>عرض المزيد</Button></div>}</CommandGroup>)}</CommandList></Command></DialogContent></Dialog></>;
+}
