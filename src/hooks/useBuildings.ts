@@ -2,20 +2,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Building, Unit } from "@/data/types";
 import { applyActivityRegistry, countAvailableUnits } from "@/lib/bookingActivities";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useBuildingsAndUnits = () => {
+  const { isAdmin, isManager } = useAuth();
+  const canReadPeople = isAdmin || isManager;
   return useQuery({
-    queryKey: ["buildings-units"],
+    queryKey: ["buildings-units", canReadPeople],
     queryFn: async (): Promise<{ buildings: Building[]; units: Unit[] }> => {
       // Public site reads only the registry's public views: published, non-test units in published buildings.
       const [bRes, uRes, tRes, buRes, aRes, baRes, uaRes] = await Promise.all([
         supabase.from("public_buildings").select("*").order("number"),
         supabase.from("public_units").select("*").order("building_number").order("unit_number").limit(5000),
-        supabase.from("tenants").select("*"),
-        supabase
+        canReadPeople ? supabase.from("tenants").select("*").is("archived_at", null) : Promise.resolve({ data: [], error: null }),
+        canReadPeople ? supabase
           .from("booking_units")
           .select("unit_id, bookings:booking_id(customer_full_name, status, created_at)")
-          .limit(5000),
+          .is("archived_at", null).limit(5000) : Promise.resolve({ data: [], error: null }),
         supabase.from("public_activities").select("*").order("sort_order"),
         supabase.from("public_building_activities").select("*"),
         supabase.from("public_unit_activities").select("*"),
@@ -79,6 +82,7 @@ export const useBuildingsAndUnits = () => {
           activity: u.activity,
           price: Number(u.price),
           status: u.status as "available" | "rented" | "reserved",
+          leasingStatus: u.leasing_status,
           tenant: tenantInfo?.name ?? bookingNameByUnitId.get(u.id)?.name ?? null,
         };
       });

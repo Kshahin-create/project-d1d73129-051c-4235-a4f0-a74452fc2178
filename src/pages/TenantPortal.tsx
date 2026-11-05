@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Building2, Receipt, Lock, User, Loader2 } from "lucide-react";
+import { unitStatusLabel } from "@/lib/unitStatus";
 
 type Unit = {
   id: string;
@@ -15,6 +16,7 @@ type Unit = {
   price: number;
   activity: string | null;
   status: string;
+  leasing_status: string | null;
 };
 type Invoice = {
   id: string;
@@ -152,7 +154,7 @@ export default function TenantPortal() {
                     <Row label="النشاط" value={u.activity || "—"} />
                     <Row label="المساحة" value={`${u.area} م²`} />
                     <Row label="السعر السنوي" value={`${Number(u.price).toLocaleString()} ر.س`} />
-                    <Row label="الحالة" value={u.status === "rented" ? "مؤجرة" : u.status} />
+                    <Row label="الحالة" value={unitStatusLabel(u.leasing_status)} />
                   </dl>
                 </div>
               ))
