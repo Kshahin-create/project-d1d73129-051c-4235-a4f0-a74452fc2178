@@ -254,6 +254,7 @@ export type Database = {
           buildings_sheet_id: string | null
           buildings_sheet_last_direction: string | null
           buildings_sheet_last_sync_at: string | null
+          grace_days: number
           hold_hours: number
           id: number
           leads_sheet_id: string | null
@@ -270,6 +271,7 @@ export type Database = {
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
+          grace_days?: number
           hold_hours?: number
           id?: number
           leads_sheet_id?: string | null
@@ -286,6 +288,7 @@ export type Database = {
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
+          grace_days?: number
           hold_hours?: number
           id?: number
           leads_sheet_id?: string | null
@@ -690,6 +693,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
             referencedColumns: ["id"]
           },
           {
@@ -1343,6 +1353,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
             referencedColumns: ["id"]
           },
           {
@@ -2052,6 +2069,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "receipt_allocations_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_installment_balances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_allocations_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_receipt_scope"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "receipt_allocations_receipt_id_fkey"
             columns: ["receipt_id"]
             isOneToOne: false
@@ -2128,6 +2159,13 @@ export type Database = {
             foreignKeyName: "receipt_legacy_sources_canonical_receipt_id_fkey"
             columns: ["canonical_receipt_id"]
             isOneToOne: false
+            referencedRelation: "metrics_receipt_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_canonical_receipt_id_fkey"
+            columns: ["canonical_receipt_id"]
+            isOneToOne: false
             referencedRelation: "receipt_cash_read"
             referencedColumns: ["id"]
           },
@@ -2136,6 +2174,13 @@ export type Database = {
             columns: ["canonical_receipt_id"]
             isOneToOne: false
             referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_receipt_scope"
             referencedColumns: ["id"]
           },
           {
@@ -2157,6 +2202,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
             referencedColumns: ["id"]
           },
           {
@@ -2282,6 +2334,13 @@ export type Database = {
             columns: ["party_id"]
             isOneToOne: false
             referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: true
+            referencedRelation: "metrics_receipt_scope"
             referencedColumns: ["id"]
           },
           {
@@ -2550,6 +2609,13 @@ export type Database = {
             foreignKeyName: "tenant_account_units_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_account_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -2807,6 +2873,13 @@ export type Database = {
             foreignKeyName: "tenants_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -2918,6 +2991,13 @@ export type Database = {
             foreignKeyName: "unit_activities_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_activities_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -2986,6 +3066,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_audit_log_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
             referencedColumns: ["id"]
           },
           {
@@ -3095,6 +3182,13 @@ export type Database = {
             foreignKeyName: "unit_collections_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_collections_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -3183,6 +3277,13 @@ export type Database = {
             foreignKeyName: "unit_contracts_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_contracts_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -3245,6 +3346,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_files_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
             referencedColumns: ["id"]
           },
           {
@@ -3387,6 +3495,13 @@ export type Database = {
             foreignKeyName: "unit_status_backfill_review_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: true
+            referencedRelation: "metrics_unit_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_status_backfill_review_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: true
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -3453,6 +3568,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_status_history_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
             referencedColumns: ["id"]
           },
           {
@@ -3712,6 +3834,141 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contracts"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      metrics_conversion_events: {
+        Row: {
+          event_id: string | null
+          opportunity_id: string | null
+          reached_at: string | null
+        }
+        Insert: {
+          event_id?: string | null
+          opportunity_id?: never
+          reached_at?: string | null
+        }
+        Update: {
+          event_id?: string | null
+          opportunity_id?: never
+          reached_at?: string | null
+        }
+        Relationships: []
+      }
+      metrics_installment_balances: {
+        Row: {
+          amount_excl_vat: number | null
+          amount_incl_vat: number | null
+          contract_id: string | null
+          contract_status: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string | null
+          paid_excl: number | null
+          paid_vat: number | null
+          party_id: string | null
+          remaining_excl: number | null
+          remaining_vat: number | null
+          sequence_no: number | null
+          status: string | null
+          vat_amount: number | null
+          waived_at: string | null
+          waived_by: string | null
+          waiver_reason: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metrics_receipt_scope: {
+        Row: {
+          allocated_excl: number | null
+          allocated_vat: number | null
+          amount_excl_vat: number | null
+          amount_incl_vat: number | null
+          contract_id: string | null
+          id: string | null
+          paid_at: string | null
+          receipt_no: string | null
+          status: string | null
+          vat_amount: number | null
+          vat_documented: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metrics_unit_scope: {
+        Row: {
+          activity_id: string | null
+          activity_name: string | null
+          area_m2: number | null
+          building_id: string | null
+          building_number: number | null
+          id: string | null
+          leasing_status:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          phase: number | null
+          publish_state: string | null
+          unit_number: number | null
+          unit_type: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "units_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["number"]
+          },
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "public_buildings"
+            referencedColumns: ["number"]
           },
         ]
       }
@@ -4030,6 +4287,13 @@ export type Database = {
             foreignKeyName: "receipts_reverses_id_fkey"
             columns: ["reverses_id"]
             isOneToOne: true
+            referencedRelation: "metrics_receipt_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: true
             referencedRelation: "receipt_cash_read"
             referencedColumns: ["id"]
           },
@@ -4062,6 +4326,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_unit_scope"
             referencedColumns: ["id"]
           },
           {
@@ -4779,6 +5050,21 @@ export type Database = {
           merged_groups: number
         }[]
       }
+      metrics_is_overdue: {
+        Args: { _due: string; _grace: number; _today: string }
+        Returns: boolean
+      }
+      metrics_ratio: {
+        Args: { _denominator: number; _numerator: number }
+        Returns: number
+      }
+      metrics_scope_match: {
+        Args: {
+          _scope: Json
+          _unit: Database["public"]["Views"]["metrics_unit_scope"]["Row"]
+        }
+        Returns: boolean
+      }
       move_opportunity: {
         Args: {
           _lost_to?: string
@@ -4936,6 +5222,10 @@ export type Database = {
       }
       set_contract_state: {
         Args: { _id: string; _reason: string; _status: string }
+        Returns: undefined
+      }
+      set_metrics_settings: {
+        Args: { _grace_days: number; _reason: string }
         Returns: undefined
       }
       set_tenant_account_paid_amount: {
