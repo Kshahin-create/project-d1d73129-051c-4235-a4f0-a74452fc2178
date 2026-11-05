@@ -207,6 +207,7 @@ Deno.serve(async (req) => {
 
     let q: any = admin.from(res.table).select(res.select)
       .order(res.ts, { ascending: true }).order("id", { ascending: true }).limit(limit + 1);
+    if (res.base) q = res.base(q);
     if (since) q = q.gte(res.ts, new Date(since).toISOString());
     if (cursor) q = q.or(`${res.ts}.gt.${cursor.t},and(${res.ts}.eq.${cursor.t},id.gt.${cursor.id})`);
     const bad = invalidFilter(res, url);
