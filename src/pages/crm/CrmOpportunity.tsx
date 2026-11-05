@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { useState } from "react";
 import { Navigate, useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -109,7 +110,7 @@ export default function CrmOpportunity() {
   };
 
   return (
-    <main dir="rtl" className="container-tight space-y-6 py-8">
+    <><Header/><main dir="rtl" className="container-tight space-y-6 py-8">
       {oppQ.isError && <p role="alert" className="text-destructive">تعذر تحميل الفرصة</p>}
       {opp && (
         <>
@@ -199,6 +200,6 @@ export default function CrmOpportunity() {
           </section>
         </>
       )}
-    </main>
+    </main></>
   );
 }

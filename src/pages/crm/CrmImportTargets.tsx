@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -105,7 +106,7 @@ export default function CrmImportTargets() {
   };
 
   return (
-    <main dir="rtl" className="container-tight space-y-5 py-8">
+    <><Header/><main dir="rtl" className="container-tight space-y-5 py-8">
       <h1 className="text-2xl font-bold">استيراد قائمة مستهدفة</h1>
       <p className="text-sm text-muted-foreground">ارفع CSV أو Excel بأعمدة: الاسم، الجوال، نوع الهوية، رقم الهوية، المدينة، ملاحظات. كل صف يصبح عميلًا + فرصة «جديد» بمصدر «قائمة مستهدفة».</p>
       <div className="flex flex-wrap items-center gap-3">
@@ -138,6 +139,6 @@ export default function CrmImportTargets() {
           </TableBody>
         </Table>
       )}
-    </main>
+    </main></>
   );
 }
