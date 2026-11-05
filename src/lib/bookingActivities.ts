@@ -5,7 +5,6 @@ export const BOOKING_ACTIVITIES = [
   { key: "batteries-decor", short: "بطاريات وزينة", title: "بطاريات وزينة السيارات", description: "على وحدات قطع الغيار — مباني 7 إلى 10", marker: "بطاريات", buildings: [7, 8, 9, 10] },
   { key: "tires", short: "البناشر والإطارات", title: "البناشر والإطارات", description: "مباني 7 إلى 10", marker: "بناشر", buildings: [7, 8, 9, 10] },
   { key: "car-wash", short: "مغاسل السيارات", title: "مغاسل السيارات", description: "على وحدات البناشر — مباني 7 إلى 10", marker: "مغسلة", buildings: [7, 8, 9, 10] },
-  { key: "quick-maintenance", short: "صيانة سريعة", title: "خدمات صيانة السيارات السريعة", description: "مباني 12 و13 ومبنى 22", marker: "صيانة سريعة", buildings: [12, 13, 22] },
   { key: "large-maintenance", short: "مراكز صيانة كبيرة", title: "مراكز صيانة السيارات الكبيرة", description: "على وحدات المعارض — مبنى 22", marker: "مركز صيانة", buildings: [22] },
   { key: "restaurants", short: "مطاعم وكافيهات", title: "المطاعم والكافتيريات والكافيهات", description: "مباني 12 و13", marker: "مطعم", buildings: [12, 13] },
   { key: "icecream-juices", short: "آيس كريم وعصيرات", title: "الآيس كريم والعصيرات", description: "مباني 12 و13", marker: "عصيرات", buildings: [12, 13] },
