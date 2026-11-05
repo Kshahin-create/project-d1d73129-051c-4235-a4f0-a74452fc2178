@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { CloudUpload, CloudDownload, ExternalLink, FileSpreadsheet, Loader2, Save } from "lucide-react";
+import { CloudUpload, ExternalLink, FileSpreadsheet, Loader2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export default function AdminSheetsSync() {
   const [lastDir, setLastDir] = useState<string | null>(null);
   const [selected, setSelected] = useState<number[]>(BUILDINGS);
   const [saving, setSaving] = useState(false);
-  const [busy, setBusy] = useState<"push" | "pull" | null>(null);
+  const [busy, setBusy] = useState<"push" | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -58,7 +58,7 @@ export default function AdminSheetsSync() {
     toast({ title: "تم الحفظ" });
   };
 
-  const run = async (action: "push" | "pull") => {
+  const run = async (action: "push") => {
     if (!isAdmin) return;
     if (!originalId) return toast({ title: "احفظ معرّف الشييت أولاً", variant: "destructive" });
     if (selected.length === 0) return toast({ title: "اختر مبنى واحد على الأقل", variant: "destructive" });
@@ -69,17 +69,18 @@ export default function AdminSheetsSync() {
     setBusy(null);
     if (error || (data as any)?.error) {
       return toast({
-        title: action === "push" ? "فشل الرفع للشييت" : "فشل السحب من الشييت",
+        title: "فشل الرفع للشييت",
         description: (data as any)?.error || error?.message,
         variant: "destructive",
       });
     }
     const d = data as any;
     toast({
-      title: action === "push" ? "تم الرفع بنجاح" : "تم السحب بنجاح",
-      description: action === "push"
-        ? `تم رفع ${d.pushed} وحدة على ${selected.length} مبنى`
-        : `تم تحديث ${d.updated} وحدة من أصل ${d.pulled} صف`,
+      title: d.status_errors?.length ? "تم الرفع مع أخطاء في الحالات" : "تم الرفع بنجاح",
+      description: d.status_errors?.length
+        ? `وحدات بحالة غير معروفة: ${d.status_errors.slice(0, 5).join("، ")}`
+        : `تم الرفع على ${selected.length} مبنى`,
+      variant: d.status_errors?.length ? "destructive" : undefined,
     });
     const { data: s } = await supabase
       .from("app_settings")
@@ -164,17 +165,13 @@ export default function AdminSheetsSync() {
           <CardTitle>المزامنة</CardTitle>
           <CardDescription>
             <strong>رفع للشييت:</strong> بيكتب بيانات الوحدات والمستأجرين من السيستم على الشييت (بيمسح اللي فيه ويستبدله).<br />
-            <strong>سحب من الشييت:</strong> بيقرأ الشييت ويحدّث بيانات الوحدات في السيستم (النوع، المساحة، النشاط، السعر، الحالة).
+            السحب من الشييت إلى السيستم متوقف نهائيًا؛ السيستم هو المصدر الوحيد للبيانات.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <Button onClick={() => run("push")} disabled={!isAdmin || busy !== null} size="lg">
             {busy === "push" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
             <span className="mr-2">رفع للشييت</span>
-          </Button>
-          <Button onClick={() => run("pull")} disabled={!isAdmin || busy !== null} size="lg" variant="secondary">
-            {busy === "pull" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4" />}
-            <span className="mr-2">سحب من الشييت</span>
           </Button>
         </CardContent>
       </Card>
