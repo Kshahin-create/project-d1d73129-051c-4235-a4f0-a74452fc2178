@@ -13,6 +13,7 @@ export default function CrmUnassigned() {
   const { isAdmin, isLeasingManager, loading } = useAuth();
   const allowed = isAdmin || isLeasingManager;
   const navigate = useNavigate();
+  const [pages,setPages]=useState({unassigned:0,transfers:0,alerts:0});
   const [bulkFrom, setBulkFrom] = useState("");
   const [bulkTo, setBulkTo] = useState("");
 
@@ -30,30 +31,30 @@ export default function CrmUnassigned() {
   });
 
   const unassignedQ = useQuery({
-    queryKey: ["crm-unassigned"],
+    queryKey: ["crm-unassigned",pages.unassigned],
     enabled: allowed,
     queryFn: async () => {
-      const { data, error } = await supabase.from("opportunities").select("id, stage, source, created_at, parties(name_ar, tenant_code)").is("owner_user_id", null).is("outcome", null).order("created_at").range(0, 99);
+      const { data, error } = await supabase.from("opportunities").select("id, stage, source, created_at, parties(name_ar, tenant_code)").is("owner_user_id", null).is("outcome", null).order("created_at").range(pages.unassigned*25,pages.unassigned*25+24);
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const transfersQ = useQuery({
-    queryKey: ["crm-transfers"],
+    queryKey: ["crm-transfers",pages.transfers],
     enabled: allowed,
     queryFn: async () => {
-      const { data, error } = await supabase.from("transfer_requests").select("*, opportunities(parties(name_ar))").eq("status", "pending").order("created_at").range(0, 49);
+      const { data, error } = await supabase.from("transfer_requests").select("*, opportunities(parties(name_ar))").eq("status", "pending").order("created_at").range(pages.transfers*25,pages.transfers*25+24);
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const alertsQ = useQuery({
-    queryKey: ["crm-alerts"],
+    queryKey: ["crm-alerts",pages.alerts],
     enabled: allowed,
     queryFn: async () => {
-      const { data, error } = await supabase.from("opportunity_alerts").select("*").range(0, 99);
+      const { data, error } = await supabase.from("opportunity_alerts").select("*").range(pages.alerts*25,pages.alerts*25+24);
       if (error) throw error;
       return data ?? [];
     },
@@ -145,6 +146,7 @@ export default function CrmUnassigned() {
         {alertsQ.data?.length === 0 && <p className="text-sm text-muted-foreground">لا تنبيهات</p>}
       </section>
       <Input className="hidden" aria-hidden readOnly />
+      <div className="flex flex-wrap gap-4">{([['unassigned','غير الموزعة',unassignedQ.data],['transfers','طلبات النقل',transfersQ.data],['alerts','التنبيهات',alertsQ.data]] as const).map(([key,label,rows])=><div key={key} className="flex items-center gap-2"><span>{label} · {pages[key]+1}</span><Button variant="outline" disabled={!pages[key]} onClick={()=>setPages(p=>({...p,[key]:p[key]-1}))}>السابق</Button><Button variant="outline" disabled={(rows?.length??0)<25} onClick={()=>setPages(p=>({...p,[key]:p[key]+1}))}>التالي</Button></div>)}</div>
     </main></>
   );
 }

@@ -4276,6 +4276,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_party_units_page: {
+        Args: { _limit?: number; _offset?: number; _party: string }
+        Returns: Json
+      }
       admin_pipeline_page: {
         Args: {
           _limit?: number

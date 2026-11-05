@@ -1,9 +1,11 @@
 # Phase 2 / Prompt 7 — Navigation, record pages, global search
-- [ ] Present affected tables/views/functions/edge functions/files and migration scope; wait for approval before implementation.
-- [ ] Organize six navigation sections, Settings/Developers and compatible redirects; preserve all dashboards until Prompt 8 is verified.
-- [ ] Add linked unit/party/contract/receipt/booking record pages using existing permission-gated Phase 1 data.
-- [ ] Add permission-aware server search and consistent list pagination/sorting/saved filters/columns/audited exports without new business logic.
-- [ ] Verify legacy URLs, role restrictions, real record navigation/search/exports and desktop/mobile layouts; report remaining Phase 1 blockers separately.
+- [x] Present affected tables/views/functions/edge functions/files and migration scope; plan approved.
+- [x] Organize six navigation sections, Settings/Developers and compatible redirects; preserve all dashboards until Prompt 8 is verified.
+- [x] Add linked unit/party/contract/receipt/booking record pages using existing permission-gated Phase 1 data.
+- [x] Add permission-aware server search and shared server list controls; paged directory, tenant accounts, paid tenants, pipeline and party units; audited CSV/XLSX exports and own preferences.
+- [x] Verify admin real record navigation/search, party tabs, 708-row CSV, export audit, legacy developer redirect and desktop/mobile/current viewport; 32 tests and automatic build passed.
+- [ ] Verify dedicated manager/accountant/leasing-manager/sales sessions and real contract/private-file chains — blocked: no selected dedicated role session, no accountant/leasing-manager/sales users and no new contract records.
+- [ ] Finish literal every-list/every-link coverage and saved external-filter restoration on remaining specialized lists — not fully completed in this pass; existing workflows retained.
 
 # Phase 1 / Prompt 6 — Contracts, installments, receipts
 - [x] Approve the plan, separate accountant role and historical precision reconciliation.

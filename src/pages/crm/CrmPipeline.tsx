@@ -29,7 +29,7 @@ type OppRow = {
 };
 
 const PAGE_SIZE = 25;
-const BOARD_STAGES = [...OPEN_STAGES, ...PARKED_STAGES] as const;
+const BOARD_STAGES = [...OPEN_STAGES, "won", ...PARKED_STAGES] as const;
 
 async function fetchOwnerNames(ownerIds: string[]): Promise<Record<string, string>> {
   if (ownerIds.length === 0) return {};
@@ -70,6 +70,7 @@ export default function CrmPipeline() {
   if (!allowed) return <Navigate to="/" replace />;
 
   const move = async (oppId: string, toStage: string) => {
+    if(isManager)return;
     const reason = window.prompt(`سبب النقل إلى «${stageLabel(toStage)}» (5 أحرف على الأقل)`)?.trim();
     if (!reason || reason.length < 5) return;
     let revisitAt: string | null = null;
@@ -103,7 +104,7 @@ export default function CrmPipeline() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      {view==="board"&&<div className="flex flex-wrap gap-3">
         <Input className="max-w-xs" placeholder="بحث بالاسم أو الكود" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         <select className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm" value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); setPage(0); }}>
           <option value="">كل المراحل</option>
@@ -121,14 +122,15 @@ export default function CrmPipeline() {
         
       </div>
 
+      }
       {q.isError && <p role="alert" className="text-destructive">تعذر تحميل الفرص</p>}
 
       {view === "board" && !q.isError && (
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="flex items-start gap-3 overflow-x-auto pb-4">
           {BOARD_STAGES.map((stage) => (
             <div
               key={stage}
-              className="flex w-64 shrink-0 flex-col gap-2 rounded-xl border border-border bg-card p-3"
+              className="flex min-h-48 w-64 shrink-0 flex-col gap-2 rounded-md border border-border bg-card p-3"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -143,7 +145,7 @@ export default function CrmPipeline() {
               {(byStage[stage] ?? []).map((o) => (
                 <button
                   key={o.id}
-                  draggable
+                  draggable={!isManager}
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", o.id)}
                   onClick={() => navigate(`/admin/opportunities/${o.id}`)}
                   className={cn(
@@ -164,7 +166,7 @@ export default function CrmPipeline() {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?new Date(q.dataUpdatedAt).toLocaleString("ar-SA"):"—"}</p>
+      {view==="board"&&<p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?new Date(q.dataUpdatedAt).toLocaleString("ar-SA"):"—"}</p>}
       {view === "board"&&<div className="flex gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>}
       {view === "list" && <AdminServerList spec={adminLists.opportunities} filters={{...(stageFilter?{stage:stageFilter}:{}),...(sourceFilter?{source:sourceFilter}:{}),...(ownerFilter&&ownerFilter!=="none"?{owner_user_id:ownerFilter}:{})}} onFilters={f=>{setStageFilter(f.stage??"");setSourceFilter(f.source??"");setOwnerFilter(f.owner_user_id??"");}}/>}
 

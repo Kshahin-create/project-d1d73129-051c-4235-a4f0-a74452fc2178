@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
@@ -87,7 +88,7 @@ export default function CrmTeamPerformance() {
     <><Header/><main dir="rtl" className="container-tight space-y-5 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">أداء الفريق</h1>
-        <Button variant="outline" onClick={() => exportRowsToExcel(stats.map((s) => ({ الوسيط: name(s.owner), مفتوحة: s.open, مستأجر: s.won, مغلقة_خسارة: s.lost, متابعة_متأخرة: s.overdue, وصلت_للعقد: s.toContract, متوسط_أول_رد_ساعات: s.avgResponse?.toFixed(1) ?? "" })), "أداء-الفريق")}>تصدير</Button>
+        <Button variant="outline" disabled={!oppsQ.isSuccess||!actsQ.isSuccess} onClick={async () => {try{const start=await supabase.rpc("request_admin_export",{_list:"opportunities",_format:"xlsx",_scope:{report:"team_performance"}});if(start.error)throw start.error;exportRowsToExcel(stats.map((s) => ({ الوسيط: name(s.owner), مفتوحة: s.open, مستأجر: s.won, مغلقة_خسارة: s.lost, متابعة_متأخرة: s.overdue, وصلت_للعقد: s.toContract, متوسط_أول_رد_ساعات: s.avgResponse?.toFixed(1) ?? "" })), "أداء-الفريق");const done=await supabase.rpc("complete_admin_export",{_id:String(start.data),_status:"generated",_count:stats.length});if(done.error)throw done.error;}catch(e){toast.error((e as Error).message);}}}>تصدير</Button>
       </div>
       {(oppsQ.isError || actsQ.isError) && <p role="alert" className="text-destructive">تعذر تحميل البيانات</p>}
       <Table>
