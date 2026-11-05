@@ -4442,6 +4442,10 @@ export type Database = {
         Args: { _booking_id: string; _paid_amount: number }
         Returns: undefined
       }
+      set_contract_state: {
+        Args: { _id: string; _reason: string; _status: string }
+        Returns: undefined
+      }
       set_tenant_account_paid_amount: {
         Args: { _paid_amount: number; _tenant_account_id: string }
         Returns: undefined
