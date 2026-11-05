@@ -4460,6 +4460,10 @@ export type Database = {
     Functions: {
       _assert_admin_writer: { Args: never; Returns: undefined }
       _assert_reason: { Args: { _reason: string }; Returns: string }
+      _metrics_snapshot: {
+        Args: { _audience: string; _scope: Json }
+        Returns: Json
+      }
       _safety_audit: {
         Args: {
           _action: string
@@ -5050,10 +5054,19 @@ export type Database = {
           merged_groups: number
         }[]
       }
+      metrics_finance: { Args: { _scope?: Json }; Returns: Json }
+      metrics_inventory: { Args: { _scope?: Json }; Returns: Json }
       metrics_is_overdue: {
         Args: { _due: string; _grace: number; _today: string }
         Returns: boolean
       }
+      metrics_opportunity_matches: {
+        Args: { _id: string; _scope: Json }
+        Returns: boolean
+      }
+      metrics_pending_approvals: { Args: { _scope?: Json }; Returns: Json }
+      metrics_pipeline: { Args: { _scope?: Json }; Returns: Json }
+      metrics_quality: { Args: { _scope?: Json }; Returns: Json }
       metrics_ratio: {
         Args: { _denominator: number; _numerator: number }
         Returns: number
@@ -5065,6 +5078,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      metrics_service_snapshot: { Args: { _scope?: Json }; Returns: Json }
+      metrics_snapshot: { Args: { _scope?: Json }; Returns: Json }
       move_opportunity: {
         Args: {
           _lost_to?: string

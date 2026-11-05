@@ -365,6 +365,13 @@
       "when": 1793917789510,
       "tag": "0051_central_metrics_read_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1793917841830,
+      "tag": "0052_metrics_scoped_snapshots",
+      "breakpoints": true
     }
   ]
 }
