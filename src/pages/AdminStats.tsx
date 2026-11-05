@@ -108,7 +108,7 @@ function StatCard({
   );
 }
 
-const fmt = (n: number) => new Intl.NumberFormat("ar-EG").format(n);
+const fmt = (n: number|null) => n==null?"غير متاح":new Intl.NumberFormat("ar-EG").format(n);
 const fmtMoney = (n: number) =>
   new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 }).format(n) + " ر.س";
 
@@ -235,7 +235,7 @@ const AdminStats = () => {
                 icon={CalendarRange}
                 label={`حجوزات (${days} يوم)`}
                 value={fmt(data.bookings.total)}
-                hint={`الإيراد: ${fmtMoney(data.bookings.totalRevenue)}`}
+                hint="طلبات الحجز المسجلة؛ ليست إيرادًا"
               />
             </div>
 
@@ -246,7 +246,7 @@ const AdminStats = () => {
                 icon={Building2}
                 label="مؤجرة"
                 value={fmt(data.units.rented)}
-                hint={`نسبة الإشغال: ${data.units.occupancy_rate}%`}
+                hint={`نسبة الإشغال من المنشور: ${data.units.occupancy_rate??"غير قابلة للحساب"}% · كل المشروع · آخر تحديث ${new Date(data.generated_at).toLocaleString("ar-SA")}`}
                 tone="success"
               />
               <StatCard

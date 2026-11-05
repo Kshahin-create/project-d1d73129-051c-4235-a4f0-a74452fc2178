@@ -59,7 +59,7 @@ async function isAdminFromRequest(req: Request): Promise<boolean> {
   const { data: roles } = await admin
     .from("user_roles")
     .select("role")
-    .eq("user_id", userId);
+    .eq("user_id", userId).eq("is_active",true);
   return (roles ?? []).some((r) => r.role === "admin");
 }
 
