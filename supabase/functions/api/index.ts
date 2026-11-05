@@ -78,7 +78,7 @@ const UNIT_FIELDS = "id, building_number, unit_number, unit_type, area, activity
 async function listBuildings() {
   const [{ data: buildings, error: be }, { data: units, error: ue }] = await Promise.all([
     admin.from("buildings").select("number, type, expected_annual_revenue, booking_enabled").order("number"),
-    admin.from("units").select("building_number,status").limit(10000),
+    admin.from("units").select("building_number,status").eq("is_test", false).eq("publish_state", "published").limit(10000),
   ]);
   if (be) return err(be.message, 500);
   if (ue) return err(ue.message, 500);
@@ -105,12 +105,12 @@ async function getBuilding(num: number) {
     .select("number, type, expected_annual_revenue, booking_enabled").eq("number", num).maybeSingle();
   if (error) return err(error.message, 500);
   if (!data) return err("Building not found", 404);
-  const { data: units } = await admin.from("units").select(UNIT_FIELDS).eq("building_number", num).order("unit_number");
+  const { data: units } = await admin.from("units").select(UNIT_FIELDS).eq("is_test", false).eq("publish_state", "published").eq("building_number", num).order("unit_number");
   return json({ data: { ...data, units: units ?? [] } });
 }
 
 async function listUnits(url: URL) {
-  let q = admin.from("units").select(UNIT_FIELDS).limit(5000);
+  let q = admin.from("units").select(UNIT_FIELDS).eq("is_test", false).eq("publish_state", "published").limit(5000);
   const status = url.searchParams.get("status");
   const building = url.searchParams.get("building_number");
   const activity = url.searchParams.get("activity");
@@ -123,7 +123,7 @@ async function listUnits(url: URL) {
 }
 
 async function getUnit(id: string) {
-  const { data, error } = await admin.from("units").select(UNIT_FIELDS).eq("id", id).maybeSingle();
+  const { data, error } = await admin.from("units").select(UNIT_FIELDS).eq("is_test", false).eq("publish_state", "published").eq("id", id).maybeSingle();
   if (error) return err(error.message, 500);
   if (!data) return err("Unit not found", 404);
   return json({ data });
@@ -162,7 +162,7 @@ function unitCounts(u: { status: string }[]) {
 
 async function getStats() {
   const [{ data: units }, { data: buildings }] = await Promise.all([
-    admin.from("units").select("status, price").limit(10000),
+    admin.from("units").select("status, price").eq("is_test", false).eq("publish_state", "published").limit(10000),
     admin.from("buildings").select("number"),
   ]);
   const u = (units ?? []) as { status: string; price: number }[];
@@ -187,7 +187,7 @@ async function getOverview(days: number) {
   since.setUTCDate(since.getUTCDate() - days);
   const sinceIso = since.toISOString();
   const [units, buildings, profiles, bookings, emailRows] = await Promise.all([
-    admin.from("units").select("status").limit(10000),
+    admin.from("units").select("status").eq("is_test", false).eq("publish_state", "published").limit(10000),
     admin.from("buildings").select("number"),
     admin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
     admin.from("bookings").select("total_price").gte("created_at", sinceIso),

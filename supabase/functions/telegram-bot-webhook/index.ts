@@ -198,7 +198,7 @@ async function cmdStats(admin: any, token: string, chat_id: number) {
   const [bookingsRes, invoicesRes, unitsRes, unpaidRes] = await Promise.all([
     admin.from("bookings").select("id,status,total_price,paid_amount,created_at").gte("created_at", iso),
     admin.from("invoices").select("id,amount,paid_amount,paid,paid_at,created_at"),
-    admin.from("units").select("status"),
+    admin.from("units").select("status").eq("is_test", false),
     admin.from("invoices").select("amount,paid_amount").eq("paid", false),
   ]);
   const bookings = bookingsRes.data || [];
@@ -243,7 +243,7 @@ async function cmdUnpaid(admin: any, token: string, chat_id: number) {
 }
 
 async function cmdUnits(admin: any, token: string, chat_id: number) {
-  const { data } = await admin.from("units").select("status,building_number");
+  const { data } = await admin.from("units").select("status,building_number").eq("is_test", false);
   const byStatus: Record<string, number> = {};
   const byBuilding: Record<string, { rented: number; available: number; reserved: number }> = {};
   for (const u of data || []) {
@@ -1174,7 +1174,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     const [b, inv, units] = await Promise.all([
       admin.from("bookings").select("status,total_price,paid_amount,created_at"),
       admin.from("invoices").select("amount,paid_amount,paid,paid_at,due_date"),
-      admin.from("units").select("status,price"),
+      admin.from("units").select("status,price").eq("is_test", false),
     ]);
     const B = b.data || [], I = inv.data || [], U = units.data || [];
     return {

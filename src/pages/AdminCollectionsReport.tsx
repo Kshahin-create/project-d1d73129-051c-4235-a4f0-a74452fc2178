@@ -49,6 +49,7 @@ export default function AdminCollectionsReport() {
         supabase
           .from("units")
           .select("id, building_number, unit_number, unit_type, area, price, status")
+          .eq("is_test", false)
           .in("status", ["rented", "booked"])
           .limit(5000),
         supabase

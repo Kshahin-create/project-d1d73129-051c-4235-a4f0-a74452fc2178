@@ -186,6 +186,7 @@ async function fetchUnitStats() {
   const { data: units } = await admin
     .from("units")
     .select("status, price")
+    .eq("is_test", false)
     .limit(5000);
   const u = units ?? [];
   const total = u.length;

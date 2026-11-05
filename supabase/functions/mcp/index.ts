@@ -97,6 +97,7 @@ mcp.tool("list_units", {
       .select(
         "id,building_number,unit_number,unit_type,area,activity,price,status",
       )
+      .eq("is_test", false)
       .order("building_number")
       .order("unit_number")
       .limit(args.limit ?? 100);
@@ -141,6 +142,7 @@ mcp.tool("search_units", {
       .select(
         "id,building_number,unit_number,unit_type,area,activity,price,status",
       )
+      .eq("is_test", false)
       .eq("status", "available")
       .limit(args.limit ?? 50);
     if (args.max_price) q = q.lte("price", args.max_price);
@@ -158,7 +160,7 @@ mcp.tool("stats_overview", {
   inputSchema: z.object({}),
   handler: async () => {
     const [units, bookings, buildings] = await Promise.all([
-      admin.from("units").select("status,price,area"),
+      admin.from("units").select("status,price,area").eq("is_test", false),
       admin.from("bookings").select("status,total_price,units_count"),
       admin.from("buildings").select("expected_annual_revenue"),
     ]);

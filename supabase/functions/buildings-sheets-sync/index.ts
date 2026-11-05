@@ -419,7 +419,7 @@ Deno.serve(async (req) => {
         { data: leads },
         { data: collections },
       ] = await Promise.all([
-        admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").in("building_number", buildings).order("building_number").order("unit_number"),
+        admin.from("units").select("id, building_number, unit_number, unit_type, area, activity, price, status").eq("is_test", false).in("building_number", buildings).order("building_number").order("unit_number"),
         admin.from("tenants").select("id, unit_id, tenant_name, phone, business_name, activity_type, cr_number, start_date, end_date, notes, created_at"),
         admin.from("tenant_account_units").select("unit_id, tenant_account_id"),
         admin.from("tenant_accounts").select("id, full_name, phone, email, business_name, activity_type, cr_number, total_price, paid_amount, notes, created_at").is("merged_into", null),
