@@ -2658,6 +2658,18 @@ export type Database = {
         Returns: boolean
       }
       import_leads: { Args: { _rows: Json }; Returns: number }
+      initialize_unit_leasing_status: {
+        Args: {
+          _reason: string
+          _status: Database["public"]["Enums"]["unit_leasing_status"]
+          _unit_id: string
+        }
+        Returns: undefined
+      }
+      leasing_manager_bookings: {
+        Args: { _limit?: number; _offset?: number; _search?: string }
+        Returns: Json
+      }
       list_my_telegram_links: {
         Args: never
         Returns: {
@@ -2700,6 +2712,18 @@ export type Database = {
         }
         Returns: string
       }
+      register_unit_contract: {
+        Args: {
+          _booking_id: string
+          _ends_on: string
+          _number: string
+          _reason: string
+          _starts_on: string
+          _tenant_account_id: string
+          _unit_id: string
+        }
+        Returns: string
+      }
       remove_booking_units: {
         Args: {
           _booking_id: string
@@ -2722,6 +2746,10 @@ export type Database = {
       }
       set_tenant_account_paid_amount: {
         Args: { _paid_amount: number; _tenant_account_id: string }
+        Returns: undefined
+      }
+      set_unit_contract_state: {
+        Args: { _contract_id: string; _reason: string; _status: string }
         Returns: undefined
       }
       set_unit_status: {
@@ -2757,6 +2785,15 @@ export type Database = {
           is_valid: boolean
           scopes: string[]
         }[]
+      }
+      verify_unit_first_payment: {
+        Args: {
+          _contract_id: string
+          _reason: string
+          _receipt_id: string
+          _receipt_type: string
+        }
+        Returns: string
       }
     }
     Enums: {

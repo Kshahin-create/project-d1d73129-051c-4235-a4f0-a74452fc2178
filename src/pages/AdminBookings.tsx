@@ -207,20 +207,19 @@ const AdminBookings = () => {
   }, [rows]);
 
   const extendExpiry = async (id: string) => {
-    const input = window.prompt("كم ساعة تريد إضافتها لمدة الحجز؟", "24");
-    if (!input) return;
-    const hours = parseInt(input, 10);
-    if (!Number.isFinite(hours) || hours <= 0) {
-      toast.error("أدخل عدد ساعات صحيح");
+    const reason = window.prompt("سبب تمديد الحجز (5 أحرف على الأقل)")?.trim();
+    if (!reason) return;
+    if (reason.length < 5) {
+      toast.error("السبب لا يقل عن 5 أحرف");
       return;
     }
-    const { data, error } = await supabase.rpc("extend_booking_expiry" as any, {
+    const { data, error } = await supabase.rpc("extend_booking_hold", {
       _booking_id: id,
-      _hours: hours,
+      _reason: reason,
     });
     if (error) toast.error("فشل التمديد: " + error.message);
     else {
-      toast.success(`تم التمديد ${hours} ساعة`);
+      toast.success("تم تمديد الحجز وفق إعدادات النظام");
       load();
     }
   };
@@ -614,7 +613,7 @@ const AdminBookings = () => {
                       return (
                         <div className={`mt-2 rounded-lg p-2 text-center text-xs font-semibold ${expired ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-700"}`}>
                           {expired
-                            ? "⏰ انتهت صلاحية الحجز (48 ساعة)"
+                            ? "⏰ انتهت صلاحية الحجز"
                             : <>⏰ ينتهي خلال <span className="num">{hours}</span> س <span className="num">{mins}</span> د</>}
                         </div>
                       );
@@ -654,7 +653,7 @@ const AdminBookings = () => {
                             onClick={() => confirmBooking(b)}
                             className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/10 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
                           >
-                            <CheckCircle2 className="h-3 w-3" /> تأكيد ونقل للمؤجرين
+                            <CheckCircle2 className="h-3 w-3" /> تأكيد الطلب وانتظار العقد
                           </button>
                           <button
                             onClick={() => cancelBooking(b.id)}
