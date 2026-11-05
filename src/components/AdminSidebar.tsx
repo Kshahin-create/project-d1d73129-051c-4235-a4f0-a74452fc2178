@@ -197,7 +197,7 @@ export const AdminSidebar = () => {
   return (
     <>
       {/* Mobile open button — bottom-right for RTL */}
-      <Button
+      <Button variant="ghost"
         onClick={() => setMobileOpen(true)}
         className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg lg:hidden"
         aria-label="فتح القائمة"
@@ -228,7 +228,7 @@ export const AdminSidebar = () => {
           {!collapsed && (
             <span className="truncate text-sm font-bold">{title}</span>
           )}
-          <Button
+          <Button variant="ghost"
             onClick={() => setCollapsed((c) => !c)}
             className="hidden h-7 w-7 items-center justify-center rounded-md hover:bg-secondary lg:inline-flex"
             aria-label="طي القائمة"
@@ -239,7 +239,7 @@ export const AdminSidebar = () => {
               <ChevronRight className="h-4 w-4" />
             )}
           </Button>
-          <Button
+          <Button variant="ghost"
             onClick={() => setMobileOpen(false)}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-secondary lg:hidden"
             aria-label="إغلاق"
@@ -284,7 +284,7 @@ export const AdminSidebar = () => {
 
             return (
               <div key={group.id} className="flex flex-col">
-                <Button
+                <Button variant="ghost"
                   type="button"
                   onClick={() =>
                     setOpenGroups((p) => ({ ...p, [group.id]: !isOpen }))
@@ -345,7 +345,7 @@ export const AdminSidebar = () => {
         <div className="border-t border-border p-2">
           {user ? (
             <>
-              <Button
+              <Button variant="ghost"
                 onClick={handleSignOut}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10"
                 title="تسجيل الخروج"

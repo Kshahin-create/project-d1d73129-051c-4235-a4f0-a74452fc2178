@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { PageMetadata } from "@/components/PageMetadata";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { legacyAdminRoutes, redirectedAdminHref } from "@/lib/adminNavigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -77,7 +77,7 @@ function AdminOnly({children}: {children: React.ReactNode}) {
 
 function PublicFloatingContact() {
   const { pathname } = useLocation();
-  return pathname === '/dashboard' ? null : <FloatingWhatsApp />;
+  return pathname === "/dashboard" || pathname.startsWith("/admin") || pathname.startsWith("/crm") || pathname === "/control" ? null : <FloatingWhatsApp />;
 }
 
 const App = () => (
