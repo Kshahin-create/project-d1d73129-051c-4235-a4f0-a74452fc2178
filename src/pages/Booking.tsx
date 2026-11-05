@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
 import { fmtNum } from "@/lib/utils";
-import { bookingRedirect, parseBookingActivity } from "@/lib/bookingActivities";
+import { bookingRedirect, parseBookingActivity, unitAllowedForActivity } from "@/lib/bookingActivities";
 import { Button } from "@/components/ui/button";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{svg,png,jpg,jpeg}", {
@@ -71,6 +71,10 @@ const Booking = () => {
   const { data, isLoading, isError, refetch } = useBuildingsAndUnits();
   const buildings = data?.buildings ?? [];
   const units = data?.units ?? [];
+
+  useEffect(() => {
+    setSelectedUnits((previous) => previous.filter((unit) => unitAllowedForActivity(unit, activityFilter)));
+  }, [activityFilter]);
 
   // Fetch saved customer profile when user logs in
   useEffect(() => {
@@ -146,7 +150,7 @@ const Booking = () => {
   };
 
   const handleUnitToggle = (u: Unit) => {
-    if (u.status === "rented" || u.status === "reserved") return;
+    if (u.status !== "available" || !unitAllowedForActivity(u, activityFilter)) return;
     setSelectedUnits((prev) => {
       const exists = prev.some((p) => p.unitNumber === u.unitNumber && p.buildingNumber === u.buildingNumber);
       if (exists) {
@@ -219,6 +223,10 @@ const Booking = () => {
   // إنشاء الحجز في قاعدة البيانات (تغيير حالة الوحدات إلى محجوزة)
   const createBookingInDb = async (): Promise<string | null> => {
     if (!user || !customer || selectedUnits.length === 0) return null;
+    if (selectedUnits.some((unit) => !unitAllowedForActivity(unit, activityFilter))) {
+      toast.error("بعض الوحدات غير متاحة للنشاط المختار");
+      return null;
+    }
     if (bookingId) return bookingId; // موجود بالفعل
     setCreatingBooking(true);
     const { data: newId, error } = await supabase.rpc("create_booking", {
@@ -454,6 +462,7 @@ const Booking = () => {
                 <UnitGrid
                   buildingNumber={selectedBuilding.number}
                   units={buildingUnits}
+                  activity={activityFilter}
                   selectedUnits={selectedUnitNumbers}
                   onSelect={handleUnitToggle}
                   planImage={getPlanImage(selectedBuilding.number)}

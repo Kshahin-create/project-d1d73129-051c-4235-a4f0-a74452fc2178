@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingRedirect, classifyBookingActivity, countAvailableUnits, parseBookingActivity } from "./bookingActivities";
+import { bookingRedirect, classifyBookingActivity, countAvailableUnits, parseBookingActivity, unitAllowedForActivity, countActivityAvailableUnits } from "./bookingActivities";
 
 describe("booking activity scopes", () => {
   it("offers independent carpentry and smithing scopes", () => {
@@ -43,5 +43,29 @@ describe("owner activity-to-building mapping", () => {
     expect([7, 12, 13, 14].filter(n => buildingInActivity({ number: n, type: "" }, "restaurants"))).toEqual([12, 13]);
     expect([13, 14, 19, 20].filter(n => buildingInActivity({ number: n, type: "" }, "glass"))).toEqual([14, 19]);
     expect([12, 22, 21].filter(n => buildingInActivity({ number: n, type: "" }, "quick-maintenance"))).toEqual([12, 22]);
+  });
+});
+
+describe("red tyre and car-wash units", () => {
+  const expected = { 7: [75, 85, 86, 96], 8: [97, 107, 108, 118], 9: [119, 128, 129, 138], 10: [139, 148, 149, 158] };
+  it.each(["tires", "car-wash"] as const)("allows only red units for %s in buildings 7–10", (activity) => {
+    for (const [building, numbers] of Object.entries(expected)) {
+      const buildingNumber = Number(building);
+      const allNumbers = Array.from({ length: buildingNumber < 9 ? 22 : 20 }, (_, i) => numbers[0] + i);
+      expect(allNumbers.filter(unitNumber => unitAllowedForActivity({ buildingNumber, unitNumber }, activity))).toEqual(numbers);
+    }
+    expect(unitAllowedForActivity({ buildingNumber: 11, unitNumber: 139 }, activity)).toBe(false);
+  });
+  it("keeps existing rented and reserved red units unavailable", () => {
+    expect(countActivityAvailableUnits([
+      { buildingNumber: 7, unitNumber: 75, status: "rented" },
+      { buildingNumber: 7, unitNumber: 85, status: "available" },
+      { buildingNumber: 7, unitNumber: 86, status: "reserved" },
+      { buildingNumber: 7, unitNumber: 87, status: "available" },
+    ], "car-wash")).toBe(1);
+  });
+  it("does not reserve spare-parts units for other activities", () => {
+    expect(unitAllowedForActivity({ buildingNumber: 7, unitNumber: 87 }, "parts")).toBe(true);
+    expect(unitAllowedForActivity({ buildingNumber: 7, unitNumber: 87 }, null)).toBe(true);
   });
 });

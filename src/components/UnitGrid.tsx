@@ -7,6 +7,7 @@ import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingP
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
+import { unitAllowedForActivity, type BookingActivity } from "@/lib/bookingActivities";
 
 interface UnitGridProps {
   buildingNumber: number;
@@ -16,6 +17,7 @@ interface UnitGridProps {
   onSelect: (unit: Unit) => void;
   /** Optional building plan image. Add PNGs to src/assets/plans/ as building-{n}.png */
   planImage?: string;
+  activity?: BookingActivity | null;
 }
 
 const sectionImages = import.meta.glob("@/assets/plans/section-*.svg", {
@@ -64,6 +66,7 @@ const UnitGridSection = ({
   planImage,
   layoutOverride,
   planLabel,
+  activity,
 }: UnitGridProps & { layoutOverride?: PlanLayout; planLabel?: string }) => {
   const [zoomed, setZoomed] = useState(false);
   const [hoveredUnit, setHoveredUnit] = useState<number | null>(null);
@@ -78,11 +81,12 @@ const UnitGridSection = ({
     layout?.units.map((area) => {
       const unit = unitsByNumber.get(area.unitNumber);
       if (!unit) return null;
+      const activityReserved = !unitAllowedForActivity(unit, activity);
       const rawRented = unit.status === "rented";
       const rawReserved = unit.status === "reserved";
-      const isRented = canDistinguish ? rawRented : (rawRented || rawReserved);
-      const isReserved = canDistinguish ? rawReserved : false;
-      const isLocked = rawRented || rawReserved;
+      const isRented = !activityReserved && (canDistinguish ? rawRented : (rawRented || rawReserved));
+      const isReserved = activityReserved || (canDistinguish && rawReserved);
+      const isLocked = activityReserved || rawRented || rawReserved;
       const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
 
@@ -194,7 +198,7 @@ const UnitGridSection = ({
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
         <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
-        {canDistinguish && (
+        {(canDistinguish || activity === "tires" || activity === "car-wash") && (
           <LegendDot colorClass="bg-foreground/80 border-2 border-foreground text-background" label="محجوز" icon={<Lock className="h-3 w-3" />} />
         )}
         <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label={canDistinguish ? "مؤجر" : "غير متاح"} icon={<Lock className="h-3 w-3" />} />
@@ -205,11 +209,12 @@ const UnitGridSection = ({
         <h4 className="mb-3 font-display font-bold">أو اختر رقم الوحدة من القائمة</h4>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
+            const activityReserved = !unitAllowedForActivity(u, activity);
             const rawRented = u.status === "rented";
             const rawReserved = u.status === "reserved";
-            const isRented = canDistinguish ? rawRented : (rawRented || rawReserved);
-            const isReserved = canDistinguish ? rawReserved : false;
-            const isLocked = rawRented || rawReserved;
+            const isRented = !activityReserved && (canDistinguish ? rawRented : (rawRented || rawReserved));
+            const isReserved = activityReserved || (canDistinguish && rawReserved);
+            const isLocked = activityReserved || rawRented || rawReserved;
             const isSelected = selectedSet.has(u.unitNumber);
             const isCorner = u.unitType === "ركنية";
             return (

@@ -49,3 +49,26 @@ export function bookingRedirect(activity: BookingActivity | null): string {
 export function countAvailableUnits(units: ReadonlyArray<{ status: string }>): number {
   return units.filter((unit) => unit.status === "available").length;
 }
+
+// Owner's red corner units; also recorded as بنشر / مغسلة سيارات in the unit sheet.
+export const TYRE_WASH_UNITS: Readonly<Record<number, readonly number[]>> = {
+  7: [75, 85, 86, 96],
+  8: [97, 107, 108, 118],
+  9: [119, 128, 129, 138],
+  10: [139, 148, 149, 158],
+};
+
+export function unitAllowedForActivity(
+  unit: { buildingNumber: number; unitNumber: number },
+  activity: BookingActivity | null | undefined,
+): boolean {
+  if (activity !== "tires" && activity !== "car-wash") return true;
+  return TYRE_WASH_UNITS[unit.buildingNumber]?.includes(unit.unitNumber) ?? false;
+}
+
+export function countActivityAvailableUnits(
+  units: ReadonlyArray<{ buildingNumber: number; unitNumber: number; status: string }>,
+  activity: BookingActivity,
+): number {
+  return units.filter((unit) => unit.status === "available" && unitAllowedForActivity(unit, activity)).length;
+}
