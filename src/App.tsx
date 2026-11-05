@@ -2,7 +2,9 @@ import { lazy, Suspense } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { PageMetadata } from "@/components/PageMetadata";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { legacyAdminRoutes, redirectedAdminHref } from "@/lib/adminNavigation";
+import { useAuth } from "@/hooks/useAuth";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -58,13 +60,24 @@ const CrmTeamPerformance = lazy(() => import("./pages/crm/CrmTeamPerformance.tsx
 const CrmImportTargets = lazy(() => import("./pages/crm/CrmImportTargets.tsx"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup.tsx"));
 const AdminBookingControl = lazy(() => import("./pages/AdminBookingControl.tsx"));
+const AdminRecord = lazy(() => import("./pages/AdminRecord.tsx"));
+const AdminWorkspace = lazy(() => import("./pages/AdminWorkspace.tsx"));
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
 
 const queryClient = new QueryClient();
+function LegacyAdminRedirect() {
+  const location = useLocation();
+  return <Navigate replace to={redirectedAdminHref(location.pathname, location.search, location.hash) ?? "/admin"} />;
+}
+function AdminOnly({children}: {children: React.ReactNode}) {
+  const auth = useAuth();
+  if (auth.loading) return null;
+  return auth.isAdmin ? <>{children}</> : <Navigate to="/auth" replace />;
+}
 
 function PublicFloatingContact() {
   const { pathname } = useLocation();
-  return pathname === '/dashboard' ? null : <FloatingWhatsApp />;
+  return pathname === "/dashboard" || pathname.startsWith("/admin") || pathname.startsWith("/crm") || pathname === "/control" ? null : <FloatingWhatsApp />;
 }
 
 const App = () => (
@@ -94,11 +107,12 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/telegram" element={<TelegramSettings />} />
-          <Route path="/admin/api-keys" element={<AdminApiKeys />} />
+          {Object.keys(legacyAdminRoutes).map(path => <Route key={path} path={path} element={<LegacyAdminRedirect />} />)}
+          <Route path="/admin/settings/developers/api-keys" element={<AdminOnly><AdminApiKeys /></AdminOnly>} />
           <Route path="/admin/campaigns" element={<AdminCampaigns />} />
-          <Route path="/admin/stats" element={<AdminStats />} />
-          <Route path="/api-docs" element={<ApiDocs />} />
-          <Route path="/mcp" element={<Mcp />} />
+          <Route path="/admin/settings/developers/stats" element={<AdminOnly><AdminStats /></AdminOnly>} />
+          <Route path="/admin/settings/developers/api-docs" element={<AdminOnly><ApiDocs /></AdminOnly>} />
+          <Route path="/admin/settings/developers/mcp" element={<AdminOnly><Mcp /></AdminOnly>} />
           <Route path="/control" element={<ControlDashboard />} />
           <Route path="/how-to-book" element={<HowToBook />} />
           <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
@@ -121,12 +135,15 @@ const App = () => (
           <Route path="/admin/units-incomplete" element={<AdminUnitsIncomplete />} />
           <Route path="/admin/unit-status-review" element={<AdminUnitStatusReview />} />
           <Route path="/leasing/holds" element={<LeasingHolds />} />
-          <Route path="/crm" element={<CrmPipeline />} />
-          <Route path="/crm/party/:id" element={<CrmParty />} />
-          <Route path="/crm/opportunity/:id" element={<CrmOpportunity />} />
-          <Route path="/crm/unassigned" element={<CrmUnassigned />} />
-          <Route path="/crm/team" element={<CrmTeamPerformance />} />
-          <Route path="/crm/import" element={<CrmImportTargets />} />
+          <Route path="/crm/party/:id" element={<LegacyAdminRedirect />} />
+          <Route path="/crm/opportunity/:id" element={<LegacyAdminRedirect />} />
+          <Route path="/admin/opportunities" element={<CrmPipeline />} />
+          <Route path="/admin/opportunities/:id" element={<CrmOpportunity />} />
+          <Route path="/admin/opportunities/unassigned" element={<CrmUnassigned />} />
+          <Route path="/admin/opportunities/team" element={<CrmTeamPerformance />} />
+          <Route path="/admin/opportunities/import" element={<CrmImportTargets />} />
+          {["units","parties","installments"].map(kind=><Route key={kind} path={`/admin/${kind}`} element={<AdminWorkspace />} />)}
+          {["units","parties","contracts","receipts","bookings"].map(kind=><Route key={kind} path={`/admin/${kind}/:id`} element={<AdminRecord />} />)}
           <Route path="/admin/backup" element={<AdminBackup />} />
           <Route path="/admin/booking-control" element={<AdminBookingControl />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

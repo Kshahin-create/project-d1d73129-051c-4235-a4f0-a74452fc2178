@@ -1,11 +1,14 @@
 import { Phone, LogIn } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 import { COMPANY, CONTACT } from "@/lib/config";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo-nukhbat.webp";
 
 export const Header = () => {
   const { user, loading } = useAuth();
+  const { pathname } = useLocation();
+  const administration = pathname.startsWith("/admin") || pathname.startsWith("/crm") || pathname === "/dashboard" || pathname === "/control";
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-lg">
       <div className="container-tight flex h-16 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-4">
@@ -27,6 +30,7 @@ export const Header = () => {
         </Link>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {administration && <AdminGlobalSearch />}
           {!loading && !user && (
             <Link
               to="/auth"

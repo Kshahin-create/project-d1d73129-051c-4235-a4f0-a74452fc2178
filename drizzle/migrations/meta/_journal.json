@@ -302,6 +302,20 @@
       "when": 1793910950448,
       "tag": "0042_finance_outer_writer_lock_and_receipt_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793911786279,
+      "tag": "0043_admin_navigation_preferences_exports",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793912029688,
+      "tag": "0044_admin_directory_paged_read",
+      "breakpoints": true
     }
   ]
 }
