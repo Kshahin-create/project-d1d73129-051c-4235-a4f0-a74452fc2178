@@ -50,6 +50,7 @@ type ExtLink = {
   leasingOnly?: boolean;
   crmOnly?: boolean;
   crmManagerOnly?: boolean;
+  financeOnly?: boolean;
 };
 
 type LinkGroup = {
@@ -60,6 +61,13 @@ type LinkGroup = {
 };
 
 const groups: LinkGroup[] = [
+  { id: "finance", label: "العقود والمحاسبة", Icon: Banknote, links: [
+    { to: "/admin/contracts", label: "العقود", Icon: ClipboardList, financeOnly: true },
+    { to: "/admin/receipts", label: "الإيصالات", Icon: Banknote, financeOnly: true },
+    { to: "/admin/settings/payment-plans", label: "خطط السداد", Icon: CalendarRange, financeOnly: true },
+    { to: "/admin/receipt-reconciliation", label: "مطابقة التحصيلات", Icon: FileSpreadsheet, financeOnly: true },
+    { to: "/admin/receipt-review", label: "مراجعة المصادر القديمة", Icon: History, financeOnly: true },
+  ] },
   {
     id: "general",
     label: "عام",
@@ -138,7 +146,7 @@ const groups: LinkGroup[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, user, loading } = useAuth();
+  const { isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -181,11 +189,12 @@ export const AdminSidebar = () => {
       (!l.leasingOnly || isLeasingManager) &&
       (!l.crmOnly || isAdmin || isManager || isLeasingManager || isSalesAgent) &&
       (!l.crmManagerOnly || isAdmin || isLeasingManager) &&
+      (!l.financeOnly || isAdmin || isManager || isAccountant || isLeasingManager) &&
       (!l.authOnly || !!user);
     return groups
       .map((g) => ({ ...g, links: g.links.filter(canSee) }))
       .filter((g) => g.links.length > 0);
-  }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, user]);
+  }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, user]);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   useEffect(() => {
