@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logAccess } from "@/lib/accessLog";
 import type { Session, User } from "@supabase/supabase-js";
@@ -16,11 +16,14 @@ export const useAuth = () => {
   const [isInvestor,setIsInvestor]=useState(false);
   const [isAccountant, setIsAccountant] = useState(false);
   const [permissions,setPermissions]=useState<Record<string,string[]>>({});
+  const activeUser=useRef<string|null>(null);
 
   useEffect(() => {
     const fetchRoles = async (uid: string) => {
-      await supabase.rpc('accept_my_staff_invitation');
-      const {data}=await supabase.rpc('my_permissions');
+      const accepted=await supabase.rpc('accept_my_staff_invitation');
+      if(accepted.error||activeUser.current!==uid)return;
+      const {data,error}=await supabase.rpc('my_permissions');
+      if(error||activeUser.current!==uid)return;
       const result=data as unknown as {roles:string[];permissions:{capability:string;levels:string[]}[]}|null;
       const roles=result?.roles??[];
       setPermissions(Object.fromEntries((result?.permissions??[]).map(p=>[p.capability,p.levels])));
@@ -35,6 +38,10 @@ export const useAuth = () => {
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
+      activeUser.current=sess?.user.id??null;
+      setPermissions({});
+      setIsAdmin(false);setIsControl(false);setIsManager(false);setIsTenant(false);
+      setIsLeasingManager(false);setIsSalesAgent(false);setIsAccountant(false);setIsInvestor(false);
       setSession(sess);
       setUser(sess?.user ?? null);
       if (event === "SIGNED_IN" && sess?.user) {
@@ -64,6 +71,7 @@ export const useAuth = () => {
     });
 
     supabase.auth.getSession().then(async ({ data }) => {
+      activeUser.current=data.session?.user.id??null;
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
