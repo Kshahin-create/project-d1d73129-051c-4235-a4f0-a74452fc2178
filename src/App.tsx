@@ -45,6 +45,7 @@ const AdminLeads = lazy(() => import("./pages/AdminLeads.tsx"));
 const AdminInterested = lazy(() => import("./pages/AdminInterested.tsx"));
 const AdminSheetsSync = lazy(() => import("./pages/AdminSheetsSync.tsx"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup.tsx"));
+const AdminBookingControl = lazy(() => import("./pages/AdminBookingControl.tsx"));
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
 
 const queryClient = new QueryClient();
