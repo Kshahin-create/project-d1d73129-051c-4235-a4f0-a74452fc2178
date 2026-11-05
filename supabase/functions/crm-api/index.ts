@@ -40,8 +40,9 @@ const R: Record<string, Resource> = {
     pii: [], finance: ["expected_annual_revenue"], filters: { type: "text", number: "int" },
   },
   units: {
-    table: "units", select: "id,building_number,unit_number,unit_type,activity,area,price,status,created_at,updated_at", ts: "updated_at",
-    pii: [], finance: [], filters: { status: "text", building_number: "int", activity: "text", unit_type: "text" },
+    table: "units", select: "id,building_number,unit_number,unit_type,activity,area,price,status,publish_state,created_at,updated_at", ts: "updated_at",
+    pii: [], finance: [], filters: { status: "text", building_number: "int", activity: "text", unit_type: "text", publish_state: "text" },
+    base: (q: any) => q.eq("is_test", false), // test units are never exposed
   },
   bookings: {
     table: "bookings",
@@ -189,7 +190,9 @@ Deno.serve(async (req) => {
     if (need && !scopes.includes(need)) return fail("forbidden", `Resource requires '${need}' scope`, 403);
 
     if (m[2]) {
-      const { data, error } = await admin.from(res.table).select(res.select).eq("id", m[2]).maybeSingle();
+      let one: any = admin.from(res.table).select(res.select).eq("id", m[2]);
+      if (res.base) one = res.base(one);
+      const { data, error } = await one.maybeSingle();
       if (error) throw error;
       if (!data) return fail("not_found", "Record not found", 404);
       return json({ data: shape(res, data as any, scopes) });
