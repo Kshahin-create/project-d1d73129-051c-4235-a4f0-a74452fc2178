@@ -330,6 +330,13 @@
       "when": 1793912705741,
       "tag": "0046_admin_unit_timeline_read",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793912829816,
+      "tag": "0047_admin_paid_tenants_paged_read",
+      "breakpoints": true
     }
   ]
 }

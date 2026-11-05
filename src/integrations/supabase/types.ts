@@ -4266,6 +4266,16 @@ export type Database = {
         Args: { _canonical_id: string; _duplicate_ids: string[] }
         Returns: Json
       }
+      admin_paid_tenants_page: {
+        Args: {
+          _ascending?: boolean
+          _limit?: number
+          _offset?: number
+          _search?: string
+          _sort?: string
+        }
+        Returns: Json
+      }
       admin_set_building_registry: {
         Args: {
           _building_number: number
