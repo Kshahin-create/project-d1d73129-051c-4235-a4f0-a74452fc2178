@@ -37,6 +37,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { activeAdminGroup } from "@/lib/adminNavigation";
+import { Button } from "@/components/ui/button";
 
 type ExtLink = {
   to: string;
@@ -61,88 +63,55 @@ type LinkGroup = {
 };
 
 const groups: LinkGroup[] = [
-  { id: "finance", label: "العقود والمحاسبة", Icon: Banknote, links: [
-    { to: "/admin/contracts", label: "العقود", Icon: ClipboardList, financeOnly: true },
-    { to: "/admin/receipts", label: "الإيصالات", Icon: Banknote, financeOnly: true },
-    { to: "/admin/settings/payment-plans", label: "خطط السداد", Icon: CalendarRange, financeOnly: true },
-    { to: "/admin/receipt-reconciliation", label: "مطابقة التحصيلات", Icon: FileSpreadsheet, financeOnly: true },
-    { to: "/admin/receipt-review", label: "مراجعة المصادر القديمة", Icon: History, financeOnly: true },
-  ] },
-  {
-    id: "general",
-    label: "عام",
-    Icon: Compass,
-    links: [
-      { to: "/", label: "الرئيسية", Icon: Home },
-      { to: "/booking", label: "احجز وحدتك", Icon: CalendarRange },
-      { to: "/profile", label: "حسابي", Icon: User, authOnly: true },
-      { to: "/tenant", label: "وحداتي وفواتيري", Icon: ClipboardList, tenantOnly: true },
-    ],
-  },
-  {
-    id: "dashboards",
-    label: "اللوحات",
-    Icon: LayoutDashboard,
-    links: [
-      { to: "/dashboard", label: "الداشبورد العام", Icon: LayoutDashboard, managerOnly: true },
-      { to: "/admin", label: "لوحة الأدمن", Icon: Shield, adminOnly: true },
-      { to: "/control", label: "لوحة الكنترول", Icon: Wrench, controlOnly: true },
-    ],
-  },
-  {
-    id: "operations",
-    label: "العمليات",
-    Icon: Briefcase,
-    links: [
-      { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
-      { to: "/leasing/holds", label: "تمديد الحجوزات", Icon: CalendarRange, leasingOnly: true },
-      { to: "/admin/booking-control", label: "التحكم في الحجز", Icon: Building2, managerOnly: true },
-      { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
-      { to: "/admin/paid-tenants", label: "المسددون", Icon: BadgeCheck, managerOnly: true },
-      { to: "/admin/collections-report", label: "تقرير التحصيلات", Icon: Banknote, managerOnly: true },
-      { to: "/admin/interested", label: "المهتمون", Icon: MessageCircle, managerOnly: true },
-      { to: "/admin/sheets-sync", label: "مزامنة الشييت", Icon: FileSpreadsheet, managerOnly: true },
-      { to: "/admin/leads", label: "المستهدفون", Icon: MessageCircle, adminOnly: true },
-      { to: "/admin/campaigns", label: "الحملات الإعلانية", Icon: MessageCircle, adminOnly: true },
-    ],
-  },
-  {
-    id: "crm",
-    label: "المبيعات والعملاء",
-    Icon: Users,
-    links: [
-      { to: "/crm", label: "لوحة الفرص", Icon: Briefcase, crmOnly: true },
-      { to: "/crm/import", label: "استيراد قائمة مستهدفة", Icon: FileSpreadsheet, crmOnly: true },
-      { to: "/crm/unassigned", label: "غير موزّعة وطلبات النقل", Icon: ClipboardList, crmManagerOnly: true },
-      { to: "/crm/team", label: "أداء الفريق", Icon: Activity, crmManagerOnly: true },
-    ],
-  },
-  {
-    id: "system",
-    label: "النظام",
-    Icon: Settings2,
-    links: [
-      { to: "/admin/settings/activities", label: "الأنشطة والمباني", Icon: Building2, managerOnly: true },
-      { to: "/admin/settings/unit-import", label: "استيراد الوحدات", Icon: FileSpreadsheet, managerOnly: true },
-      { to: "/admin/units-incomplete", label: "وحدات تحتاج استكمال", Icon: ClipboardList, managerOnly: true },
-      { to: "/admin/unit-status-review", label: "مراجعة حالات الوحدات", Icon: ClipboardList, managerOnly: true },
-      { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
-      { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
-      { to: "/admin/access-log", label: "سجل الدخول والأجهزة", Icon: Globe2, adminOnly: true },
-      { to: "/admin/backup", label: "نسخ احتياطي", Icon: Database, adminOnly: true },
-    ],
-  },
-  {
-    id: "developers",
-    label: "المطورون",
-    Icon: Terminal,
-    links: [
-      { to: "/admin/stats", label: "إحصائيات السيرفر", Icon: Activity, adminOnly: true },
-      { to: "/admin/api-keys", label: "مفاتيح الـ API", Icon: KeyRound, adminOnly: true },
-      { to: "/api-docs", label: "توثيق الـ API", Icon: Code2, adminOnly: true },
-      { to: "/mcp", label: "خادم MCP", Icon: Bot, adminOnly: true },
-    ],
-  },
+  {id:"home",label:"الرئيسية",Icon:Home,links:[
+    {to:"/dashboard",label:"الملخص التنفيذي",Icon:LayoutDashboard,managerOnly:true},
+    {to:"/admin",label:"لوحة الأدمن",Icon:Shield,adminOnly:true},
+    {to:"/control",label:"لوحة الكنترول",Icon:Wrench,controlOnly:true},
+  ]},
+  {id:"units",label:"الوحدات",Icon:Building2,links:[
+    {to:"/admin/units",label:"الخريطة والوحدات",Icon:Building2,controlOnly:true},
+    {to:"/admin/units-incomplete",label:"وحدات تحتاج استكمال",Icon:ClipboardList,managerOnly:true},
+    {to:"/admin/unit-status-review",label:"مراجعة حالات الوحدات",Icon:History,managerOnly:true},
+  ]},
+  {id:"customers",label:"العملاء والحجوزات",Icon:Users,links:[
+    {to:"/admin/parties",label:"العملاء",Icon:Users,crmOnly:true},
+    {to:"/admin/opportunities",label:"لوحة الفرص",Icon:Briefcase,crmOnly:true},
+    {to:"/admin/bookings",label:"الحجوزات",Icon:CalendarRange,managerOnly:true},
+    {to:"/leasing/holds",label:"تمديد الحجوزات",Icon:CalendarRange,leasingOnly:true},
+    {to:"/admin/opportunities/unassigned",label:"غير موزعة وطلبات النقل",Icon:ClipboardList,crmManagerOnly:true},
+    {to:"/admin/opportunities/team",label:"أداء الفريق",Icon:Activity,crmManagerOnly:true},
+    {to:"/admin/opportunities/import",label:"القائمة المستهدفة",Icon:FileSpreadsheet,crmOnly:true},
+    {to:"/admin/interested",label:"المهتمون",Icon:MessageCircle,managerOnly:true},
+    {to:"/admin/leads",label:"المستهدفون",Icon:MessageCircle,adminOnly:true},
+    {to:"/admin/campaigns",label:"الحملات",Icon:MessageCircle,adminOnly:true},
+  ]},
+  {id:"tenants",label:"المستأجرون والعقود",Icon:ClipboardList,links:[
+    {to:"/admin/tenant-accounts",label:"المستأجرون",Icon:Users,managerOnly:true},
+    {to:"/admin/contracts",label:"العقود",Icon:ClipboardList,financeOnly:true},
+  ]},
+  {id:"finance",label:"المالية",Icon:Banknote,links:[
+    {to:"/admin/installments",label:"الأقساط",Icon:CalendarRange,financeOnly:true},
+    {to:"/admin/receipts",label:"السندات والإيصالات",Icon:Banknote,financeOnly:true},
+    {to:"/admin/receipt-reconciliation",label:"المطابقة",Icon:FileSpreadsheet,financeOnly:true},
+    {to:"/admin/receipt-review",label:"مراجعة المصادر القديمة",Icon:History,financeOnly:true},
+    {to:"/admin/paid-tenants",label:"المسددون",Icon:BadgeCheck,managerOnly:true},
+    {to:"/admin/collections-report",label:"تقارير التحصيل",Icon:Banknote,managerOnly:true},
+  ]},
+  {id:"settings",label:"الإعدادات",Icon:Settings2,links:[
+    {to:"/admin/booking-control",label:"المباني والتحكم في الحجز",Icon:Building2,managerOnly:true},
+    {to:"/admin/settings/activities",label:"الأنشطة والمباني",Icon:Building2,managerOnly:true},
+    {to:"/admin/settings/payment-plans",label:"خطط السداد",Icon:CalendarRange,financeOnly:true},
+    {to:"/admin/settings/unit-import",label:"استيراد الوحدات",Icon:FileSpreadsheet,managerOnly:true},
+    {to:"/admin/users",label:"المستخدمون والصلاحيات",Icon:Users,adminOnly:true},
+    {to:"/admin/sheets-sync",label:"التكاملات والشييت",Icon:FileSpreadsheet,managerOnly:true},
+    {to:"/admin/backup",label:"النسخ الاحتياطي",Icon:Database,adminOnly:true},
+    {to:"/admin/audit",label:"سجل التدقيق",Icon:History,adminOnly:true},
+    {to:"/admin/access-log",label:"سجل الدخول",Icon:Globe2,adminOnly:true},
+    {to:"/admin/settings/developers/api-keys",label:"المطورون — مفاتيح API",Icon:KeyRound,adminOnly:true},
+    {to:"/admin/settings/developers/api-docs",label:"المطورون — توثيق API",Icon:Code2,adminOnly:true},
+    {to:"/admin/settings/developers/mcp",label:"المطورون — MCP",Icon:Bot,adminOnly:true},
+    {to:"/admin/settings/developers/stats",label:"المطورون — إحصائيات السيرفر",Icon:Activity,adminOnly:true},
+  ]},
 ];
 
 export const AdminSidebar = () => {
@@ -202,7 +171,7 @@ export const AdminSidebar = () => {
     setOpenGroups((prev) => {
       const next = { ...prev };
       for (const g of visibleGroups) {
-        if (g.links.some((l) => l.to === pathname)) next[g.id] = true;
+        if (g.id === activeAdminGroup(pathname)) next[g.id] = true;
       }
       return next;
     });
@@ -228,13 +197,13 @@ export const AdminSidebar = () => {
   return (
     <>
       {/* Mobile open button — bottom-right for RTL */}
-      <button
+      <Button
         onClick={() => setMobileOpen(true)}
         className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg lg:hidden"
         aria-label="فتح القائمة"
       >
         <Menu className="h-5 w-5" />
-      </button>
+      </Button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
@@ -259,7 +228,7 @@ export const AdminSidebar = () => {
           {!collapsed && (
             <span className="truncate text-sm font-bold">{title}</span>
           )}
-          <button
+          <Button
             onClick={() => setCollapsed((c) => !c)}
             className="hidden h-7 w-7 items-center justify-center rounded-md hover:bg-secondary lg:inline-flex"
             aria-label="طي القائمة"
@@ -269,14 +238,14 @@ export const AdminSidebar = () => {
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setMobileOpen(false)}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-secondary lg:hidden"
             aria-label="إغلاق"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
 
         {/* Groups */}
@@ -284,7 +253,7 @@ export const AdminSidebar = () => {
           {visibleGroups.map((group) => {
             const GroupIcon = group.Icon;
             const isOpen = openGroups[group.id] ?? false;
-            const hasActive = group.links.some((l) => l.to === pathname);
+            const hasActive = group.id === activeAdminGroup(pathname);
 
             if (collapsed) {
               // In collapsed mode, just render icons flat
@@ -315,7 +284,7 @@ export const AdminSidebar = () => {
 
             return (
               <div key={group.id} className="flex flex-col">
-                <button
+                <Button
                   type="button"
                   onClick={() =>
                     setOpenGroups((p) => ({ ...p, [group.id]: !isOpen }))
@@ -337,7 +306,7 @@ export const AdminSidebar = () => {
                       isOpen ? "rotate-180" : "",
                     )}
                   />
-                </button>
+                </Button>
                 {isOpen && (
                   <div className="mt-1 flex flex-col gap-0.5 pr-3">
                     {group.links.map(({ to, label, Icon }) => {
@@ -366,18 +335,24 @@ export const AdminSidebar = () => {
           })}
         </nav>
 
+        <div className="border-t border-border p-2 flex flex-wrap gap-2 text-xs">
+          <NavLink to="/" title="الموقع">{collapsed ? <Home className="h-4 w-4"/> : "الموقع"}</NavLink>
+          <NavLink to="/booking" title="الحجز">{collapsed ? <CalendarRange className="h-4 w-4"/> : "الحجز"}</NavLink>
+          {user && <NavLink to="/profile" title="حسابي">{collapsed ? <User className="h-4 w-4"/> : "حسابي"}</NavLink>}
+          {isTenant && <NavLink to="/tenant">وحداتي وفواتيري</NavLink>}
+        </div>
         {/* Footer */}
         <div className="border-t border-border p-2">
           {user ? (
             <>
-              <button
+              <Button
                 onClick={handleSignOut}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10"
                 title="تسجيل الخروج"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>تسجيل الخروج</span>}
-              </button>
+              </Button>
               {!collapsed && user.email && (
                 <div className="flex items-center gap-2 truncate px-3 pb-1 pt-2 text-[10px] text-muted-foreground">
                   <UserCircle2 className="h-3 w-3 shrink-0" />
