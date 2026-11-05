@@ -3559,6 +3559,17 @@ export type Database = {
         Returns: Json
       }
       create_telegram_link_token: { Args: never; Returns: string }
+      crm_ensure_party: {
+        Args: {
+          _email: string
+          _id_number: string
+          _id_type: string
+          _name: string
+          _phone: string
+          _source: string
+        }
+        Returns: string
+      }
       ensure_tenant_account_for_tenant: {
         Args: { _tenant_id: string }
         Returns: string
