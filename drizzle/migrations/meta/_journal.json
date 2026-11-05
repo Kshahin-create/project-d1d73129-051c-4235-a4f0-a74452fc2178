@@ -183,6 +183,13 @@
       "when": 1793895932375,
       "tag": "0025_crm_parties_opportunities",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793896029126,
+      "tag": "0026_crm_functions_and_views",
+      "breakpoints": true
     }
   ]
 }
