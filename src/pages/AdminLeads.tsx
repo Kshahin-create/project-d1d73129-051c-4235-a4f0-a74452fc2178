@@ -1,3 +1,4 @@
+import { exportAdminList } from "@/lib/adminExport";
 import { AdminServerList } from "@/components/admin/AdminServerList";
 import { adminLists } from "@/lib/adminData";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -261,23 +262,7 @@ const AdminLeads = () => {
     toast({ title: ok ? "تم النسخ" : "فشل النسخ", variant: ok ? "default" : "destructive" });
   };
 
-  const handleExport = () => {
-    const rows = filtered.map((l) => ({
-      الاسم: l.full_name,
-      "رقم الجوال": l.phone,
-      "ملاحظات": l.notes || "",
-      "الحالة": STATUSES.find((s) => s.value === l.status)?.label || l.status,
-      "آخر تواصل": l.last_message_at
-        ? new Date(l.last_message_at).toLocaleString("ar-SA-u-nu-latn")
-        : "",
-      "تاريخ الإضافة": new Date(l.created_at).toLocaleString("ar-SA-u-nu-latn"),
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 28 }, { wch: 18 }, { wch: 40 }, { wch: 14 }, { wch: 22 }, { wch: 22 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "المستهدفون");
-    XLSX.writeFile(wb, `leads-${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
+  const handleExport = async()=>{try{await exportAdminList("leads","xlsx",q,statusFilter==="all"?{}:{status:statusFilter},showArchived);}catch(e){toast({title:"تعذر التصدير",description:(e as Error).message,variant:"destructive"});}};
 
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([

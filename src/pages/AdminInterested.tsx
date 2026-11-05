@@ -1,3 +1,4 @@
+import { exportAdminList } from "@/lib/adminExport";
 import { AdminServerList } from "@/components/admin/AdminServerList";
 import { adminLists } from "@/lib/adminData";
 import { Button } from "@/components/ui/button";
@@ -156,23 +157,7 @@ const AdminInterested = () => {
     else toast.success("تم تحديث الحالة");
   };
 
-  const exportRows = (fmt: "xlsx" | "csv") => {
-    const data = filtered.map((r) => ({
-      "اسم العميل": r.full_name,
-      "رقم الجوال": r.phone,
-      "النشاط المطلوب": r.requested_activity ?? "",
-      "الاسم التجاري": r.business_name ?? "",
-      "المبنى المطلوب": r.requested_building ?? "",
-      "الوحدة المطلوبة": r.requested_unit ?? "",
-      "مصدر العميل": r.customer_source ?? "",
-      "الملاحظات": r.notes ?? "",
-      "المصدر": r.source === "telegram" ? "تيليجرام" : r.source === "web" ? "ويب" : "يدوي",
-      "الحالة": STATUS_LABEL[r.status] ?? r.status,
-      "تاريخ التسجيل": new Date(r.created_at).toLocaleString("ar-EG-u-nu-latn"),
-    }));
-    if (fmt === "xlsx") exportRowsToExcel(data, "interested", "المهتمون");
-    else exportRowsToCSV(data, "interested");
-  };
+  const exportRows = async (fmt:"csv"|"xlsx")=>{try{await exportAdminList("interested_customers",fmt,search,{},showArchived);}catch(e){toast.error((e as Error).message);}};
 
   if (!loading && !user) { navigate("/auth"); return null; }
   if (!loading && user && !canAccess) {
