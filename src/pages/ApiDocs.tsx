@@ -884,6 +884,7 @@ const ApiDocs = () => {
           <Code2 className="h-7 w-7 text-primary" />
           <h1 className="text-2xl font-bold">توثيق REST API</h1>
         </div>
+        <p className="mb-3 text-sm text-muted-foreground">حالة التأجير الجديدة: متاحة، محجوزة مؤقتًا، بانتظار العقد، مؤجرة، صيانة، موقوفة. واجهة API للقراءة فقط؛ حقل status القديم يُعرض للتوافق ولا يمكن تعديله.</p>
         <p className="mb-6 text-sm text-muted-foreground">
           استهلك بيانات نخبة تسكين من تطبيق الموبايل أو أي نظام تاني عبر REST.
           أمثلة جاهزة بـ 5 لغات وPostman Collection للتحميل.

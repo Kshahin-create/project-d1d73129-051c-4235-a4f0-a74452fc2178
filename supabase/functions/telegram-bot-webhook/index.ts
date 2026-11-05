@@ -1159,7 +1159,7 @@ const AI_TOOLS = [
 // Managers can read reports; only linked admins can write.
 async function canWrite(admin: any, userId: string | null): Promise<boolean> {
   if (!userId) return false;
-  const { data } = await admin.from("user_roles").select("role").eq("user_id", userId);
+  const { data } = await admin.from("user_roles").select("role").eq("user_id", userId).eq("is_active", true);
   const roles = (data || []).map((r: any) => r.role);
   return roles.includes("admin");
 }
