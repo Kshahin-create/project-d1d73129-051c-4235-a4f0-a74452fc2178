@@ -72,13 +72,13 @@ function LinkedUnits({kind,id}:{kind:RecordKind;id:string}){
 }
 function PartyStatement({id}:{id:string}){
  const q=useQuery({queryKey:["party-statement",id],queryFn:async()=>{
-   const all=async(table:string,filter:(request:ReturnType<typeof adminClient.from>)=>unknown)=>{const rows:AdminRow[]=[];for(let offset=0;;offset+=500){let request=adminClient.from(table).select("*").order("id");const filtered=filter(request) as typeof request;const r=await filtered.range(offset,offset+499);if(r.error)throw r.error;rows.push(...r.data as AdminRow[]);if(r.data.length<500)break;}return rows;};
-   const contracts=await all("contracts",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").eq("party_id",id));
+   const all=async(table:string,key:string,value:string|string[])=>{const rows:AdminRow[]=[];for(let offset=0;;offset+=500){let request=adminClient.from(table).select("*").order("id");request=Array.isArray(value)?request.in(key,value):request.eq(key,value);const r=await request.range(offset,offset+499);if(r.error)throw r.error;rows.push(...r.data as AdminRow[]);if(r.data.length<500)break;}return rows;};
+   const contracts=await all("contracts","party_id",id);
    const ids=contracts.map(c=>String(c.id));
-   const receipts=await all("receipt_cash_read",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").eq("party_id",id));
-   const installments=ids.length?await all("installments_read",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").in("contract_id",ids)):[];
+   const receipts=await all("receipt_cash_read","party_id",id);
+   const installments=ids.length?await all("installments_read","contract_id",ids):[];
    const allocations:AdminRow[]=[];
-   for(let chunk=0;chunk<receipts.length;chunk+=100){const receiptIds=receipts.slice(chunk,chunk+100).map(r=>String(r.id));allocations.push(...await all("receipt_allocations",r=>(r as unknown as ReturnType<typeof adminClient.from>).select("*").in("receipt_id",receiptIds)));}
+   for(let chunk=0;chunk<receipts.length;chunk+=100){const receiptIds=receipts.slice(chunk,chunk+100).map(r=>String(r.id));allocations.push(...await all("receipt_allocations","receipt_id",receiptIds));}
    return statementTotals(installments as unknown as StatementInstallment[],receipts as unknown as StatementReceipt[],allocations as unknown as StatementAllocation[]);
  }});
  return <div className="space-y-8">{q.isError?<p role="alert" className="text-destructive">تعذر حساب كشف الحساب</p>:<dl className="grid gap-5 border-b border-border pb-5 sm:grid-cols-4">{[["المستحق شامل الضريبة",q.data?.due],["المخصص المتحقق شامل الضريبة",q.data?.allocated],["الرصيد المتبقي شامل الضريبة",q.data?.balance],["متحقق غير مخصص شامل الضريبة",q.data?.unallocated]].map(([label,value])=><div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-2 text-xl font-bold">{value==null?"—":money(value)} ريال</dd></div>)}</dl>}<p className="border-r-4 border-primary pr-3 text-sm">المصادر التاريخية قيد المراجعة ليست تحصيلًا معتمدًا.</p><AdminServerList spec={{...adminLists.receipts,table:"receipt_cash_read"}} filters={{party_id:id}}/><AdminServerList spec={adminLists.contracts} filters={{party_id:id}}/></div>;
