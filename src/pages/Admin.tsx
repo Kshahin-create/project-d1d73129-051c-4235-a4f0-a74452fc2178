@@ -223,13 +223,9 @@ const Admin = () => {
 
       const { data: tenantSnap } = await supabase.from("tenants").select("*").eq("unit_id", u.id).maybeSingle();
 
-      await supabase.from("tenants").delete().eq("unit_id", u.id);
-      const { error } = await supabase.from("units").update({ status: "available" }).eq("id", u.id);
-      if (error) {
-        // Put the tenant back so a refused release never loses tenant details.
-        if (tenantSnap) await supabase.from("tenants").insert(tenantSnap as any);
-        throw error;
-      }
+      // Archives the tenant row (kept with the reason) and frees the unit in one database step.
+      const { error } = await supabase.rpc("archive_tenant" as any, { _unit_id: u.id, _reason: reason });
+      if (error) throw error;
 
       await writeAuditLog({
         unit_id: u.id,
