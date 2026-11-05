@@ -8,5 +8,6 @@ describe("financial precision",()=>{
     expect(rows.reduce((s,r)=>s+Math.round(r.amount_incl_vat*100),0)).toBe(11500);
   });
   it("does not assume VAT for an explicitly zero rate",()=>expect(installmentPreview(200,0,1)[0]).toEqual({amount_excl_vat:200,vat_amount:0,amount_incl_vat:200}));
+  it("never generates negative small installments",()=>{const rows=installmentPreview(0.02,0,4);expect(rows.map(r=>r.amount_excl_vat)).toEqual([0,0,0.01,0.01]);expect(rows.reduce((s,r)=>s+Math.round(r.amount_excl_vat*100),0)).toBe(2);});
   it("rejects invalid installment count",()=>expect(()=>installmentPreview(100,15,0)).toThrow());
 });

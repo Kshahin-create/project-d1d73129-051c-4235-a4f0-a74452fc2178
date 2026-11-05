@@ -5,8 +5,8 @@ export function installmentPreview(rent: number, vatRate: number, count: number)
   const cents = Math.round(rent * 100), tax = Math.round(cents * vatRate / 100);
   let assigned = 0, taxAssigned = 0;
   return Array.from({length: count}, (_, index) => {
-    const excl = index === count-1 ? cents-assigned : Math.round(cents/count);
-    const vat = index === count-1 ? tax-taxAssigned : Math.round(tax/count);
+    const excl = Math.floor(cents/count) + (index >= count - cents % count ? 1 : 0);
+    const vat = Math.floor(tax/count) + (index >= count - tax % count ? 1 : 0);
     assigned += excl; taxAssigned += vat;
     return {amount_excl_vat:excl/100,vat_amount:vat/100,amount_incl_vat:(excl+vat)/100};
   });
