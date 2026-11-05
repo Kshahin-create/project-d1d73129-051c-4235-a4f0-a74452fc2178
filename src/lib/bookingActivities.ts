@@ -1,13 +1,11 @@
 // buildings: explicit building numbers for the activity (owner-provided mapping); null = classify by building type.
 export const BOOKING_ACTIVITIES = [
   { key: "service", short: "صيانة السيارات", title: "ورش صيانة السيارات", description: "مباني 1 إلى 6 ومبنى 11", marker: "صيانة", buildings: [1, 2, 3, 4, 5, 6, 11] },
-  { key: "parts", short: "قطع الغيار", title: "قطع غيار السيارات", description: "مباني 7 إلى 10 و12 و13 ومبنى 22", marker: "قطع غيار", buildings: [7, 8, 9, 10, 12, 13, 22] },
+  { key: "parts", short: "قطع الغيار", title: "قطع غيار السيارات", description: "مباني 7 إلى 10 ومبنى 22", marker: "قطع غيار", buildings: [7, 8, 9, 10, 22] },
   { key: "batteries-decor", short: "بطاريات وزينة", title: "بطاريات وزينة السيارات", description: "على وحدات قطع الغيار — مباني 7 إلى 10", marker: "بطاريات", buildings: [7, 8, 9, 10] },
   { key: "tires", short: "البناشر والإطارات", title: "البناشر والإطارات", description: "مباني 7 إلى 10", marker: "بناشر", buildings: [7, 8, 9, 10] },
   { key: "car-wash", short: "مغاسل السيارات", title: "مغاسل السيارات", description: "على وحدات البناشر — مباني 7 إلى 10", marker: "مغسلة", buildings: [7, 8, 9, 10] },
   { key: "large-maintenance", short: "مراكز صيانة كبيرة", title: "مراكز صيانة السيارات الكبيرة", description: "على وحدات المعارض — مبنى 22", marker: "مركز صيانة", buildings: [22] },
-  { key: "restaurants", short: "مطاعم وكافيهات", title: "المطاعم والكافتيريات والكافيهات", description: "مباني 12 و13", marker: "مطعم", buildings: [12, 13] },
-  { key: "icecream-juices", short: "آيس كريم وعصيرات", title: "الآيس كريم والعصيرات", description: "مباني 12 و13", marker: "عصيرات", buildings: [12, 13] },
   { key: "shops", short: "محلات تجارية", title: "المحلات التجارية والمعارض", description: "محلات ومعارض تجارية — مباني 12 و13 ومبنى 22", marker: "محل", buildings: [12, 13, 22] },
   { key: "car-showrooms", short: "معارض السيارات", title: "معارض السيارات", description: "معارض السيارات — مبنى 22", marker: "معرض سيارات", buildings: [22] },
   { key: "carpentry", short: "النجارة", title: "ورش النجارة", description: "ورش النجارة والأخشاب", marker: "نجارة", buildings: null },
