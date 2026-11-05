@@ -299,7 +299,7 @@ function buildDashboardRows(perBuilding: BStat[]): { rows: (string|number)[][]; 
   const sectionRows: number[] = [];
   const tableHeaderRows: number[] = [];
 
-  rows.push(["لوحة المعلومات — مدينة المعجار", "", "", "", ""]);
+  rows.push(["لوحة المعلومات — MNICity", "", "", "", ""]);
   rows.push([`آخر تحديث: ${new Date().toLocaleString("en-GB", { timeZone: "Asia/Riyadh" })}`, "", "", "", ""]);
   rows.push(["", "", "", "", ""]);
 
@@ -356,7 +356,14 @@ Deno.serve(async (req) => {
     if (!ok) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type":"application/json" }});
 
     const body = await req.json().catch(()=>({}));
-    const action: "push" | "pull" | "meta" = body.action || "push";
+    const action: "push" | "meta" = body.action || "push";
+    if ((body.action as string) === "pull") {
+      // Sheet → database import is permanently disabled: the database is the single source of truth.
+      return new Response(JSON.stringify({ error: "السحب من الشيت إلى قاعدة البيانات متوقف نهائيًا. المزامنة باتجاه الشيت فقط." }), { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (action !== "push" && action !== "meta") {
+      return new Response(JSON.stringify({ error: "إجراء غير معروف" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const canMutate = (roles || []).some((r: { role: string }) => r.role === "admin");
     if (!canMutate && (action !== "meta" || body.delete_title)) {
       return new Response(JSON.stringify({ error: "صلاحية المدير للعرض فقط" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -380,7 +387,8 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ sheets }), { headers: { ...corsHeaders, "Content-Type":"application/json" }});
     }
 
-    let pushed = 0, pulled = 0, updated = 0;
+    let pushed = 0;
+    const statusErrors: string[] = [];
 
     if (action === "push") {
       const titles = [
@@ -663,36 +671,12 @@ Deno.serve(async (req) => {
       await safeBatch(sheetId, formatReqs);
     }
 
-    if (action === "pull") {
-      for (const b of buildings) {
-        const name = tabName(b);
-        let result: any;
-        try { result = await gw(`/${sheetId}/values/${encodeURIComponent(name)}!A2:O`); } catch { continue; }
-        const values: string[][] = result.values || [];
-        for (const row of values) {
-          const unitNum = parseInt((row[0]||"").trim(), 10);
-          if (!unitNum) continue;
-          const unit_type = (row[1]||"").trim() || null;
-          const area = parseFloat((row[2]||"").replace(/[^\d.]/g,"")) || 0;
-          const activity = (row[3]||"").trim() || null;
-          const price = parseFloat((row[4]||"").replace(/[^\d.]/g,"")) || 0;
-          const statusAr = (row[7]||"").trim();
-          const status = AR_STATUS[statusAr] || "available";
-          pulled++;
-          const { error } = await admin.from("units")
-            .update({ unit_type, area, activity, price, status })
-            .eq("building_number", b).eq("unit_number", unitNum);
-          if (!error) updated++;
-        }
-      }
-    }
-
     await admin.from("app_settings").update({
       buildings_sheet_last_sync_at: new Date().toISOString(),
       buildings_sheet_last_direction: action,
     }).eq("id", 1);
 
-    return new Response(JSON.stringify({ ok:true, action, pushed, pulled, updated }), {
+    return new Response(JSON.stringify({ ok: statusErrors.length === 0, action, pushed, status_errors: statusErrors }), {
       headers: { ...corsHeaders, "Content-Type":"application/json" },
     });
   } catch (e) {
