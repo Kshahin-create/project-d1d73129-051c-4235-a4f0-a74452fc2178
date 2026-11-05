@@ -13,6 +13,7 @@ export const useAuth = () => {
   const [isTenant, setIsTenant] = useState(false);
   const [isLeasingManager, setIsLeasingManager] = useState(false);
   const [isSalesAgent, setIsSalesAgent] = useState(false);
+  const [isInvestor,setIsInvestor]=useState(false);
   const [isAccountant, setIsAccountant] = useState(false);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export const useAuth = () => {
       setIsLeasingManager(roles.includes("leasing_manager"));
       setIsSalesAgent(roles.includes("sales_agent"));
       setIsAccountant(roles.includes("accountant"));
+      setIsInvestor(roles.includes("investor"));
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
@@ -55,6 +57,7 @@ export const useAuth = () => {
         setIsLeasingManager(false);
         setIsSalesAgent(false);
         setIsAccountant(false);
+        setIsInvestor(false);
       }
     });
 
@@ -72,5 +75,5 @@ export const useAuth = () => {
 
   // Manager is read-only: only admins can perform write actions on admin surfaces.
   const canEdit = isAdmin;
-  return { session, user, loading, isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, canEdit };
+  return { session, user, loading, isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, isInvestor, canEdit };
 };
