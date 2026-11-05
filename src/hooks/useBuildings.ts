@@ -1,27 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Building, Unit } from "@/data/types";
-import { BOOKING_ACTIVITIES, classifyBookingActivity, countAvailableUnits } from "@/lib/bookingActivities";
+import { applyActivityRegistry, countAvailableUnits } from "@/lib/bookingActivities";
 
 export const useBuildingsAndUnits = () => {
   return useQuery({
     queryKey: ["buildings-units"],
     queryFn: async (): Promise<{ buildings: Building[]; units: Unit[] }> => {
-      const [bRes, uRes, tRes, buRes] = await Promise.all([
-        supabase.from("buildings").select("*").order("number"),
-        supabase.from("units").select("*").order("building_number").order("unit_number").limit(2000),
+      // Public site reads only the registry's public views: published, non-test units in published buildings.
+      const [bRes, uRes, tRes, buRes, aRes, baRes, uaRes] = await Promise.all([
+        supabase.from("public_buildings").select("*").order("number"),
+        supabase.from("public_units").select("*").order("building_number").order("unit_number").limit(5000),
         supabase.from("tenants").select("*"),
         supabase
           .from("booking_units")
           .select("unit_id, bookings:booking_id(customer_full_name, status, created_at)")
           .limit(5000),
+        supabase.from("public_activities").select("*").order("sort_order"),
+        supabase.from("public_building_activities").select("*"),
+        supabase.from("public_unit_activities").select("*"),
       ]);
+      if (aRes.error) throw aRes.error;
+      if (baRes.error) throw baRes.error;
+      if (uaRes.error) throw uaRes.error;
+      applyActivityRegistry({
+        activities: (aRes.data ?? []) as any,
+        buildingActivities: (baRes.data ?? []) as any,
+        unitActivities: (uaRes.data ?? []) as any,
+      });
       // buildings may fail for unauthenticated users after RLS change —
       // fall back to deriving building info from public units data.
       if (uRes.error) throw uRes.error;
       if (tRes.error) throw tRes.error;
+      if (bRes.error) throw bRes.error;
 
-      const buildingsRaw = bRes.error ? [] : (bRes.data ?? []);
+      const buildingsRaw = (bRes.data ?? []) as { number: number; type: string; booking_enabled: boolean; expected_annual_revenue: number }[];
 
       // Buildings closed to booking (booking_enabled = false) are hidden from
       // the public booking flow entirely; the database still rejects their
@@ -29,7 +42,7 @@ export const useBuildingsAndUnits = () => {
       const disabledBuildingNumbers = new Set(
         buildingsRaw.filter((b) => b.booking_enabled === false).map((b) => b.number),
       );
-      const unitsRaw = (uRes.data ?? []).filter((u) => !disabledBuildingNumbers.has(u.building_number));
+      const unitsRaw = ((uRes.data ?? []) as any[]).filter((u) => !disabledBuildingNumbers.has(u.building_number));
       const tenantsRaw = tRes.data ?? [];
       const bookingUnitsRaw = (buRes.error ? [] : (buRes.data ?? [])) as any[];
 
@@ -70,52 +83,20 @@ export const useBuildingsAndUnits = () => {
         };
       });
 
-      // If buildings query succeeded, use it directly.
-      // Otherwise derive minimal building list from units (public data).
-      let buildings: Building[];
-      if (buildingsRaw.length > 0) {
-        buildings = buildingsRaw
-          .filter((b) => !disabledBuildingNumbers.has(b.number))
-          .map((b) => {
+      const unitBuildingNumbers = new Set(units.map((u) => u.buildingNumber));
+      const buildings: Building[] = buildingsRaw
+        .filter((b) => !disabledBuildingNumbers.has(b.number) && unitBuildingNumbers.has(b.number))
+        .map((b) => {
           const bu = units.filter((u) => u.buildingNumber === b.number);
-          const rented = bu.filter((u) => u.status === "rented").length;
-          const reserved = bu.filter((u) => u.status === "reserved").length;
           return {
             number: b.number,
             type: b.type,
             totalUnits: bu.length,
-            rentedUnits: rented,
+            rentedUnits: bu.filter((u) => u.status === "rented").length,
             availableUnits: countAvailableUnits(bu),
             expectedAnnualRevenue: Number(b.expected_annual_revenue),
           };
         });
-      } else {
-        const uniqueBuildingNumbers = [...new Set(unitsRaw.map((u) => u.building_number))].sort((a, b) => a - b);
-        buildings = uniqueBuildingNumbers.map((bn) => {
-          const bu = units.filter((u) => u.buildingNumber === bn);
-          const rented = bu.filter((u) => u.status === "rented").length;
-          const reserved = bu.filter((u) => u.status === "reserved").length;
-          // Derive building type from the activity of its units so the
-          // service/parts filter still works for unauthenticated users.
-          const activity = bu[0]?.activity ?? "";
-          const derivedType = BOOKING_ACTIVITIES.find((item) => item.key === classifyBookingActivity(activity))?.title ?? "غير محدد";
-          return {
-            number: bn,
-            type: derivedType,
-            totalUnits: bu.length,
-            rentedUnits: rented,
-            availableUnits: countAvailableUnits(bu),
-            expectedAnnualRevenue: 0,
-          };
-        });
-        // Also patch units' buildingType so downstream UI shows the correct label.
-        for (const u of units) {
-          if (!u.buildingType) {
-            const b = buildings.find((bb) => bb.number === u.buildingNumber);
-            if (b) u.buildingType = b.type;
-          }
-        }
-      }
 
       return { buildings, units };
     },
