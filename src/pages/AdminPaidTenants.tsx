@@ -1,5 +1,7 @@
+import { Button } from "@/components/ui/button";
+import { adminClient } from "@/lib/adminData";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Loader2,
   Search,
@@ -52,30 +54,15 @@ export default function AdminPaidTenants() {
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
 
+  const [page,setPage]=useState(0),[total,setTotal]=useState(0),[sort,setSort]=useState("created_at");
+  const readAccounts=async(offset:number,limit=25)=>{const r=await supabase.rpc("admin_paid_tenants_page",{_search:search,_sort:sort,_limit:limit,_offset:offset});if(r.error)throw r.error;return r.data as unknown as {rows:TenantRow[];count:number};};
+  const allRelated=async(table:string,fields:string,ids:string[],active=false)=>{const rows:any[]=[];if(!ids.length)return rows;for(let o=0;;o+=500){let q=adminClient.from(table).select(fields).in("tenant_account_id",ids).order("id").range(o,o+499);if(active)q=q.eq("is_archived",false);const r=await q;if(r.error)throw r.error;rows.push(...r.data);if(r.data.length<500)break;}return rows;};
   const load = async () => {
     setFetching(true);
     try {
-      const [accRes, linksRes, collRes, filesRes] = await Promise.all([
-        supabase.rpc("admin_list_tenant_accounts"),
-        supabase
-          .from("tenant_account_units")
-          .select(
-            "tenant_account_id, unit_id, units:unit_id(unit_number, building_number, unit_type, area, price, activity)",
-          )
-          .limit(5000),
-        supabase
-          .from("unit_collections")
-          .select("tenant_account_id, unit_id, amount, is_archived")
-          .eq("is_archived", false)
-          .limit(10000),
-        supabase
-          .from("tenant_account_files")
-          .select("tenant_account_id, custom_name, is_archived")
-          .eq("is_archived", false)
-          .limit(10000),
-      ]);
-      if (accRes.error) throw accRes.error;
-
+      const result=await readAccounts(page*25);setTotal(result.count);const ids=result.rows.map(t=>t.id);
+      const [links,collections,files]=await Promise.all([allRelated("tenant_account_units","tenant_account_id, unit_id, units:unit_id(unit_number, building_number, unit_type, area, price, activity)",ids),allRelated("unit_collections","tenant_account_id, unit_id, amount",ids,true),allRelated("tenant_account_files","tenant_account_id, custom_name",ids,true)]);
+      const accRes={data:result.rows},linksRes={data:links},collRes={data:collections},filesRes={data:files};
       const uMap = new Map<string, UnitInfo[]>();
       for (const l of (linksRes.data as any[]) ?? []) {
         if (!l.units) continue;
@@ -123,34 +110,24 @@ export default function AdminPaidTenants() {
 
   useEffect(() => {
     if (!loading && (isAdmin || isManager)) load();
-  }, [loading, isAdmin, isManager]);
+  }, [loading, isAdmin, isManager,page,search,sort]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim();
-    if (!q) return tenants;
-    return tenants.filter(
-      (t) =>
-        t.full_name?.includes(q) ||
-        t.business_name?.includes(q) ||
-        t.activity_type?.includes(q) ||
-        t.phone?.includes(q) ||
-        t.cr_number?.includes(q),
-    );
-  }, [tenants, search]);
-
-  const stats = useMemo(() => {
-    const totalCollected = filtered.reduce((s, t) => s + Number(t.collected_total || 0), 0);
-    const totalContracts = filtered.reduce((s, t) => s + Number(t.total_price || 0), 0);
-    const totalUnits = filtered.reduce((s, t) => s + Number(t.units_count || 0), 0);
-    return { count: filtered.length, totalCollected, totalContracts, totalUnits };
-  }, [filtered]);
-
+  const filtered = tenants;
   const fmt = (n: number) => n.toLocaleString("en-US");
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    let request:string|undefined;
+    try{
+    const start=await supabase.rpc("request_admin_export",{_list:"paid_tenants",_format:"xlsx",_scope:{search,sort,basis:"legacy excluding VAT"}});if(start.error)throw start.error;request=String(start.data);
+    const all:TenantRow[]=[];for(let o=0;;o+=500){const part=await readAccounts(o,500);all.push(...part.rows);if(part.rows.length<500)break;}
+
     const rows: Record<string, any>[] = [];
-    for (const t of filtered) {
-      const units = unitsByTenant.get(t.id) ?? [];
+    for (const t of all) {
+      const linked=await allRelated("tenant_account_units","unit_id,units:unit_id(unit_number,building_number,price)",[t.id]);
+      const units=linked.filter(l=>l.units).map(l=>({...l.units,unit_id:l.unit_id}));
+      const collections=await allRelated("unit_collections","unit_id,amount",[t.id],true);
+      const paidByTenantUnit=new Map<string,number>();for(const c of collections){const key=`${t.id}:${c.unit_id}`;paidByTenantUnit.set(key,(paidByTenantUnit.get(key)??0)+Number(c.amount));}
+      const fileRows=await allRelated("tenant_account_files","custom_name",[t.id],true);const filesByTenant=new Map([[t.id,fileRows.map(f=>f.custom_name)]]);
       if (units.length === 0) {
         rows.push({
           "اسم المستأجر أو المنشأة": t.full_name,
@@ -188,7 +165,9 @@ export default function AdminPaidTenants() {
       return;
     }
     exportRowsToExcel(rows, "paid-tenants", "المسددون");
+    const done=await supabase.rpc("complete_admin_export",{_id:request,_status:"generated",_count:rows.length});if(done.error)throw done.error;
     toast.success("تم التصدير");
+    }catch(e){if(request)await supabase.rpc("complete_admin_export",{_id:request,_status:"failed",_count:0});toast.error((e as Error).message);}
   };
 
   if (!loading && !user) {
@@ -204,7 +183,8 @@ export default function AdminPaidTenants() {
             <Lock className="mx-auto h-12 w-12 text-destructive" />
             <h2 className="mt-4 font-display text-xl font-bold">لا تملك صلاحية الوصول</h2>
           </div>
-        </main>
+          <div className="flex gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
+      </main>
       </div>
     );
   }
@@ -228,30 +208,14 @@ export default function AdminPaidTenants() {
           </button>
         </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {[
-            { label: "عدد المسددين", value: fmt(stats.count), Icon: BadgeCheck },
-            { label: "إجمالي العقود", value: `${fmt(stats.totalContracts)} ر.س`, Icon: Building2 },
-            { label: "إجمالي التحصيل التاريخي بدون الضريبة", value: `${fmt(stats.totalCollected)} ر.س`, Icon: Wallet },
-            { label: "إجمالي الوحدات", value: fmt(stats.totalUnits), Icon: FolderOpen },
-          ].map((k) => (
-            <div key={k.label} className="rounded-2xl border border-border bg-card p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <k.Icon className="h-4 w-4 text-primary" />
-                {k.label}
-              </div>
-              <div className="mt-2 font-display text-xl font-bold">{k.value}</div>
-            </div>
-          ))}
-        </div>
-
+        <p className="text-xs text-muted-foreground">المرحلة الأولى · {total} مستأجر مطابق · آخر قراءة: {new Date().toLocaleString("ar-SA")}</p>
+        <select aria-label="ترتيب المسددين" value={sort} onChange={e=>{setSort(e.target.value);setPage(0);}}><option value="created_at">الأحدث</option><option value="full_name">الاسم</option></select>
         {/* Search */}
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {setSearch(e.target.value);setPage(0);}}
             placeholder="ابحث بالاسم، العلامة التجارية، النشاط، الجوال..."
             className="flex-1 bg-transparent text-sm outline-none"
           />
@@ -326,7 +290,7 @@ export default function AdminPaidTenants() {
                         <td className="px-3 py-3">{t.activity_type || "—"}</td>
                         <td className="px-3 py-3" dir="ltr">{t.phone || "—"}</td>
                         <td className="px-3 py-3">{u.building_number}</td>
-                        <td className="px-3 py-3">{u.unit_number}</td>
+                        <td className="px-3 py-3"><Link className="text-primary hover:underline" to={`/admin/units/${u.unit_id}`}>{u.unit_number}</Link></td>
                         <td className="px-3 py-3">{u.unit_type || "—"}</td>
                         <td className="px-3 py-3">{fmt(u.area)} م²</td>
                         <td className="px-3 py-3">{fmt(u.price)} ر.س</td>
@@ -417,6 +381,7 @@ export default function AdminPaidTenants() {
             </div>
           </div>
         )}
+        <div className="flex gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
       </main>
     </div>
   );
