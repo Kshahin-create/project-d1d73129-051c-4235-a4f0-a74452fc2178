@@ -4185,6 +4185,7 @@ export type Database = {
         Returns: undefined
       }
       finance_can_read: { Args: never; Returns: boolean }
+      finance_regression_tests: { Args: never; Returns: Json }
       find_tenant_by_cr: {
         Args: { _cr: string }
         Returns: {
