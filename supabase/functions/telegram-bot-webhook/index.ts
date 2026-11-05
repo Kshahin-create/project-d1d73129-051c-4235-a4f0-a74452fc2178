@@ -1354,19 +1354,8 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     const { data, error } = await admin.rpc("telegram_unit_status_action", { _actor: userId, _action: name, _args: args });
     return error ? { error: error.message } : data;
   }
-  if (name === "record_payment") {
-    const amt = Number(args.amount);
-    if (!amt || amt <= 0) return { error: "amount must be > 0" };
-    if (!args.booking_id && !args.tenant_account_id) return { error: "booking_id or tenant_account_id required" };
-    const { data, error } = await admin.rpc("record_payment", {
-      _booking_id: args.booking_id || null,
-      _tenant_account_id: args.tenant_account_id || null,
-      _amount: amt,
-      _method: args.method || "cash",
-      _notes: args.notes || null,
-    });
-    if (error) return { error: error.message };
-    return { ok: true, invoice_id: data, amount: amt };
+  if (["record_payment", "create_invoice", "mark_invoice_paid", "delete_invoice", "set_booking_paid_amount"].includes(name)) {
+    return { error: "السجلات المالية التاريخية للقراءة فقط؛ تسجيل وتصحيح الدفعات من صفحة الإيصالات بعد مراجعة العميل والضريبة وتاريخ السداد." };
   }
   if (name === "generate_financial_claim") {
     if (!chat_id) return { error: "chat_id required" };
@@ -1765,24 +1754,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
 async function handlePhoto(admin: any, token: string, chat_id: number, msg: any) {
   const sub = await getSub(admin, chat_id);
   if (!sub?.user_id) return send(token, chat_id, "🚫 ربط الحساب مطلوب");
-  const invoiceId = sub.last_referenced_invoice_id;
-  if (!invoiceId) return send(token, chat_id, "📎 ابعت الصورة بعد عرض فاتورة بـ /invoice");
-
-  const photos = msg.photo as any[];
-  const best = photos[photos.length - 1];
-  const fr = await fetch(TG(token, "getFile") + `?file_id=${best.file_id}`);
-  const fj = await fr.json();
-  const filePath = fj?.result?.file_path;
-  if (!filePath) return send(token, chat_id, "⚠️ تعذّر تحميل الصورة");
-  const fileUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
-  const fileRes = await fetch(fileUrl);
-  const bytes = new Uint8Array(await fileRes.arrayBuffer());
-  const objectKey = `receipts/${invoiceId}/${Date.now()}.jpg`;
-  const { error: upErr } = await admin.storage.from("avatars").upload(objectKey, bytes, { contentType: "image/jpeg", upsert: true });
-  if (upErr) return send(token, chat_id, `⚠️ فشل الرفع: ${esc(upErr.message)}`);
-  const { data: pub } = admin.storage.from("avatars").getPublicUrl(objectKey);
-  await admin.from("invoices").update({ receipt_image_url: pub.publicUrl }).eq("id", invoiceId);
-  await send(token, chat_id, `✅ تم إرفاق الإيصال بالفاتورة`);
+  return send(token, chat_id, "إثباتات السداد تُرفع بشكل خاص من صفحة الإيصالات؛ الفواتير التاريخية للقراءة فقط.");
 }
 
 // === Callback queries ===
@@ -1808,14 +1780,7 @@ async function handleCallback(admin: any, token: string, cb: any) {
       await answerCb(token, cb.id, "❌ تم الإلغاء");
       await editText(token, chat_id, message_id, `${cb.message.text}\n\n❌ <b>تم الإلغاء</b>`);
     } else if (action === "pay_full") {
-      const { data: inv } = await admin.from("invoices").select("amount,paid_amount").eq("id", arg).maybeSingle();
-      if (!inv) throw new Error("invoice not found");
-      const remaining = Number(inv.amount) - Number(inv.paid_amount || 0);
-      await admin.from("invoices").update({
-        paid_amount: inv.amount, paid: true, paid_at: new Date().toISOString(),
-      }).eq("id", arg);
-      await answerCb(token, cb.id, `✅ سُجِّل ${fmtNum(remaining)} ر.س`);
-      await editText(token, chat_id, message_id, `${cb.message.text}\n\n✅ <b>تم تسجيل الدفع</b>`);
+      await answerCb(token, cb.id, "سجل الدفعة من صفحة الإيصالات؛ الفواتير التاريخية للقراءة فقط");
     } else if (action === "pdfs_b") {
       await answerCb(token, cb.id, "⏳ جاري الإعداد");
       await sendBookingPDFs(admin, token, chat_id, arg);
