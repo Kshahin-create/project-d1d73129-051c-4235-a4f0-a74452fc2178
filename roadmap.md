@@ -14,9 +14,9 @@
 - [x] Test permission rules and verify admin view plus simulated manager UI; real manager-session end-to-end remains unverified (no manager session supplied).
 
 # Tyre shops and car washes
-- [ ] Verify red unit numbers in owner plans for buildings 7–10.
-- [ ] Limit tyre/car-wash selection to those units, show other units reserved for these activities, and preserve actual bookings and other activities.
-- [ ] Test exact mapping and verify authenticated selection and activity counts.
+- [x] Verify red unit numbers visually in owner plans for buildings 7–10 and cross-check the activity sheet.
+- [x] Limit tyre/car-wash selection to those units, show other units reserved for these activities, and preserve actual bookings and other activities without changing occupancy records.
+- [x] Test exact mapping/counts and verify authenticated selection through details, spare-parts independence and desktop/mobile rendering; no real booking submitted.
 
 # Email corrections
 - [x] Correct Arabic rendering and RTL in email templates.
