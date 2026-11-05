@@ -127,6 +127,16 @@
     font-feature-settings: "lnum" 1, "tnum" 1;
     font-variant-numeric: lining-nums tabular-nums;
   }
+  /* Table cells must stay table cells; keep RTL column alignment */
+  td.num, th.num {
+    display: table-cell;
+    direction: rtl;
+    unicode-bidi: plaintext;
+    text-align: right;
+    vertical-align: middle;
+  }
+  td, th { vertical-align: middle; }
+  thead th { white-space: nowrap; }
 
   /* Force English (Latin) digits everywhere across Arabic UI */
   html[lang="ar"], body, * {
