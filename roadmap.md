@@ -1,7 +1,9 @@
 # Phase 1 / Prompt 4 — One unit-status writer
-- [ ] Present affected surfaces, additive migration/backfill and verification plan; wait for approval.
-- [ ] After approval, implement the single status writer, 48-hour holds/one extension, separate leasing manager and linked contract/payment verification.
-- [ ] After approval, migrate all writers/readers and add unit timeline; verify transitions, permissions, concurrency and preserved flows.
+- [x] Present affected surfaces, additive migration/backfill and verification plan; approved.
+- [x] Implement the status writer/write guard, 48-hour holds/one extension, separate leasing manager and linked contract/payment verification.
+- [x] Connect booking writers, Telegram dispatcher and compatible status reads; add unit timeline, contracts and historical review.
+- [x] Verify database rollback regression flow, control/manager restrictions, duplicate booking/extension, 47 unit tests, authenticated desktop unit dialogs and mobile sign-in gate.
+- [ ] Verify authenticated external API/MCP end-to-end (blocked: no integration test key supplied); real simultaneous concurrency and actual cron timing remain unverified.
 
 # Respond.io marketing campaigns
 - [x] Collect all customer phone sources and deduplicate securely.
