@@ -3631,6 +3631,44 @@ export type Database = {
           },
         ]
       }
+      receipt_reconciliation: {
+        Row: {
+          month: string | null
+          original_total: number | null
+          pending_review: number | null
+          precision_difference: number | null
+          receipt_total: number | null
+          rounded_total: number | null
+          rows: number | null
+          source_archived: boolean | null
+          source_table: string | null
+          unexplained_difference: number | null
+          unit_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units_status_read"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units_status_read: {
         Row: {
           activity: string | null
@@ -3871,6 +3909,16 @@ export type Database = {
         Returns: string
       }
       admin_user_directory: { Args: never; Returns: Json }
+      allocate_receipt: {
+        Args: {
+          _amount_excl_vat: number
+          _installment: string
+          _reason: string
+          _receipt: string
+          _vat_amount: number
+        }
+        Returns: string
+      }
       approve_transfer: {
         Args: { _approve: boolean; _notes?: string; _request_id: string }
         Returns: {
@@ -4315,6 +4363,10 @@ export type Database = {
         }
         Returns: string
       }
+      record_receipt: {
+        Args: { _data: Json; _reason: string }
+        Returns: string
+      }
       refresh_installments: { Args: { _contract?: string }; Returns: undefined }
       register_unit_contract: {
         Args: {
@@ -4364,6 +4416,10 @@ export type Database = {
       }
       reverse_payment: {
         Args: { _invoice_id: string; _reason: string }
+        Returns: string
+      }
+      reverse_receipt: {
+        Args: { _id: string; _reason: string }
         Returns: string
       }
       save_payment_plan: {
@@ -4428,6 +4484,10 @@ export type Database = {
           scopes: string[]
         }[]
       }
+      verify_receipt: {
+        Args: { _id: string; _reason: string }
+        Returns: undefined
+      }
       verify_unit_first_payment: {
         Args: {
           _contract_id: string
@@ -4436,6 +4496,10 @@ export type Database = {
           _receipt_type: string
         }
         Returns: string
+      }
+      waive_installment: {
+        Args: { _id: string; _reason: string }
+        Returns: undefined
       }
     }
     Enums: {
