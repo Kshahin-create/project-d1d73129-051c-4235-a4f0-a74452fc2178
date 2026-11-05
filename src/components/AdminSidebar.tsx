@@ -99,6 +99,9 @@ const groups: LinkGroup[] = [
     label: "النظام",
     Icon: Settings2,
     links: [
+      { to: "/admin/settings/activities", label: "الأنشطة والمباني", Icon: Building2, managerOnly: true },
+      { to: "/admin/settings/unit-import", label: "استيراد الوحدات", Icon: FileSpreadsheet, managerOnly: true },
+      { to: "/admin/units-incomplete", label: "وحدات تحتاج استكمال", Icon: ClipboardList, managerOnly: true },
       { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
       { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
       { to: "/admin/access-log", label: "سجل الدخول والأجهزة", Icon: Globe2, adminOnly: true },
