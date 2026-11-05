@@ -158,6 +158,7 @@ const AdminApiKeys = () => {
                   { v: "admin", l: "أدمن (حذف)" },
                   { v: "crm:read", l: "CRM: قراءة فقط (مباني/وحدات/حجوزات بدون بيانات شخصية)" },
                   { v: "crm:pii", l: "CRM: بيانات العملاء والتواصل" },
+                  { v: "crm:metrics", l: "CRM: المؤشرات المجمعة الموحدة" },
                   { v: "crm:finance", l: "CRM: المبالغ والفواتير والتحصيلات" },
                 ].map((s) => (
                   <label key={s.v} className="flex items-center gap-2 text-sm">

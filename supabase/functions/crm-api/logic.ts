@@ -1,6 +1,6 @@
 // Pure helpers for the read-only CRM API (no Deno/Supabase imports so they are unit-testable).
-export type CrmScope = "crm:read" | "crm:pii" | "crm:finance";
-export const CRM_SCOPES: CrmScope[] = ["crm:read", "crm:pii", "crm:finance"];
+export type CrmScope = "crm:read" | "crm:pii" | "crm:finance" | "crm:metrics";
+export const CRM_SCOPES: CrmScope[] = ["crm:read", "crm:pii", "crm:finance", "crm:metrics"];
 
 export interface Cursor { t: string; id: string }
 

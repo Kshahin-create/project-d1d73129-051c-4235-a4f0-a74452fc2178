@@ -1,4 +1,4 @@
-# MNICITY Booking Platform — CRM Integration API (v1.1, Read-Only)
+# MNICITY Booking Platform — CRM Integration API (v1.2, Read-Only)
 
 > Audience: engineers (and Claude Code) building an external, independent CRM (e.g. Django) that pulls data from the MNICITY industrial-city booking platform.
 > All examples use **fictional data**. No real customer data or secrets appear in this file.
@@ -23,7 +23,7 @@ Admin confirms request -> booking.status = confirmed, units.leasing_status = pen
 Active contract + explicitly verified first receipt + manual confirmation -> units.leasing_status = leased
 No action before expires_at            -> booking.status = expired, units back to available
 Admin/customer cancels                 -> booking.status = cancelled, units back to available
-Payments are recorded as unit_collections (cash received) and invoices.
+Payments are recorded through audited receipts and installment allocations. Legacy unit_collections and invoices are immutable evidence only; historical reconciliation remains pending.
 ```
 
 Unit state now uses `leasing_status`: `available | on_hold | pending_contract | leased | maintenance | blocked`.
@@ -32,7 +32,7 @@ Read-only legacy responses project `status`: available→available, leased→ren
 all other states→reserved (unavailable). CRM unit responses also include `leasing_status`; no API writes were added.
 Holds use database settings: 48 hours and one extension, by the separate leasing-manager role with a reason.
 
-Scope: **one project, one phase** ("المرحلة الأولى"). There is no projects/phases table; the API exposes them as constants via `/meta`.
+Scope: **all registered project units**, excluding test units. Building phase comes from buildings.phase; currently unassigned phases must not be inferred.
 
 ## 2. Tables and relationships (actually existing)
 
@@ -418,3 +418,25 @@ Run every 5–15 minutes via Celery beat / cron. Sync order: buildings → units
 - Webhooks/push events (pull-only for now), deletion tombstones, rate limiting.
 - Write API for the CRM (phase 2).
 - **Legacy `api` (v2.0):** read-only. Remaining routes: `GET /buildings`, `/buildings/:number`, `/units`, `/units/:id`, `/bookings`, `/bookings/:id`, `/stats`, `/stats/overview`. Any non-GET method returns 405. `/tenants`, `/tenant-accounts`, `/customers`, `/users`, `/audit-log`, `/invoices` return 410. Responses contain unit fields and aggregate counts only; bookings return real database IDs without customer data. Browser CORS is limited to `app_settings.api_cors_allowlist`.
+
+
+## 16. Central dashboard metrics (v1.2)
+
+`GET /metrics` requires both `crm:read` and **`crm:metrics`**. Finance is omitted unless **`crm:finance`** is also present. No names, contacts, private files, quality candidates or approval records are returned. Existing keys are unchanged; administrators explicitly choose the extra scope. This endpoint is read-only.
+
+Optional filters: `building` (number), `phase` (registered value or `unassigned`), `activity` (registry UUID or `unassigned`), `unit_type`, `from`, `to` (`YYYY-MM-DD`). Defaults are the current month through today in Asia/Riyadh. Response includes `as_of`, normalized `scope`, `inventory`, `pipeline`, and permitted `finance`. Each unavailable section returns `unavailable: true`; it is not zero.
+
+All consumers use public `metrics_*` functions: UI `/dashboard`, legacy API `/stats` and `/stats/overview`, developer `admin-stats`, MCP `stats_overview`, Telegram daily summary and overview/revenue tools. Other endpoints remain record/evidence reads, not competing financial metrics.
+
+- Leased rate: published leased / published, excluding test units.
+- Occupancy rate: published (leased + on_hold + pending_contract) / published.
+- Annual rent excl VAT: active contracts' rent, or matching contract-unit rent under filters; never unit price or expected building revenue.
+- Due: outstanding non-waived installment balances whose due date precedes Riyadh today and falls in the chosen due-date period.
+- Overdue: due date more than configured grace days before Riyadh today (initial setting: 3).
+- Collected: verified non-reversed approved receipts by actual paid_at in the chosen period. VAT is separate; undocumented VAT stays null.
+- Collection rate: verified allocations to installments due in the selected period / their total non-waived obligation (incl VAT consistently). Unallocated receipts are excluded.
+- Conversion: distinct documented transitions to pending_contract in period / submitted booking requests in period. Repeated transitions count once; the ratio may exceed 100% when older requests convert.
+
+Inventory, current stages and active contract rent are current snapshots, not historical end-of-period inventory. Zero denominator gives null, not 0%/100%. Receipt attribution follows allocation → installment → contract → scoped contract-unit rent share. Unallocated sums remain explicitly project-level and never spread into a building/activity without allocation evidence. Test-unit shares are excluded consistently.
+
+Coverage: approved finance sources only; **54 historical sources require human review**, no final finance cutover or automatic approval. Comprehensive Prompt 11 quality checks are not implemented and must not be inferred from these metrics.
