@@ -288,6 +288,13 @@
       "when": 1793910765392,
       "tag": "0040_finance_precision_and_flow_regression",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793910861932,
+      "tag": "0041_finance_legacy_contract_provenance",
+      "breakpoints": true
     }
   ]
 }
