@@ -47,6 +47,7 @@ export default function AdminSheetsSync() {
   if (!isAdmin && !isManager) return <Navigate to="/" replace />;
 
   const saveId = async () => {
+    if (!isAdmin) return;
     setSaving(true);
     const id = extractSheetId(sheetId);
     const { error } = await supabase.from("app_settings").update({ buildings_sheet_id: id || null }).eq("id", 1);
@@ -58,6 +59,7 @@ export default function AdminSheetsSync() {
   };
 
   const run = async (action: "push" | "pull") => {
+    if (!isAdmin) return;
     if (!originalId) return toast({ title: "احفظ معرّف الشييت أولاً", variant: "destructive" });
     if (selected.length === 0) return toast({ title: "اختر مبنى واحد على الأقل", variant: "destructive" });
     setBusy(action);
@@ -110,12 +112,13 @@ export default function AdminSheetsSync() {
             <Label>رابط الشييت أو الـ ID</Label>
             <div className="flex gap-2">
               <Input
+                disabled={!isAdmin}
                 value={sheetId}
                 onChange={(e) => setSheetId(e.target.value)}
                 placeholder="https://docs.google.com/spreadsheets/d/..."
                 dir="ltr"
               />
-              <Button onClick={saveId} disabled={saving || sheetId === originalId}>
+              <Button onClick={saveId} disabled={!isAdmin || saving || sheetId === originalId}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 <span className="mr-2">حفظ</span>
               </Button>
@@ -165,11 +168,11 @@ export default function AdminSheetsSync() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <Button onClick={() => run("push")} disabled={busy !== null} size="lg">
+          <Button onClick={() => run("push")} disabled={!isAdmin || busy !== null} size="lg">
             {busy === "push" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
             <span className="mr-2">رفع للشييت</span>
           </Button>
-          <Button onClick={() => run("pull")} disabled={busy !== null} size="lg" variant="secondary">
+          <Button onClick={() => run("pull")} disabled={!isAdmin || busy !== null} size="lg" variant="secondary">
             {busy === "pull" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4" />}
             <span className="mr-2">سحب من الشييت</span>
           </Button>

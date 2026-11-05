@@ -8,6 +8,11 @@
 - [x] Show latest recorded access IP and country with read-only account details.
 - [x] Verify authenticated directory and details on desktop/mobile without changing user records.
 
+# Manager read-only access
+- [x] Audit and block manager administrative writes in database functions/policies and service functions.
+- [x] Remove manager editing controls, including returning-customer marking and user deletion.
+- [x] Test permission rules and verify admin view plus simulated manager UI; real manager-session end-to-end remains unverified (no manager session supplied).
+
 # Email corrections
 - [x] Correct Arabic rendering and RTL in email templates.
 - [x] Correct company roles in booking emails.

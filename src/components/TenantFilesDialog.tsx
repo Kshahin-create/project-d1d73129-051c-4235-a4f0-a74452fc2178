@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   X, Upload, Download, Trash2, FileText, Paperclip, Loader2, Plus,
   Archive, ArchiveRestore, Pencil, RefreshCw, Eye,
@@ -46,6 +47,7 @@ const fmtSize = (b?: number | null) => {
 const ACCEPT = ".pdf,.doc,.docx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }: Props) {
+  const { isAdmin } = useAuth();
   const [files, setFiles] = useState<TenantFile[]>([]);
   const [uploaderMap, setUploaderMap] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"active" | "archived">("active");
@@ -237,7 +239,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
 
         <div className="max-h-[calc(90vh-60px)] overflow-y-auto p-4">
           {/* Uploader */}
-          <div className="mb-5 rounded-2xl border border-dashed border-border bg-secondary/30 p-4">
+          {isAdmin && <div className="mb-5 rounded-2xl border border-dashed border-border bg-secondary/30 p-4">
             <div className="mb-2 flex items-center justify-between">
               <div className="text-sm font-semibold">رفع ملفات جديدة</div>
               <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border bg-background px-2 py-1 text-xs hover:bg-secondary">
@@ -301,7 +303,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
                 رفع {pending.length > 0 ? `(${pending.length})` : ""}
               </button>
             </div>
-          </div>
+          </div>}
 
           {/* Tabs */}
           <div className="mb-3 flex gap-1 rounded-xl border border-border bg-background p-1">
@@ -352,7 +354,7 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
                     <button onClick={() => download(f)} title="تحميل" className="rounded-lg border border-border p-1.5 hover:bg-secondary">
                       <Download className="h-3.5 w-3.5" />
                     </button>
-                    {!f.is_archived && (
+                    {isAdmin && !f.is_archived && (
                       <>
                         <button onClick={() => rename(f)} title="تعديل الاسم" className="rounded-lg border border-border p-1.5 hover:bg-secondary">
                           <Pencil className="h-3.5 w-3.5" />
@@ -375,14 +377,14 @@ export function TenantFilesDialog({ open, tenantAccountId, tenantName, onClose }
                         </button>
                       </>
                     )}
-                    {f.is_archived && (
+                    {isAdmin && f.is_archived && (
                       <button onClick={() => restore(f)} title="استعادة" className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-1.5 text-emerald-700 hover:bg-emerald-500/20">
                         <ArchiveRestore className="h-3.5 w-3.5" />
                       </button>
                     )}
-                    <button onClick={() => remove(f)} title="حذف نهائي" className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20">
+                    {isAdmin && <button onClick={() => remove(f)} title="حذف نهائي" className="rounded-lg bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20">
                       <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    </button>}
                   </div>
                 </div>
               ))}

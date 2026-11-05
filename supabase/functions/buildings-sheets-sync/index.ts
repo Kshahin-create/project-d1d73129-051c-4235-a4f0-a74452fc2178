@@ -357,6 +357,10 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(()=>({}));
     const action: "push" | "pull" | "meta" = body.action || "push";
+    const canMutate = (roles || []).some((r: { role: string }) => r.role === "admin");
+    if (!canMutate && (action !== "meta" || body.delete_title)) {
+      return new Response(JSON.stringify({ error: "صلاحية المدير للعرض فقط" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const buildings: number[] = Array.isArray(body.buildings) && body.buildings.length
       ? body.buildings : [1,2,3,4,5,6,7,8,9,10];
 

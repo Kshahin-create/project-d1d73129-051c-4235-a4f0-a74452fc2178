@@ -241,13 +241,13 @@ export default function AdminTenantAccounts() {
               <p className="text-xs text-muted-foreground">{rows.length} حساب</p>
             </div>
           </div>
-          <button
+          {isAdmin && <button
             onClick={() => setShowCreate(true)}
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
             إنشاء حساب
-          </button>
+          </button>}
         </div>
 
         {/* Stats */}
@@ -378,8 +378,9 @@ export default function AdminTenantAccounts() {
           >
             <Download className="h-4 w-4" /> تصدير
           </button>
-          <button
+          {isAdmin && <button
             onClick={async () => {
+              if (!isAdmin) return;
               if (!confirm("سيتم دمج المستأجرين المكررين تلقائياً بمطابقة الاسم أو اسم المنشأة بالضبط. سيتم نقل كل الوحدات والتحصيلات والملفات والفواتير إلى السجل الرئيسي، وتُخفى النسخ المكررة (تُحفظ للمراجعة). المتابعة؟")) return;
               const { data, error } = await supabase.rpc("admin_auto_merge_duplicate_tenants");
               if (error) { toast.error(error.message); return; }
@@ -390,7 +391,7 @@ export default function AdminTenantAccounts() {
             className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 sm:text-sm"
           >
             <AlertTriangle className="h-4 w-4" /> دمج المكررين
-          </button>
+          </button>}
 
         </div>
 
@@ -443,10 +444,11 @@ export default function AdminTenantAccounts() {
                             className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
                           >
                             <Pencil className="h-3 w-3" />
-                            إدارة
+                            {isAdmin ? "إدارة" : "التفاصيل"}
                           </button>
-                          <button
+                          {isAdmin && <button
                             onClick={async () => {
+                              if (!isAdmin) return;
                               if (!confirm(`حذف حساب "${r.full_name}" نهائياً؟ سيتم فك ربط الوحدات ولن يتمكن من الدخول.`)) return;
                               try {
                                 await callTenantAdmin({ action: "delete", tenant_account_id: r.id });
@@ -460,7 +462,7 @@ export default function AdminTenantAccounts() {
                             title="حذف نهائي"
                           >
                             <Trash2 className="h-3 w-3" />
-                          </button>
+                          </button>}
                         </div>
                       </td>
                     </tr>
@@ -473,7 +475,7 @@ export default function AdminTenantAccounts() {
 
       </main>
 
-      {showCreate && (
+      {isAdmin && showCreate && (
         <CreateModal
           onClose={() => setShowCreate(false)}
           onCreated={() => {
@@ -694,6 +696,7 @@ function DetailModal({
   onClose: () => void;
   onOpenFiles: (id: string, name: string) => void;
 }) {
+  const { isAdmin } = useAuth();
   const [tab, setTab] = useState<"profile" | "files" | "units" | "invoices" | "auth">("profile");
   const [account, setAccount] = useState<any>(null);
   const [linked, setLinked] = useState<LinkedUnit[]>([]);
@@ -755,7 +758,7 @@ function DetailModal({
           { id: "units", label: `الوحدات (${linked.length})` },
           { id: "invoices", label: "الفواتير" },
           { id: "auth", label: "الحساب والدخول" },
-        ].map((t) => (
+        ].filter(t => isAdmin || t.id !== "auth").map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id as any)}
@@ -783,7 +786,7 @@ function DetailModal({
       )}
       {tab === "units" && <UnitsTab tenantId={tenantId} linked={linked} allUnits={allUnits} onChanged={load} />}
       {tab === "invoices" && <InvoicesTab tenantId={tenantId} linked={linked} invoices={invoices} onChanged={load} />}
-      {tab === "auth" && (
+      {isAdmin && tab === "auth" && (
         <AuthTab tenantId={tenantId} magicLink={magicLink} setMagicLink={setMagicLink} onDeleted={onClose} />
       )}
     </Modal>
@@ -791,6 +794,7 @@ function DetailModal({
 }
 
 function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void }) {
+  const { isAdmin } = useAuth();
   const [full_name, setFullName] = useState(account.full_name || "");
   const [business_name, setBusiness] = useState(account.business_name || "");
   const [cr_number, setCrNumber] = useState(account.cr_number || "");
@@ -803,6 +807,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
   const validCr = (s: string) => /^7\d{8,9}$/.test(s.trim());
 
   const save = async () => {
+    if (!isAdmin) return;
     if (!full_name.trim()) return toast.error("اسم المستأجر أو المنشأة مطلوب");
     if (!cr_number.trim()) return toast.error("الرقم الوطني الموحد مطلوب");
     if (!validCr(cr_number)) return toast.error("الرقم الوطني الموحد يجب أن يكون 9 أو 10 أرقام ويبدأ بـ 7");
@@ -830,6 +835,7 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
     }
   };
 
+  if (!isAdmin) return <dl className="grid gap-3">{[["اسم المستأجر", account.full_name], ["المنشأة", account.business_name], ["الرقم الوطني", account.cr_number], ["النشاط", account.activity_type], ["الجوال", account.phone], ["البريد", account.email]].map(([label, value]) => <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="break-words text-sm">{value || "غير مسجّل"}</dd></div>)}</dl>;
   return (
     <div className="space-y-3">
       <Field label="اسم المستأجر أو المنشأة *">
@@ -864,11 +870,13 @@ function ProfileTab({ account, onSaved }: { account: any; onSaved: () => void })
 
 
 function UnitsTab({ tenantId, linked, allUnits, onChanged }: { tenantId: string; linked: LinkedUnit[]; allUnits: Unit[]; onChanged: () => void }) {
+  const { isAdmin } = useAuth();
   const [adding, setAdding] = useState<Set<string>>(new Set());
   const linkedIds = new Set(linked.map((l) => l.unit_id));
   const available = allUnits.filter((u) => !linkedIds.has(u.id));
 
   const add = async () => {
+    if (!isAdmin) return;
     if (adding.size === 0) return;
     const { error } = await supabase.rpc("admin_link_tenant_units", {
       _tenant_account_id: tenantId,
@@ -882,6 +890,7 @@ function UnitsTab({ tenantId, linked, allUnits, onChanged }: { tenantId: string;
     }
   };
   const remove = async (unitId: string) => {
+    if (!isAdmin) return;
     const { error } = await supabase.rpc("admin_unlink_tenant_unit", {
       _tenant_account_id: tenantId,
       _unit_id: unitId,
@@ -908,16 +917,16 @@ function UnitsTab({ tenantId, linked, allUnits, onChanged }: { tenantId: string;
                   <span className="font-medium">مبنى {l.unit?.building_number} - وحدة {l.unit?.unit_number}</span>
                   <span className="text-xs text-muted-foreground">({l.unit?.unit_type || "—"})</span>
                 </div>
-                <button onClick={() => remove(l.unit_id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
+                {isAdmin && <button onClick={() => remove(l.unit_id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
                   <Trash2 className="h-4 w-4" />
-                </button>
+                </button>}
               </div>
             ))
           )}
         </div>
       </div>
 
-      <div>
+      {isAdmin && <div>
         <h3 className="mb-2 text-sm font-bold">إضافة وحدات</h3>
         <div className="max-h-56 overflow-y-auto rounded-xl border border-border p-2">
           {available.length === 0 ? (
@@ -948,7 +957,7 @@ function UnitsTab({ tenantId, linked, allUnits, onChanged }: { tenantId: string;
             ربط {adding.size} وحدة
           </button>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     const TOKEN = Deno.env.get("RESPOND_IO_API_TOKEN");
     if (!TOKEN) throw new Error("RESPOND_IO_API_TOKEN missing");
 
-    // Auth — admin/manager only
+    // Sending messages is an administrative write: admin only.
     const authHeader = req.headers.get("Authorization") || "";
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       });
     }
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userData.user.id);
-    const allowed = (roles || []).some((r: any) => r.role === "admin" || r.role === "manager");
+    const allowed = (roles || []).some((r: any) => r.role === "admin");
     if (!allowed) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },

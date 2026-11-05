@@ -604,6 +604,10 @@ async function cmdOverdue(admin: any, token: string, chat_id: number) {
 
 
 async function cmdInterested(admin: any, token: string, chat_id: number, arg: string, sub: any) {
+  if (!(await canWrite(admin, sub.user_id))) {
+    await send(token, chat_id, "🚫 صلاحية المدير للعرض فقط؛ تسجيل العملاء للأدمن");
+    return;
+  }
   // Format examples:
   //  /interested أحمد | 0555555555 | مطعم | مطعم الذواق | 3 | 12 | إعلان | يفضل وحدة كبيرة
   //  Or labeled lines (الاسم: ... / الجوال: ...)
@@ -1151,12 +1155,12 @@ const AI_TOOLS = [
   },
 ];
 
-// Check if linked user has admin/manager role for write operations
+// Managers can read reports; only linked admins can write.
 async function canWrite(admin: any, userId: string | null): Promise<boolean> {
   if (!userId) return false;
   const { data } = await admin.from("user_roles").select("role").eq("user_id", userId);
   const roles = (data || []).map((r: any) => r.role);
-  return roles.includes("admin") || roles.includes("manager");
+  return roles.includes("admin");
 }
 
 async function runAITool(admin: any, name: string, args: any): Promise<any> {
@@ -1343,7 +1347,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
 
 async function runAIWriteTool(admin: any, userId: string, name: string, args: any, chat_id?: number): Promise<any> {
   const allowed = await canWrite(admin, userId);
-  if (!allowed) return { error: "forbidden: تحتاج صلاحية admin أو manager" };
+  if (!allowed) return { error: "forbidden: صلاحية المدير للعرض فقط؛ التعديل للأدمن" };
 
   if (name === "confirm_booking") {
     const bookingId = String(args.booking_id);
@@ -2003,7 +2007,7 @@ Deno.serve(async (req) => {
           await cmdBooking(admin, token, chat_id, m[0]);
         } else if (/مطالب[هة]|مطلب[هة]\s+مالي[هة]|financial\s+claim/i.test(normalizeArabic(text)) && extractUnitRequest(text).building_number && extractUnitRequest(text).unit_numbers.length) {
           if (!(await canWrite(admin, sub.user_id))) {
-            await send(token, chat_id, "🚫 تحتاج صلاحية admin أو manager لإنشاء مطالبة مالية");
+            await send(token, chat_id, "🚫 صلاحية المدير للعرض فقط؛ إنشاء المطالبات للأدمن");
           } else {
             const out: any = await generateFinancialClaimFromText(admin, chat_id, text);
             if (out.ok) {
