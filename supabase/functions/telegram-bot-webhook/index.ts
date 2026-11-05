@@ -1,4 +1,4 @@
-import { metricsSnapshot,metricsTelegramText,metricsPeriod,legacyMetricUnits } from "../_shared/metrics.ts";
+import { metricsActorSnapshot,metricsSnapshot,metricsTelegramText,metricsPeriod,legacyMetricUnits } from "../_shared/metrics.ts";
 // Advanced Telegram bot: linking, commands, inline buttons, receipt photos, AI Q&A.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
@@ -194,7 +194,7 @@ async function requireLinked(admin: any, token: string, chat_id: number) {
 
 // === Commands ===
 async function cmdStats(admin: any, token: string, chat_id: number) {
-  const snapshot=await metricsSnapshot(admin);await send(token,chat_id,metricsTelegramText(snapshot));
+  const sub=await getSub(admin,chat_id);if(!sub?.user_id)throw new Error("ربط الحساب مطلوب");const snapshot=await metricsActorSnapshot(admin,sub.user_id);await send(token,chat_id,metricsTelegramText(snapshot));
 }
 
 async function cmdUnpaid(admin: any, token: string, chat_id: number) {
@@ -1135,13 +1135,13 @@ async function canWrite(admin: any, userId: string | null): Promise<boolean> {
   return roles.includes("admin");
 }
 
-async function runAITool(admin: any, name: string, args: any): Promise<any> {
+async function runAITool(admin: any, name: string, args: any, actor?:string): Promise<any> {
   const lim = (n: any, d=10) => Math.max(1, Math.min(50, Number(n) || d));
   const today = new Date(); today.setHours(0,0,0,0);
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
   const todayStr = new Date().toISOString().slice(0,10);
 
-  if(name==="get_overview"){const snapshot=await metricsSnapshot(admin);return{...snapshot,units:legacyMetricUnits(snapshot)};}
+  if(name==="get_overview"){if(!actor)throw new Error("ربط الحساب مطلوب");const snapshot=await metricsActorSnapshot(admin,actor);return{...snapshot,units:legacyMetricUnits(snapshot)};}
   if (name === "search_bookings") {
     if (args.query) return { results: await searchBookingsSmart(admin, String(args.query), lim(args.limit)) };
     let q = admin.from("bookings").select("id,customer_full_name,customer_phone,business_name,status,total_price,paid_amount,expires_at,created_at").order("created_at",{ascending:false}).limit(lim(args.limit));
@@ -1167,7 +1167,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     const { data } = await q;
     return { results: data || [], count: data?.length || 0 };
   }
-  if(name==="revenue_report"){const days=({today:1,week:7,month:undefined,year:365} as Record<string,number|undefined>)[String(args.period??"month")];return await metricsSnapshot(admin,metricsPeriod(days));}
+  if(name==="revenue_report"){const days=({today:1,week:7,month:undefined,year:365} as Record<string,number|undefined>)[String(args.period??"month")];if(!actor)throw new Error("ربط الحساب مطلوب");return await metricsActorSnapshot(admin,actor,metricsPeriod(days));}
   if (name === "resolve_booking_id") {
     const q = String(args.query || "").trim();
     if (!q) return { error: "query required" };
@@ -1534,6 +1534,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
 
   await typing(token, chat_id);
   const writeAllowed = await canWrite(admin, userId);
+  const {data:roles,error:roleError}=await admin.from("user_roles").select("role").eq("user_id",userId).eq("is_active",true);if(roleError)throw roleError;if(!(roles??[]).some((r:any)=>["admin","manager"].includes(r.role))){if(!userId)return send(token,chat_id,"ربط الحساب مطلوب");return send(token,chat_id,metricsTelegramText(await metricsActorSnapshot(admin,userId)));}
   const preCtx = await buildPreContext(admin, question);
   const history = await loadChatMemory(admin, chat_id, 40);
 
@@ -1621,7 +1622,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
           try {
             const out = WRITE_TOOLS.has(call.name)
               ? await runAIWriteTool(admin, userId || "", call.name, call.args, chat_id)
-              : await runAITool(admin, call.name, call.args);
+              : await runAITool(admin, call.name, call.args,userId??undefined);
             return { tool: call.name, args: call.args, result: out };
           } catch (e) {
             return { tool: call.name, args: call.args, error: String((e as Error).message) };
@@ -1649,7 +1650,7 @@ async function aiAnswer(admin: any, token: string, chat_id: number, question: st
       try {
         const out = WRITE_TOOLS.has(fname)
           ? await runAIWriteTool(admin, userId || "", fname, args, chat_id)
-          : await runAITool(admin, fname, args);
+          : await runAITool(admin, fname, args,userId??undefined);
         return { tool_call_id: tc.id, role: "tool", content: JSON.stringify(out).slice(0, 12000) };
       } catch (e) {
         return { tool_call_id: tc.id, role: "tool", content: JSON.stringify({ error: String((e as Error).message) }) };
