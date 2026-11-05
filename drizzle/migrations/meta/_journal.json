@@ -71,6 +71,13 @@
       "when": 1793888471877,
       "tag": "0009_activities_registry_and_unit_import",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793891755066,
+      "tag": "0010_unit_leasing_status_foundation",
+      "breakpoints": true
     }
   ]
 }
