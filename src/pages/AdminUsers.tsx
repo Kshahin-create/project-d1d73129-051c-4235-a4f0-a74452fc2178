@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DirectoryAvatar, UserDirectoryDetails } from "@/components/admin/UserDirectoryDetails";
 import { directoryName, matchesDirectorySearch, type DirectoryDetails } from "@/lib/userDirectory";
 
-type AppRole = "admin" | "control" | "manager" | "tenant" | "user";
+type AppRole = "admin" | "control" | "manager" | "tenant" | "user" | "leasing_manager";
 
 interface UserRow extends DirectoryDetails {
   user_id: string;
@@ -24,6 +24,7 @@ interface UserRow extends DirectoryDetails {
 }
 
 const ROLE_META: Record<AppRole, { label: string; icon: typeof Shield; cls: string; ring: string }> = {
+  leasing_manager: { label: "مدير التأجير", icon: Briefcase, cls: "bg-secondary text-secondary-foreground", ring: "ring-border" },
   admin: { label: "أدمن", icon: Shield, cls: "bg-primary/10 text-primary", ring: "ring-primary/20" },
   manager: { label: "مدير", icon: Briefcase, cls: "bg-emerald-500/10 text-emerald-600", ring: "ring-emerald-500/20" },
   control: { label: "Control", icon: Wrench, cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400", ring: "ring-amber-500/20" },
@@ -439,6 +440,7 @@ const AdminUsers = () => {
                         <option value="tenant">مستأجر</option>
                         <option value="control">Control (دعم/صيانة)</option>
                         <option value="manager">مدير</option>
+                        <option value="leasing_manager">مدير التأجير (تمديد فقط)</option>
                         <option value="admin">أدمن</option>
                       </select>
                     )}

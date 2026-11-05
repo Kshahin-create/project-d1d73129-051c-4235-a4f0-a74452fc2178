@@ -1,0 +1,2 @@
+DO $$ DECLARE d text;BEGIN SELECT pg_get_functiondef('public.set_unit_status(uuid,public.unit_leasing_status,text,text,uuid)'::regprocedure) INTO d;d:=replace(d,'FROM public.unit_contracts WHERE id=ref_id AND unit_id=u.id','FROM public.unit_contracts ct WHERE ct.id=ref_id AND ct.unit_id=u.id');EXECUTE d;END $$;
+SELECT exists(SELECT 1 FROM pg_proc WHERE proname='set_unit_status');

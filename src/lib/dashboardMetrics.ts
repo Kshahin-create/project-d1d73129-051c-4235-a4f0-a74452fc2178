@@ -11,7 +11,7 @@ export type AccountUnitRow = { id: string; tenant_account_id: string; unit_id: s
 export type DashboardFilters = { building: string; activity: string; status: string; search: string };
 export type DateRange = { from: string; to: string };
 export const EMPTY_FILTERS: DashboardFilters = { building: 'all', activity: 'all', status: 'all', search: '' };
-export const STATUS_LABELS: Record<string, string> = { rented: 'مؤجر', reserved: 'محجوز', booked: 'حجز مسجل', available: 'متاح', maintenance: 'صيانة' };
+export const STATUS_LABELS: Record<string, string> = { rented: 'مؤجر', reserved: 'محجوز', booked: 'حجز مسجل', available: 'متاح', maintenance: 'صيانة', review: 'تحتاج مراجعة' };
 export const statusLabel = (status: string) => STATUS_LABELS[status] ?? 'حالة غير محددة';
 export const bookingStatusLabel = (status: string) => ({ pending: 'قيد الانتظار', confirmed: 'مؤكد', cancelled: 'ملغي', expired: 'منتهي' } as Record<string, string>)[status] ?? 'حالة غير محددة';
 export const clampDashboardPage = (page: number, total: number, pageSize: number) => Math.min(Math.max(1, page), Math.max(1, Math.ceil(total / pageSize)));

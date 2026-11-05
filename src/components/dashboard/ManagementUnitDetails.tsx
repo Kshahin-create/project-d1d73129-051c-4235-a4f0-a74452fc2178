@@ -8,6 +8,7 @@ import { fmt, number, statusClass, statusLabel, bookingStatusLabel, type Dashboa
 import { readDashboardRows } from '@/hooks/useDashboardData';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { UnitStatusTimeline } from '@/components/admin/UnitStatusTimeline';
 
 type UnitFile = { id: string; unit_id: string; file_name: string; storage_path: string };
 type AccountFile = { id: string; tenant_account_id: string; custom_name: string; storage_path: string; is_archived: boolean };
@@ -40,6 +41,7 @@ export function ManagementUnitDetails({ unit, onClose, userId }: { unit: Dashboa
       <TabsContent value="collections"><p className="my-4 text-sm">إجمالي التحصيلات المسجلة غير المؤرشفة: <span className="num font-bold text-primary">{fmt(detail.data.collections.reduce((s, c) => s + number(c.amount), 0))}</span> ر.س</p>{detail.data.collections.map(c => <div key={c.id} className="flex justify-between border-b py-3 text-sm"><span className="num">{fmt(number(c.amount))} ر.س</span><span className="num text-muted-foreground">{new Date(c.created_at).toLocaleDateString('en-GB')}</span></div>)}{!detail.data.collections.length && <Empty />}</TabsContent>
       <TabsContent value="files">{detail.data.files.map(f => <File key={f.id} name={f.file_name} onOpen={() => download('unit-files', f.storage_path)} />)}{detail.data.accountFiles.map(f => <File key={f.id} name={`${f.custom_name} · ملف حساب المستأجر`} onOpen={() => download('tenant-account-files', f.storage_path)} />)}{!detail.data.files.length && !detail.data.accountFiles.length && <Empty />}</TabsContent>
     </Tabs>}
+    {unit && <UnitStatusTimeline key={unit.id} unitId={unit.id} />}
   </DialogContent></Dialog>;
 }
 function Empty() { return <p className="py-8 text-center text-sm text-muted-foreground">لا توجد سجلات</p>; }

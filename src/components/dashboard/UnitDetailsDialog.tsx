@@ -19,6 +19,9 @@ import {
 import { cn } from "@/lib/utils";
 import { UnitFilesPanel } from "./UnitFilesPanel";
 import { UnitCollectionsPanel } from "./UnitCollectionsPanel";
+import { UnitStatusTimeline } from "@/components/admin/UnitStatusTimeline";
+import { UnitContractPanel } from "@/components/admin/UnitContractPanel";
+import { unitStatusLabel } from "@/lib/unitStatus";
 
 
 
@@ -158,7 +161,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
 
   if (!unit) return null;
 
-  const uMeta = UNIT_STATUS_META[unit.status];
+  const uMeta = { cls: "bg-secondary text-secondary-foreground border-border", label: unitStatusLabel(unit.leasingStatus) };
 
   // aggregates
   const totalBookings = bookings.length;
@@ -220,12 +223,14 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                 </div>
 
                 <Tabs defaultValue="overview" dir="rtl">
-                  <TabsList className="grid w-full grid-cols-5" dir="rtl">
+                  <TabsList className="flex h-auto w-full flex-wrap" dir="rtl">
                     <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
                     <TabsTrigger value="bookings">الحجوزات ({totalBookings})</TabsTrigger>
                     <TabsTrigger value="tenant">المستأجر ({tenants.length})</TabsTrigger>
                     <TabsTrigger value="collections">التحصيلات ({collectionsCount})</TabsTrigger>
                     <TabsTrigger value="files">الملفات</TabsTrigger>
+                    <TabsTrigger value="status">سجل الحالات</TabsTrigger>
+                    <TabsTrigger value="contract">العقد</TabsTrigger>
                   </TabsList>
 
                   {/* OVERVIEW */}
@@ -364,7 +369,7 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                   {/* COLLECTIONS */}
                   <TabsContent value="collections" className="mt-4">
                     <UnitCollectionsPanel
-                      unitId={unit.id!}
+                      unitId={unit.id ?? ""}
                       unitPrice={Number(unit.price || 0)}
                       tenantAccountId={tenantAccountId}
                       tenantName={currentTenant?.tenant_name ?? null}
@@ -375,8 +380,10 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
 
                   {/* FILES */}
                   <TabsContent value="files" className="mt-4">
-                    <UnitFilesPanel unitId={unit.id!} />
+                    <UnitFilesPanel unitId={unit.id ?? ""} />
                   </TabsContent>
+                  <TabsContent value="status">{unit.id && <UnitStatusTimeline key={unit.id} unitId={unit.id} />}</TabsContent>
+                  <TabsContent value="contract">{unit.id && <UnitContractPanel unitId={unit.id} canEdit={canEdit} accountId={tenantAccountId} bookingId={bookings.find(b => b.status === "confirmed")?.id} />}</TabsContent>
                 </Tabs>
               </>
             )}

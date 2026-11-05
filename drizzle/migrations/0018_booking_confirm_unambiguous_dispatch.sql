@@ -1,0 +1,7 @@
+DO $$ DECLARE d text;BEGIN SELECT pg_get_functiondef('public.confirm_booking(uuid)'::regprocedure) INTO d;d:=replace(d,'FUNCTION public.confirm_booking(_booking_id uuid)','FUNCTION public.confirm_booking_transition(_booking_id uuid)');EXECUTE d;END $$;
+CREATE OR REPLACE FUNCTION public.confirm_booking(_booking_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN PERFORM public.confirm_booking_transition(_booking_id);END $$;
+CREATE OR REPLACE FUNCTION public.confirm_booking(_booking_id uuid,_paid_amount numeric DEFAULT 0) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF coalesce(_paid_amount,0)<>0 THEN RAISE EXCEPTION 'سجّل الدفعة بإيصال مستقل؛ تأكيد الحجز لا يعدّل الأموال'; END IF;PERFORM public.confirm_booking_transition(_booking_id);END $$;
+REVOKE EXECUTE ON FUNCTION public.confirm_booking_transition(uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.confirm_booking_transition(uuid) TO authenticated,service_role;
+DO $$ DECLARE d text;n text;BEGIN FOREACH n IN ARRAY ARRAY['unit_status_regression_tests','telegram_unit_status_action'] LOOP SELECT pg_get_functiondef(oid) INTO d FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname=n;d:=replace(d,'public.confirm_booking(bid)','public.confirm_booking_transition(bid)');d:=replace(d,'public.confirm_booking((_args->>''booking_id'')::uuid)','public.confirm_booking_transition((_args->>''booking_id'')::uuid)');EXECUTE d;END LOOP;END $$;
+SELECT EXISTS(SELECT 1 FROM pg_proc WHERE proname='confirm_booking_transition');

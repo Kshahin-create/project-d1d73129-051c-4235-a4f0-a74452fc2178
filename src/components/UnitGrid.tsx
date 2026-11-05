@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
 import { unitAllowedForActivity, type BookingActivity } from "@/lib/bookingActivities";
+import { unitStatusLabel } from "@/lib/unitStatus";
 
 interface UnitGridProps {
   buildingNumber: number;
@@ -86,7 +87,7 @@ const UnitGridSection = ({
       const rawReserved = unit.status === "reserved";
       const isRented = !activityReserved && (canDistinguish ? rawRented : (rawRented || rawReserved));
       const isReserved = activityReserved || (canDistinguish && rawReserved);
-      const isLocked = activityReserved || rawRented || rawReserved;
+      const isLocked = activityReserved || unit.status !== "available";
       const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
 
@@ -214,7 +215,7 @@ const UnitGridSection = ({
             const rawReserved = u.status === "reserved";
             const isRented = !activityReserved && (canDistinguish ? rawRented : (rawRented || rawReserved));
             const isReserved = activityReserved || (canDistinguish && rawReserved);
-            const isLocked = activityReserved || rawRented || rawReserved;
+            const isLocked = activityReserved || u.status !== "available";
             const isSelected = selectedSet.has(u.unitNumber);
             const isCorner = u.unitType === "ركنية";
             return (
@@ -223,6 +224,7 @@ const UnitGridSection = ({
                 whileHover={!isLocked ? { scale: 1.05 } : undefined}
                 whileTap={!isLocked ? { scale: 0.96 } : undefined}
                 disabled={isLocked}
+                title={activityReserved ? "محجوزة لهذا النشاط" : unitStatusLabel(u.leasingStatus)}
                 onClick={() => onSelect(u)}
                 className={cn(
                   "group relative flex h-auto w-full aspect-square flex-col items-center justify-center rounded-xl border-2 p-1 text-center transition-all",

@@ -47,6 +47,7 @@ type ExtLink = {
   authOnly?: boolean;
   managerOnly?: boolean;
   tenantOnly?: boolean;
+  leasingOnly?: boolean;
 };
 
 type LinkGroup = {
@@ -84,6 +85,7 @@ const groups: LinkGroup[] = [
     Icon: Briefcase,
     links: [
       { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
+      { to: "/leasing/holds", label: "تمديد الحجوزات", Icon: CalendarRange, leasingOnly: true },
       { to: "/admin/booking-control", label: "التحكم في الحجز", Icon: Building2, managerOnly: true },
       { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
       { to: "/admin/paid-tenants", label: "المسددون", Icon: BadgeCheck, managerOnly: true },
@@ -102,6 +104,7 @@ const groups: LinkGroup[] = [
       { to: "/admin/settings/activities", label: "الأنشطة والمباني", Icon: Building2, managerOnly: true },
       { to: "/admin/settings/unit-import", label: "استيراد الوحدات", Icon: FileSpreadsheet, managerOnly: true },
       { to: "/admin/units-incomplete", label: "وحدات تحتاج استكمال", Icon: ClipboardList, managerOnly: true },
+      { to: "/admin/unit-status-review", label: "مراجعة حالات الوحدات", Icon: ClipboardList, managerOnly: true },
       { to: "/admin/users", label: "المستخدمون", Icon: Users, adminOnly: true },
       { to: "/admin/audit", label: "سجل التدقيق", Icon: History, adminOnly: true },
       { to: "/admin/access-log", label: "سجل الدخول والأجهزة", Icon: Globe2, adminOnly: true },
@@ -122,7 +125,7 @@ const groups: LinkGroup[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, isControl, isManager, isTenant, user, loading } = useAuth();
+  const { isAdmin, isControl, isManager, isTenant, isLeasingManager, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -162,11 +165,12 @@ export const AdminSidebar = () => {
       (!l.controlOnly || isControl || isAdmin || isManager) &&
       (!l.managerOnly || isManager || isAdmin) &&
       (!l.tenantOnly || isTenant) &&
+      (!l.leasingOnly || isLeasingManager) &&
       (!l.authOnly || !!user);
     return groups
       .map((g) => ({ ...g, links: g.links.filter(canSee) }))
       .filter((g) => g.links.length > 0);
-  }, [isAdmin, isControl, isManager, isTenant, user]);
+  }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, user]);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   useEffect(() => {

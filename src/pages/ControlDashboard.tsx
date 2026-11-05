@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { unitStatusLabel } from "@/lib/unitStatus";
 
 type UnitRow = {
   id: string;
@@ -28,6 +30,7 @@ type UnitRow = {
   area: number;
   price: number;
   status: string;
+  leasing_status: string | null;
   updated_at: string;
 };
 
@@ -102,9 +105,9 @@ const ControlDashboard = () => {
     enabled: !!user && (isControl || isAdmin || isManager),
     queryFn: async (): Promise<UnitRow[]> => {
       const { data, error } = await supabase
-        .from("units")
+        .from("units_status_read")
         .select(
-          "id,building_number,unit_number,unit_type,activity,area,price,status,status_before_maintenance,updated_at",
+          "id,building_number,unit_number,unit_type,activity,area,price,status,leasing_status,updated_at",
         )
         .order("building_number")
         .order("unit_number")
@@ -161,10 +164,10 @@ const ControlDashboard = () => {
     setUpdatingId(unit.id);
     // Maintenance changes go through the database function; the database also blocks
     // the control role from setting available / reserved / rented.
-    const viaMaintenance = next === "maintenance" || (unit.status === "maintenance" && !isAdmin);
-    const { error } = viaMaintenance
-      ? await supabase.rpc("control_set_maintenance" as any, { _unit_id: unit.id, _on: next === "maintenance" })
-      : await supabase.from("units").update({ status: next }).eq("id", unit.id);
+    const reason = window.prompt("سبب تغيير الحالة (5 أحرف على الأقل)")?.trim();
+    if (!reason || reason.length < 5) { setUpdatingId(null); return; }
+    if (next !== "maintenance" && next !== "available") { setUpdatingId(null); return; }
+    const { error } = await supabase.rpc("set_unit_status", { unit_id: unit.id, new_status: next, reason, ref_type: "maintenance", ref_id: null });
     setUpdatingId(null);
     if (error) {
       toast.error("تعذّر تحديث الحالة: " + error.message);
@@ -335,19 +338,17 @@ const ControlDashboard = () => {
                         )}
                       >
                         <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
-                        {status.label}
+                        {unitStatusLabel(u.leasing_status)}
                       </span>
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 gap-1.5">
-                      {(Object.keys(STATUS_META) as StatusKey[]).map((k) => {
+                      {(["available", "maintenance"] as StatusKey[]).map((k) => {
                         const meta = STATUS_META[k];
                         const active = u.status === k;
-                        const allowed =
-                          isAdmin ||
-                          controlCanSetStatus(u.status as UnitStatus, k as UnitStatus, ((u as any).status_before_maintenance ?? null) as UnitStatus | null);
+                        const allowed = (isAdmin || isControl) && ((u.leasing_status === "available" && k === "maintenance") || (u.leasing_status === "maintenance" && k === "available"));
                         return (
-                          <button
+                          <Button variant="outline" size="sm"
                             key={k}
                             disabled={isUpdating || active || !allowed}
                             onClick={() => updateStatus(u, k)}
@@ -366,7 +367,7 @@ const ControlDashboard = () => {
                               <meta.Icon className="h-3 w-3" />
                             )}
                             {meta.label}
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>

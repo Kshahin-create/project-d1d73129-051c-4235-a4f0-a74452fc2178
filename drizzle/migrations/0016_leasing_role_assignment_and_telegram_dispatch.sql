@@ -1,0 +1,18 @@
+ALTER TABLE public.user_roles ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL DEFAULT true;
+CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid,_role public.app_role) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=_user_id AND role=_role AND is_active);$$;
+CREATE OR REPLACE FUNCTION public.admin_set_user_role(_target_user uuid,_new_role public.app_role) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE before_rows jsonb;BEGIN IF NOT public.has_role(auth.uid(),'admin') THEN RAISE EXCEPTION 'تعيين الأدوار للأدمن فقط'; END IF;IF _target_user=auth.uid() AND _new_role<>'admin' THEN RAISE EXCEPTION 'لا يمكن إزالة دورك الإداري'; END IF;PERFORM 1 FROM public.profiles WHERE user_id=_target_user;IF NOT FOUND THEN RAISE EXCEPTION 'المستخدم غير موجود';END IF;PERFORM 1 FROM public.user_roles WHERE user_id=_target_user FOR UPDATE;SELECT jsonb_agg(to_jsonb(r)) INTO before_rows FROM public.user_roles r WHERE user_id=_target_user;UPDATE public.user_roles SET is_active=false WHERE user_id=_target_user;INSERT INTO public.user_roles(user_id,role,is_active) VALUES(_target_user,_new_role,true) ON CONFLICT(user_id,role) DO UPDATE SET is_active=true;PERFORM public._safety_audit('SET_ROLE','user_roles',_target_user::text,before_rows,(SELECT jsonb_agg(to_jsonb(r)) FROM public.user_roles r WHERE user_id=_target_user),'تعيين دور المستخدم يدويًا');END $$;
+CREATE OR REPLACE FUNCTION public.telegram_unit_status_action(_actor uuid,_action text,_args jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE old_claims text;result jsonb;BEGIN
+ IF auth.role()<>'service_role' OR _actor IS NULL THEN RAISE EXCEPTION 'العملية لخدمة تيليجرام الموثقة فقط'; END IF;
+ IF _action='extend_booking_expiry' THEN IF NOT public.has_role(_actor,'leasing_manager') THEN RAISE EXCEPTION 'التمديد لمدير التأجير فقط'; END IF;ELSIF NOT public.has_role(_actor,'admin') THEN RAISE EXCEPTION 'التعديل للأدمن فقط';END IF;
+ old_claims:=current_setting('request.jwt.claims',true);PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
+ IF _action='confirm_booking' THEN PERFORM public.confirm_booking((_args->>'booking_id')::uuid);result:=jsonb_build_object('ok',true,'status','confirmed');
+ ELSIF _action='cancel_booking' THEN PERFORM public.cancel_booking_with_reason((_args->>'booking_id')::uuid,_args->>'reason');result:=jsonb_build_object('ok',true,'status','cancelled');
+ ELSIF _action='extend_booking_expiry' THEN result:=jsonb_build_object('ok',true,'expires_at',public.extend_booking_hold((_args->>'booking_id')::uuid,_args->>'reason'));
+ ELSIF _action='set_unit_status' THEN PERFORM public.set_unit_status((_args->>'unit_id')::uuid,(_args->>'status')::public.unit_leasing_status,_args->>'reason',_args->>'ref_type',nullif(_args->>'ref_id','')::uuid);result:=jsonb_build_object('ok',true);
+ ELSE RAISE EXCEPTION 'إجراء غير معتمد';END IF;
+ PERFORM set_config('request.jwt.claims',coalesce(old_claims,''),true);RETURN result;
+END $$;
+REVOKE EXECUTE ON FUNCTION public.telegram_unit_status_action(uuid,text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.telegram_unit_status_action(uuid,text,jsonb) TO service_role;
+SELECT has_function_privilege('authenticated','public.telegram_unit_status_action(uuid,text,jsonb)','EXECUTE') AS must_be_false;
+SELECT hold_hours,max_hold_extensions FROM public.app_settings WHERE id=1;

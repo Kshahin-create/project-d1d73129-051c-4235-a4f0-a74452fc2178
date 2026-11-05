@@ -106,6 +106,69 @@
       "when": 1793892085716,
       "tag": "0014_unit_contract_evidence_and_write_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793892162334,
+      "tag": "0015_unit_status_read_compatibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793892364452,
+      "tag": "0016_leasing_role_assignment_and_telegram_dispatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793892514123,
+      "tag": "0017_unit_status_import_initialization_and_regressions",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793892544167,
+      "tag": "0018_booking_confirm_unambiguous_dispatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793892566357,
+      "tag": "0019_contract_record_identifier_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793892592935,
+      "tag": "0020_unit_status_contract_reference_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793892671198,
+      "tag": "0021_unit_status_validation_and_audit_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793892708014,
+      "tag": "0022_unit_status_regression_permission_coverage",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793892811883,
+      "tag": "0023_unit_status_single_audit_event",
+      "breakpoints": true
     }
   ]
 }

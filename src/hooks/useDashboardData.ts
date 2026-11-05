@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import type { DashboardUnit, CollectionRow, BookingRow, BookingUnitRow, TenantRow, InvoiceRow, AccountUnitRow } from '@/lib/dashboardMetrics';
 import type { StatusEvent } from '@/lib/ownerMetrics';
+import { legacyUnitStatus } from '@/lib/unitStatus';
 
 type TableName = keyof Database['public']['Tables'];
 // Dynamic column selections cannot retain the generated union of every table's
@@ -31,7 +32,7 @@ export function useDashboardData(enabled: boolean, userId?: string) {
   const client = useQueryClient();
   const prefix = ['management-dashboard', userId];
   const options = { enabled, staleTime: 60_000, refetchInterval: 60_000, retry: 1 };
-  const units = useQuery({ ...options, queryKey: [...prefix, 'units'], queryFn: () => readDashboardRows<DashboardUnit>('units', 'id, building_number, unit_number, status, price, area, activity, unit_type', { is_test: false }) });
+  const units = useQuery({ ...options, queryKey: [...prefix, 'units'], queryFn: async () => (await readDashboardRows<DashboardUnit & { leasing_status: string | null }>('units', 'id, building_number, unit_number, status, leasing_status, price, area, activity, unit_type', { is_test: false })).map(u => ({...u, status: u.leasing_status === null ? 'review' : legacyUnitStatus(u.leasing_status)})) });
   const buildings = useQuery({ ...options, queryKey: [...prefix, 'buildings'], queryFn: () => readDashboardRows<{ id: string; number: number; type: string }>('buildings', 'id, number, type') });
   const tenants = useQuery({ ...options, queryKey: [...prefix, 'tenants'], queryFn: () => readDashboardRows<TenantRow>('tenants', 'id, unit_id, tenant_name, business_name, phone, activity_type') });
   const collections = useQuery({ ...options, queryKey: [...prefix, 'unit_collections'], queryFn: () => readDashboardRows<CollectionRow>('unit_collections', 'id, unit_id, amount, is_archived, created_at') });
@@ -41,11 +42,12 @@ export function useDashboardData(enabled: boolean, userId?: string) {
   const accountUnits = useQuery({ ...options, queryKey: [...prefix, 'tenant_account_units'], queryFn: () => readDashboardRows<AccountUnitRow>('tenant_account_units', 'id, tenant_account_id, unit_id') });
   const history = useQuery({ ...options, queryKey: [...prefix, 'history'], queryFn: async () => {
     const select = 'id, entity_table, entity_id, action, created_at, before_status:before_data->>status, after_status:after_data->>status';
-    const [unitEvents, bookingEvents] = await Promise.all([
-      readDashboardRows<StatusEvent>('audit_log', select, { entity_table: 'units', action: 'UPDATE' }),
+    const [unitEvents, bookingEvents, legacyEvents] = await Promise.all([
+      readDashboardRows<StatusEvent>('audit_log', 'id, entity_table, entity_id, action, created_at, before_status:before_data->>leasing_status, after_status:after_data->>leasing_status', { entity_table: 'units', action: 'UNIT_STATUS_TRANSITION' }).then(rows => rows.map(r => ({ ...r, action: 'UPDATE', before_status: r.before_status === null ? null : legacyUnitStatus(r.before_status), after_status: r.after_status === null ? null : legacyUnitStatus(r.after_status) }))),
       readDashboardRows<StatusEvent>('audit_log', select, { entity_table: 'bookings', action: 'UPDATE' }),
+      readDashboardRows<StatusEvent>('audit_log', select, { entity_table: 'units', action: 'UPDATE' }),
     ]);
-    return [...unitEvents, ...bookingEvents];
+    return [...unitEvents, ...bookingEvents, ...legacyEvents];
   } });
   useEffect(() => {
     if (!enabled) return;

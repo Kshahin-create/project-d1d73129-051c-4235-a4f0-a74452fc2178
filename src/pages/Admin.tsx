@@ -11,6 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { exportUnitsToExcel, exportUnitsToCSV, exportUnitsToPDF } from "@/lib/exportUnits";
+import { Button } from "@/components/ui/button";
+import { UnitDetailsDialog } from "@/components/dashboard/UnitDetailsDialog";
+import { unitStatusLabel } from "@/lib/unitStatus";
+import type { Unit } from "@/data/types";
 import { MaintenanceToggle } from "@/components/MaintenanceToggle";
 import { UnitsMap } from "@/components/dashboard/UnitsMap";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -36,6 +40,7 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
   const [confirmRent, setConfirmRent] = useState(false);
   const [releaseTarget, setReleaseTarget] = useState<{ unitNumber: number; buildingNumber: number; status: "rented" | "reserved" } | null>(null);
+  const [detailUnit, setDetailUnit] = useState<Unit | null>(null);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditEntries, setAuditEntries] = useState<any[]>([]);
 
@@ -126,7 +131,7 @@ const Admin = () => {
     mode: "rent" | "reserve" = "rent",
   ) => {
     const { data: u } = await supabase
-      .from("units")
+      .from("units_status_read")
       .select("id")
       .eq("building_number", buildingNumber)
       .eq("unit_number", unitNumber)
@@ -167,39 +172,7 @@ const Admin = () => {
     if (!editingUnit) return;
     setSaving(true);
     try {
-      const targetStatus = editingUnit.mode === "reserve" ? "reserved" : "rented";
-      const action = editingUnit.wasRented ? "update" : editingUnit.mode === "reserve" ? "reserve" : "rent";
-      // previous status — best effort: derive from current units cache
-      const currentUnit = units.find(
-        (u) => u.buildingNumber === editingUnit.building && u.unitNumber === editingUnit.unitNumber,
-      );
-      const previousStatus = currentUnit?.status ?? "available";
-
-      const { error: ue } = await supabase.from("units").update({ status: targetStatus }).eq("id", editingUnit.id);
-      if (ue) throw ue;
-
-      const { data: existing } = await supabase.from("tenants").select("id").eq("unit_id", editingUnit.id).maybeSingle();
-      if (existing) {
-        const { error } = await supabase.from("tenants").update(tenantForm).eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("tenants").insert({ ...tenantForm, unit_id: editingUnit.id });
-        if (error) throw error;
-      }
-
-      await writeAuditLog({
-        unit_id: editingUnit.id,
-        building_number: editingUnit.building,
-        unit_number: editingUnit.unitNumber,
-        action,
-        previous_status: previousStatus,
-        new_status: targetStatus,
-        reason,
-        tenant_snapshot: tenantForm,
-      });
-
-      const verb = editingUnit.wasRented ? "تحديث بيانات" : editingUnit.mode === "reserve" ? "حجز" : "تأجير";
-      toast.success(`تم ${verb} الوحدة ${editingUnit.unitNumber}`);
+      throw new Error("الحجز والتأجير من طلب الحجز وسجل العقد فقط؛ افتح تفاصيل الوحدة");
       setConfirmRent(false);
       setEditingUnit(null);
       qc.invalidateQueries({ queryKey: ["buildings-units"] });
@@ -215,30 +188,13 @@ const Admin = () => {
     setSaving(true);
     try {
       const { data: u } = await supabase
-        .from("units").select("id")
+        .from("units_status_read").select("id")
         .eq("building_number", releaseTarget.buildingNumber)
         .eq("unit_number", releaseTarget.unitNumber)
         .maybeSingle();
       if (!u) throw new Error("الوحدة غير موجودة");
 
-      const { data: tenantSnap } = await supabase.from("tenants").select("*").eq("unit_id", u.id).maybeSingle();
-
-      // Archives the tenant row (kept with the reason) and frees the unit in one database step.
-      const { error } = await supabase.rpc("archive_tenant" as any, { _unit_id: u.id, _reason: reason });
-      if (error) throw error;
-
-      await writeAuditLog({
-        unit_id: u.id,
-        building_number: releaseTarget.buildingNumber,
-        unit_number: releaseTarget.unitNumber,
-        action: "release",
-        previous_status: releaseTarget.status,
-        new_status: "available",
-        reason,
-        tenant_snapshot: tenantSnap,
-      });
-
-      toast.success(`تم إخلاء الوحدة ${releaseTarget.unitNumber}`);
+      throw new Error("الإخلاء يتطلب انتهاء أو إنهاء العقد من تفاصيل الوحدة");
       setReleaseTarget(null);
       qc.invalidateQueries({ queryKey: ["buildings-units"] });
     } catch (err: any) {
@@ -465,19 +421,7 @@ const Admin = () => {
                       <div className="num text-right text-xs">{u.area} م²</div>
                       <div className="num text-right text-xs">{u.price.toLocaleString("en-US")}</div>
                       <div className="text-right">
-                        {u.status === "rented" ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive whitespace-nowrap">
-                            <Lock className="h-2.5 w-2.5" /> مؤجر
-                          </span>
-                        ) : u.status === "reserved" ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent-foreground whitespace-nowrap">
-                            <Lock className="h-2.5 w-2.5" /> محجوز
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success whitespace-nowrap">
-                            <CheckCircle2 className="h-2.5 w-2.5" /> متاح
-                          </span>
-                        )}
+                        <span className="text-xs font-semibold">{unitStatusLabel(u.leasingStatus)}</span>
                       </div>
                       <div className="truncate text-right text-xs">
                         {u.tenant ? (
@@ -487,45 +431,7 @@ const Admin = () => {
                         )}
                       </div>
                       <div className="text-right">
-                        {u.status === "rented" || u.status === "reserved" ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            <button
-                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, u.status === "reserved" ? "reserve" : "rent")}
-                              className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10 whitespace-nowrap"
-                            >
-                              عرض/تعديل
-                            </button>
-                            {u.status === "reserved" && (
-                              <button
-                                onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "rent")}
-                                className="rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/20 whitespace-nowrap"
-                              >
-                                تأجير
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setReleaseTarget({ unitNumber: u.unitNumber, buildingNumber: u.buildingNumber, status: u.status as "rented" | "reserved" })}
-                              className="rounded-lg bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success hover:bg-success/20 whitespace-nowrap"
-                            >
-                              إخلاء
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap gap-1.5">
-                            <button
-                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "rent")}
-                              className="rounded-lg bg-primary px-3 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 whitespace-nowrap"
-                            >
-                              تأجير
-                            </button>
-                            <button
-                              onClick={() => openRentDialog(u.unitNumber, u.buildingNumber, u.status, "reserve")}
-                              className="rounded-lg bg-accent/20 px-3 py-1 text-[11px] font-bold text-accent-foreground hover:bg-accent/30 whitespace-nowrap"
-                            >
-                              حجز
-                            </button>
-                          </div>
-                        )}
+                        <Button variant="outline" size="sm" onClick={() => setDetailUnit(u)}>تفاصيل الوحدة والعقد</Button>
                       </div>
                     </div>
                   ))}
@@ -542,6 +448,7 @@ const Admin = () => {
       </main>
 
 
+      <UnitDetailsDialog unit={detailUnit} open={!!detailUnit} onOpenChange={v => { if (!v) setDetailUnit(null); }} />
       {/* Tenant data form dialog */}
       {editingUnit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm" onClick={() => setEditingUnit(null)}>
