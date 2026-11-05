@@ -1965,6 +1965,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "receipt_allocations_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "installments_read"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_allocations_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipt_cash_read"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "receipt_allocations_receipt_id_fkey"
             columns: ["receipt_id"]
             isOneToOne: false
@@ -1982,6 +1996,7 @@ export type Database = {
       }
       receipt_legacy_sources: {
         Row: {
+          canonical_receipt_id: string | null
           id: string
           original_amount: number
           receipt_id: string
@@ -1997,6 +2012,7 @@ export type Database = {
           unit_id: string | null
         }
         Insert: {
+          canonical_receipt_id?: string | null
           id?: string
           original_amount: number
           receipt_id: string
@@ -2012,6 +2028,7 @@ export type Database = {
           unit_id?: string | null
         }
         Update: {
+          canonical_receipt_id?: string | null
           id?: string
           original_amount?: number
           receipt_id?: string
@@ -2027,6 +2044,27 @@ export type Database = {
           unit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "receipt_legacy_sources_canonical_receipt_id_fkey"
+            columns: ["canonical_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipt_cash_read"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_canonical_receipt_id_fkey"
+            columns: ["canonical_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipt_cash_read"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "receipt_legacy_sources_receipt_id_fkey"
             columns: ["receipt_id"]
@@ -2157,6 +2195,13 @@ export type Database = {
             columns: ["party_id"]
             isOneToOne: false
             referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: true
+            referencedRelation: "receipt_cash_read"
             referencedColumns: ["id"]
           },
           {
@@ -3422,6 +3467,72 @@ export type Database = {
       }
     }
     Views: {
+      finance_source_integrity: {
+        Row: {
+          changed_source: boolean | null
+          missing_mapping: boolean | null
+          missing_source: boolean | null
+          source_id: string | null
+          source_table: string | null
+        }
+        Relationships: []
+      }
+      installments_read: {
+        Row: {
+          amount_excl_vat: number | null
+          amount_incl_vat: number | null
+          contract_id: string | null
+          created_at: string | null
+          current_status: string | null
+          due_date: string | null
+          id: string | null
+          sequence_no: number | null
+          status: string | null
+          vat_amount: number | null
+          waived_at: string | null
+          waived_by: string | null
+          waiver_reason: string | null
+        }
+        Insert: {
+          amount_excl_vat?: number | null
+          amount_incl_vat?: number | null
+          contract_id?: string | null
+          created_at?: string | null
+          current_status?: never
+          due_date?: string | null
+          id?: string | null
+          sequence_no?: number | null
+          status?: string | null
+          vat_amount?: number | null
+          waived_at?: string | null
+          waived_by?: string | null
+          waiver_reason?: string | null
+        }
+        Update: {
+          amount_excl_vat?: number | null
+          amount_incl_vat?: number | null
+          contract_id?: string | null
+          created_at?: string | null
+          current_status?: never
+          due_date?: string | null
+          id?: string | null
+          sequence_no?: number | null
+          status?: string | null
+          vat_amount?: number | null
+          waived_at?: string | null
+          waived_by?: string | null
+          waiver_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunity_alerts: {
         Row: {
           alert_kind: string | null
@@ -3628,6 +3739,124 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_buildings"
             referencedColumns: ["number"]
+          },
+        ]
+      }
+      receipt_cash_read: {
+        Row: {
+          amount_excl_vat: number | null
+          amount_incl_vat: number | null
+          archived_at: string | null
+          booking_id: string | null
+          contract_id: string | null
+          id: string | null
+          idempotency_key: string | null
+          method: string | null
+          paid_at: string | null
+          party_id: string | null
+          proof_bucket: string | null
+          proof_file: string | null
+          reason: string | null
+          receipt_no: string | null
+          recorded_at: string | null
+          recorded_by: string | null
+          reverses_id: string | null
+          status: string | null
+          vat_amount: number | null
+          vat_documented: boolean | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount_excl_vat?: number | null
+          amount_incl_vat?: number | null
+          archived_at?: string | null
+          booking_id?: string | null
+          contract_id?: string | null
+          id?: string | null
+          idempotency_key?: string | null
+          method?: string | null
+          paid_at?: string | null
+          party_id?: string | null
+          proof_bucket?: string | null
+          proof_file?: string | null
+          reason?: string | null
+          receipt_no?: string | null
+          recorded_at?: string | null
+          recorded_by?: string | null
+          reverses_id?: string | null
+          status?: string | null
+          vat_amount?: number | null
+          vat_documented?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount_excl_vat?: number | null
+          amount_incl_vat?: number | null
+          archived_at?: string | null
+          booking_id?: string | null
+          contract_id?: string | null
+          id?: string | null
+          idempotency_key?: string | null
+          method?: string | null
+          paid_at?: string | null
+          party_id?: string | null
+          proof_bucket?: string | null
+          proof_file?: string | null
+          reason?: string | null
+          receipt_no?: string | null
+          recorded_at?: string | null
+          recorded_by?: string | null
+          reverses_id?: string | null
+          status?: string | null
+          vat_amount?: number | null
+          vat_documented?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: true
+            referencedRelation: "receipt_cash_read"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: true
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4414,6 +4643,15 @@ export type Database = {
       }
       resolve_legacy_receipt: {
         Args: { _reason: string; _resolution: string; _source: string }
+        Returns: undefined
+      }
+      resolve_legacy_receipt_link: {
+        Args: {
+          _canonical: string
+          _reason: string
+          _resolution: string
+          _source: string
+        }
         Returns: undefined
       }
       reverse_collection: {
