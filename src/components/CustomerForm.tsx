@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { PhoneField } from "@/components/PhoneField";
+import { ID_TYPES, identityError, isValidIdentity, type IdType } from "@/lib/identity";
 
-export const customerSchema = z.object({
+export const customerSchema = z
+  .object({
   fullName: z
     .string()
     .trim()
@@ -32,12 +34,17 @@ export const customerSchema = z.object({
     .trim()
     .min(2, "يرجى ذكر النشاط التجاري")
     .max(150),
-  crNumber: z
-    .string()
-    .trim()
-    .regex(/^7\d{8,9}$/, "الرقم الوطني الموحد يجب أن يكون 9 أو 10 أرقام ويبدأ بـ 7"),
+  idType: z.enum(["commercial_registration", "national_id", "iqama"], {
+    errorMap: () => ({ message: "يرجى اختيار نوع الهوية" }),
+  }),
+  crNumber: z.string().trim(),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
-});
+  })
+  .superRefine((d, ctx) => {
+    if (d.idType && !isValidIdentity(d.idType, d.crNumber)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["crNumber"], message: identityError(d.idType as IdType) });
+    }
+  });
 
 export type CustomerFormData = z.infer<typeof customerSchema>;
 
@@ -53,6 +60,7 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
     handleSubmit,
     reset,
     control,
+    watch,
     formState: { errors },
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
@@ -67,6 +75,9 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(defaultValues)]);
+
+  const idType = watch("idType");
+  const numberLabel = ID_TYPES.find((t) => t.value === idType)?.numberLabel ?? "رقم الهوية / السجل";
 
   return (
     <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -99,7 +110,34 @@ export const CustomerForm = ({ onSubmit, formId, defaultValues }: Props) => {
         <Input {...register("business")} placeholder="مركز صيانة سيارات / محل قطع غيار..." />
       </Field>
 
-      <Field label="الرقم الوطني الموحد" required error={errors.crNumber?.message}>
+      <Field label="نوع الهوية" required error={errors.idType?.message}>
+        <Controller
+          control={control}
+          name="idType"
+          render={({ field }) => (
+            <div role="radiogroup" className="grid grid-cols-3 gap-2">
+              {ID_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={field.value === t.value}
+                  onClick={() => field.onChange(t.value)}
+                  className={`rounded-md border px-2 py-2 text-sm font-medium transition-colors ${
+                    field.value === t.value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background hover:bg-muted"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+        />
+      </Field>
+
+      <Field label={numberLabel} required error={errors.crNumber?.message}>
         <Input {...register("crNumber")} dir="ltr" inputMode="numeric" maxLength={10} className="text-left" />
       </Field>
 
