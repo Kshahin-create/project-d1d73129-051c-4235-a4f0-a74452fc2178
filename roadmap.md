@@ -1,3 +1,9 @@
+# Phase 1 / Prompt 5 — CRM inside the platform
+- [x] Parties/opportunities/ownership tables, sales_agent role, backfill (954 parties, 49 won opportunities, 157 linked bookings), round-robin assignment, hourly reopen cron.
+- [x] Writer functions with Arabic errors, contact masking for agents, booking/leasing stage hooks, no-answer auto-close at 10, transfer requests and bulk reassign.
+- [x] Screens: pipeline board/list, party, opportunity, unassigned queue, team performance, target-list import; 7 unit tests pass; admin preview verified.
+- [ ] Verify with a real sales_agent account (masking, hold creation, transfer request) — blocked: no sales agent user exists yet.
+
 # Phase 1 / Prompt 4 — One unit-status writer
 - [x] Present affected surfaces, additive migration/backfill and verification plan; approved.
 - [x] Implement the status writer/write guard, 48-hour holds/one extension, separate leasing manager and linked contract/payment verification.
