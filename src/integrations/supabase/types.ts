@@ -368,6 +368,7 @@ export type Database = {
       }
       buildings: {
         Row: {
+          booking_enabled: boolean
           created_at: string
           expected_annual_revenue: number
           id: string
@@ -376,6 +377,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          booking_enabled?: boolean
           created_at?: string
           expected_annual_revenue?: number
           id?: string
@@ -384,6 +386,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          booking_enabled?: boolean
           created_at?: string
           expected_annual_revenue?: number
           id?: string
