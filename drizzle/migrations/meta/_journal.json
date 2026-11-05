@@ -309,6 +309,13 @@
       "when": 1793911786279,
       "tag": "0043_admin_navigation_preferences_exports",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793912029688,
+      "tag": "0044_admin_directory_paged_read",
+      "breakpoints": true
     }
   ]
 }

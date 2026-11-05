@@ -4327,6 +4327,17 @@ export type Database = {
         Returns: string
       }
       admin_user_directory: { Args: never; Returns: Json }
+      admin_user_directory_page: {
+        Args: {
+          _ascending?: boolean
+          _limit?: number
+          _offset?: number
+          _role?: string
+          _search?: string
+          _sort?: string
+        }
+        Returns: Json
+      }
       allocate_receipt: {
         Args: {
           _amount_excl_vat: number
