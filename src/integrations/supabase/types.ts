@@ -2116,6 +2116,21 @@ export type Database = {
           },
         ]
       }
+      unit_status_write_capabilities: {
+        Row: {
+          transaction_id: number
+          unit_id: string
+        }
+        Insert: {
+          transaction_id: number
+          unit_id: string
+        }
+        Update: {
+          transaction_id?: number
+          unit_id?: string
+        }
+        Relationships: []
+      }
       units: {
         Row: {
           activity: string | null
@@ -2703,6 +2718,16 @@ export type Database = {
       }
       set_tenant_account_paid_amount: {
         Args: { _paid_amount: number; _tenant_account_id: string }
+        Returns: undefined
+      }
+      set_unit_status: {
+        Args: {
+          new_status: Database["public"]["Enums"]["unit_leasing_status"]
+          reason: string
+          ref_id?: string
+          ref_type: string
+          unit_id: string
+        }
         Returns: undefined
       }
       sync_all_rented_units_to_accounts: { Args: never; Returns: number }

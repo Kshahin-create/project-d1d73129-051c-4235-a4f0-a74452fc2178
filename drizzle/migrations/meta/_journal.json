@@ -78,6 +78,13 @@
       "when": 1793891755066,
       "tag": "0010_unit_leasing_status_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793891871743,
+      "tag": "0011_unit_status_transactional_writer",
+      "breakpoints": true
     }
   ]
 }
