@@ -23,7 +23,7 @@ interface BuildingSelectorProps {
 const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
   service: Wrench, parts: Cog, tires: Droplets, shops: Store,
   "car-showrooms": Car, "batteries-decor": BatteryCharging, "car-wash": Droplets,
-  "quick-maintenance": Zap, "large-maintenance": Wrench, restaurants: UtensilsCrossed, "icecream-juices": IceCreamCone,
+  "large-maintenance": Wrench, restaurants: UtensilsCrossed, "icecream-juices": IceCreamCone,
   glass: PanelTop, "civil-defense": ShieldAlert,
   carpentry: Hammer, smithing: Flame, "warehouse-a": Warehouse, "warehouse-b": Package,
 };
