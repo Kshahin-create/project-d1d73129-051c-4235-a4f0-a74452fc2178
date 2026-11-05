@@ -4276,6 +4276,17 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_pipeline_page: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _owner?: string
+          _search?: string
+          _source?: string
+          _stage?: string
+        }
+        Returns: Json
+      }
       admin_set_building_registry: {
         Args: {
           _building_number: number
