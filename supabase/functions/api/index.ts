@@ -1,14 +1,9 @@
-// Public REST API for external apps (mobile, integrations).
+// Legacy external API — READ-ONLY.
 // Auth: either `X-API-Key: nkb_...` OR `Authorization: Bearer <jwt>`.
-// Routes are prefixed with /api inside the function path.
+// Returns unit fields and aggregate counts only. No personal data (names, phones,
+// emails, ID/CR numbers, user IDs) is ever returned. All write routes were removed.
+// CORS origins come from app_settings.api_cors_allowlist.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-api-key",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-};
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -18,103 +13,87 @@ const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-type Scope = "read" | "write" | "admin";
-interface AuthCtx {
-  type: "api_key" | "jwt";
-  scopes: Scope[];
-  userId?: string;
-  isAdmin?: boolean;
-  isManager?: boolean;
-  apiKeyId?: string;
+const BASE_CORS = {
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
+  "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+  Vary: "Origin",
+};
+
+let allowCache: { at: number; list: string[] } | null = null;
+async function getAllowList(): Promise<string[]> {
+  if (allowCache && Date.now() - allowCache.at < 60_000) return allowCache.list;
+  const { data } = await admin.from("app_settings").select("api_cors_allowlist").eq("id", 1).maybeSingle();
+  const list = ((data as any)?.api_cors_allowlist ?? []) as string[];
+  allowCache = { at: Date.now(), list };
+  return list;
 }
+
+function corsFor(origin: string | null, allow: string[]): Record<string, string> {
+  if (origin && allow.includes(origin.replace(/\/$/, ""))) {
+    return { ...BASE_CORS, "Access-Control-Allow-Origin": origin };
+  }
+  return { ...BASE_CORS };
+}
+
+let CORS: Record<string, string> = { ...BASE_CORS };
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...CORS, "Content-Type": "application/json" },
   });
 }
-function err(message: string, status = 400, extra?: Record<string, unknown>) {
-  return json({ error: message, ...(extra ?? {}) }, status);
+function err(message: string, status = 400) {
+  return json({ error: message }, status);
 }
 
 async function sha256Hex(input: string): Promise<string> {
-  const buf = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(input),
-  );
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function authenticate(req: Request): Promise<AuthCtx | null> {
-  const apiKey = req.headers.get("x-api-key") ?? req.headers.get("X-API-Key");
+async function authenticate(req: Request): Promise<boolean> {
+  const apiKey = req.headers.get("x-api-key");
   if (apiKey) {
-    const hash = await sha256Hex(apiKey);
-    const { data, error } = await admin.rpc("verify_api_key", {
-      _key_hash: hash,
-    });
-    if (error || !data || data.length === 0) return null;
-    const row = data[0] as { id: string; scopes: Scope[]; is_valid: boolean };
-    if (!row.is_valid) return null;
-    // fire-and-forget last_used update
+    const { data, error } = await admin.rpc("verify_api_key", { _key_hash: await sha256Hex(apiKey) });
+    if (error || !data || data.length === 0) return false;
+    const row = data[0] as { id: string; is_valid: boolean };
+    if (!row.is_valid) return false;
     admin.rpc("touch_api_key", { _id: row.id }).then(() => {});
-    return { type: "api_key", scopes: row.scopes, apiKeyId: row.id };
+    return true;
   }
-
   const auth = req.headers.get("Authorization");
   if (auth?.startsWith("Bearer ")) {
-    const token = auth.slice(7);
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: auth } },
     });
-    const { data, error } = await userClient.auth.getClaims(token);
-    if (error || !data?.claims) return null;
-    const userId = data.claims.sub as string;
-    const { data: roles } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
-    return {
-      type: "jwt",
-      userId,
-      isAdmin,
-      isManager: (roles ?? []).some((r) => r.role === "manager"),
-      scopes: isAdmin ? ["read", "write", "admin"] : ["read"],
-    };
+    const { data, error } = await userClient.auth.getClaims(auth.slice(7));
+    return !error && !!data?.claims?.sub;
   }
-  return null;
+  return false;
 }
 
-function requireScope(ctx: AuthCtx, scope: Scope): Response | null {
-  if (!ctx.scopes.includes(scope) && !ctx.scopes.includes("admin")) {
-    return err(`This endpoint requires '${scope}' scope`, 403);
-  }
-  return null;
-}
+const UNIT_FIELDS = "id, building_number, unit_number, unit_type, area, activity, price, status";
 
-// ---------- Route handlers ----------
 async function listBuildings() {
-  const [{ data: buildings, error: be }, { data: units, error: ue }] =
-    await Promise.all([
-      admin.from("buildings").select("*").order("number"),
-      admin.from("units").select("building_number,status").limit(5000),
-    ]);
+  const [{ data: buildings, error: be }, { data: units, error: ue }] = await Promise.all([
+    admin.from("buildings").select("number, type, expected_annual_revenue, booking_enabled").order("number"),
+    admin.from("units").select("building_number,status").limit(10000),
+  ]);
   if (be) return err(be.message, 500);
   if (ue) return err(ue.message, 500);
-  const result = (buildings ?? []).map((b) => {
-    const bu = (units ?? []).filter((u) => u.building_number === b.number);
-    const rented = bu.filter((u) => u.status === "rented").length;
-    const reserved = bu.filter((u) => u.status === "reserved").length;
+  const result = (buildings ?? []).map((b: any) => {
+    const bu = (units ?? []).filter((u: any) => u.building_number === b.number);
+    const count = (s: string) => bu.filter((u: any) => u.status === s).length;
     return {
       number: b.number,
       type: b.type,
+      booking_enabled: b.booking_enabled,
       total_units: bu.length,
-      rented_units: rented,
-      reserved_units: reserved,
-      available_units: bu.length - rented - reserved,
+      available_units: count("available"),
+      reserved_units: count("reserved"),
+      rented_units: count("rented"),
+      maintenance_units: count("maintenance"),
       expected_annual_revenue: Number(b.expected_annual_revenue),
     };
   });
@@ -122,381 +101,82 @@ async function listBuildings() {
 }
 
 async function getBuilding(num: number) {
-  const { data, error } = await admin
-    .from("buildings")
-    .select("*")
-    .eq("number", num)
-    .maybeSingle();
+  const { data, error } = await admin.from("buildings")
+    .select("number, type, expected_annual_revenue, booking_enabled").eq("number", num).maybeSingle();
   if (error) return err(error.message, 500);
   if (!data) return err("Building not found", 404);
-  const { data: units } = await admin
-    .from("units")
-    .select("*")
-    .eq("building_number", num)
-    .order("unit_number");
+  const { data: units } = await admin.from("units").select(UNIT_FIELDS).eq("building_number", num).order("unit_number");
   return json({ data: { ...data, units: units ?? [] } });
 }
 
 async function listUnits(url: URL) {
-  let q = admin.from("units").select("*").limit(2000);
+  let q = admin.from("units").select(UNIT_FIELDS).limit(5000);
   const status = url.searchParams.get("status");
   const building = url.searchParams.get("building_number");
   const activity = url.searchParams.get("activity");
   if (status) q = q.eq("status", status);
   if (building) q = q.eq("building_number", Number(building));
   if (activity) q = q.ilike("activity", `%${activity}%`);
-  const { data, error } = await q
-    .order("building_number")
-    .order("unit_number");
+  const { data, error } = await q.order("building_number").order("unit_number");
   if (error) return err(error.message, 500);
   return json({ data, count: data?.length ?? 0 });
 }
 
 async function getUnit(id: string) {
-  const { data, error } = await admin
-    .from("units")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await admin.from("units").select(UNIT_FIELDS).eq("id", id).maybeSingle();
   if (error) return err(error.message, 500);
   if (!data) return err("Unit not found", 404);
-  const { data: tenant } = await admin
-    .from("tenants")
-    .select("*")
-    .eq("unit_id", id)
-    .maybeSingle();
-  // Consolidated tenant account (if linked)
-  const { data: link } = await admin
-    .from("tenant_account_units")
-    .select("tenant_account_id, tenant_accounts(id, full_name, phone, email, business_name, activity_type, total_price)")
-    .eq("unit_id", id)
-    .maybeSingle();
-  return json({ data: { ...data, tenant, tenant_account: (link as any)?.tenant_accounts ?? null } });
-}
-
-async function createBooking(body: any) {
-  if (!body?.customer?.fullName || !body?.customer?.phone) {
-    return err("customer.fullName and customer.phone are required", 400);
-  }
-  if (!Array.isArray(body.units) || body.units.length === 0) {
-    return err("units array is required", 400);
-  }
-  const webhookUrl = Deno.env.get("N8N_WEBHOOK_URL");
-  if (!webhookUrl) return err("Booking webhook not configured", 500);
-  const totalArea = body.units.reduce(
-    (s: number, u: any) => s + (Number(u.area) || 0),
-    0,
-  );
-  const totalPrice = body.units.reduce(
-    (s: number, u: any) => s + (Number(u.price) || 0),
-    0,
-  );
-  const payload = {
-    source: "نخبة تسكين - API",
-    submitted_at: new Date().toISOString(),
-    customer: body.customer,
-    units: body.units,
-    totals: {
-      units_count: body.units.length,
-      total_area: totalArea,
-      total_annual_price: totalPrice,
-      vat_note: "السعر غير شامل ضريبة القيمة المضافة 15%",
-    },
-    whatsapp_message: body.message ?? null,
-  };
-  const r = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!r.ok) {
-    const t = await r.text();
-    return err(`Booking webhook failed [${r.status}]`, 502, { details: t });
-  }
-  return json({ success: true, booking_id: crypto.randomUUID() }, 201);
-}
-
-async function listTenants(url: URL) {
-  let q = admin.from("tenants").select("*, units(building_number, unit_number)");
-  const search = url.searchParams.get("search");
-  if (search) q = q.ilike("tenant_name", `%${search}%`);
-  const { data, error } = await q.order("created_at", { ascending: false });
-  if (error) return err(error.message, 500);
-  return json({ data, count: data?.length ?? 0 });
-}
-
-async function createTenant(body: any) {
-  if (!body?.unit_id || !body?.tenant_name) {
-    return err("unit_id and tenant_name are required", 400);
-  }
-  const { data, error } = await admin
-    .from("tenants")
-    .insert({
-      unit_id: body.unit_id,
-      tenant_name: body.tenant_name,
-      business_name: body.business_name ?? null,
-      phone: body.phone ?? null,
-      activity_type: body.activity_type ?? null,
-      start_date: body.start_date ?? null,
-      notes: body.notes ?? null,
-    })
-    .select()
-    .single();
-  if (error) return err(error.message, 400);
-  await admin.from("units").update({ status: "rented" }).eq("id", body.unit_id);
-  return json({ data }, 201);
-}
-
-async function updateTenant(id: string, body: any) {
-  const ALLOWED = [
-    "tenant_name",
-    "business_name",
-    "phone",
-    "activity_type",
-    "start_date",
-    "end_date",
-    "notes",
-    "cr_number",
-    "offer_image_url",
-  ];
-  const allowed: Record<string, any> = {};
-  for (const k of ALLOWED) if (k in body) allowed[k] = body[k];
-  if (Object.keys(allowed).length === 0) {
-    return err("No valid fields to update", 400);
-  }
-  const { data, error } = await admin
-    .from("tenants")
-    .update(allowed)
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) return err(error.message, 400);
   return json({ data });
 }
 
-// Hard delete is not allowed: the tenant row is archived (preserved) with a required reason.
-async function deleteTenant(id: string, reason: string | null) {
-  if (!reason || reason.trim().length < 5) return err("reason query parameter required (min 5 chars)", 400);
-  const { data: tenant } = await admin.from("tenants").select("unit_id").eq("id", id).maybeSingle();
-  if (!tenant?.unit_id) return err("Tenant not found", 404);
-  const { error } = await admin.rpc("archive_tenant", { _unit_id: tenant.unit_id, _reason: reason.trim() });
-  if (error) return err(error.message, 400);
-  return json({ success: true, archived: true, unit_released: true });
-}
+// Bookings: real database IDs, unit/aggregate fields only — no customer data.
+const BOOKING_FIELDS =
+  "id, offer_number, status, units_count, total_area, total_price, payment_plan, created_at, expires_at, booking_units(unit_id, building_number, unit_number, unit_type, area, price, activity)";
 
-// ---------- Tenant Accounts (consolidated) ----------
-async function listTenantAccounts(url: URL) {
-  let q = admin
-    .from("tenant_accounts")
-    .select(
-      "id, full_name, phone, email, business_name, activity_type, notes, total_price, user_id, created_at, tenant_account_units(unit_id, units(building_number, unit_number, area, price, status))"
-    );
-  const search = url.searchParams.get("search");
-  if (search) q = q.ilike("full_name", `%${search}%`);
-  const { data, error } = await q.order("full_name");
-  if (error) return err(error.message, 500);
-  const shaped = (data ?? []).map((r: any) => ({
-    id: r.id,
-    full_name: r.full_name,
-    phone: r.phone,
-    email: r.email,
-    business_name: r.business_name,
-    activity_type: r.activity_type,
-    notes: r.notes,
-    total_price: r.total_price,
-    has_login: !!r.user_id,
-    created_at: r.created_at,
-    units_count: r.tenant_account_units?.length ?? 0,
-    units: (r.tenant_account_units ?? []).map((tau: any) => ({
-      unit_id: tau.unit_id,
-      ...tau.units,
-    })),
-  }));
-  return json({ data: shaped, count: shaped.length });
-}
-
-async function getTenantAccount(id: string) {
-  const { data, error } = await admin
-    .from("tenant_accounts")
-    .select(
-      "*, tenant_account_units(unit_id, units(building_number, unit_number, unit_type, area, price, activity, status)), invoices(id, unit_id, amount, paid_amount, paid, due_date, paid_at, period_start, period_end, notes, created_at)"
-    )
-    .eq("id", id)
-    .maybeSingle();
-  if (error) return err(error.message, 500);
-  if (!data) return err("Tenant account not found", 404);
-  return json({ data });
-}
-
-async function linkTenantAccountUnits(id: string, body: any) {
-  if (!Array.isArray(body?.unit_ids) || body.unit_ids.length === 0) {
-    return err("unit_ids array required", 400);
-  }
-  const rows = body.unit_ids.map((u: string) => ({ tenant_account_id: id, unit_id: u }));
-  const { error } = await admin.from("tenant_account_units").upsert(rows, { onConflict: "tenant_account_id,unit_id" });
-  if (error) return err(error.message, 400);
-  return json({ success: true });
-}
-
-async function unlinkTenantAccountUnit(id: string, unitId: string) {
-  // Goes through the database function, which preserves the link row before removing it.
-  const { error } = await admin.rpc("admin_unlink_tenant_unit", { _tenant_account_id: id, _unit_id: unitId });
-  if (error) return err(error.message, 400);
-  return json({ success: true });
-}
-
-async function listInvoices(url: URL) {
-  let q = admin.from("invoices").select("*");
-  const acc = url.searchParams.get("tenant_account_id");
-  const paid = url.searchParams.get("paid");
-  if (acc) q = q.eq("tenant_account_id", acc);
-  if (paid === "true" || paid === "false") q = q.eq("paid", paid === "true");
-  const { data, error } = await q.order("created_at", { ascending: false });
-  if (error) return err(error.message, 500);
-  return json({ data, count: data?.length ?? 0 });
-}
-
-async function updateUnit(id: string, body: any) {
-  const allowed: Record<string, any> = {};
-  for (const k of ["unit_type", "area", "activity", "price", "status", "unit_number", "building_number"]) {
-    if (k in body) allowed[k] = body[k];
-  }
-  if (Object.keys(allowed).length === 0) return err("No valid fields to update", 400);
-  if (allowed.status && !["available", "rented", "reserved"].includes(allowed.status)) {
-    return err("Invalid status. Allowed: available, rented, reserved", 400);
-  }
-  const { data, error } = await admin.from("units").update(allowed).eq("id", id).select().single();
-  if (error) return err(error.message, 400);
-  return json({ data });
-}
-
-async function createUnit(body: any) {
-  if (body?.building_number == null || body?.unit_number == null) {
-    return err("building_number and unit_number are required", 400);
-  }
-  const { data, error } = await admin.from("units").insert({
-    building_number: body.building_number,
-    unit_number: body.unit_number,
-    unit_type: body.unit_type ?? null,
-    area: body.area ?? 0,
-    activity: body.activity ?? null,
-    price: body.price ?? 0,
-    status: body.status ?? "available",
-  }).select().single();
-  if (error) return err(error.message, 400);
-  return json({ data }, 201);
-}
-
-async function deleteUnit(id: string) {
-  const { error } = await admin.from("units").delete().eq("id", id);
-  if (error) return err(error.message, 400);
-  return json({ success: true });
-}
-
-// ---------- Bookings read/update ----------
 async function listBookings(url: URL) {
-  let q = admin.from("bookings").select("*, booking_units(*)").limit(500);
+  let q = admin.from("bookings").select(BOOKING_FIELDS).is("archived_at", null).limit(1000);
   const status = url.searchParams.get("status");
-  const userId = url.searchParams.get("user_id");
   if (status) q = q.eq("status", status);
-  if (userId) q = q.eq("user_id", userId);
   const { data, error } = await q.order("created_at", { ascending: false });
   if (error) return err(error.message, 500);
   return json({ data, count: data?.length ?? 0 });
 }
 
 async function getBooking(id: string) {
-  const { data, error } = await admin
-    .from("bookings")
-    .select("*, booking_units(*)")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await admin.from("bookings").select(BOOKING_FIELDS).eq("id", id).maybeSingle();
   if (error) return err(error.message, 500);
   if (!data) return err("Booking not found", 404);
   return json({ data });
 }
 
-async function updateBooking(id: string, body: any) {
-  const allowed: Record<string, any> = {};
-  for (const k of ["status", "notes", "whatsapp_sent"]) if (k in body) allowed[k] = body[k];
-  if (allowed.status && !["pending", "confirmed", "cancelled"].includes(allowed.status)) {
-    return err("Invalid status. Allowed: pending, confirmed, cancelled", 400);
-  }
-  const { data, error } = await admin.from("bookings").update(allowed).eq("id", id).select().single();
-  if (error) return err(error.message, 400);
-  return json({ data });
-}
-
-// ---------- Customers ----------
-async function listCustomers(url: URL) {
-  let q = admin.from("customer_profiles").select("*").limit(1000);
-  const search = url.searchParams.get("search");
-  if (search) q = q.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%,email.ilike.%${search}%`);
-  const { data, error } = await q.order("created_at", { ascending: false });
-  if (error) return err(error.message, 500);
-  return json({ data, count: data?.length ?? 0 });
-}
-
-async function getCustomer(userId: string) {
-  const { data, error } = await admin
-    .from("customer_profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error) return err(error.message, 500);
-  if (!data) return err("Customer not found", 404);
-  return json({ data });
-}
-
-// ---------- Users ----------
-async function listUsers() {
-  const { data: profiles, error } = await admin.from("profiles").select("*").limit(1000);
-  if (error) return err(error.message, 500);
-  const { data: roles } = await admin.from("user_roles").select("user_id, role");
-  const result = (profiles ?? []).map((p) => ({
-    ...p,
-    roles: (roles ?? []).filter((r) => r.user_id === p.user_id).map((r) => r.role),
-  }));
-  return json({ data: result, count: result.length });
-}
-
-// ---------- Audit log ----------
-async function listAuditLog(url: URL) {
-  let q = admin.from("audit_log").select("*").limit(500);
-  const table = url.searchParams.get("table");
-  const action = url.searchParams.get("action");
-  if (table) q = q.eq("entity_table", table);
-  if (action) q = q.eq("action", action);
-  const { data, error } = await q.order("created_at", { ascending: false });
-  if (error) return err(error.message, 500);
-  return json({ data, count: data?.length ?? 0 });
+function unitCounts(u: { status: string }[]) {
+  const c = (s: string) => u.filter((x) => x.status === s).length;
+  return {
+    total: u.length,
+    available: c("available"),
+    reserved: c("reserved"),
+    rented: c("rented"),
+    maintenance: c("maintenance"),
+  };
 }
 
 async function getStats() {
-  const { data: units } = await admin
-    .from("units")
-    .select("status, price")
-    .limit(5000);
-  const { data: buildings } = await admin.from("buildings").select("number");
-  const u = units ?? [];
-  const total = u.length;
-  const rented = u.filter((x) => x.status === "rented").length;
-  const reserved = u.filter((x) => x.status === "reserved").length;
-  const available = total - rented - reserved;
-  const actualRevenue = u
-    .filter((x) => x.status === "rented")
-    .reduce((s, x) => s + Number(x.price), 0);
-  const potentialRevenue = u.reduce((s, x) => s + Number(x.price), 0);
+  const [{ data: units }, { data: buildings }] = await Promise.all([
+    admin.from("units").select("status, price").limit(10000),
+    admin.from("buildings").select("number"),
+  ]);
+  const u = (units ?? []) as { status: string; price: number }[];
+  const counts = unitCounts(u);
   return json({
     data: {
       buildings_count: buildings?.length ?? 0,
-      units: { total, rented, reserved, available },
-      occupancy_rate: total > 0 ? +((rented / total) * 100).toFixed(2) : 0,
+      units: counts,
+      occupancy_rate: counts.total > 0 ? +((counts.rented / counts.total) * 100).toFixed(2) : 0,
       revenue: {
-        actual_annual: actualRevenue,
-        potential_annual: potentialRevenue,
+        actual_annual_excl_vat: u.filter((x) => x.status === "rented").reduce((s, x) => s + Number(x.price), 0),
+        potential_annual_excl_vat: u.reduce((s, x) => s + Number(x.price), 0),
         currency: "SAR",
-        vat_note: "السعر غير شامل ضريبة القيمة المضافة 15%",
+        vat_included: false,
       },
     },
   });
@@ -506,271 +186,103 @@ async function getOverview(days: number) {
   const since = new Date();
   since.setUTCDate(since.getUTCDate() - days);
   const sinceIso = since.toISOString();
-
   const [units, buildings, profiles, bookings, emailRows] = await Promise.all([
-    admin.from("units").select("status, price").limit(5000),
+    admin.from("units").select("status").limit(10000),
     admin.from("buildings").select("number"),
-    admin.from("profiles").select("created_at").gte("created_at", sinceIso),
-    admin
-      .from("bookings")
-      .select("created_at, total_price, units_count")
-      .gte("created_at", sinceIso),
-    admin
-      .from("email_send_log")
-      .select("message_id, status, template_name, created_at")
-      .gte("created_at", sinceIso)
-      .order("created_at", { ascending: false })
-      .limit(5000),
+    admin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
+    admin.from("bookings").select("total_price").gte("created_at", sinceIso),
+    admin.from("email_send_log").select("message_id, status, template_name, created_at")
+      .gte("created_at", sinceIso).order("created_at", { ascending: false }).limit(5000),
   ]);
-
-  const u = units.data ?? [];
-  const total = u.length;
-  const rented = u.filter((x) => x.status === "rented").length;
-  const reserved = u.filter((x) => x.status === "reserved").length;
-
-  // Dedup emails by message_id (latest first)
+  const counts = unitCounts((units.data ?? []) as { status: string }[]);
   const seen = new Set<string>();
-  const latest: any[] = [];
+  const emailCounts = { total: 0, sent: 0, failed: 0, suppressed: 0 };
   for (const r of emailRows.data ?? []) {
     const k = r.message_id ?? `${r.template_name}-${r.created_at}`;
     if (seen.has(k)) continue;
     seen.add(k);
-    latest.push(r);
-  }
-  const emailCounts = { total: latest.length, sent: 0, failed: 0, suppressed: 0 };
-  for (const r of latest) {
+    emailCounts.total++;
     if (r.status === "sent") emailCounts.sent++;
     else if (["dlq", "failed", "bounced"].includes(r.status)) emailCounts.failed++;
     else if (["suppressed", "complained"].includes(r.status)) emailCounts.suppressed++;
   }
-
   const bk = bookings.data ?? [];
-  const totalRevenue = bk.reduce((s, r) => s + Number(r.total_price ?? 0), 0);
-
   return json({
     data: {
       range_days: days,
       buildings_count: buildings.data?.length ?? 0,
-      units: {
-        total,
-        rented,
-        reserved,
-        available: total - rented - reserved,
-        occupancy_rate: total > 0 ? +((rented / total) * 100).toFixed(2) : 0,
-      },
-      new_signups: profiles.data?.length ?? 0,
+      units: { ...counts, occupancy_rate: counts.total > 0 ? +((counts.rented / counts.total) * 100).toFixed(2) : 0 },
+      new_signups: profiles.count ?? 0,
       bookings: {
         count: bk.length,
-        total_revenue: totalRevenue,
+        total_value_excl_vat: bk.reduce((s, r: any) => s + Number(r.total_price ?? 0), 0),
+        vat_included: false,
       },
       emails: emailCounts,
     },
   });
 }
+
+const REMOVED = [/^\/tenants/, /^\/tenant-accounts/, /^\/customers/, /^\/users/, /^\/audit-log/, /^\/invoices/];
+
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  CORS = corsFor(req.headers.get("Origin"), await getAllowList().catch(() => []));
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   const url = new URL(req.url);
-  // Strip the function name prefix; supports both /api and /functions/v1/api
   let path = url.pathname.replace(/^\/functions\/v1\/api/, "").replace(/^\/api/, "");
-  if (path === "" || path === "/") path = "/";
+  if (path === "") path = "/";
 
-  // Public meta endpoint
-  if (path === "/" && req.method === "GET") {
+  if (!["GET", "HEAD"].includes(req.method)) {
+    return err("This API is read-only. Only GET requests are allowed.", 405);
+  }
+
+  if (path === "/") {
     return json({
-      name: "نخبة تسكين API",
-      version: "1.0.0",
+      name: "MNICity API",
+      version: "2.0.0",
+      read_only: true,
       docs: "/api-docs",
       endpoints: [
         "GET /buildings",
         "GET /buildings/:number",
         "GET /units",
         "GET /units/:id",
-        "POST /units",
-        "PATCH /units/:id",
-        "DELETE /units/:id",
-        "POST /bookings",
         "GET /bookings",
         "GET /bookings/:id",
-        "PATCH /bookings/:id",
-        "GET /tenants",
-        "POST /tenants",
-        "PATCH /tenants/:id",
-        "DELETE /tenants/:id",
-        "GET /tenant-accounts",
-        "GET /tenant-accounts/:id",
-        "POST /tenant-accounts/:id/units",
-        "DELETE /tenant-accounts/:id/units/:unit_id",
-        "GET /invoices?tenant_account_id=&paid=",
-        "GET /customers",
-        "GET /customers/:user_id",
-        "GET /users",
-        "GET /audit-log",
         "GET /stats",
         "GET /stats/overview?days=N",
       ],
     });
   }
 
-  const ctx = await authenticate(req);
-  if (!ctx) {
-    return err(
-      "Unauthorized. Provide X-API-Key header or Authorization: Bearer <jwt>.",
-      401,
-    );
+  if (REMOVED.some((r) => r.test(path))) {
+    return err("This endpoint was removed because it exposed personal data.", 410);
   }
 
-  if (ctx.type === "jwt" && ctx.isManager && !ctx.isAdmin && !["GET", "HEAD"].includes(req.method)) {
-    return err("صلاحية المدير للعرض فقط", 403);
+  if (!(await authenticate(req))) {
+    return err("Unauthorized. Provide X-API-Key header or Authorization: Bearer <jwt>.", 401);
   }
 
   try {
-    // GET /buildings
-    if (path === "/buildings" && req.method === "GET") {
-      const g = requireScope(ctx, "read");
-      return g ?? (await listBuildings());
-    }
-    // GET /buildings/:number
-    const buildingMatch = path.match(/^\/buildings\/(\d+)$/);
-    if (buildingMatch && req.method === "GET") {
-      const g = requireScope(ctx, "read");
-      return g ?? (await getBuilding(Number(buildingMatch[1])));
-    }
-    // GET /units
-    if (path === "/units" && req.method === "GET") {
-      const g = requireScope(ctx, "read");
-      return g ?? (await listUnits(url));
-    }
-    // GET /units/:id
-    const unitMatch = path.match(/^\/units\/([0-9a-f-]{36})$/i);
-    if (unitMatch && req.method === "GET") {
-      const g = requireScope(ctx, "read");
-      return g ?? (await getUnit(unitMatch[1]));
-    }
-    // POST /units
-    if (path === "/units" && req.method === "POST") {
-      const g = requireScope(ctx, "write");
-      if (g) return g;
-      return await createUnit(await req.json());
-    }
-    // PATCH /units/:id
-    if (unitMatch && req.method === "PATCH") {
-      const g = requireScope(ctx, "write");
-      if (g) return g;
-      return await updateUnit(unitMatch[1], await req.json());
-    }
-    // DELETE /units/:id
-    if (unitMatch && req.method === "DELETE") {
-      const g = requireScope(ctx, "admin");
-      return g ?? (await deleteUnit(unitMatch[1]));
-    }
-    // POST /bookings
-    if (path === "/bookings" && req.method === "POST") {
-      const g = requireScope(ctx, "read"); // bookings allowed for any authed key
-      if (g) return g;
-      return await createBooking(await req.json());
-    }
-    // GET /bookings
-    if (path === "/bookings" && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await listBookings(url));
-    }
-    // GET/PATCH /bookings/:id
-    const bookingMatch = path.match(/^\/bookings\/([0-9a-f-]{36})$/i);
-    if (bookingMatch && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await getBooking(bookingMatch[1]));
-    }
-    if (bookingMatch && req.method === "PATCH") {
-      const g = requireScope(ctx, "write");
-      if (g) return g;
-      return await updateBooking(bookingMatch[1], await req.json());
-    }
-    // /customers
-    if (path === "/customers" && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await listCustomers(url));
-    }
-    const customerMatch = path.match(/^\/customers\/([0-9a-f-]{36})$/i);
-    if (customerMatch && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await getCustomer(customerMatch[1]));
-    }
-    // /users
-    if (path === "/users" && req.method === "GET") {
-      const g = requireScope(ctx, "admin");
-      return g ?? (await listUsers());
-    }
-    // /audit-log
-    if (path === "/audit-log" && req.method === "GET") {
-      const g = requireScope(ctx, "admin");
-      return g ?? (await listAuditLog(url));
-    }
-    // /tenants
-    if (path === "/tenants" && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await listTenants(url));
-    }
-    if (path === "/tenants" && req.method === "POST") {
-      const g = requireScope(ctx, "write");
-      if (g) return g;
-      return await createTenant(await req.json());
-    }
-    const tenantMatch = path.match(/^\/tenants\/([0-9a-f-]{36})$/i);
-    if (tenantMatch && req.method === "PATCH") {
-      const g = requireScope(ctx, "write");
-      if (g) return g;
-      return await updateTenant(tenantMatch[1], await req.json());
-    }
-    if (tenantMatch && req.method === "DELETE") {
-      const g = requireScope(ctx, "admin");
-      return g ?? (await deleteTenant(tenantMatch[1], url.searchParams.get("reason")));
-    }
-    // /tenant-accounts (consolidated)
-    if (path === "/tenant-accounts" && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await listTenantAccounts(url));
-    }
-    const taMatch = path.match(/^\/tenant-accounts\/([0-9a-f-]{36})$/i);
-    if (taMatch && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await getTenantAccount(taMatch[1]));
-    }
-    const taLinkMatch = path.match(/^\/tenant-accounts\/([0-9a-f-]{36})\/units$/i);
-    if (taLinkMatch && req.method === "POST") {
-      const g = requireScope(ctx, "write");
-      if (g) return g;
-      return await linkTenantAccountUnits(taLinkMatch[1], await req.json());
-    }
-    const taUnlinkMatch = path.match(/^\/tenant-accounts\/([0-9a-f-]{36})\/units\/([0-9a-f-]{36})$/i);
-    if (taUnlinkMatch && req.method === "DELETE") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await unlinkTenantAccountUnit(taUnlinkMatch[1], taUnlinkMatch[2]));
-    }
-    if (path === "/invoices" && req.method === "GET") {
-      const g = requireScope(ctx, "write");
-      return g ?? (await listInvoices(url));
-    }
-    if (path === "/stats" && req.method === "GET") {
-      const g = requireScope(ctx, "read");
-      return g ?? (await getStats());
-    }
-    // GET /stats/overview?days=N — full ops overview (emails, bookings, users)
-    if (path === "/stats/overview" && req.method === "GET") {
-      const g = requireScope(ctx, "read");
-      if (g) return g;
-      const days = Math.min(
-        Math.max(1, Number(url.searchParams.get("days") ?? "7") || 7),
-        90,
-      );
+    if (path === "/buildings") return await listBuildings();
+    const b = path.match(/^\/buildings\/(\d+)$/);
+    if (b) return await getBuilding(Number(b[1]));
+    if (path === "/units") return await listUnits(url);
+    const u = path.match(/^\/units\/([0-9a-f-]{36})$/i);
+    if (u) return await getUnit(u[1]);
+    if (path === "/bookings") return await listBookings(url);
+    const bk = path.match(/^\/bookings\/([0-9a-f-]{36})$/i);
+    if (bk) return await getBooking(bk[1]);
+    if (path === "/stats") return await getStats();
+    if (path === "/stats/overview") {
+      const days = Math.min(Math.max(1, Number(url.searchParams.get("days") ?? "7") || 7), 90);
       return await getOverview(days);
     }
-    return err(`Route not found: ${req.method} ${path}`, 404);
+    return err(`Route not found: GET ${path}`, 404);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("API error:", msg);
-    return err(msg, 500);
+    return err("Internal error", 500);
   }
 });

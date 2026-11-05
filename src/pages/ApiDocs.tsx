@@ -49,7 +49,7 @@ interface Endpoint {
 }
 
 // ---------- Endpoints (rich metadata) ----------
-const endpoints: Endpoint[] = [
+const allEndpoints: Endpoint[] = [
   {
     id: "list-buildings",
     method: "GET",
@@ -160,7 +160,7 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/units/:id",
     title: "تفاصيل وحدة",
-    desc: "تفاصيل وحدة بالـ UUID + بيانات المستأجر إن وجد.",
+    desc: "تفاصيل وحدة بالـ UUID (حقول الوحدة فقط، بدون أي بيانات شخصية).",
     scope: "read",
     pathParams: [
       {
@@ -181,14 +181,6 @@ const endpoints: Endpoint[] = [
         activity: "قطع غيار",
         price: 60000,
         status: "rented",
-        tenant: {
-          id: "uuid",
-          tenant_name: "أحمد محمد",
-          business_name: "ورشة النخبة",
-          phone: "+966500000000",
-          activity_type: "قطع غيار",
-          start_date: "2026-01-01",
-        },
       },
     },
   },
@@ -413,19 +405,16 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/bookings",
     title: "قائمة الحجوزات",
-    desc: "كل الحجوزات مع وحداتها. يتطلب صلاحية `write`.",
-    scope: "write",
+    desc: "الحجوزات بمعرّفاتها الحقيقية مع وحداتها والمجاميع فقط — بدون اسم أو جوال أو بريد أو رقم هوية.",
+    scope: "read",
     queryParams: [
-      { name: "status", type: "string", desc: "pending | confirmed | cancelled", example: "pending" },
-      { name: "user_id", type: "uuid", desc: "تصفية بحسب المستخدم" },
+      { name: "status", type: "string", desc: "pending | confirmed | cancelled | expired", example: "pending" },
     ],
     response: {
       data: [
         {
           id: "uuid",
-          user_id: "uuid",
-          customer_full_name: "أحمد محمد",
-          customer_phone: "+966500000000",
+          offer_number: "OF-0001",
           status: "pending",
           total_area: 100,
           total_price: 120000,
@@ -442,8 +431,8 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/bookings/:id",
     title: "تفاصيل حجز",
-    desc: "تفاصيل حجز محدد بكل وحداته.",
-    scope: "write",
+    desc: "تفاصيل حجز محدد بكل وحداته (بدون بيانات شخصية).",
+    scope: "read",
     pathParams: [{ name: "id", type: "uuid", required: true, desc: "معرف الحجز" }],
     response: { data: { id: "uuid", status: "pending", booking_units: [] } },
   },
@@ -664,6 +653,10 @@ const endpoints: Endpoint[] = [
     notes: ["كل المبالغ بالريال السعودي (SAR)."],
   },
 ];
+
+// The legacy API is read-only and never returns personal data: only these GET routes remain.
+const KEPT_ENDPOINTS = new Set(["/buildings", "/buildings/:number", "/units", "/units/:id", "/bookings", "/bookings/:id", "/stats", "/stats/overview"]);
+const endpoints: Endpoint[] = allEndpoints.filter((e) => e.method === "GET" && KEPT_ENDPOINTS.has(e.path));
 
 // ---------- Code generators per language ----------
 function buildUrl(e: Endpoint): string {
@@ -967,15 +960,13 @@ const ApiDocs = () => {
               </div>
               <ul className="list-inside list-disc space-y-1 text-xs">
                 <li>
-                  <Badge variant="outline">read</Badge> — قراءة مباني/وحدات/
-                  إحصائيات + إنشاء حجوزات
+                  الـ API دي <strong>قراءة فقط</strong>: أي مفتاح صالح يقدر يقرأ المباني والوحدات والحجوزات والإحصائيات.
                 </li>
                 <li>
-                  <Badge variant="outline">write</Badge> — كل ما سبق + إدارة
-                  المستأجرين (إضافة/تعديل/قائمة)
+                  مفيش أي بيانات شخصية في الردود (أسماء، جوالات، بريد، أرقام هوية). مسارات المستأجرين والعملاء والمستخدمين والفواتير وسجل التعديلات اتشالت وبترجع 410.
                 </li>
                 <li>
-                  <Badge variant="outline">admin</Badge> — كل ما سبق + الحذف
+                  الطلبات من المتصفح مسموحة بس من الدومينات المسجّلة في إعدادات النظام.
                 </li>
               </ul>
             </div>
@@ -1013,13 +1004,13 @@ const ApiDocs = () => {
               <tbody>
                 {[
                   ["200", "نجاح", "تم بنجاح"],
-                  ["201", "تم الإنشاء", "تم إنشاء مورد جديد"],
                   ["400", "Bad Request", "بيانات ناقصة أو صيغة JSON خاطئة"],
                   ["401", "Unauthorized", "مفتاح API ناقص أو غير صحيح"],
                   ["403", "Forbidden", "المفتاح ليس له الصلاحية المطلوبة"],
                   ["404", "Not Found", "المسار أو المورد غير موجود"],
                   ["500", "Server Error", "خطأ داخلي - راجع السجلات"],
-                  ["502", "Bad Gateway", "فشل الاتصال بـ webhook خارجي"],
+                  ["405", "Method Not Allowed", "الـ API قراءة فقط — GET بس"],
+                  ["410", "Gone", "المسار اتشال لأنه كان بيرجّع بيانات شخصية"],
                 ].map(([code, name, reason]) => (
                   <tr key={code} className="border-b border-border/50">
                     <td className="py-2 font-mono">{code}</td>
@@ -1045,8 +1036,6 @@ const ApiDocs = () => {
           <TabsList>
             <TabsTrigger value="all">الكل</TabsTrigger>
             <TabsTrigger value="read">قراءة</TabsTrigger>
-            <TabsTrigger value="write">كتابة</TabsTrigger>
-            <TabsTrigger value="admin">أدمن</TabsTrigger>
           </TabsList>
           <TabsContent value={scopeTab} />
         </Tabs>

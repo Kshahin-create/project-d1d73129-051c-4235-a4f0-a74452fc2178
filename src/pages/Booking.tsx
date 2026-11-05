@@ -94,6 +94,7 @@ const Booking = () => {
             phone: data.phone ?? "",
             email: data.email ?? user.email ?? "",
             business: data.business_name ?? "",
+            idType: ((data as any).id_type ?? undefined) as any,
             crNumber: (data as any).cr_number ?? "",
             notes: data.notes ?? "",
           });
@@ -180,6 +181,7 @@ const Booking = () => {
             email: data.email || user.email,
             business_name: data.business,
             notes: data.notes || null,
+            id_type: data.idType,
           },
           { onConflict: "user_id" }
         )
@@ -190,7 +192,7 @@ const Booking = () => {
     setStep(5);
   };
 
-  const notifyTelegramStage = (stage: "summary" | "failed", errorMsg?: string) => {
+  const notifyTelegramStage = (stage: "failed", errorMsg?: string) => {
     if (!customer || selectedUnits.length === 0) return;
     supabase.functions
       .invoke("telegram-notify", {
@@ -238,6 +240,7 @@ const Booking = () => {
       _unit_ids: selectedUnits.map((u) => u.id).filter(Boolean) as string[],
       _cr_number: customer.crNumber || null,
       _payment_plan: paymentPlan,
+      _id_type: customer.idType,
     } as any);
     setCreatingBooking(false);
     if (error || !newId) {
@@ -249,7 +252,7 @@ const Booking = () => {
     }
     setBookingId(newId as string);
     setBookingError(null);
-    toast.success("تم تأكيد حجزك ✅");
+    toast.success("استلمنا طلب حجزك، وبيتواصل معك فريق التأجير لتأكيده");
 
     // إشعار تيليجرام (لا نوقف التدفق لو فشل)
     supabase.functions
@@ -371,17 +374,6 @@ const Booking = () => {
     }, 80);
     return () => window.clearTimeout(timeout);
   }, [activityFilter, isLoading, step]);
-
-  // تنبيه تيليجرام فور وصول العميل لصفحة الملخص (قبل التأكيد)
-  const summaryNotifiedRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (step !== 5 || !customer || selectedUnits.length === 0 || bookingId) return;
-    const key = `${customer.phone}|${selectedUnits.map((u) => u.id).join(",")}`;
-    if (summaryNotifiedRef.current === key) return;
-    summaryNotifiedRef.current = key;
-    notifyTelegramStage("summary");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, customer, selectedUnits.length, bookingId]);
 
   const goBack = () => {
     if (step === 1) {
@@ -584,7 +576,7 @@ const Booking = () => {
                           <div className="flex-1">
                             <p className="font-bold text-foreground">سجّل حسابك واحفظ بياناتك</p>
                             <p className="mt-1 text-muted-foreground">
-                              لو عملت حساب، بياناتك هتتحفظ وتتعبّى تلقائياً في أي حجز جاي.
+                              إذا سجّلت حساب، نحفظ بياناتك وتتعبّى تلقائيًا في طلباتك الجاية.
                             </p>
                             <Link
                               to="/auth"
@@ -640,7 +632,7 @@ const Booking = () => {
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success text-success-foreground">
                         <CheckCircle2 className="h-8 w-8" />
                       </div>
-                      <h3 className="mt-4 font-display text-xl font-bold">تم تأكيد حجزك</h3>
+                      <h3 className="mt-4 font-display text-xl font-bold">استلمنا طلب حجزك، وبيتواصل معك فريق التأجير لتأكيده</h3>
                       <p className="mt-2 text-sm text-muted-foreground">
                         وصلنا طلبك وسيتواصل معك فريقنا قريباً لإتمام السداد.
                       </p>
@@ -706,7 +698,7 @@ const Booking = () => {
                         <>
                           <div className="rounded-2xl border border-success/30 bg-success/5 p-6 text-center">
                             <CheckCircle2 className="mx-auto h-10 w-10 text-success" />
-                            <h3 className="mt-3 font-display text-xl font-bold">تم تأكيد حجزك</h3>
+                            <h3 className="mt-3 font-display text-xl font-bold">استلمنا طلب حجزك، وبيتواصل معك فريق التأجير لتأكيده</h3>
                             <p className="mt-1 text-sm text-muted-foreground">
                               رقم الحجز: <span className="font-mono font-bold" dir="ltr">{bookingId.slice(0, 8)}</span>
                             </p>

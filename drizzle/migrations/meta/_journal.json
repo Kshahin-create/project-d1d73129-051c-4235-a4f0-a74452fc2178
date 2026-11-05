@@ -57,6 +57,13 @@
       "when": 1793885960985,
       "tag": "0007_restore_status_amount_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793887270600,
+      "tag": "0008_identity_type_and_api_cors",
+      "breakpoints": true
     }
   ]
 }

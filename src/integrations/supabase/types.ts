@@ -136,6 +136,7 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          api_cors_allowlist: string[]
           buildings_sheet_id: string | null
           buildings_sheet_last_direction: string | null
           buildings_sheet_last_sync_at: string | null
@@ -149,6 +150,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          api_cors_allowlist?: string[]
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
@@ -162,6 +164,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          api_cors_allowlist?: string[]
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
@@ -318,6 +321,7 @@ export type Database = {
           customer_phone: string
           expires_at: string
           id: string
+          id_type: string | null
           is_returning_customer: boolean
           notes: string | null
           offer_image_url: string | null
@@ -348,6 +352,7 @@ export type Database = {
           customer_phone: string
           expires_at?: string
           id?: string
+          id_type?: string | null
           is_returning_customer?: boolean
           notes?: string | null
           offer_image_url?: string | null
@@ -378,6 +383,7 @@ export type Database = {
           customer_phone?: string
           expires_at?: string
           id?: string
+          id_type?: string | null
           is_returning_customer?: boolean
           notes?: string | null
           offer_image_url?: string | null
@@ -447,6 +453,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          id_type: string | null
           notes: string | null
           phone: string | null
           updated_at: string
@@ -463,6 +470,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          id_type?: string | null
           notes?: string | null
           phone?: string | null
           updated_at?: string
@@ -479,6 +487,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          id_type?: string | null
           notes?: string | null
           phone?: string | null
           updated_at?: string
@@ -1902,6 +1911,20 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              _business_name: string
+              _cr_number: string
+              _customer_email: string
+              _customer_full_name: string
+              _customer_phone: string
+              _id_type: string
+              _notes: string
+              _payment_plan: string
+              _unit_ids: string[]
+            }
+            Returns: string
+          }
       create_telegram_link_token: { Args: never; Returns: string }
       ensure_tenant_account_for_tenant: {
         Args: { _tenant_id: string }
@@ -2027,6 +2050,10 @@ export type Database = {
         Returns: undefined
       }
       unlink_my_telegram: { Args: { _chat_id: number }; Returns: undefined }
+      validate_identity: {
+        Args: { _id_type: string; _number: string }
+        Returns: boolean
+      }
       verify_api_key: {
         Args: { _key_hash: string }
         Returns: {
