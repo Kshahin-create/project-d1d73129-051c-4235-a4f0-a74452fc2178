@@ -53,6 +53,7 @@ type ExtLink = {
   crmOnly?: boolean;
   crmManagerOnly?: boolean;
   financeOnly?: boolean;
+  homeOnly?: boolean;
 };
 
 type LinkGroup = {
@@ -63,11 +64,7 @@ type LinkGroup = {
 };
 
 const groups: LinkGroup[] = [
-  {id:"home",label:"الرئيسية",Icon:Home,links:[
-    {to:"/dashboard",label:"الملخص التنفيذي",Icon:LayoutDashboard,managerOnly:true},
-    {to:"/admin",label:"لوحة الأدمن",Icon:Shield,adminOnly:true},
-    {to:"/control",label:"لوحة الكنترول",Icon:Wrench,controlOnly:true},
-  ]},
+  {id:"home",label:"الرئيسية",Icon:Home,links:[{to:"/dashboard",label:"ملخص المشروع",Icon:LayoutDashboard,homeOnly:true}]},
   {id:"units",label:"الوحدات",Icon:Building2,links:[
     {to:"/admin/units",label:"الخريطة والوحدات",Icon:Building2,controlOnly:true},
     {to:"/admin/units-incomplete",label:"وحدات تحتاج استكمال",Icon:ClipboardList,managerOnly:true},
@@ -115,7 +112,7 @@ const groups: LinkGroup[] = [
 ];
 
 export const AdminSidebar = () => {
-  const { isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, user, loading } = useAuth();
+  const { isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, isInvestor, user, loading } = useAuth();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -151,6 +148,7 @@ export const AdminSidebar = () => {
 
   const visibleGroups = useMemo(() => {
     const canSee = (l: ExtLink) =>
+      (!l.homeOnly || isAdmin || isManager || isInvestor || isAccountant || isLeasingManager || isControl) &&
       (!l.adminOnly || isAdmin) &&
       (!l.controlOnly || isControl || isAdmin || isManager) &&
       (!l.managerOnly || isManager || isAdmin) &&
@@ -163,7 +161,7 @@ export const AdminSidebar = () => {
     return groups
       .map((g) => ({ ...g, links: g.links.filter(canSee) }))
       .filter((g) => g.links.length > 0);
-  }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, user]);
+  }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, isInvestor, user]);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   useEffect(() => {

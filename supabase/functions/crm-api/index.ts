@@ -1,3 +1,4 @@
+import { metricsSnapshot } from "../_shared/metrics.ts";
 // Read-only REST API for an external CRM (server-to-server). GET only.
 // Auth: header `X-API-Key` (key created in /admin/api-keys with crm:* scopes).
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -166,10 +167,15 @@ Deno.serve(async (req) => {
         data: {
           api_version: API_VERSION,
           project: { code: "MNICITY", name_ar: "المدينة الصناعية بشمال مكة المكرمة" },
-          phase: { code: "phase-1", name_ar: "المرحلة الأولى", note: "Single phase; no phases table exists." },
-          scopes, resources: [...Object.keys(R), "templates"], server_time: new Date().toISOString(),
+          phase: { note: "Scope uses registered building phases; unassigned phases are not inferred." },
+          scopes, resources: [...Object.keys(R), "templates","metrics"], server_time: new Date().toISOString(),
         },
       });
+    }
+    if(path==="/metrics"){
+      if(!scopes.includes("crm:metrics"))return fail("forbidden","Resource requires crm:metrics scope",403);
+      const scope:Record<string,string>={};for(const key of ["building","phase","activity","unit_type","from","to"]){const value=url.searchParams.get(key);if(value){if(value.length>100)return fail("invalid_filter","Invalid metrics filter",400);scope[key]=value;}}
+      const snapshot=await metricsSnapshot(admin,scope);if(!scopes.includes("crm:finance"))delete snapshot.finance;delete snapshot.quality;delete snapshot.approvals;return json({data:snapshot});
     }
     if (path === "/templates") {
       const { data, error } = await admin.from("marketing_campaigns").select("template_name,language,components,created_at").order("created_at", { ascending: true });

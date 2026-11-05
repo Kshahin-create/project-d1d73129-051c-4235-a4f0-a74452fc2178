@@ -1,3 +1,4 @@
+import { metricsSnapshot,legacyMetricUnits,metricsPeriod } from "../_shared/metrics.ts";
 // Legacy external API — READ-ONLY.
 // Auth: either `X-API-Key: nkb_...` OR `Authorization: Bearer <jwt>`.
 // Returns unit fields and aggregate counts only. No personal data (names, phones,
@@ -161,66 +162,11 @@ function unitCounts(u: { status: string }[]) {
 }
 
 async function getStats() {
-  const [{ data: units }, { data: buildings }] = await Promise.all([
-    admin.from("units_status_read").select("status, price").eq("is_test", false).eq("publish_state", "published").limit(10000),
-    admin.from("buildings").select("number"),
-  ]);
-  const u = (units ?? []) as { status: string; price: number }[];
-  const counts = unitCounts(u);
-  return json({
-    data: {
-      buildings_count: buildings?.length ?? 0,
-      units: counts,
-      occupancy_rate: counts.total > 0 ? +((counts.rented / counts.total) * 100).toFixed(2) : 0,
-      revenue: {
-        actual_annual_excl_vat: u.filter((x) => x.status === "rented").reduce((s, x) => s + Number(x.price), 0),
-        potential_annual_excl_vat: u.reduce((s, x) => s + Number(x.price), 0),
-        currency: "SAR",
-        vat_included: false,
-      },
-    },
-  });
+  const snapshot=await metricsSnapshot(admin);return json({data:{buildings_count:snapshot.options.buildings?.length??0,units:legacyMetricUnits(snapshot),occupancy_rate:snapshot.inventory.occupancy_rate,revenue:{actual_annual_excl_vat:snapshot.finance.annual_rent_excl_vat,potential_annual_excl_vat:null,currency:"SAR",vat_included:false},metrics:snapshot}});
 }
 
 async function getOverview(days: number) {
-  const since = new Date();
-  since.setUTCDate(since.getUTCDate() - days);
-  const sinceIso = since.toISOString();
-  const [units, buildings, profiles, bookings, emailRows] = await Promise.all([
-    admin.from("units_status_read").select("status").eq("is_test", false).eq("publish_state", "published").limit(10000),
-    admin.from("buildings").select("number"),
-    admin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", sinceIso),
-    admin.from("bookings").select("total_price").gte("created_at", sinceIso),
-    admin.from("email_send_log").select("message_id, status, template_name, created_at")
-      .gte("created_at", sinceIso).order("created_at", { ascending: false }).limit(5000),
-  ]);
-  const counts = unitCounts((units.data ?? []) as { status: string }[]);
-  const seen = new Set<string>();
-  const emailCounts = { total: 0, sent: 0, failed: 0, suppressed: 0 };
-  for (const r of emailRows.data ?? []) {
-    const k = r.message_id ?? `${r.template_name}-${r.created_at}`;
-    if (seen.has(k)) continue;
-    seen.add(k);
-    emailCounts.total++;
-    if (r.status === "sent") emailCounts.sent++;
-    else if (["dlq", "failed", "bounced"].includes(r.status)) emailCounts.failed++;
-    else if (["suppressed", "complained"].includes(r.status)) emailCounts.suppressed++;
-  }
-  const bk = bookings.data ?? [];
-  return json({
-    data: {
-      range_days: days,
-      buildings_count: buildings.data?.length ?? 0,
-      units: { ...counts, occupancy_rate: counts.total > 0 ? +((counts.rented / counts.total) * 100).toFixed(2) : 0 },
-      new_signups: profiles.count ?? 0,
-      bookings: {
-        count: bk.length,
-        total_value_excl_vat: bk.reduce((s, r: any) => s + Number(r.total_price ?? 0), 0),
-        vat_included: false,
-      },
-      emails: emailCounts,
-    },
-  });
+  const snapshot=await metricsSnapshot(admin,metricsPeriod(days));return json({data:{range_days:days,buildings_count:snapshot.options.buildings?.length??0,units:legacyMetricUnits(snapshot),bookings:{count:snapshot.pipeline.booking_requests,total_value_excl_vat:null,vat_included:false},metrics:snapshot}});
 }
 
 const REMOVED = [/^\/tenants/, /^\/tenant-accounts/, /^\/customers/, /^\/users/, /^\/audit-log/, /^\/invoices/];

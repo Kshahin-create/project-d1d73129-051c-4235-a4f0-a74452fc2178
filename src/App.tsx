@@ -19,6 +19,7 @@ const Terms = lazy(() => import("./pages/Terms.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
 const AuthMobileCallback = lazy(() => import("./pages/AuthMobileCallback.tsx"));
 const AuthMobileStart = lazy(() => import("./pages/AuthMobileStart.tsx"));
+const MetricsHome = lazy(() => import("./pages/MetricsDashboard.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers.tsx"));
 const AdminAudit = lazy(() => import("./pages/AdminAudit.tsx"));
@@ -98,13 +99,15 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/mobile-callback" element={<AuthMobileCallback />} />
           <Route path="/auth/mobile/start" element={<AuthMobileStart />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={<MetricsHome />} />
+          <Route path="/admin/maintenance" element={<ControlDashboard />} />
+          <Route path="/admin/legacy-units" element={<Admin />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/audit" element={<AdminAudit />} />
           <Route path="/admin/access-log" element={<AdminAccessLog />} />
           <Route path="/admin/tenants" element={<AdminTenants />} />
           <Route path="/admin/bookings" element={<AdminBookings />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<MetricsHome />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/telegram" element={<TelegramSettings />} />
           {Object.keys(legacyAdminRoutes).map(path => <Route key={path} path={path} element={<LegacyAdminRedirect />} />)}
@@ -113,7 +116,7 @@ const App = () => (
           <Route path="/admin/settings/developers/stats" element={<AdminOnly><AdminStats /></AdminOnly>} />
           <Route path="/admin/settings/developers/api-docs" element={<AdminOnly><ApiDocs /></AdminOnly>} />
           <Route path="/admin/settings/developers/mcp" element={<AdminOnly><Mcp /></AdminOnly>} />
-          <Route path="/control" element={<ControlDashboard />} />
+          <Route path="/control" element={<MetricsHome />} />
           <Route path="/how-to-book" element={<HowToBook />} />
           <Route path="/admin/tenant-accounts" element={<AdminTenantAccounts />} />
           <Route path="/admin/paid-tenants" element={<AdminPaidTenants />} />

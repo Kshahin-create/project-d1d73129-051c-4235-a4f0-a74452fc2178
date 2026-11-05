@@ -351,6 +351,48 @@
       "when": 1793913831556,
       "tag": "0049_admin_party_units_paged_read",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793917732068,
+      "tag": "0050_metrics_investor_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1793917789510,
+      "tag": "0051_central_metrics_read_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1793917841830,
+      "tag": "0052_metrics_scoped_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793917883582,
+      "tag": "0053_metrics_drilldown_and_role_compatibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1793918075038,
+      "tag": "0054_metrics_consistency_and_regression_checks",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1793918113911,
+      "tag": "0055_metrics_drilldown_scope_alignment",
+      "breakpoints": true
     }
   ]
 }
