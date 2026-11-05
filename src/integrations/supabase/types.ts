@@ -3915,6 +3915,7 @@ export type Database = {
         | "tenant"
         | "leasing_manager"
         | "sales_agent"
+        | "accountant"
       opportunity_activity_outcome: "answered" | "no_answer" | "follow_up"
       opportunity_activity_type:
         | "call"
@@ -4097,6 +4098,7 @@ export const Constants = {
         "tenant",
         "leasing_manager",
         "sales_agent",
+        "accountant",
       ],
       opportunity_activity_outcome: ["answered", "no_answer", "follow_up"],
       opportunity_activity_type: [

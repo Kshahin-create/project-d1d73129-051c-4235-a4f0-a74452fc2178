@@ -211,6 +211,13 @@
       "when": 1793896179978,
       "tag": "0029_crm_contact_masking_enforcement",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793907980837,
+      "tag": "0030_accountant_role",
+      "breakpoints": true
     }
   ]
 }
