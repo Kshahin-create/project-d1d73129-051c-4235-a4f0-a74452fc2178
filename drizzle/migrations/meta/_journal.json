@@ -407,6 +407,13 @@
       "when": 1793918606409,
       "tag": "0057_metrics_trusted_telegram_audiences",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793918899541,
+      "tag": "0058_metrics_inventory_server_status_counts",
+      "breakpoints": true
     }
   ]
 }

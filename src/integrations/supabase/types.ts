@@ -4479,6 +4479,7 @@ export type Database = {
         Returns: Json
       }
       _metrics_finance_base: { Args: { _scope?: Json }; Returns: Json }
+      _metrics_inventory_base: { Args: { _scope?: Json }; Returns: Json }
       _metrics_snapshot: {
         Args: { _audience: string; _scope: Json }
         Returns: Json
