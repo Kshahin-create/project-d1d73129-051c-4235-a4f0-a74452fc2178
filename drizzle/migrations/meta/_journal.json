@@ -351,6 +351,13 @@
       "when": 1793913831556,
       "tag": "0049_admin_party_units_paged_read",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793917732068,
+      "tag": "0050_metrics_investor_role",
+      "breakpoints": true
     }
   ]
 }
