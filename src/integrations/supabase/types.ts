@@ -140,6 +140,72 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_export_requests: {
+        Row: {
+          actor_role: string
+          completed_at: string | null
+          created_at: string
+          format: string
+          id: string
+          list_key: string
+          row_count: number | null
+          scope: Json
+          status: string
+          user_id: string
+        }
+        Insert: {
+          actor_role: string
+          completed_at?: string | null
+          created_at?: string
+          format: string
+          id?: string
+          list_key: string
+          row_count?: number | null
+          scope?: Json
+          status?: string
+          user_id: string
+        }
+        Update: {
+          actor_role?: string
+          completed_at?: string | null
+          created_at?: string
+          format?: string
+          id?: string
+          list_key?: string
+          row_count?: number | null
+          scope?: Json
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_list_preferences: {
+        Row: {
+          id: string
+          list_key: string
+          name: string
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          list_key: string
+          name: string
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          list_key?: string
+          name?: string
+          settings?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -4366,6 +4432,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      complete_admin_export: {
+        Args: { _count: number; _id: string; _status: string }
+        Returns: undefined
+      }
       confirm_booking:
         | { Args: { _booking_id: string }; Returns: undefined }
         | {
@@ -4744,6 +4814,10 @@ export type Database = {
         Returns: Json
       }
       reopen_due_postponed: { Args: never; Returns: number }
+      request_admin_export: {
+        Args: { _format: string; _list: string; _scope: Json }
+        Returns: string
+      }
       request_transfer: {
         Args: { _opportunity_id: string; _reason: string }
         Returns: {
@@ -4788,6 +4862,10 @@ export type Database = {
       }
       reverse_receipt: {
         Args: { _id: string; _reason: string }
+        Returns: string
+      }
+      save_admin_list_preferences: {
+        Args: { _list: string; _name: string; _settings: Json }
         Returns: string
       }
       save_payment_plan: {
