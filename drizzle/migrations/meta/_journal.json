@@ -253,6 +253,13 @@
       "when": 1793908248228,
       "tag": "0035_finance_regression_rollback",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793910314678,
+      "tag": "0036_receipt_payment_compatibility_and_contract_edit",
+      "breakpoints": true
     }
   ]
 }
