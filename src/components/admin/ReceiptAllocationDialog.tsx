@@ -1,0 +1,10 @@
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FinanceRecordPicker } from "./FinanceRecordPicker";
+import { money } from "@/lib/finance";
+export function ReceiptAllocationDialog({installment,action}:{installment:{id:string;sequence_no:number;amount_excl_vat:number;vat_amount:number};action:(name:string,args:Record<string,unknown>)=>Promise<boolean>}) {
+ const [open,setOpen]=useState(false);const [busy,setBusy]=useState(false);
+ return <><Button size="sm" variant="outline" onClick={()=>setOpen(true)}>تخصيص إيصال</Button><Dialog open={open} onOpenChange={setOpen}><DialogContent dir="rtl" className="max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>تخصيص إيصال للقسط {installment.sequence_no}</DialogTitle></DialogHeader><p className="text-sm">قيمة القسط بدون الضريبة: {money(installment.amount_excl_vat)} ريال · الضريبة: {money(installment.vat_amount)} ريال</p><form className="space-y-3" onSubmit={async e=>{e.preventDefault();if(busy)return;const f=new FormData(e.currentTarget);setBusy(true);try{if(await action("allocate_receipt",{_receipt:String(f.get("receipt_id")),_installment:installment.id,_amount_excl_vat:Number(f.get("amount")),_vat_amount:Number(f.get("vat")),_reason:String(f.get("reason"))}))setOpen(false);}finally{setBusy(false);}}}><FinanceRecordPicker name="receipt_id" label="الإيصال"/><label className="block text-sm">المبلغ المخصص بدون الضريبة<Input name="amount" type="number" step="0.01" min="0" required/></label><label className="block text-sm">ضريبة التخصيص<Input name="vat" type="number" step="0.01" min="0" required/></label><label className="block text-sm">سبب التخصيص<Input name="reason" required minLength={5}/></label><Button type="submit" disabled={busy} className="w-full">حفظ التخصيص</Button></form></DialogContent></Dialog></>;
+}
