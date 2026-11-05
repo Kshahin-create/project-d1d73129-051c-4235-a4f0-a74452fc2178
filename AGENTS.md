@@ -16,3 +16,4 @@
 - Serve compressed WebP renditions on public pages and retain a detailed plan for zoom; explicit intrinsic dimensions reserve layout space without altering source drawings.- External CRM integration goes through the read-only crm-api function with crm:* scoped, field-redacting keys; the legacy api function stays separate so CRM keys can never write.
 - Unit availability is enforced in the database: a unit with a tenant or an active booking can never be 'available' (triggers block it and auto-reserve), so the public booking page can trust unit status.
 - Register owner-supplied section location images in BuildingLocationPreview and render them above each unit plan; explicit building-section keys prevent showing a different section's location.
+- Admin user details use an admin-gated read-only directory RPC with explicit contact fields and latest user-linked access records; never expose auth secrets or infer nationality from an IP location.

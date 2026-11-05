@@ -29,6 +29,13 @@
       "when": 1793838134477,
       "tag": "0003_add_building_booking_enabled",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793877839912,
+      "tag": "0004_admin_user_directory_details",
+      "breakpoints": true
     }
   ]
 }

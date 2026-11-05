@@ -3,6 +3,11 @@
 - [x] Add admin campaign page, durable send tracking and explicit confirmation.
 - [x] Test normalization, audience rules and live authenticated preview without sending real messages; deploy the campaign function.
 
+# User directory details
+- [x] Show registered names, uploaded avatars and contact/profile details in the admin user directory.
+- [x] Show latest recorded access IP and country with read-only account details.
+- [x] Verify authenticated directory and details on desktop/mobile without changing user records.
+
 # Email corrections
 - [x] Correct Arabic rendering and RTL in email templates.
 - [x] Correct company roles in booking emails.

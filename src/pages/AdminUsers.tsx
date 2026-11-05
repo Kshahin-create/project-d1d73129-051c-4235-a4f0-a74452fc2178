@@ -8,10 +8,13 @@ import { toast } from "sonner";
 import { Shield, Wrench, User as UserIcon, Lock, Users, Search, ArrowRight, UserPlus, Sparkles, ShieldCheck, Briefcase, Info, ChevronDown, Check, X as XIcon } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { fmtNum } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { DirectoryAvatar, UserDirectoryDetails } from "@/components/admin/UserDirectoryDetails";
+import { directoryName, matchesDirectorySearch, type DirectoryDetails } from "@/lib/userDirectory";
 
 type AppRole = "admin" | "control" | "manager" | "tenant" | "user";
 
-interface UserRow {
+interface UserRow extends DirectoryDetails {
   user_id: string;
   email: string | null;
   display_name: string | null;
@@ -74,12 +77,17 @@ const AdminUsers = () => {
   const [pendingChange, setPendingChange] = useState<{ row: UserRow; newRole: AppRole } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showRolesGuide, setShowRolesGuide] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
     setFetching(true);
-    const { data, error } = await supabase.rpc("admin_list_users");
-    if (error) toast.error("تعذّر تحميل المستخدمين: " + error.message);
-    else setRows((data as UserRow[]) ?? []);
+    setLoadError(false);
+    const { data, error } = await supabase.rpc("admin_user_directory");
+    if (error) {
+      setLoadError(true);
+      toast.error("تعذّر تحميل بيانات المستخدمين");
+    } else setRows((data as unknown as UserRow[]) ?? []);
     setFetching(false);
   };
 
@@ -113,7 +121,7 @@ const AdminUsers = () => {
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter(
-        (r) => (r.email ?? "").toLowerCase().includes(q) || (r.display_name ?? "").toLowerCase().includes(q)
+        (r) => matchesDirectorySearch(r, q)
       );
     }
     return list;
@@ -347,7 +355,8 @@ const AdminUsers = () => {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ابحث بالاسم أو البريد..."
+              placeholder="ابحث بالاسم، الجوال، المنشأة، IP أو الدولة..."
+              aria-label="البحث في المستخدمين"
               className="flex-1 bg-transparent text-sm outline-none"
             />
           </div>
@@ -369,6 +378,8 @@ const AdminUsers = () => {
         {/* List */}
         {fetching ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">جارِ التحميل...</div>
+        ) : loadError ? (
+          <div className="py-12 text-center"><p className="mb-3 text-destructive">تعذّر تحميل بيانات المستخدمين</p><Button variant="outline" onClick={load}>إعادة المحاولة</Button></div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">لا توجد نتائج</div>
         ) : (
@@ -383,25 +394,32 @@ const AdminUsers = () => {
                   className={`rounded-2xl border border-border bg-card p-4 shadow-card ring-1 ${meta.ring} transition hover:shadow-md`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${meta.cls}`}>
-                      {initials(r.display_name, r.email)}
-                    </div>
+                    <DirectoryAvatar row={r} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="font-display text-base font-bold truncate">
-                          {r.display_name || "—"}
+                        <div className="font-display text-base font-bold break-words [overflow-wrap:anywhere]">
+                          {directoryName(r)}
                           {isSelf && <span className="mr-1 text-[10px] font-normal text-muted-foreground">(أنت)</span>}
                         </div>
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
                           <Icon className="h-3 w-3" /> {meta.label}
                         </span>
                       </div>
-                      <div className="mt-0.5 truncate text-xs text-muted-foreground" dir="ltr">{r.email || "—"}</div>
+                      <div className="mt-0.5 break-all text-xs text-muted-foreground" dir="ltr">{r.contact_email || r.email || "بريد غير مسجّل"}</div>
+                      <div className="mt-1 text-sm" dir="ltr">{r.phone || "جوال غير مسجّل"}</div>
                       <div className="mt-1 text-[11px] text-muted-foreground">
                         مسجَّل منذ {new Date(r.created_at).toLocaleDateString("ar-EG-u-nu-latn")}
                       </div>
                     </div>
                   </div>
+
+                  <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
+                    <div className="min-w-0"><dt className="text-muted-foreground">المنشأة</dt><dd className="mt-1 break-words">{r.business_name || "غير مسجّلة"}</dd></div>
+                    <div className="min-w-0"><dt className="text-muted-foreground">دولة آخر دخول مسجّل</dt><dd className="mt-1 break-words">{r.country || "غير مسجّلة"}{r.city ? ` — ${r.city}` : ""}</dd></div>
+                    <div className="min-w-0"><dt className="text-muted-foreground">آخر IP مسجّل</dt><dd className="mt-1 break-all" dir="ltr">{r.ip_address || "غير مسجّل"}</dd></div>
+                    <div><dt className="text-muted-foreground">آخر دخول</dt><dd className="mt-1">{r.last_sign_in_at ? new Date(r.last_sign_in_at).toLocaleDateString("ar-EG") : "غير مسجّل"}</dd></div>
+                  </dl>
+                  <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => setSelectedUser(r)}><UserIcon className="ml-2 h-4 w-4" />كل بيانات المستخدم</Button>
 
                   <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
                     <span className="text-[11px] text-muted-foreground">تغيير الدور</span>
@@ -448,6 +466,7 @@ const AdminUsers = () => {
         onConfirm={handleConfirmChange}
         onCancel={() => setPendingChange(null)}
       />
+      <UserDirectoryDetails row={selectedUser} onClose={() => setSelectedUser(null)} />
 
       <Footer />
     </div>
