@@ -623,6 +623,13 @@ export type Database = {
             foreignKeyName: "contract_units_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -1263,6 +1270,13 @@ export type Database = {
             columns: ["tenant_account_id"]
             isOneToOne: false
             referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_unit_report"
             referencedColumns: ["id"]
           },
           {
@@ -2076,6 +2090,13 @@ export type Database = {
             foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -2456,6 +2477,13 @@ export type Database = {
             foreignKeyName: "tenant_account_units_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_account_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -2706,6 +2734,13 @@ export type Database = {
             foreignKeyName: "tenants_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -2810,6 +2845,13 @@ export type Database = {
             foreignKeyName: "unit_activities_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_activities_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -2873,6 +2915,13 @@ export type Database = {
           unit_number?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "unit_audit_log_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unit_audit_log_unit_id_fkey"
             columns: ["unit_id"]
@@ -2973,6 +3022,13 @@ export type Database = {
             foreignKeyName: "unit_collections_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_collections_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -3054,6 +3110,13 @@ export type Database = {
             foreignKeyName: "unit_contracts_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_contracts_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -3111,6 +3174,13 @@ export type Database = {
           uploaded_by_email?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "unit_files_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unit_files_unit_id_fkey"
             columns: ["unit_id"]
@@ -3244,6 +3314,13 @@ export type Database = {
             foreignKeyName: "unit_status_backfill_review_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: true
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_status_backfill_review_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: true
             referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
@@ -3305,6 +3382,13 @@ export type Database = {
           unit_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "unit_status_history_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unit_status_history_unit_id_fkey"
             columns: ["unit_id"]
@@ -3476,6 +3560,38 @@ export type Database = {
           source_table: string | null
         }
         Relationships: []
+      }
+      finance_unit_report: {
+        Row: {
+          building_number: number | null
+          collected_excl_vat: number | null
+          collected_vat: number | null
+          contract_rent: number | null
+          id: string | null
+          leasing_status:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          receipts_count: number | null
+          remaining_incl_vat: number | null
+          unit_number: number | null
+          unit_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["number"]
+          },
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "public_buildings"
+            referencedColumns: ["number"]
+          },
+        ]
       }
       installments_read: {
         Row: {
@@ -3875,6 +3991,13 @@ export type Database = {
           unit_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_unit_report"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "receipt_legacy_sources_unit_id_fkey"
             columns: ["unit_id"]
