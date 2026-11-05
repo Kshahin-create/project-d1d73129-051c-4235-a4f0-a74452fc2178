@@ -104,7 +104,7 @@ export default function CrmPipeline() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      {view==="board"&&<div className="flex flex-wrap gap-3">
         <Input className="max-w-xs" placeholder="بحث بالاسم أو الكود" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         <select className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm" value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); setPage(0); }}>
           <option value="">كل المراحل</option>
@@ -122,6 +122,7 @@ export default function CrmPipeline() {
         
       </div>
 
+      }
       {q.isError && <p role="alert" className="text-destructive">تعذر تحميل الفرص</p>}
 
       {view === "board" && !q.isError && (
@@ -165,7 +166,7 @@ export default function CrmPipeline() {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?new Date(q.dataUpdatedAt).toLocaleString("ar-SA"):"—"}</p>
+      {view==="board"&&<p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?new Date(q.dataUpdatedAt).toLocaleString("ar-SA"):"—"}</p>}
       {view === "board"&&<div className="flex gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>}
       {view === "list" && <AdminServerList spec={adminLists.opportunities} filters={{...(stageFilter?{stage:stageFilter}:{}),...(sourceFilter?{source:sourceFilter}:{}),...(ownerFilter&&ownerFilter!=="none"?{owner_user_id:ownerFilter}:{})}} onFilters={f=>{setStageFilter(f.stage??"");setSourceFilter(f.source??"");setOwnerFilter(f.owner_user_id??"");}}/>}
 
