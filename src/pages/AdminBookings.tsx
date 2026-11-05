@@ -92,12 +92,12 @@ const AdminBookings = () => {
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired">("all");
 
   const load = async () => {
     setFetching(true);
-    // قبل التحميل، شغّل تنظيف الحجوزات منتهية الصلاحية (48 ساعة)
-    if (isAdmin) await supabase.rpc("expire_pending_bookings" as any);
+    // انتهاء الحجوزات بيتم تلقائيًا في قاعدة البيانات كل 5 دقائق (مش مرتبط بفتح الصفحة).
     const { data, error } = await supabase
       .from("bookings")
       .select("*, booking_units(building_number,unit_number,unit_type,area,price)")
@@ -112,7 +112,7 @@ const AdminBookings = () => {
   }, [loading, canAccess]);
 
   const filtered = useMemo(() => {
-    let list = rows;
+    let list = showArchived ? rows : rows.filter((r: any) => !r.archived_at);
     if (statusFilter !== "all") list = list.filter((r) => r.status === statusFilter);
     const q = search.trim().toLowerCase();
     if (q) {
@@ -300,10 +300,12 @@ const AdminBookings = () => {
   };
 
   const cancelBooking = async (id: string) => {
-    if (!confirm("هل أنت متأكد من إلغاء هذا الحجز؟ سيتم تحرير الوحدات.")) return;
+    const reason = window.prompt("سبب إلغاء الحجز (5 أحرف على الأقل) — الحجز هيتأرشف ومش هيتمسح:")?.trim() ?? "";
+    if (!reason) return;
+    if (reason.length < 5) { toast.error("السبب لازم يكون 5 أحرف على الأقل"); return; }
     // تحديث متفائل لواجهة المستخدم
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: "cancelled" } : r)));
-    const { error } = await supabase.rpc("cancel_booking", { _booking_id: id });
+    const { error } = await supabase.rpc("cancel_booking_with_reason" as any, { _booking_id: id, _reason: reason });
     if (error) {
       toast.error("فشل الإلغاء: " + error.message);
       // تراجع عن التحديث المتفائل بإعادة التحميل
