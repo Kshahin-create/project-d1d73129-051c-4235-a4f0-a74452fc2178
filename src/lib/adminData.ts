@@ -39,7 +39,8 @@ export function listQuery(spec: ListSpec, search: string, sort: string, ascendin
   if (spec.archived && !archived) q = q.is(spec.archived, null);
   const term = safeSearch(search);
   if (term) {
-    if (spec.key === "units" && /^\d+$/.test(term)) q = q.eq("unit_number", Number(term));
+    if (/^[0-9a-f-]{36}$/i.test(term)) q = q.eq("id", term);
+    else if (spec.key === "units" && /^\d+$/.test(term)) q = q.eq("unit_number", Number(term));
     else if (spec.search?.length) q = q.or(spec.search.map(key => `${key}.ilike.%${term}%`).join(","));
     else if (/^[0-9a-f-]{36}$/i.test(term)) q = q.eq("id", term);
     else q = q.eq("id", "00000000-0000-0000-0000-000000000000");
@@ -53,6 +54,7 @@ export function rowHref(spec: ListSpec, row: AdminRow) {
 }
 export function canReadFinance(auth: { isAdmin: boolean; isManager: boolean; isAccountant: boolean; isLeasingManager: boolean }) { return auth.isAdmin || auth.isManager || auth.isAccountant || auth.isLeasingManager; }
 export function canExportList(key: string, auth: { isAdmin: boolean; isManager: boolean; isLeasingManager: boolean; isAccountant: boolean; isSalesAgent: boolean }) {
+  if (["audit_log","access_log","marketing_campaigns"].includes(key)) return auth.isAdmin;
   if (auth.isAdmin || auth.isManager) return true;
   if (["contracts", "receipts", "installments"].includes(key)) return auth.isAccountant || auth.isLeasingManager;
   return key === "opportunities" && (auth.isLeasingManager || auth.isSalesAgent);
