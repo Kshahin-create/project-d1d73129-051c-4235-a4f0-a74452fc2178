@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { ShowArchivedToggle } from "@/components/ArchiveActionDialog";
 import { toast } from "sonner";
 import { CalendarRange, Lock, Search, ArrowRight, Phone, Mail, Building2, CheckCircle2, XCircle, Clock, FileImage, TimerReset, TrendingUp, Wallet, Layers, Hourglass, MessageCircle, Download, UserCheck } from "lucide-react";
 import { fmtNum } from "@/lib/utils";
@@ -123,7 +124,7 @@ const AdminBookings = () => {
       );
     }
     return list;
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, showArchived]);
 
   const toggleReturning = async (b: BookingRow) => {
     if (!isAdmin) return;
@@ -515,6 +516,7 @@ const AdminBookings = () => {
                 </button>
               ))}
             </div>
+            <ShowArchivedToggle checked={showArchived} onChange={setShowArchived} />
             <button
               onClick={exportBookings}
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm"
