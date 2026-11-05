@@ -25,6 +25,7 @@ import {
   MessageCircle,
   FileSpreadsheet,
   Database,
+  Building2,
   Compass,
   Briefcase,
   BadgeCheck,
