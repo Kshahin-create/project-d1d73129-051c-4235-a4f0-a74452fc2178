@@ -1,0 +1,2 @@
+ALTER TABLE public.buildings ADD COLUMN IF NOT EXISTS booking_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+COMMENT ON COLUMN public.buildings.booking_enabled IS 'When false, the building is closed to new bookings; create_booking rejects its units';

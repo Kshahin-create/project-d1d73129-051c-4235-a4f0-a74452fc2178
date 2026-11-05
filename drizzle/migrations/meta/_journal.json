@@ -22,6 +22,13 @@
       "when": 1793701468136,
       "tag": "0002_guard_only_pending_bookings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793838134477,
+      "tag": "0003_add_building_booking_enabled",
+      "breakpoints": true
     }
   ]
 }
