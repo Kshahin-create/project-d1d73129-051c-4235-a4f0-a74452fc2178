@@ -661,6 +661,27 @@ export type Database = {
           },
         ]
       }
+      capabilities: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          name_ar: string
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string
+          name_ar: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          name_ar?: string
+        }
+        Relationships: []
+      }
       contract_units: {
         Row: {
           annual_rent_excl_vat: number | null
@@ -2359,6 +2380,111 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          capability: string
+          level: string
+          role: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          capability: string
+          level?: string
+          role: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          capability?: string
+          level?: string
+          role?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_capability_fkey"
+            columns: ["capability"]
+            isOneToOne: false
+            referencedRelation: "capabilities"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          is_active: boolean
+          is_system: boolean
+          name_ar: string
+          retired_by: string | null
+          retired_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string
+          is_active?: boolean
+          is_system?: boolean
+          name_ar: string
+          retired_by?: string | null
+          retired_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          is_active?: boolean
+          is_system?: boolean
+          name_ar?: string
+          retired_by?: string | null
+          retired_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_accounts: {
+        Row: {
+          auth_sync_status: string
+          deactivated_at: string | null
+          deactivated_by: string | null
+          reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth_sync_status?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth_sync_status?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -3713,6 +3839,44 @@ export type Database = {
           },
         ]
       }
+      user_role_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          is_active: boolean
+          reason: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_role_assignments_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -4993,6 +5157,10 @@ export type Database = {
           maintenance_mode: boolean
         }[]
       }
+      has_permission: {
+        Args: { _capability: string; _level?: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5175,6 +5343,10 @@ export type Database = {
       }
       next_invoice_number: { Args: never; Returns: string }
       next_offer_number: { Args: { _booking_id?: string }; Returns: string }
+      permission_levels_allow: {
+        Args: { _granted: string; _requested: string }
+        Returns: boolean
+      }
       publish_unit: {
         Args: { _reason: string; _state: string; _unit_id: string }
         Returns: string

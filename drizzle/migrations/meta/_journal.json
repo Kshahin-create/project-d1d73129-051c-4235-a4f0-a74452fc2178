@@ -414,6 +414,13 @@
       "when": 1793918899541,
       "tag": "0058_metrics_inventory_server_status_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1793921541897,
+      "tag": "0059_dynamic_permissions_foundation",
+      "breakpoints": true
     }
   ]
 }
