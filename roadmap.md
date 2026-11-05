@@ -1,3 +1,10 @@
+# Phase 2 / Prompt 7 — Navigation, record pages, global search
+- [ ] Present affected tables/views/functions/edge functions/files and migration scope; wait for approval before implementation.
+- [ ] Organize six navigation sections, Settings/Developers and compatible redirects; preserve all dashboards until Prompt 8 is verified.
+- [ ] Add linked unit/party/contract/receipt/booking record pages using existing permission-gated Phase 1 data.
+- [ ] Add permission-aware server search and consistent list pagination/sorting/saved filters/columns/audited exports without new business logic.
+- [ ] Verify legacy URLs, role restrictions, real record navigation/search/exports and desktop/mobile layouts; report remaining Phase 1 blockers separately.
+
 # Phase 1 / Prompt 6 — Contracts, installments, receipts
 - [x] Approve the plan, separate accountant role and historical precision reconciliation.
 - [x] Add audited contracts, plans, installments, receipts, allocations and private documents; integrate manual leasing-manager confirmation and first-installment gate.
