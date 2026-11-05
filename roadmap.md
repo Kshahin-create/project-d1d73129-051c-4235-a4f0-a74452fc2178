@@ -1,3 +1,8 @@
+# Phase 1 / Prompt 4 — One unit-status writer
+- [ ] Present affected surfaces, additive migration/backfill and verification plan; wait for approval.
+- [ ] After approval, implement the single status writer, 48-hour holds/one extension, separate leasing manager and linked contract/payment verification.
+- [ ] After approval, migrate all writers/readers and add unit timeline; verify transitions, permissions, concurrency and preserved flows.
+
 # Respond.io marketing campaigns
 - [x] Collect all customer phone sources and deduplicate securely.
 - [x] Add admin campaign page, durable send tracking and explicit confirmation.
