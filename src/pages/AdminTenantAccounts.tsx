@@ -18,6 +18,8 @@ import {
   KeyRound,
   Link2,
   Trash2,
+  Archive,
+  RotateCcw,
   Building2,
   Receipt,
   Copy,
@@ -114,6 +116,8 @@ type Invoice = {
   period_end: string | null;
   notes: string | null;
 };
+
+type InactiveRow = { id: string; full_name: string; business_name: string | null; phone: string | null; kind: "merged" | "archived"; reason: string | null; at: string | null; merged_into_id: string | null; merged_into_name: string | null; can_unmerge: boolean };
 
 const callTenantAdmin = async (body: any) => {
   const { data, error } = await supabase.functions.invoke("tenant-admin", { body });
