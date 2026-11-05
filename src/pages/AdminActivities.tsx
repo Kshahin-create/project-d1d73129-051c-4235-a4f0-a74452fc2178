@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Layers, Loader2, Pencil, Plus, Building2 } from "lucide-react";
@@ -96,7 +97,7 @@ export default function AdminActivities() {
   };
 
   return (
-    <main className="container-tight space-y-6 py-8" dir="rtl">
+    <><Header/><main className="container-tight space-y-6 py-8" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Layers className="h-7 w-7 text-primary" />
@@ -242,6 +243,6 @@ export default function AdminActivities() {
           <DialogFooter><Button onClick={saveBuilding} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}حفظ</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </main></>
   );
 }

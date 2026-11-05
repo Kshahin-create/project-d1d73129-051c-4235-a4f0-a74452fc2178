@@ -133,6 +133,8 @@ export default function AdminTenantAccounts() {
   const { user, isAdmin, isManager, loading } = useAuth();
   const [rows, setRows] = useState<TenantRow[]>([]);
   const [search, setSearch] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
   const [fetching, setFetching] = useState(true);
   const [filterKey, setFilterKey] = useState<FilterKey>("all");
 
@@ -183,15 +185,15 @@ export default function AdminTenantAccounts() {
 
   const load = async () => {
     setFetching(true);
-    const { data, error } = await supabase.rpc("admin_list_tenant_accounts");
+    const { data, error } = await supabase.rpc("admin_tenant_accounts_page",{_search:search,_filter:filterKey,_limit:25,_offset:page*25});
     if (error) toast.error(error.message);
-    else setRows((data as TenantRow[]) ?? []);
+    else {const r=data as unknown as {rows:TenantRow[];count:number};setRows(r.rows??[]);setTotal(r.count??0);}
     setFetching(false);
   };
 
   useEffect(() => {
     if (!loading && (isAdmin || isManager)) load();
-  }, [loading, isAdmin, isManager]);
+  }, [loading, isAdmin, isManager,page,search,filterKey]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -253,19 +255,7 @@ export default function AdminTenantAccounts() {
     );
   }
 
-  const filtered = rows
-    .filter((r) => {
-      if (!matchesFilter(r, filterKey)) return false;
-      const q = search.trim().toLowerCase();
-      if (!q) return true;
-      return (
-        r.full_name.toLowerCase().includes(q) ||
-        (r.email ?? "").toLowerCase().includes(q) ||
-        (r.phone ?? "").toLowerCase().includes(q) ||
-        (r.business_name ?? "").toLowerCase().includes(q)
-      );
-    })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const filtered=rows;
 
   const filterChips: { id: FilterKey; label: string }[] = [
     { id: "all", label: "الكل" },
@@ -289,7 +279,7 @@ export default function AdminTenantAccounts() {
             </div>
             <div>
               <h1 className="font-display text-xl font-bold sm:text-2xl">حسابات المستأجرين</h1>
-              <p className="text-xs text-muted-foreground">{rows.length} حساب</p>
+              <p className="text-xs text-muted-foreground">{total} حساب · حسب الفلاتر الحالية</p>
             </div>
           </div>
           {isAdmin && <button
@@ -302,7 +292,7 @@ export default function AdminTenantAccounts() {
         </div>
 
         {/* Stats */}
-        {!fetching && rows.length > 0 && (
+        {false && !fetching && rows.length > 0 && (
           <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             <StatCard
               title={filterKey === "all" ? "إجمالي الحسابات" : `الحسابات (${filterChips.find((f) => f.id === filterKey)?.label})`}
@@ -457,7 +447,7 @@ export default function AdminTenantAccounts() {
                 <tbody>
                   {filtered.map((r) => (
                     <tr key={r.id} className="border-b border-border last:border-0">
-                      <td className="p-3 font-medium">{r.full_name}</td>
+                      <td className="p-3 font-medium"><button className="text-primary hover:underline" onClick={()=>setDetailId(r.id)}>{r.full_name}</button></td>
                       <td className="p-3 text-muted-foreground">{r.business_name || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.cr_number || "—"}</td>
                       <td className="p-3 text-muted-foreground">{r.activity_type || "—"}</td>
@@ -552,6 +542,7 @@ export default function AdminTenantAccounts() {
             )}
           </div>
         )}
+        <div className="mt-5 flex gap-3"><button disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</button><span>صفحة {page+1} · {total} حساب</span><button disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</button></div>
       </main>
 
       <ConfirmDialog
