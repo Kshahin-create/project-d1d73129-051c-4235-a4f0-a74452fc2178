@@ -960,15 +960,13 @@ const ApiDocs = () => {
               </div>
               <ul className="list-inside list-disc space-y-1 text-xs">
                 <li>
-                  <Badge variant="outline">read</Badge> — قراءة مباني/وحدات/
-                  إحصائيات + إنشاء حجوزات
+                  الـ API دي <strong>قراءة فقط</strong>: أي مفتاح صالح يقدر يقرأ المباني والوحدات والحجوزات والإحصائيات.
                 </li>
                 <li>
-                  <Badge variant="outline">write</Badge> — كل ما سبق + إدارة
-                  المستأجرين (إضافة/تعديل/قائمة)
+                  مفيش أي بيانات شخصية في الردود (أسماء، جوالات، بريد، أرقام هوية). مسارات المستأجرين والعملاء والمستخدمين والفواتير وسجل التعديلات اتشالت وبترجع 410.
                 </li>
                 <li>
-                  <Badge variant="outline">admin</Badge> — كل ما سبق + الحذف
+                  الطلبات من المتصفح مسموحة بس من الدومينات المسجّلة في إعدادات النظام.
                 </li>
               </ul>
             </div>
@@ -1006,13 +1004,13 @@ const ApiDocs = () => {
               <tbody>
                 {[
                   ["200", "نجاح", "تم بنجاح"],
-                  ["201", "تم الإنشاء", "تم إنشاء مورد جديد"],
                   ["400", "Bad Request", "بيانات ناقصة أو صيغة JSON خاطئة"],
                   ["401", "Unauthorized", "مفتاح API ناقص أو غير صحيح"],
                   ["403", "Forbidden", "المفتاح ليس له الصلاحية المطلوبة"],
                   ["404", "Not Found", "المسار أو المورد غير موجود"],
                   ["500", "Server Error", "خطأ داخلي - راجع السجلات"],
-                  ["502", "Bad Gateway", "فشل الاتصال بـ webhook خارجي"],
+                  ["405", "Method Not Allowed", "الـ API قراءة فقط — GET بس"],
+                  ["410", "Gone", "المسار اتشال لأنه كان بيرجّع بيانات شخصية"],
                 ].map(([code, name, reason]) => (
                   <tr key={code} className="border-b border-border/50">
                     <td className="py-2 font-mono">{code}</td>
@@ -1038,8 +1036,6 @@ const ApiDocs = () => {
           <TabsList>
             <TabsTrigger value="all">الكل</TabsTrigger>
             <TabsTrigger value="read">قراءة</TabsTrigger>
-            <TabsTrigger value="write">كتابة</TabsTrigger>
-            <TabsTrigger value="admin">أدمن</TabsTrigger>
           </TabsList>
           <TabsContent value={scopeTab} />
         </Tabs>
