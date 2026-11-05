@@ -11,6 +11,9 @@ import { Header } from "@/components/Header";
 import { toast } from "sonner";
 import { exportRowsToExcel } from "@/lib/exportData";
 import { financeLabels, money } from "@/lib/finance";
+import type { SupabaseClient } from "@supabase/supabase-js";
+// Dynamic report tables span both generated tables and views; keep this boundary local.
+const financeClient = supabase as unknown as SupabaseClient;
 type TableName = "contracts" | "payment_plans" | "receipts" | "receipt_reconciliation" | "receipt_legacy_sources";
 const tabs: {path:string;title:string;table:TableName}[]=[{path:"/admin/contracts",title:"العقود",table:"contracts"},{path:"/admin/settings/payment-plans",title:"خطط السداد",table:"payment_plans"},{path:"/admin/receipts",title:"الإيصالات",table:"receipts"},{path:"/admin/receipt-reconciliation",title:"مطابقة التحصيلات",table:"receipt_reconciliation"},{path:"/admin/receipt-review",title:"مراجعة المصادر القديمة",table:"receipt_legacy_sources"}];
 type Row=Record<string,unknown>;
@@ -18,7 +21,7 @@ export default function FinanceWorkspace(){
  const auth=useAuth();const client=useQueryClient();const location=useLocation();const [params]=useSearchParams();const tab=tabs.find(t=>t.path===location.pathname)??tabs[0];
  const [page,setPage]=useState(0);const [search,setSearch]=useState("");const [status,setStatus]=useState("");const [show,setShow]=useState(false);const [busy,setBusy]=useState(false);const [detail,setDetail]=useState<Row|null>(null);
  const canWrite=auth.isAdmin||auth.isAccountant;const canRead=canWrite||auth.isManager||auth.isLeasingManager;
- const buildQuery=()=>{let q=supabase.from(tab.table).select("*",{count:"exact"});if(search&&tab.table==="contracts")q=q.ilike("contract_no",`%${search}%`);if(search&&tab.table==="receipts")q=q.ilike("receipt_no",`%${search}%`);if(search&&tab.table==="payment_plans")q=q.ilike("name",`%${search}%`);if(status&&(tab.table==="contracts"||tab.table==="receipts"))q=q.eq("status",status);if(status&&tab.table==="receipt_legacy_sources")q=q.eq("resolution",status);if(params.get("party")&&tab.table==="receipts")q=q.eq("party_id",params.get("party"));return q;};
+ const buildQuery=()=>{let q=financeClient.from(tab.table).select("*",{count:"exact"});if(search&&tab.table==="contracts")q=q.ilike("contract_no",`%${search}%`);if(search&&tab.table==="receipts")q=q.ilike("receipt_no",`%${search}%`);if(search&&tab.table==="payment_plans")q=q.ilike("name",`%${search}%`);if(status&&(tab.table==="contracts"||tab.table==="receipts"))q=q.eq("status",status);if(status&&tab.table==="receipt_legacy_sources")q=q.eq("resolution",status);if(params.get("party")&&tab.table==="receipts")q=q.eq("party_id",params.get("party"));return q;};
  const q=useQuery({queryKey:["finance",tab.table,page,search,status,params.get("party")],enabled:canRead,queryFn:async()=>{const r=await buildQuery().order(tab.table==="receipt_reconciliation"?"month":tab.table==="receipts"?"recorded_at":tab.table==="receipt_legacy_sources"?"source_recorded_at":"created_at",{ascending:false}).range(page*25,page*25+24);if(r.error)throw r.error;return {rows:r.data as unknown as Row[],count:r.count??0};}});
  const action=async(name:string,args:Record<string,unknown>)=>{setBusy(true);try{const r=await (supabase.rpc as unknown as (n:string,a:Record<string,unknown>)=>Promise<{error:{message:string}|null}>)(name,args);if(r.error)throw r.error;toast.success("تم تسجيل الإجراء");void client.invalidateQueries({queryKey:["finance"]});void client.invalidateQueries({queryKey:["finance-installments"]});return true;}catch(e){toast.error((e as Error).message);return false;}finally{setBusy(false);}};
  const reason=()=>window.prompt("سبب الإجراء (٥ أحرف على الأقل)")?.trim();
