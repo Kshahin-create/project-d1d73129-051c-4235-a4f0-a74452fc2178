@@ -372,6 +372,13 @@
       "when": 1793917841830,
       "tag": "0052_metrics_scoped_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793917883582,
+      "tag": "0053_metrics_drilldown_and_role_compatibility",
+      "breakpoints": true
     }
   ]
 }

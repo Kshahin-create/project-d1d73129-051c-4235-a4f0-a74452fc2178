@@ -5054,6 +5054,15 @@ export type Database = {
           merged_groups: number
         }[]
       }
+      metrics_drilldown: {
+        Args: {
+          _limit?: number
+          _metric: string
+          _offset?: number
+          _scope?: Json
+        }
+        Returns: Json
+      }
       metrics_finance: { Args: { _scope?: Json }; Returns: Json }
       metrics_inventory: { Args: { _scope?: Json }; Returns: Json }
       metrics_is_overdue: {
