@@ -149,63 +149,6 @@ Deno.serve(async (req) => {
       return json({ ok: true, url: signed.signedUrl });
     }
 
-    if (action === "delete") {
-      const id = body.id as string;
-      const { data: rec, error } = await admin.from("system_backups").select("*").eq("id", id).single();
-      if (error || !rec) return json({ error: "Not found" }, 404);
-      await admin.storage.from(BUCKET).remove([rec.storage_path]);
-      await admin.from("system_backups").delete().eq("id", id);
-      return json({ ok: true });
-    }
-
-    if (action === "restore") {
-      const id = body.id as string;
-      const { data: rec, error } = await admin.from("system_backups").select("*").eq("id", id).single();
-      if (error || !rec) return json({ error: "Not found" }, 404);
-      const { data: file, error: dErr } = await admin.storage.from(BUCKET).download(rec.storage_path);
-      if (dErr || !file) return json({ error: dErr?.message || "download failed" }, 500);
-      const text = await file.text();
-      const payload = JSON.parse(text);
-      const data: Record<string, any[]> = payload.data || {};
-
-      // Snapshot current state first (auto-backup before restore)
-      try {
-        await fetch(req.url, {
-          method: "POST",
-          headers: { Authorization: authHeader, "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "create", name: `pre-restore-${Date.now()}`, kind: "auto", notes: `auto before restore of ${rec.name}` }),
-        });
-      } catch (_) { /* ignore */ }
-
-      const restoreOrder = TABLES.filter((t) => t !== "system_backups");
-      const deleteOrder = [...restoreOrder].reverse();
-      const report: Record<string, { deleted: number; inserted: number; error?: string }> = {};
-
-      // Delete children first (use created_at filter — exists on every backed-up table)
-      for (const t of deleteOrder) {
-        const { error: delErr, count } = await admin.from(t).delete({ count: "exact" }).gte("created_at", "1900-01-01");
-        report[t] = { deleted: count ?? 0, inserted: 0, error: delErr?.message };
-      }
-      // Insert parents first
-      for (const t of restoreOrder) {
-        const rows = data[t] ?? [];
-        if (rows.length === 0) continue;
-        // chunk inserts
-        const CHUNK = 500;
-        let inserted = 0;
-        let lastErr: string | undefined;
-        for (let i = 0; i < rows.length; i += CHUNK) {
-          const slice = rows.slice(i, i + CHUNK);
-          const { error: insErr } = await admin.from(t).insert(slice);
-          if (insErr) { lastErr = insErr.message; break; }
-          inserted += slice.length;
-        }
-        report[t] = { ...(report[t] ?? { deleted: 0, inserted: 0 }), inserted, error: lastErr ?? report[t]?.error };
-      }
-
-      return json({ ok: true, report });
-    }
-
     return json({ error: "Unknown action" }, 400);
   } catch (e: any) {
     console.error(e);

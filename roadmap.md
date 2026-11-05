@@ -1,7 +1,9 @@
 # Phase 2 / Prompt 9 — Roles, permissions, security
 - [x] Review existing roles, policies, writers, account flows and private documents; resolve dynamic roles and admin approvals.
-- [ ] Present complete affected tables/functions/edge files and additive migration plan; wait for approval.
-- [ ] Implement approved permissions foundation and sales boundaries first, then privacy, staff MFA/lifecycle, approvals, tenant access and guide.
+- [x] Present complete affected tables/functions/edge files and additive migration plan; approved.
+- [x] Add dynamic role registry/matrix, audited role assignment, contact masking, direct CRM write revocation, internal-table locks, staff invitation/deactivation foundation and matrix guide.
+- [ ] Complete all RLS/writer/edge capability enforcement, mandatory TOTP, approval execution, tenant portal/OTP linkage, session lists, draft UI and private-file scopes; not yet implemented end-to-end.
+- [ ] Remediate deep scan remaining alerts: Telegram jobs/document send authorization, mobile redirects, access-log spoofing and external API leakage. Backup hardcoded-secret bypass removed, destructive restore/delete disabled; deployed verification pending.
 - [ ] Verify direct database/edge/storage denial, ownership and session/MFA behavior for each role; preserve previous workflows.
 
 # Phase 2 / Prompt 8 — Dashboard and metrics
