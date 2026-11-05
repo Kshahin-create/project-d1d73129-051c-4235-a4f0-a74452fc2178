@@ -44,7 +44,7 @@ function RecordTab({kind,id,row,tab,spec}:{kind:RecordKind;id:string;row:AdminRo
        const accountIds=(accounts.data??[]).map(a=>a.id);
        if(!accountIds.length)return{...contracts,table:"contracts"};
        const files=await adminClient.from("tenant_account_files").select("*",{count:"exact"}).in("tenant_account_id",accountIds).eq("is_archived",false).order("created_at",{ascending:false}).range(page*25,page*25+24);
-       if(files.error)throw files.error;return{rows:[...contracts.rows,...files.data.map(f=>({...f,file_name:f.custom_name,file_bucket:"tenant-files"}))],count:contracts.count+(files.count??0),table:"documents"};
+       if(files.error)throw files.error;return{rows:[...contracts.rows,...files.data.map(f=>({...f,file_name:f.custom_name,file_bucket:"tenant-account-files"}))],count:contracts.count+(files.count??0),table:"documents"};
      }
      return{rows:[row],count:1,table:spec.table};
    }
