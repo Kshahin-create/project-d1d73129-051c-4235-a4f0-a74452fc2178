@@ -9,6 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { OPEN_STAGES, PARKED_STAGES, STAGE_LABELS, SOURCE_LABELS, stageLabel, isOverdue } from "@/lib/crm";
 import { exportRowsToExcel } from "@/lib/exportData";
+import { Header } from "@/components/Header";
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 type OppRow = {
@@ -115,7 +119,7 @@ export default function CrmPipeline() {
   const ownerName = (id: string | null) => (id ? (ownersQ.data?.[id] ?? "…") : "غير موزّعة");
 
   return (
-    <main dir="rtl" className="container-tight space-y-5 py-8">
+    <><Header/><main dir="rtl" className="container-tight space-y-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">لوحة الفرص</h1>
         <div className="flex gap-2">
@@ -139,7 +143,7 @@ export default function CrmPipeline() {
           <option value="none">غير موزّعة</option>
           {ownerIds.map((id) => <option key={id} value={id}>{ownerName(id)}</option>)}
         </select>
-        <Button variant="outline" onClick={() => exportRowsToExcel(filtered.map((o) => ({ الكود: o.parties?.tenant_code, العميل: o.parties?.name_ar, المرحلة: stageLabel(o.stage), المصدر: SOURCE_LABELS[o.source] ?? o.source, المالك: ownerName(o.owner_user_id), الإجراء_القادم: o.next_action ?? "", تاريخه: o.next_action_at ?? "" })), "الفرص")}>تصدير</Button>
+        
       </div>
 
       {q.isError && <p role="alert" className="text-destructive">تعذر تحميل الفرص</p>}
@@ -172,7 +176,7 @@ export default function CrmPipeline() {
                     isOverdue(o.next_action_at) && "border-destructive/50",
                   )}
                 >
-                  <div className="font-medium">{o.parties?.name_ar ?? "—"}</div>
+                  <Link className="font-medium text-primary hover:underline" to={`/admin/parties/${o.party_id}`} onClick={e=>e.stopPropagation()}>{o.parties?.name_ar ?? "—"}</Link>
                   <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                     <span>{o.parties?.tenant_code}</span>
                     <span>{ownerName(o.owner_user_id)}</span>
@@ -185,39 +189,8 @@ export default function CrmPipeline() {
         </div>
       )}
 
-      {view === "list" && !q.isError && (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>العميل</TableHead>
-                <TableHead>المرحلة</TableHead>
-                <TableHead>المصدر</TableHead>
-                <TableHead>المالك</TableHead>
-                <TableHead>الإجراء القادم</TableHead>
-                <TableHead>لا يرد</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageRows.map((o) => (
-                <TableRow key={o.id} className="cursor-pointer" onClick={() => navigate(`/crm/opportunity/${o.id}`)}>
-                  <TableCell>{o.parties?.name_ar} <span className="text-xs text-muted-foreground">({o.parties?.tenant_code})</span></TableCell>
-                  <TableCell>{stageLabel(o.stage)}</TableCell>
-                  <TableCell>{SOURCE_LABELS[o.source] ?? o.source}</TableCell>
-                  <TableCell>{ownerName(o.owner_user_id)}</TableCell>
-                  <TableCell className={cn(isOverdue(o.next_action_at) && "text-destructive")}>{o.next_action ?? "—"}</TableCell>
-                  <TableCell>{o.no_answer_attempts}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" disabled={!page} onClick={() => setPage((p) => p - 1)}>السابق</Button>
-            <span>{page + 1} / {Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))}</span>
-            <Button variant="outline" disabled={(page + 1) * PAGE_SIZE >= filtered.length} onClick={() => setPage((p) => p + 1)}>التالي</Button>
-          </div>
-        </>
-      )}
-    </main>
+      {view === "list" && <AdminServerList spec={adminLists.opportunities} filters={{...(stageFilter?{stage:stageFilter}:{}),...(sourceFilter?{source:sourceFilter}:{})}}/>}
+
+    </main></>
   );
 }
