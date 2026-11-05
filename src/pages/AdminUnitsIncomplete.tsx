@@ -56,16 +56,19 @@ export default function AdminUnitsIncomplete() {
   if (!isAdmin && !isManager) return <Navigate to="/" replace />;
 
   const exportAll = async () => {
+    let request:string|undefined;
     try {
       const start=await supabase.rpc("request_admin_export",{_list:"units_incomplete",_format:"xlsx",_scope:{search,issue}});if(start.error)throw start.error;
+      request=String(start.data);
       const entries:Row[]=[];let as_of="";for(let offset=0;;offset+=500){const part=await fetchPage(500,offset);entries.push(...part.rows);as_of=part.as_of;if(part.rows.length<500)break;}
-      const d={rows:entries,total:entries.length,as_of};const done=await supabase.rpc("complete_admin_export",{_id:String(start.data),_status:"generated",_count:d.total});if(done.error)throw done.error;
+      const d={rows:entries,total:entries.length,as_of};
       exportRowsToExcel(
         d.rows.map((r) => ({ "المبنى": r.building_number ?? "", "الوحدة": r.unit_number, "النوع": r.unit_type ?? "", "النشاط": r.activity_name ?? "", "المساحة م²": r.area_m2 ?? "", "المشاكل": r.issues.map((i) => ISSUES[i] ?? i).join("، "), "النشر": r.publish_state, "تجريبية": r.is_test ? "نعم" : "لا" })),
         "units_needing_completion", "وحدات تحتاج استكمال",
         [{ "النطاق": "المشروع كامل", "الفلتر": issue === "all" ? "الكل" : ISSUES[issue], "البحث": search || "—", "وقت التحديث": new Date(d.as_of).toLocaleString("ar-SA"), "العدد": d.total }],
       );
-    } catch (e: any) { toast.error(e.message); }
+      const done=await supabase.rpc("complete_admin_export",{_id:request,_status:"generated",_count:d.total});if(done.error)throw done.error;
+    } catch (e: any) { if(request)await supabase.rpc("complete_admin_export",{_id:request,_status:"failed",_count:0});toast.error(e.message); }
   };
 
   return (

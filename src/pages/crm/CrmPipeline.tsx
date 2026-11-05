@@ -125,11 +125,11 @@ export default function CrmPipeline() {
       {q.isError && <p role="alert" className="text-destructive">تعذر تحميل الفرص</p>}
 
       {view === "board" && !q.isError && (
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="flex items-start gap-3 overflow-x-auto pb-4">
           {BOARD_STAGES.map((stage) => (
             <div
               key={stage}
-              className="flex w-64 shrink-0 flex-col gap-2 rounded-xl border border-border bg-card p-3"
+              className="flex min-h-48 w-64 shrink-0 flex-col gap-2 rounded-md border border-border bg-card p-3"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
