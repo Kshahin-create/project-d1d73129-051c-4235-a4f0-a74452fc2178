@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Navigate, Link } from "react-router-dom";
 import { AlertTriangle, Download, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +57,9 @@ export default function AdminUnitsIncomplete() {
 
   const exportAll = async () => {
     try {
-      const d = await fetchPage(5000, 0);
+      const start=await supabase.rpc("request_admin_export",{_list:"units_incomplete",_format:"xlsx",_scope:{search,issue}});if(start.error)throw start.error;
+      const entries:Row[]=[];let as_of="";for(let offset=0;;offset+=500){const part=await fetchPage(500,offset);entries.push(...part.rows);as_of=part.as_of;if(part.rows.length<500)break;}
+      const d={rows:entries,total:entries.length,as_of};const done=await supabase.rpc("complete_admin_export",{_id:String(start.data),_status:"generated",_count:d.total});if(done.error)throw done.error;
       exportRowsToExcel(
         d.rows.map((r) => ({ "المبنى": r.building_number ?? "", "الوحدة": r.unit_number, "النوع": r.unit_type ?? "", "النشاط": r.activity_name ?? "", "المساحة م²": r.area_m2 ?? "", "المشاكل": r.issues.map((i) => ISSUES[i] ?? i).join("، "), "النشر": r.publish_state, "تجريبية": r.is_test ? "نعم" : "لا" })),
         "units_needing_completion", "وحدات تحتاج استكمال",
@@ -66,7 +69,7 @@ export default function AdminUnitsIncomplete() {
   };
 
   return (
-    <main className="container-tight space-y-6 py-8" dir="rtl">
+    <><Header/><main className="container-tight space-y-6 py-8" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-7 w-7 text-primary" />
@@ -101,7 +104,7 @@ export default function AdminUnitsIncomplete() {
                   {rows.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell className="num">{r.building_number ?? "—"}</TableCell>
-                      <TableCell className="num font-bold">{r.unit_number}{r.is_test && <Badge variant="outline" className="mr-2">تجريبية</Badge>}</TableCell>
+                      <TableCell className="num font-bold"><Link className="text-primary hover:underline" to={`/admin/units/${r.id}`}>{r.unit_number}</Link>{r.is_test && <Badge variant="outline" className="mr-2">تجريبية</Badge>}</TableCell>
                       <TableCell>{r.unit_type ?? "—"}</TableCell>
                       <TableCell>{r.activity_name ?? "—"}</TableCell>
                       <TableCell className="num">{r.area_m2 ?? "—"}</TableCell>
@@ -122,6 +125,6 @@ export default function AdminUnitsIncomplete() {
           )}
         </CardContent>
       </Card>
-    </main>
+    </main></>
   );
 }

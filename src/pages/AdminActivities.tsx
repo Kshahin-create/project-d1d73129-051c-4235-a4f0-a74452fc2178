@@ -1,3 +1,5 @@
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
 import { Header } from "@/components/Header";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
@@ -109,6 +111,7 @@ export default function AdminActivities() {
         {isAdmin && <Button onClick={() => { setEdit({ ...EMPTY }); setReason(""); }}><Plus className="h-4 w-4" />نشاط جديد</Button>}
       </div>
 
+      <details><summary className="cursor-pointer text-primary">خيارات قائمة الأنشطة</summary><AdminServerList spec={adminLists.activities}/></details>
       <Card>
         <CardHeader>
           <CardTitle>الأنشطة</CardTitle>
