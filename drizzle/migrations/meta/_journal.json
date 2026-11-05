@@ -421,6 +421,13 @@
       "when": 1793921541897,
       "tag": "0059_dynamic_permissions_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793921580806,
+      "tag": "0060_permissions_audited_role_writers",
+      "breakpoints": true
     }
   ]
 }

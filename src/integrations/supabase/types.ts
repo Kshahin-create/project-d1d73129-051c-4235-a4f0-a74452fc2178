@@ -4750,6 +4750,16 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_save_role: {
+        Args: {
+          _active: boolean
+          _code: string
+          _description: string
+          _name: string
+          _reason: string
+        }
+        Returns: undefined
+      }
       admin_set_building_registry: {
         Args: {
           _building_number: number
@@ -4763,6 +4773,15 @@ export type Database = {
       }
       admin_set_role: {
         Args: { _make_admin: boolean; _target_user: string }
+        Returns: undefined
+      }
+      admin_set_role_permission: {
+        Args: {
+          _capability: string
+          _level: string
+          _reason: string
+          _role: string
+        }
         Returns: undefined
       }
       admin_set_unit_test: {
@@ -5341,12 +5360,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      my_permissions: { Args: never; Returns: Json }
       next_invoice_number: { Args: never; Returns: string }
       next_offer_number: { Args: { _booking_id?: string }; Returns: string }
       permission_levels_allow: {
         Args: { _granted: string; _requested: string }
         Returns: boolean
       }
+      permissions_bootstrap: { Args: { _reason: string }; Returns: undefined }
       publish_unit: {
         Args: { _reason: string; _state: string; _unit_id: string }
         Returns: string
