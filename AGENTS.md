@@ -21,3 +21,4 @@
 - Admin user details use an admin-gated read-only directory RPC with explicit contact fields and latest user-linked access records; never expose auth secrets or infer nationality from an IP location.
 - Enforce administrative writes on the server as admin-only and gate matching UI controls; manager reads remain separate from mutations, including storage and Telegram operations.
 - Apply activity-specific unit eligibility through the shared booking activity helper in counts, plan/list controls and selection; keep activity-only reservation display separate from persisted occupancy to preserve other activities and existing contracts.
+- Centralize leasing transitions in the database-owned set_unit_status boundary; shared unit-status helpers are read/UI policy only, and legacy compatibility must never treat unresolved records as available.

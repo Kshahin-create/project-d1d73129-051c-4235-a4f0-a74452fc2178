@@ -1,0 +1,17 @@
+INSERT INTO public.unit_status_backfill_review(unit_id,original_status,proposed_status,reason,evidence)
+SELECT u.id,u.status,CASE WHEN u.status='rented' THEN 'leased'::public.unit_leasing_status
+WHEN u.status='available' AND NOT EXISTS(SELECT 1 FROM public.tenants t WHERE t.unit_id=u.id AND t.archived_at IS NULL) AND NOT EXISTS(SELECT 1 FROM public.booking_units bu JOIN public.bookings b ON b.id=bu.booking_id WHERE bu.unit_id=u.id AND b.status IN ('pending','confirmed') AND b.archived_at IS NULL) THEN 'available'::public.unit_leasing_status
+WHEN u.status='maintenance' AND NOT EXISTS(SELECT 1 FROM public.tenants t WHERE t.unit_id=u.id AND t.archived_at IS NULL) THEN 'maintenance'::public.unit_leasing_status
+WHEN u.status='reserved' AND NOT EXISTS(SELECT 1 FROM public.tenants t WHERE t.unit_id=u.id AND t.archived_at IS NULL) AND (SELECT count(*) FROM public.booking_units bu JOIN public.bookings b ON b.id=bu.booking_id WHERE bu.unit_id=u.id AND b.archived_at IS NULL AND (b.status='confirmed' OR (b.status='pending' AND b.expires_at>now())))=1 THEN
+CASE WHEN EXISTS(SELECT 1 FROM public.booking_units bu JOIN public.bookings b ON b.id=bu.booking_id WHERE bu.unit_id=u.id AND b.status='confirmed' AND b.archived_at IS NULL) THEN 'pending_contract'::public.unit_leasing_status ELSE 'on_hold'::public.unit_leasing_status END
+ELSE NULL END,'نقل الحالة التاريخية؛ أي تعارض يتطلب مراجعة بشرية',jsonb_build_object('legacy_status',u.status,'historical',true)
+FROM public.units u WHERE NOT u.leasing_status_initialized ON CONFLICT(unit_id) DO NOTHING;
+UPDATE public.units u SET leasing_status=r.proposed_status,leasing_status_initialized=true FROM public.unit_status_backfill_review r WHERE r.unit_id=u.id AND NOT u.leasing_status_initialized;
+UPDATE public.unit_status_backfill_review SET resolved_at=now(),reason=reason || '؛ نقل موثق بدون إثبات عقد أو دفعة تاريخية' WHERE proposed_status IS NOT NULL AND resolved_at IS NULL;
+INSERT INTO public.audit_log(action,actor_role,entity_table,entity_id,before_data,after_data,context)
+SELECT 'UNIT_STATUS_BACKFILL','system','units',r.unit_id::text,jsonb_build_object('status',r.original_status),jsonb_build_object('leasing_status',r.proposed_status),jsonb_build_object('reason',r.reason,'historical_backfill',true)
+FROM public.unit_status_backfill_review r WHERE NOT EXISTS(SELECT 1 FROM public.audit_log a WHERE a.entity_id=r.unit_id::text AND a.action='UNIT_STATUS_BACKFILL');
+-- Historic status stays frozen; compatibility is projected in read views, never written.
+COMMENT ON COLUMN public.units.status IS 'DEPRECATED: frozen historical status, replaced by leasing_status. Do not write.';
+COMMENT ON COLUMN public.units.status_before_maintenance IS 'DEPRECATED: frozen historical value; no restoration from this column.';
+SELECT leasing_status,count(*) FROM public.units GROUP BY leasing_status;

@@ -188,12 +188,14 @@ export type Database = {
           buildings_sheet_id: string | null
           buildings_sheet_last_direction: string | null
           buildings_sheet_last_sync_at: string | null
+          hold_hours: number
           id: number
           leads_sheet_id: string | null
           leads_sheet_last_sync_at: string | null
           leads_sheet_name: string | null
           maintenance_message: string | null
           maintenance_mode: boolean
+          max_hold_extensions: number
           updated_at: string
           updated_by: string | null
         }
@@ -202,12 +204,14 @@ export type Database = {
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
+          hold_hours?: number
           id?: number
           leads_sheet_id?: string | null
           leads_sheet_last_sync_at?: string | null
           leads_sheet_name?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean
+          max_hold_extensions?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -216,12 +220,14 @@ export type Database = {
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
+          hold_hours?: number
           id?: number
           leads_sheet_id?: string | null
           leads_sheet_last_sync_at?: string | null
           leads_sheet_name?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean
+          max_hold_extensions?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -311,6 +317,9 @@ export type Database = {
       booking_units: {
         Row: {
           activity: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           area: number
           booking_id: string
           building_number: number
@@ -323,6 +332,9 @@ export type Database = {
         }
         Insert: {
           activity?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           area?: number
           booking_id: string
           building_number: number
@@ -335,6 +347,9 @@ export type Database = {
         }
         Update: {
           activity?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           area?: number
           booking_id?: string
           building_number?: number
@@ -368,6 +383,7 @@ export type Database = {
           customer_full_name: string
           customer_phone: string
           expires_at: string
+          hold_extensions: number
           id: string
           id_type: string | null
           is_returning_customer: boolean
@@ -399,6 +415,7 @@ export type Database = {
           customer_full_name: string
           customer_phone: string
           expires_at?: string
+          hold_extensions?: number
           id?: string
           id_type?: string | null
           is_returning_customer?: boolean
@@ -430,6 +447,7 @@ export type Database = {
           customer_full_name?: string
           customer_phone?: string
           expires_at?: string
+          hold_extensions?: number
           id?: string
           id_type?: string | null
           is_returning_customer?: boolean
@@ -1526,6 +1544,9 @@ export type Database = {
       tenants: {
         Row: {
           activity_type: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           booking_id: string | null
           business_name: string | null
           cr_number: string | null
@@ -1542,6 +1563,9 @@ export type Database = {
         }
         Insert: {
           activity_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           booking_id?: string | null
           business_name?: string | null
           cr_number?: string | null
@@ -1558,6 +1582,9 @@ export type Database = {
         }
         Update: {
           activity_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           booking_id?: string | null
           business_name?: string | null
           cr_number?: string | null
@@ -1781,6 +1808,80 @@ export type Database = {
           },
         ]
       }
+      unit_contracts: {
+        Row: {
+          booking_id: string | null
+          contract_number: string
+          created_at: string
+          created_by: string | null
+          ends_on: string | null
+          id: string
+          starts_on: string | null
+          status: string
+          status_reason: string
+          tenant_account_id: string | null
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          contract_number: string
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          id?: string
+          starts_on?: string | null
+          status?: string
+          status_reason: string
+          tenant_account_id?: string | null
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          contract_number?: string
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          id?: string
+          starts_on?: string | null
+          status?: string
+          status_reason?: string
+          tenant_account_id?: string | null
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_contracts_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_contracts_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_contracts_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_files: {
         Row: {
           created_at: string
@@ -1835,6 +1936,44 @@ export type Database = {
           },
         ]
       }
+      unit_first_payment_verifications: {
+        Row: {
+          contract_id: string
+          id: string
+          reason: string
+          receipt_id: string
+          receipt_type: string
+          verified_at: string
+          verified_by: string
+        }
+        Insert: {
+          contract_id: string
+          id?: string
+          reason: string
+          receipt_id: string
+          receipt_type: string
+          verified_at?: string
+          verified_by: string
+        }
+        Update: {
+          contract_id?: string
+          id?: string
+          reason?: string
+          receipt_id?: string
+          receipt_type?: string
+          verified_at?: string
+          verified_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_first_payment_verifications_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "unit_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_import_batches: {
         Row: {
           created_at: string
@@ -1862,6 +2001,136 @@ export type Database = {
         }
         Relationships: []
       }
+      unit_status_backfill_review: {
+        Row: {
+          created_at: string
+          evidence: Json
+          id: string
+          original_status: string
+          proposed_status:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string
+          evidence?: Json
+          id?: string
+          original_status: string
+          proposed_status?:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          unit_id: string
+        }
+        Update: {
+          created_at?: string
+          evidence?: Json
+          id?: string
+          original_status?: string
+          proposed_status?:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_status_backfill_review_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: true
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_status_backfill_review_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: true
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_status_history: {
+        Row: {
+          actor: string | null
+          actor_role: string | null
+          at: string
+          from_status: Database["public"]["Enums"]["unit_leasing_status"] | null
+          id: string
+          reason: string
+          ref_id: string | null
+          ref_type: string
+          to_status: Database["public"]["Enums"]["unit_leasing_status"] | null
+          unit_id: string
+        }
+        Insert: {
+          actor?: string | null
+          actor_role?: string | null
+          at?: string
+          from_status?:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          id?: string
+          reason: string
+          ref_id?: string | null
+          ref_type: string
+          to_status?: Database["public"]["Enums"]["unit_leasing_status"] | null
+          unit_id: string
+        }
+        Update: {
+          actor?: string | null
+          actor_role?: string | null
+          at?: string
+          from_status?:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          id?: string
+          reason?: string
+          ref_id?: string | null
+          ref_type?: string
+          to_status?: Database["public"]["Enums"]["unit_leasing_status"] | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_status_history_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_status_history_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_status_write_capabilities: {
+        Row: {
+          transaction_id: number
+          unit_id: string
+        }
+        Insert: {
+          transaction_id: number
+          unit_id: string
+        }
+        Update: {
+          transaction_id?: number
+          unit_id?: string
+        }
+        Relationships: []
+      }
       units: {
         Row: {
           activity: string | null
@@ -1873,6 +2142,10 @@ export type Database = {
           created_at: string
           id: string
           is_test: boolean
+          leasing_status:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          leasing_status_initialized: boolean
           price: number
           publish_state: string
           status: string
@@ -1891,6 +2164,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_test?: boolean
+          leasing_status?:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          leasing_status_initialized?: boolean
           price?: number
           publish_state?: string
           status?: string
@@ -1909,6 +2186,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_test?: boolean
+          leasing_status?:
+            | Database["public"]["Enums"]["unit_leasing_status"]
+            | null
+          leasing_status_initialized?: boolean
           price?: number
           publish_state?: string
           status?: string
@@ -2327,6 +2608,10 @@ export type Database = {
         Args: { _booking_id: string; _hours: number }
         Returns: string
       }
+      extend_booking_hold: {
+        Args: { _booking_id: string; _reason: string }
+        Returns: string
+      }
       find_tenant_by_cr: {
         Args: { _cr: string }
         Returns: {
@@ -2439,6 +2724,16 @@ export type Database = {
         Args: { _paid_amount: number; _tenant_account_id: string }
         Returns: undefined
       }
+      set_unit_status: {
+        Args: {
+          new_status: Database["public"]["Enums"]["unit_leasing_status"]
+          reason: string
+          ref_id?: string
+          ref_type: string
+          unit_id: string
+        }
+        Returns: undefined
+      }
       sync_all_rented_units_to_accounts: { Args: never; Returns: number }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
       unarchive_record: {
@@ -2465,7 +2760,20 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "control" | "manager" | "tenant"
+      app_role:
+        | "admin"
+        | "user"
+        | "control"
+        | "manager"
+        | "tenant"
+        | "leasing_manager"
+      unit_leasing_status:
+        | "available"
+        | "on_hold"
+        | "pending_contract"
+        | "leased"
+        | "maintenance"
+        | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2593,7 +2901,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "control", "manager", "tenant"],
+      app_role: [
+        "admin",
+        "user",
+        "control",
+        "manager",
+        "tenant",
+        "leasing_manager",
+      ],
+      unit_leasing_status: [
+        "available",
+        "on_hold",
+        "pending_contract",
+        "leased",
+        "maintenance",
+        "blocked",
+      ],
     },
   },
 } as const
