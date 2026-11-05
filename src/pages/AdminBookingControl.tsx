@@ -81,7 +81,14 @@ const AdminBookingControl = () => {
 
   const resend = async (bk: Bk) => {
     setBusy(bk.id);
-    const { error } = await supabase.functions.invoke("telegram-notify", { body: { booking_id: bk.id } });
+    const { data: bu } = await supabase.from("booking_units").select("building_number,unit_number,unit_type,area,price,activity").eq("booking_id", bk.id);
+    const { error } = await supabase.functions.invoke("telegram-notify", {
+      body: {
+        booking_id: bk.id,
+        customer: { fullName: bk.customer_full_name, phone: bk.customer_phone, business: bk.business_name ?? undefined },
+        units: (bu ?? []).map((u) => ({ buildingNumber: u.building_number, unitNumber: u.unit_number, unitType: u.unit_type, area: Number(u.area), price: Number(u.price), activity: u.activity })),
+      },
+    });
     setBusy(null);
     if (error) toast.error("فشل إرسال التنبيه لتيليجرام"); else toast.success("اتبعت التنبيه على تيليجرام");
   };

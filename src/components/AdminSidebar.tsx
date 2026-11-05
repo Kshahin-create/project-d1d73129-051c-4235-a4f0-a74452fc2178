@@ -83,6 +83,7 @@ const groups: LinkGroup[] = [
     Icon: Briefcase,
     links: [
       { to: "/admin/bookings", label: "الحجوزات", Icon: CalendarRange, managerOnly: true },
+      { to: "/admin/booking-control", label: "التحكم في الحجز", Icon: Building2, managerOnly: true },
       { to: "/admin/tenant-accounts", label: "المستأجرون", Icon: ClipboardList, managerOnly: true },
       { to: "/admin/paid-tenants", label: "المسددون", Icon: BadgeCheck, managerOnly: true },
       { to: "/admin/collections-report", label: "تقرير التحصيلات", Icon: Banknote, managerOnly: true },
