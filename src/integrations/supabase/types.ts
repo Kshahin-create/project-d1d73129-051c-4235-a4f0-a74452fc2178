@@ -2949,6 +2949,7 @@ export type Database = {
         Returns: Json
       }
       unit_import_preview: { Args: { _rows: Json }; Returns: Json }
+      unit_status_regression_tests: { Args: never; Returns: Json }
       unlink_my_telegram: { Args: { _chat_id: number }; Returns: undefined }
       validate_identity: {
         Args: { _id_type: string; _number: string }
