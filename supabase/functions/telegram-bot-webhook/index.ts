@@ -1,3 +1,4 @@
+import { metricsSnapshot,metricsTelegramText,metricsPeriod,legacyMetricUnits } from "../_shared/metrics.ts";
 // Advanced Telegram bot: linking, commands, inline buttons, receipt photos, AI Q&A.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
@@ -193,37 +194,7 @@ async function requireLinked(admin: any, token: string, chat_id: number) {
 
 // === Commands ===
 async function cmdStats(admin: any, token: string, chat_id: number) {
-  const today = new Date(); today.setHours(0,0,0,0);
-  const iso = today.toISOString();
-  const [bookingsRes, invoicesRes, unitsRes, unpaidRes] = await Promise.all([
-    admin.from("bookings").select("id,status,total_price,paid_amount,created_at").gte("created_at", iso),
-    admin.from("invoices").select("id,amount,paid_amount,paid,paid_at,created_at"),
-    admin.from("units_status_read").select("status").eq("is_test", false),
-    admin.from("invoices").select("amount,paid_amount").eq("paid", false),
-  ]);
-  const bookings = bookingsRes.data || [];
-  const invoices = invoicesRes.data || [];
-  const units = unitsRes.data || [];
-  const unpaid = unpaidRes.data || [];
-
-  const todayPayments = invoices.filter((i: any) => i.paid_at && new Date(i.paid_at) >= today)
-    .reduce((s: number, i: any) => s + Number(i.paid_amount || 0), 0);
-  const todayBookingsValue = bookings.reduce((s: number, b: any) => s + Number(b.total_price || 0), 0);
-  const totalUnpaid = unpaid.reduce((s: number, i: any) => s + (Number(i.amount) - Number(i.paid_amount || 0)), 0);
-  const occupied = units.filter((u: any) => u.status === "rented").length;
-  const total = units.length;
-  const occRate = total ? Math.round((occupied / total) * 100) : 0;
-
-  const lines = [
-    "📊 <b>إحصائيات اليوم</b>",
-    `🆕 حجوزات جديدة: <b>${bookings.length}</b> بقيمة <b>${fmtNum(todayBookingsValue)}</b> ر.س`,
-    `💵 مدفوعات اليوم: <b>${fmtNum(todayPayments)}</b> ر.س`,
-    `📑 فواتير غير مدفوعة: <b>${unpaid.length}</b> بإجمالي <b>${fmtNum(totalUnpaid)}</b> ر.س`,
-    `🏢 الإشغال: <b>${occupied}/${total}</b> (${occRate}%)`,
-    "",
-    `📅 ${fmtDate(new Date().toISOString())}`,
-  ];
-  await send(token, chat_id, lines.join("\n"));
+  const snapshot=await metricsSnapshot(admin);await send(token,chat_id,metricsTelegramText(snapshot));
 }
 
 async function cmdUnpaid(admin: any, token: string, chat_id: number) {
@@ -1170,33 +1141,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
   const todayStr = new Date().toISOString().slice(0,10);
 
-  if (name === "get_overview") {
-    const [b, inv, units] = await Promise.all([
-      admin.from("bookings").select("status,total_price,paid_amount,created_at"),
-      admin.from("invoices").select("amount,paid_amount,paid,paid_at,due_date"),
-      admin.from("units_status_read").select("status,price").eq("is_test", false),
-    ]);
-    const B = b.data || [], I = inv.data || [], U = units.data || [];
-    return {
-      bookings_today: B.filter((x:any)=>new Date(x.created_at)>=today).length,
-      bookings_today_value: B.filter((x:any)=>new Date(x.created_at)>=today).reduce((s:number,x:any)=>s+Number(x.total_price||0),0),
-      bookings_month: B.filter((x:any)=>new Date(x.created_at)>=monthStart).length,
-      bookings_month_value: B.filter((x:any)=>new Date(x.created_at)>=monthStart).reduce((s:number,x:any)=>s+Number(x.total_price||0),0),
-      bookings_pending: B.filter((x:any)=>x.status==="pending").length,
-      bookings_confirmed: B.filter((x:any)=>x.status==="confirmed").length,
-      payments_today: I.filter((x:any)=>x.paid_at && new Date(x.paid_at)>=today).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
-      payments_month: I.filter((x:any)=>x.paid_at && new Date(x.paid_at)>=monthStart).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
-      unpaid_count: I.filter((x:any)=>!x.paid).length,
-      unpaid_total: I.filter((x:any)=>!x.paid).reduce((s:number,x:any)=>s+(Number(x.amount)-Number(x.paid_amount||0)),0),
-      overdue_count: I.filter((x:any)=>!x.paid && x.due_date && x.due_date<todayStr).length,
-      units_total: U.length,
-      units_rented: U.filter((u:any)=>u.status==="rented").length,
-      units_reserved: U.filter((u:any)=>u.status==="reserved").length,
-      units_available: U.filter((u:any)=>u.status==="available").length,
-      occupancy_rate: U.length ? Math.round(U.filter((u:any)=>u.status==="rented").length/U.length*100) : 0,
-      expected_annual_revenue: U.reduce((s:number,u:any)=>s+Number(u.price||0),0),
-    };
-  }
+  if(name==="get_overview"){const snapshot=await metricsSnapshot(admin);return{...snapshot,units:legacyMetricUnits(snapshot)};}
   if (name === "search_bookings") {
     if (args.query) return { results: await searchBookingsSmart(admin, String(args.query), lim(args.limit)) };
     let q = admin.from("bookings").select("id,customer_full_name,customer_phone,business_name,status,total_price,paid_amount,expires_at,created_at").order("created_at",{ascending:false}).limit(lim(args.limit));
@@ -1222,27 +1167,7 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
     const { data } = await q;
     return { results: data || [], count: data?.length || 0 };
   }
-  if (name === "revenue_report") {
-    const period = args.period || "month";
-    let from = new Date();
-    if (period === "today") from.setHours(0,0,0,0);
-    else if (period === "week") { from.setDate(from.getDate()-7); from.setHours(0,0,0,0); }
-    else if (period === "month") { from.setDate(1); from.setHours(0,0,0,0); }
-    else if (period === "year") { from = new Date(from.getFullYear(),0,1); }
-    const fromIso = from.toISOString();
-    const [bk, inv] = await Promise.all([
-      admin.from("bookings").select("status,total_price,paid_amount,created_at").gte("created_at", fromIso),
-      admin.from("invoices").select("amount,paid_amount,paid,paid_at").gte("paid_at", fromIso).eq("paid", true),
-    ]);
-    return {
-      period, from: fromIso,
-      bookings_count: bk.data?.length || 0,
-      bookings_value: (bk.data||[]).reduce((s:number,x:any)=>s+Number(x.total_price||0),0),
-      bookings_paid: (bk.data||[]).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
-      payments_count: inv.data?.length || 0,
-      payments_total: (inv.data||[]).reduce((s:number,x:any)=>s+Number(x.paid_amount||0),0),
-    };
-  }
+  if(name==="revenue_report"){const days=({today:1,week:7,month:undefined,year:365} as Record<string,number|undefined>)[String(args.period??"month")];return await metricsSnapshot(admin,metricsPeriod(days));}
   if (name === "resolve_booking_id") {
     const q = String(args.query || "").trim();
     if (!q) return { error: "query required" };
@@ -1326,20 +1251,9 @@ async function runAITool(admin: any, name: string, args: any): Promise<any> {
       ),
     ]);
     const U = units.data || [];
-    const rented = U.filter((u: any) => u.status === "rented").length;
-    const reserved = U.filter((u: any) => u.status === "reserved").length;
-    const available = U.filter((u: any) => u.status === "available").length;
-    const revenue = U.filter((u: any) => u.status === "rented").reduce((s: number, u: any) => s + Number(u.price || 0), 0);
-    const expected = U.reduce((s: number, u: any) => s + Number(u.price || 0), 0);
-    return {
-      building_number: bn,
-      total_units: U.length, rented, reserved, available,
-      occupancy_rate: U.length ? Math.round(rented/U.length*100) : 0,
-      current_annual_revenue: revenue,
-      expected_annual_revenue: expected,
-      units: U, tenants: ts.data || [],
-    };
+    const snapshot=await metricsSnapshot(admin,{building:String(bn)});return{building_number:bn,...snapshot,units:U,tenants:ts.data??[]};
   }
+
   if (name === "list_bookings_for_tenant") {
     return { results: await searchBookingsSmart(admin, String(args.query), lim(args.limit, 20)) };
   }

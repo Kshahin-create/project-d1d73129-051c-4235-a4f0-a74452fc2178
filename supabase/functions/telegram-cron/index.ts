@@ -1,3 +1,4 @@
+import { metricsSnapshot,metricsTelegramText } from "../_shared/metrics.ts";
 // Periodic Telegram cron: daily summary, expiring bookings, overdue invoices, end-of-contract alerts.
 // Triggered by pg_cron via HTTP. Use ?job=daily|expiring|overdue|contracts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
@@ -37,54 +38,7 @@ async function broadcast(admin: any, token: string, topic: string, text: string)
 }
 
 async function jobDaily(admin: any, token: string) {
-  const today = new Date(); today.setHours(0,0,0,0);
-  const yesterday = new Date(today.getTime() - 86400000);
-  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-  const [bY, bM, invAll, units, unpaidOverdue, expiringSoon] = await Promise.all([
-    admin.from("bookings").select("status,total_price,created_at").gte("created_at", yesterday.toISOString()).lt("created_at", today.toISOString()),
-    admin.from("bookings").select("total_price,created_at").gte("created_at", monthStart.toISOString()),
-    admin.from("invoices").select("amount,paid_amount,paid,paid_at,due_date"),
-    admin.from("units_status_read").select("status").eq("is_test", false),
-    admin.from("invoices").select("invoice_number").eq("paid", false).lt("due_date", today.toISOString().slice(0,10)),
-    admin.from("bookings").select("id").eq("status","pending").lte("expires_at", new Date(Date.now()+86400000).toISOString()),
-  ]);
-  const yPay = (invAll.data||[]).filter((i: any)=>i.paid_at && new Date(i.paid_at) >= yesterday && new Date(i.paid_at) < today)
-    .reduce((s,i: any)=>s+Number(i.paid_amount||0),0);
-  const mPay = (invAll.data||[]).filter((i: any)=>i.paid_at && new Date(i.paid_at) >= monthStart)
-    .reduce((s,i: any)=>s+Number(i.paid_amount||0),0);
-  const totalUnpaid = (invAll.data||[]).filter((i: any)=>!i.paid).reduce((s,i: any)=>s+(Number(i.amount)-Number(i.paid_amount||0)),0);
-  const occupied = (units.data||[]).filter((u: any)=>u.status==="rented").length;
-  const total = (units.data||[]).length;
-
-  const yBookValue = (bY.data||[]).reduce((s,b: any)=>s+Number(b.total_price||0),0);
-  const mBookValue = (bM.data||[]).reduce((s,b: any)=>s+Number(b.total_price||0),0);
-
-  // Anomaly: yesterday bookings vs 7-day average
-  const sevenDaysAgo = new Date(today.getTime() - 7*86400000);
-  const { data: weekBk } = await admin.from("bookings").select("created_at").gte("created_at", sevenDaysAgo.toISOString()).lt("created_at", today.toISOString());
-  const avg = (weekBk?.length || 0) / 7;
-  const anomaly = avg > 0 && (bY.data?.length || 0) > avg * 2 ? "📈 ارتفاع غير معتاد في الحجوزات أمس" :
-                  avg > 0 && (bY.data?.length || 0) < avg * 0.3 ? "📉 انخفاض ملحوظ في الحجوزات أمس" : null;
-
-  const lines = [
-    "☀️ <b>الملخص اليومي</b>",
-    `📅 ${fmtDate(today)}`,
-    "",
-    "<b>أمس:</b>",
-    `• حجوزات: <b>${bY.data?.length||0}</b> بقيمة <b>${fmtNum(yBookValue)}</b> ر.س`,
-    `• مدفوعات: <b>${fmtNum(yPay)}</b> ر.س`,
-    "",
-    "<b>هذا الشهر:</b>",
-    `• حجوزات: <b>${bM.data?.length||0}</b> بقيمة <b>${fmtNum(mBookValue)}</b> ر.س`,
-    `• مدفوعات: <b>${fmtNum(mPay)}</b> ر.س`,
-    "",
-    `🏢 الإشغال: <b>${occupied}/${total}</b> (${total ? Math.round(occupied/total*100):0}%)`,
-    `📑 إجمالي مستحقات: <b>${fmtNum(totalUnpaid)}</b> ر.س`,
-    `⚠️ فواتير متأخرة: <b>${unpaidOverdue.data?.length||0}</b>`,
-    `⏰ حجوزات تنتهي خلال 24 ساعة: <b>${expiringSoon.data?.length||0}</b>`,
-  ];
-  if (anomaly) lines.push("", `🔍 ${anomaly}`);
-  await broadcast(admin, token, "daily_summary", lines.join("\n"));
+  const snapshot=await metricsSnapshot(admin);await broadcast(admin,token,"daily_summary",metricsTelegramText(snapshot));
 }
 
 async function jobExpiring(admin: any, token: string) {

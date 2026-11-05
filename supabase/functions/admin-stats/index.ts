@@ -1,3 +1,4 @@
+import { metricsSnapshot,legacyMetricUnits,metricsPeriod } from "../_shared/metrics.ts";
 // Admin-only stats aggregator: server health, sign-ins, emails, bookings, units.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
@@ -152,22 +153,7 @@ async function fetchEmailStats(days: number) {
 }
 
 async function fetchBookingStats(days: number) {
-  const since = new Date();
-  since.setUTCDate(since.getUTCDate() - days);
-  const { data } = await admin
-    .from("bookings")
-    .select("created_at, status, total_price, units_count")
-    .gte("created_at", since.toISOString())
-    .limit(5000);
-  const rows = data ?? [];
-  const total = rows.length;
-  const totalRevenue = rows.reduce((s, r) => s + Number(r.total_price ?? 0), 0);
-  const totalUnits = rows.reduce((s, r) => s + Number(r.units_count ?? 0), 0);
-  const series = bucketByDay(
-    rows.map((r) => ({ created_at: r.created_at })),
-    days,
-  );
-  return { total, totalRevenue, totalUnits, series };
+  const s=await metricsSnapshot(admin,metricsPeriod(days));return{total:s.pipeline?.booking_requests,totalRevenue:null,totalUnits:null,series:[],as_of:s.as_of};
 }
 
 async function fetchUserStats() {
@@ -183,29 +169,7 @@ async function fetchUserStats() {
 }
 
 async function fetchUnitStats() {
-  const { data: units } = await admin
-    .from("units_status_read")
-    .select("status, price")
-    .eq("is_test", false)
-    .limit(5000);
-  const u = units ?? [];
-  const total = u.length;
-  const rented = u.filter((x) => x.status === "rented").length;
-  const reserved = u.filter((x) => x.status === "reserved").length;
-  const available = u.filter((x) => x.status === "available").length;
-  const actualRevenue = u
-    .filter((x) => x.status === "rented")
-    .reduce((s, x) => s + Number(x.price), 0);
-  const potentialRevenue = u.reduce((s, x) => s + Number(x.price), 0);
-  return {
-    total,
-    rented,
-    reserved,
-    available,
-    occupancy_rate: total > 0 ? +((rented / total) * 100).toFixed(2) : 0,
-    actualRevenue,
-    potentialRevenue,
-  };
+  return legacyMetricUnits(await metricsSnapshot(admin));
 }
 
 async function fetchApiKeyStats() {
