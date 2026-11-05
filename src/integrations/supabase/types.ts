@@ -176,6 +176,36 @@ export type Database = {
         }
         Relationships: []
       }
+      archived_rows: {
+        Row: {
+          archive_reason: string
+          archived_at: string
+          archived_by: string | null
+          id: string
+          row_data: Json
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          archive_reason: string
+          archived_at?: string
+          archived_by?: string | null
+          id?: string
+          row_data: Json
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          archive_reason?: string
+          archived_at?: string
+          archived_by?: string | null
+          id?: string
+          row_data?: Json
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -276,6 +306,9 @@ export type Database = {
       }
       bookings: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           business_name: string | null
           confirmation_sent_at: string | null
           cr_number: string | null
@@ -303,6 +336,9 @@ export type Database = {
           whatsapp_sent: boolean
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           business_name?: string | null
           confirmation_sent_at?: string | null
           cr_number?: string | null
@@ -330,6 +366,9 @@ export type Database = {
           whatsapp_sent?: boolean
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           business_name?: string | null
           confirmation_sent_at?: string | null
           cr_number?: string | null
@@ -399,6 +438,9 @@ export type Database = {
       customer_profiles: {
         Row: {
           activity_type: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           avatar_url: string | null
           business_name: string | null
           created_at: string
@@ -412,6 +454,9 @@ export type Database = {
         }
         Insert: {
           activity_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           avatar_url?: string | null
           business_name?: string | null
           created_at?: string
@@ -425,6 +470,9 @@ export type Database = {
         }
         Update: {
           activity_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           avatar_url?: string | null
           business_name?: string | null
           created_at?: string
@@ -560,6 +608,9 @@ export type Database = {
       }
       interested_customers: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           business_name: string | null
           created_at: string
           created_by: string | null
@@ -578,6 +629,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           business_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -596,6 +650,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           business_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -618,6 +675,9 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           booking_id: string | null
           cr_number: string | null
           created_at: string
@@ -636,12 +696,17 @@ export type Database = {
           period_end: string | null
           period_start: string | null
           receipt_image_url: string | null
+          reversal_reason: string | null
+          reverses_id: string | null
           tenant_account_id: string | null
           unit_id: string | null
           updated_at: string
         }
         Insert: {
           amount?: number
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           booking_id?: string | null
           cr_number?: string | null
           created_at?: string
@@ -660,12 +725,17 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           receipt_image_url?: string | null
+          reversal_reason?: string | null
+          reverses_id?: string | null
           tenant_account_id?: string | null
           unit_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           booking_id?: string | null
           cr_number?: string | null
           created_at?: string
@@ -684,11 +754,20 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           receipt_image_url?: string | null
+          reversal_reason?: string | null
+          reverses_id?: string | null
           tenant_account_id?: string | null
           unit_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_tenant_account_id_fkey"
             columns: ["tenant_account_id"]
@@ -707,6 +786,9 @@ export type Database = {
       }
       leads: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           created_by: string | null
           full_name: string
@@ -719,6 +801,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           full_name: string
@@ -731,6 +816,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           full_name?: string
@@ -1180,6 +1268,9 @@ export type Database = {
       tenant_accounts: {
         Row: {
           activity_type: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           business_name: string | null
           cr_number: string | null
           created_at: string
@@ -1187,18 +1278,25 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          merge_snapshot: Json | null
           merged_at: string | null
           merged_by: string | null
           merged_into: string | null
+          merged_into_id: string | null
           notes: string | null
           paid_amount: number
           phone: string | null
           total_price: number
+          unmerged_at: string | null
+          unmerged_by: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           activity_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           business_name?: string | null
           cr_number?: string | null
           created_at?: string
@@ -1206,18 +1304,25 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          merge_snapshot?: Json | null
           merged_at?: string | null
           merged_by?: string | null
           merged_into?: string | null
+          merged_into_id?: string | null
           notes?: string | null
           paid_amount?: number
           phone?: string | null
           total_price?: number
+          unmerged_at?: string | null
+          unmerged_by?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           activity_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           business_name?: string | null
           cr_number?: string | null
           created_at?: string
@@ -1225,13 +1330,17 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          merge_snapshot?: Json | null
           merged_at?: string | null
           merged_by?: string | null
           merged_into?: string | null
+          merged_into_id?: string | null
           notes?: string | null
           paid_amount?: number
           phone?: string | null
           total_price?: number
+          unmerged_at?: string | null
+          unmerged_by?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1239,6 +1348,13 @@ export type Database = {
           {
             foreignKeyName: "tenant_accounts_merged_into_fkey"
             columns: ["merged_into"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_accounts_merged_into_id_fkey"
+            columns: ["merged_into_id"]
             isOneToOne: false
             referencedRelation: "tenant_accounts"
             referencedColumns: ["id"]
@@ -1398,6 +1514,9 @@ export type Database = {
       unit_collections: {
         Row: {
           amount: number
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -1406,12 +1525,17 @@ export type Database = {
           proof_name: string | null
           proof_path: string | null
           proof_size: number | null
+          reversal_reason: string | null
+          reverses_id: string | null
           tenant_account_id: string
           unit_id: string
           updated_at: string
         }
         Insert: {
           amount: number
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1420,12 +1544,17 @@ export type Database = {
           proof_name?: string | null
           proof_path?: string | null
           proof_size?: number | null
+          reversal_reason?: string | null
+          reverses_id?: string | null
           tenant_account_id: string
           unit_id: string
           updated_at?: string
         }
         Update: {
           amount?: number
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1434,11 +1563,20 @@ export type Database = {
           proof_name?: string | null
           proof_path?: string | null
           proof_size?: number | null
+          reversal_reason?: string | null
+          reverses_id?: string | null
           tenant_account_id?: string
           unit_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "unit_collections_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: false
+            referencedRelation: "unit_collections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unit_collections_tenant_account_id_fkey"
             columns: ["tenant_account_id"]
@@ -1511,6 +1649,7 @@ export type Database = {
           id: string
           price: number
           status: string
+          status_before_maintenance: string | null
           unit_number: number
           unit_type: string | null
           updated_at: string
@@ -1523,6 +1662,7 @@ export type Database = {
           id?: string
           price?: number
           status?: string
+          status_before_maintenance?: string | null
           unit_number: number
           unit_type?: string | null
           updated_at?: string
@@ -1535,6 +1675,7 @@ export type Database = {
           id?: string
           price?: number
           status?: string
+          status_before_maintenance?: string | null
           unit_number?: number
           unit_type?: string | null
           updated_at?: string
@@ -1575,6 +1716,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _assert_admin_writer: { Args: never; Returns: undefined }
+      _assert_reason: { Args: { _reason: string }; Returns: string }
+      _safety_audit: {
+        Args: {
+          _action: string
+          _after: Json
+          _before: Json
+          _id: string
+          _reason: string
+          _table: string
+        }
+        Returns: undefined
+      }
       adjust_payment: {
         Args: { _amount: number; _notes?: string; _tenant_account_id: string }
         Returns: string
@@ -1583,6 +1737,21 @@ export type Database = {
       admin_link_tenant_units: {
         Args: { _tenant_account_id: string; _unit_ids: string[] }
         Returns: undefined
+      }
+      admin_list_inactive_tenant_accounts: {
+        Args: never
+        Returns: {
+          at: string
+          business_name: string
+          can_unmerge: boolean
+          full_name: string
+          id: string
+          kind: string
+          merged_into_id: string
+          merged_into_name: string
+          phone: string
+          reason: string
+        }[]
       }
       admin_list_tenant_accounts: {
         Args: never
@@ -1637,8 +1806,28 @@ export type Database = {
         Args: { _tenant_account_id: string; _unit_id: string }
         Returns: undefined
       }
+      admin_unmerge_tenant_account: {
+        Args: { _merged_id: string; _reason: string }
+        Returns: Json
+      }
       admin_user_directory: { Args: never; Returns: Json }
+      archive_record: {
+        Args: { _id: string; _reason: string; _table: string }
+        Returns: undefined
+      }
+      archive_tenant: {
+        Args: { _reason: string; _unit_id: string }
+        Returns: Json
+      }
+      archive_tenant_account: {
+        Args: { _reason: string; _tenant_account_id: string }
+        Returns: undefined
+      }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
+      cancel_booking_with_reason: {
+        Args: { _booking_id: string; _reason: string }
+        Returns: undefined
+      }
       claim_marketing_recipient: {
         Args: { _campaign_id: string }
         Returns: {
@@ -1671,6 +1860,10 @@ export type Database = {
           created_accounts: number
           linked_units: number
         }[]
+      }
+      control_set_maintenance: {
+        Args: { _on: boolean; _unit_id: string }
+        Returns: string
       }
       create_booking:
         | {
@@ -1803,6 +1996,22 @@ export type Database = {
         }
         Returns: string
       }
+      remove_booking_units: {
+        Args: {
+          _booking_id: string
+          _booking_unit_ids: string[]
+          _reason: string
+        }
+        Returns: Json
+      }
+      reverse_collection: {
+        Args: { _collection_id: string; _reason: string }
+        Returns: string
+      }
+      reverse_payment: {
+        Args: { _invoice_id: string; _reason: string }
+        Returns: string
+      }
       set_booking_paid_amount: {
         Args: { _booking_id: string; _paid_amount: number }
         Returns: undefined
@@ -1813,6 +2022,10 @@ export type Database = {
       }
       sync_all_rented_units_to_accounts: { Args: never; Returns: number }
       touch_api_key: { Args: { _id: string }; Returns: undefined }
+      unarchive_record: {
+        Args: { _id: string; _reason: string; _table: string }
+        Returns: undefined
+      }
       unlink_my_telegram: { Args: { _chat_id: number }; Returns: undefined }
       verify_api_key: {
         Args: { _key_hash: string }

@@ -43,6 +43,13 @@
       "when": 1793878405004,
       "tag": "0005_manager_admin_read_only",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793885701221,
+      "tag": "0006_safety_lock_archive_reversal",
+      "breakpoints": true
     }
   ]
 }
