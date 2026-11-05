@@ -2985,6 +2985,7 @@ export type Database = {
         | "manager"
         | "tenant"
         | "leasing_manager"
+        | "sales_agent"
       unit_leasing_status:
         | "available"
         | "on_hold"
@@ -3126,6 +3127,7 @@ export const Constants = {
         "manager",
         "tenant",
         "leasing_manager",
+        "sales_agent",
       ],
       unit_leasing_status: [
         "available",

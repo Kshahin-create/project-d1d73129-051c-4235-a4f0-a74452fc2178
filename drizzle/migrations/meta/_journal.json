@@ -169,6 +169,13 @@
       "when": 1793892811883,
       "tag": "0023_unit_status_single_audit_event",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793895903906,
+      "tag": "0024_crm_add_sales_agent_role",
+      "breakpoints": true
     }
   ]
 }
