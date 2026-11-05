@@ -20,12 +20,9 @@ const UNIT_HEADER = [
   "تاريخ البداية","تاريخ النهاية","ملاحظات",
 ];
 
-const STATUS_AR: Record<string,string> = { available:"متاحة", reserved:"محجوزة", rented:"مؤجرة" };
-const AR_STATUS: Record<string,string> = {
-  "متاحة":"available","متاح":"available","شاغرة":"available","شاغر":"available",
-  "محجوزة":"reserved","محجوز":"reserved",
-  "مؤجرة":"rented","مؤجر":"rented","مستأجرة":"rented","مستأجر":"rented",
-};
+const STATUS_AR: Record<string,string> = { available:"متاحة", reserved:"محجوزة", rented:"مؤجرة", maintenance:"صيانة" };
+// Unknown statuses are never shown as "available"; they are written as an explicit error marker and logged.
+const UNKNOWN_STATUS = "خطأ: حالة غير معروفة";
 const BOOKING_STATUS_AR: Record<string,string> = {
   pending:"قيد الانتظار", confirmed:"مؤكد", cancelled:"ملغي", expired:"منتهي",
 };
@@ -480,11 +477,16 @@ Deno.serve(async (req) => {
           if (u.status === "available") stat.available++;
           else if (u.status === "reserved") { stat.reserved++; stat.priceReserved += price; }
           else if (u.status === "rented") { stat.rented++; stat.priceRented += price; }
+          if (!STATUS_AR[u.status]) {
+            const msg = `مبنى ${b} وحدة ${u.unit_number}: حالة غير معروفة "${u.status ?? ""}"`;
+            console.error("[buildings-sheets-sync] unknown unit status:", msg);
+            statusErrors.push(msg);
+          }
           rows.push([
             Number(u.unit_number) || "",
             u.unit_type || "", Number(u.area) || 0, u.activity || "",
             price, paid, remaining,
-            STATUS_AR[u.status] || u.status || "",
+            STATUS_AR[u.status] || UNKNOWN_STATUS,
             t.tenant_name || "", fmtPhone(t.phone || ""), t.business_name || "",
             t.cr_number ? "'" + t.cr_number : "",
             t.start_date || "", t.end_date || "", t.notes || "",
@@ -630,7 +632,7 @@ Deno.serve(async (req) => {
         collectionsData.push([
           Number(u.building_number) || "",
           Number(u.unit_number) || "",
-          STATUS_AR[u.status] || u.status || "",
+          STATUS_AR[u.status] || UNKNOWN_STATUS,
           t.tenant_name || acc.full_name || "",
           t.business_name || acc.business_name || "",
           price,
