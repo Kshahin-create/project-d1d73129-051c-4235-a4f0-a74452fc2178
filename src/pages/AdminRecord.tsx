@@ -31,8 +31,7 @@ function RecordTab({kind,id,row,tab,spec}:{kind:RecordKind;id:string;row:AdminRo
    if(tab==="السجل"){
      if(kind==="units"){const r=await adminClient.rpc("admin_unit_timeline",{_unit:id,_limit:25,_offset:page*25});if(r.error)throw r.error;return{...r.data as {rows:AdminRow[];count:number},table:"timeline"};}
      const audit=auth.isAdmin?await read("audit_log",{entity_table:kind==="parties"?"parties":spec.table,entity_id:id}):{rows:[],count:0,table:"audit_log"};
-     const status=kind==="units"&&(auth.isAdmin||auth.isManager)?await read("unit_status_history",{unit_id:id},"at"):{rows:[],count:0};
-     return{...audit,rows:[...audit.rows,...status.rows].sort((a,b)=>String(b.at??b.created_at).localeCompare(String(a.at??a.created_at))),count:audit.count+status.count};
+     return audit;
    }
    if(tab==="التواصل")return read("party_contacts",{party_id:id});
    if(tab==="التخصيصات")return read("receipt_allocations",{receipt_id:id});
@@ -72,7 +71,7 @@ function UnitContext({unit}:{unit:AdminRow}){
 function LinkedUnitList({id,target}:{id:string;target:"bookings"|"contracts"|"installments"}){
  const q=useQuery({queryKey:["unit-record-links",id,target],queryFn:async()=>{const r=await adminClient.from(target==="bookings"?"booking_units":"contract_units").select(target==="bookings"?"booking_id":"contract_id").eq("unit_id",id);if(r.error)throw r.error;return r.data as AdminRow[];}});
  if(q.isError)return <p role="alert" className="text-destructive">تعذر تحميل الروابط</p>;
- return <div className="space-y-6">{q.data?.map((link,index)=><div key={index}><Link className="text-primary hover:underline" to={recordHref(target==="bookings"?"bookings":"contracts",String(link.booking_id??link.contract_id))}>فتح {target==="bookings"?"الحجز":"العقد"}</Link>{target==="installments"&&<AdminServerList spec={adminLists.installments} filters={{contract_id:String(link.contract_id)}}/>}</div>)}{!q.data?.length&&<p className="text-muted-foreground">لا سجلات مرتبطة متاحة</p>}</div>;
+ return <div className="space-y-6">{q.data?.map((link,index)=><div key={index}><Link className="text-primary hover:underline" to={recordHref(target==="bookings"?"bookings":"contracts",String(link.booking_id??link.contract_id))}>فتح {target==="bookings"?"الحجز":"العقد"}</Link>{target==="installments"&&<div className="space-y-6"><AdminServerList spec={adminLists.installments} filters={{contract_id:String(link.contract_id)}}/><AdminServerList spec={adminLists.receipts} filters={{contract_id:String(link.contract_id)}}/></div>}</div>)}{!q.data?.length&&<p className="text-muted-foreground">لا سجلات مرتبطة متاحة</p>}</div>;
 }
 function LinkedUnits({kind,id}:{kind:RecordKind;id:string}){
  const [page,setPage]=useState(0);const q=useQuery({queryKey:["record-unit-links",kind,id,page],queryFn:async()=>{let request=adminClient.from(kind==="contracts"?"contract_units":kind==="bookings"?"booking_units":"contracts").select(kind==="parties"?"id,contract_units(unit_id,units(id,unit_number,building_number))":"unit_id,units(id,unit_number,building_number)",{count:"exact"}).eq(kind==="contracts"?"contract_id":kind==="bookings"?"booking_id":"party_id",id);const r=await request.order("id").range(page*25,page*25+24);if(r.error)throw r.error;return{rows:r.data as AdminRow[],count:r.count??0};}});
