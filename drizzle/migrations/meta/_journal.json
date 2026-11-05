@@ -141,6 +141,13 @@
       "when": 1793892566357,
       "tag": "0019_contract_record_identifier_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793892592935,
+      "tag": "0020_unit_status_contract_reference_scope",
+      "breakpoints": true
     }
   ]
 }
