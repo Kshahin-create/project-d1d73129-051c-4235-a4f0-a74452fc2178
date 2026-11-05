@@ -1,12 +1,20 @@
 // buildings: explicit building numbers for the activity (owner-provided mapping); null = classify by building type.
 export const BOOKING_ACTIVITIES = [
   { key: "service", short: "صيانة السيارات", title: "ورش صيانة السيارات", description: "مباني 1 إلى 6 ومبنى 11", marker: "صيانة", buildings: [1, 2, 3, 4, 5, 6, 11] },
-  { key: "parts", short: "قطع الغيار", title: "قطع غيار وبطاريات وزينة سيارات", description: "مباني 7 إلى 10 ومبنى 12 (جهة الورش)", marker: "قطع غيار", buildings: [7, 8, 9, 10, 12] },
-  { key: "tires", short: "بناشر ومغاسل", title: "بناشر ومغاسل", description: "مباني 7 إلى 10", marker: "بناشر", buildings: [7, 8, 9, 10] },
+  { key: "parts", short: "قطع الغيار", title: "قطع غيار السيارات", description: "مباني 7 إلى 10 و12 و13 ومبنى 22", marker: "قطع غيار", buildings: [7, 8, 9, 10, 12, 13, 22] },
+  { key: "batteries-decor", short: "بطاريات وزينة", title: "بطاريات وزينة السيارات", description: "على وحدات قطع الغيار — مباني 7 إلى 10", marker: "بطاريات", buildings: [7, 8, 9, 10] },
+  { key: "tires", short: "البناشر والإطارات", title: "البناشر والإطارات", description: "مباني 7 إلى 10", marker: "بناشر", buildings: [7, 8, 9, 10] },
+  { key: "car-wash", short: "مغاسل السيارات", title: "مغاسل السيارات", description: "على وحدات البناشر — مباني 7 إلى 10", marker: "مغسلة", buildings: [7, 8, 9, 10] },
+  { key: "quick-maintenance", short: "صيانة سريعة", title: "خدمات صيانة السيارات السريعة", description: "مباني 12 و13 ومبنى 22", marker: "صيانة سريعة", buildings: [12, 13, 22] },
+  { key: "large-maintenance", short: "مراكز صيانة كبيرة", title: "مراكز صيانة السيارات الكبيرة", description: "على وحدات المعارض — مبنى 22", marker: "مركز صيانة", buildings: [22] },
+  { key: "restaurants", short: "مطاعم وكافيهات", title: "المطاعم والكافتيريات والكافيهات", description: "مباني 12 و13", marker: "مطعم", buildings: [12, 13] },
+  { key: "icecream-juices", short: "آيس كريم وعصيرات", title: "الآيس كريم والعصيرات", description: "مباني 12 و13", marker: "عصيرات", buildings: [12, 13] },
   { key: "shops", short: "محلات تجارية", title: "المحلات التجارية والمعارض", description: "محلات ومعارض تجارية — مباني 12 و13 ومبنى 22", marker: "محل", buildings: [12, 13, 22] },
   { key: "car-showrooms", short: "معارض السيارات", title: "معارض السيارات", description: "معارض السيارات — مبنى 22", marker: "معرض سيارات", buildings: [22] },
   { key: "carpentry", short: "النجارة", title: "ورش النجارة", description: "ورش النجارة والأخشاب", marker: "نجارة", buildings: null },
   { key: "smithing", short: "الألمنيوم والحدادة", title: "ورش الألمنيوم والحدادة", description: "ورش الألمنيوم وأعمال الحدادة", marker: "حدادة", buildings: null },
+  { key: "glass", short: "ورش الزجاج", title: "ورش الزجاج", description: "مباني 14 إلى 19", marker: "زجاج", buildings: [14, 15, 16, 17, 18, 19] },
+  { key: "civil-defense", short: "الدفاع المدني", title: "أنشطة الدفاع المدني", description: "مباني 14 إلى 19", marker: "دفاع مدني", buildings: [14, 15, 16, 17, 18, 19] },
   { key: "warehouse-a", short: "مستودعات (أ)", title: "مستودعات متوسطة — مواد غير قابلة للاحتراق", description: "سيراميك وبورسلان، أدوات صحية، مواد بناء (أسمنت، جبس، حجر، رخام)، حديد وألومنيوم، زجاج ومرايا، قطع غيار صناعية معدنية، محركات كهربائية، أثاث وخزائن معدنية، أوانٍ معدنية وخزفية — مباني 23 إلى 30 ومبنى 32", marker: "مستودع", buildings: [23, 24, 25, 26, 27, 28, 29, 30, 32] },
   { key: "warehouse-b", short: "مستودعات (ب)", title: "مستودعات متوسطة — ملابس وأثاث وورق", description: "ملابس ومنسوجات، أثاث خشبي ومنجّد، مفروشات وسجاد ومراتب، أخشاب، ورق وكرتون وكتب، مواد تغليف، حقائب وجلديات، إطارات مركبات، منتجات بلاستيكية — مباني 31 و33 و34 و35", marker: "مستودع", buildings: [31, 33, 34, 35] },
 ] as const;
