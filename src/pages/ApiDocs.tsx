@@ -49,7 +49,7 @@ interface Endpoint {
 }
 
 // ---------- Endpoints (rich metadata) ----------
-const endpoints: Endpoint[] = [
+const allEndpoints: Endpoint[] = [
   {
     id: "list-buildings",
     method: "GET",
@@ -160,7 +160,7 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/units/:id",
     title: "تفاصيل وحدة",
-    desc: "تفاصيل وحدة بالـ UUID + بيانات المستأجر إن وجد.",
+    desc: "تفاصيل وحدة بالـ UUID (حقول الوحدة فقط، بدون أي بيانات شخصية).",
     scope: "read",
     pathParams: [
       {
@@ -181,14 +181,6 @@ const endpoints: Endpoint[] = [
         activity: "قطع غيار",
         price: 60000,
         status: "rented",
-        tenant: {
-          id: "uuid",
-          tenant_name: "أحمد محمد",
-          business_name: "ورشة النخبة",
-          phone: "+966500000000",
-          activity_type: "قطع غيار",
-          start_date: "2026-01-01",
-        },
       },
     },
   },
@@ -413,19 +405,16 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/bookings",
     title: "قائمة الحجوزات",
-    desc: "كل الحجوزات مع وحداتها. يتطلب صلاحية `write`.",
-    scope: "write",
+    desc: "الحجوزات بمعرّفاتها الحقيقية مع وحداتها والمجاميع فقط — بدون اسم أو جوال أو بريد أو رقم هوية.",
+    scope: "read",
     queryParams: [
-      { name: "status", type: "string", desc: "pending | confirmed | cancelled", example: "pending" },
-      { name: "user_id", type: "uuid", desc: "تصفية بحسب المستخدم" },
+      { name: "status", type: "string", desc: "pending | confirmed | cancelled | expired", example: "pending" },
     ],
     response: {
       data: [
         {
           id: "uuid",
-          user_id: "uuid",
-          customer_full_name: "أحمد محمد",
-          customer_phone: "+966500000000",
+          offer_number: "OF-0001",
           status: "pending",
           total_area: 100,
           total_price: 120000,
@@ -442,8 +431,8 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/bookings/:id",
     title: "تفاصيل حجز",
-    desc: "تفاصيل حجز محدد بكل وحداته.",
-    scope: "write",
+    desc: "تفاصيل حجز محدد بكل وحداته (بدون بيانات شخصية).",
+    scope: "read",
     pathParams: [{ name: "id", type: "uuid", required: true, desc: "معرف الحجز" }],
     response: { data: { id: "uuid", status: "pending", booking_units: [] } },
   },
@@ -664,6 +653,10 @@ const endpoints: Endpoint[] = [
     notes: ["كل المبالغ بالريال السعودي (SAR)."],
   },
 ];
+
+// The legacy API is read-only and never returns personal data: only these GET routes remain.
+const KEPT_ENDPOINTS = new Set(["/buildings", "/buildings/:number", "/units", "/units/:id", "/bookings", "/bookings/:id", "/stats", "/stats/overview"]);
+const endpoints: Endpoint[] = allEndpoints.filter((e) => e.method === "GET" && KEPT_ENDPOINTS.has(e.path));
 
 // ---------- Code generators per language ----------
 function buildUrl(e: Endpoint): string {
