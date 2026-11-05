@@ -42,7 +42,6 @@ describe("owner activity-to-building mapping", () => {
     expect([7, 10, 12].filter(n => buildingInActivity({ number: n, type: "" }, "car-wash"))).toEqual([7, 10]);
     expect([7, 12, 13, 14].filter(n => buildingInActivity({ number: n, type: "" }, "restaurants"))).toEqual([12, 13]);
     expect([13, 14, 19, 20].filter(n => buildingInActivity({ number: n, type: "" }, "glass"))).toEqual([14, 19]);
-    expect([12, 22, 21].filter(n => buildingInActivity({ number: n, type: "" }, "quick-maintenance"))).toEqual([12, 22]);
   });
 });
 

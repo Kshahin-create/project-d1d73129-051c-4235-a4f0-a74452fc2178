@@ -1,4 +1,4 @@
-import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, Store, Car, Hammer, Flame, Warehouse, Package, MapPin, BatteryCharging, Zap, UtensilsCrossed, IceCreamCone, PanelTop, ShieldAlert, type LucideIcon } from "lucide-react";
+import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, Store, Car, Hammer, Flame, Warehouse, Package, MapPin, BatteryCharging, UtensilsCrossed, IceCreamCone, PanelTop, ShieldAlert, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
@@ -41,7 +41,6 @@ const ACTIVITY_MAPS: Partial<Record<BookingActivity, string>> = {
   "batteries-decor": partsMap.url,
   "car-wash": partsMap.url,
   "large-maintenance": carShowroomsMap.url,
-  "quick-maintenance": shopsMap.url,
   restaurants: shopsMap.url,
   "icecream-juices": shopsMap.url,
 };
@@ -95,7 +94,6 @@ ACTIVITY_HOTSPOTS["car-showrooms"] = [
 ];
 
 ACTIVITY_HOTSPOTS["large-maintenance"] = ACTIVITY_HOTSPOTS["car-showrooms"];
-ACTIVITY_HOTSPOTS["quick-maintenance"] = ACTIVITY_HOTSPOTS.shops;
 ACTIVITY_HOTSPOTS.restaurants = ACTIVITY_HOTSPOTS.shops!.filter((h) => h.number === 12 || h.number === 13);
 ACTIVITY_HOTSPOTS["icecream-juices"] = ACTIVITY_HOTSPOTS.restaurants;
 
