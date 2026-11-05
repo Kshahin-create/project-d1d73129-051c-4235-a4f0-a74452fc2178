@@ -1,0 +1,12 @@
+DO $$ DECLARE d text;BEGIN SELECT pg_get_functiondef('public.unit_status_regression_tests()'::regprocedure) INTO d;d:=replace(d,'rejected:=false;BEGIN PERFORM public.set_unit_status(uid,''leased'',''انتقال غير مسموح''', 'rejected:=false;BEGIN PERFORM public.set_unit_status(uid,''leased'',''انتقال غير مسموح''');d:=replace(d,'result:=result||jsonb_build_object(''illegal_transition_rejected'',true);', 'result:=result||jsonb_build_object(''illegal_transition_rejected'',true);
+ UPDATE public.user_roles SET is_active=false WHERE user_id=actor;
+ INSERT INTO public.user_roles(user_id,role,is_active) VALUES(actor,''control'',true) ON CONFLICT(user_id,role) DO UPDATE SET is_active=true;
+ PERFORM public.set_unit_status(uid,''maintenance'',''اختبار وضع الصيانة'',''maintenance'',NULL);
+ PERFORM public.set_unit_status(uid,''available'',''اختبار رفع الصيانة'',''maintenance'',NULL);
+ rejected:=false;BEGIN PERFORM public.set_unit_status(uid,''blocked'',''منع التحكم من الإيقاف'',''manual'',NULL);EXCEPTION WHEN OTHERS THEN rejected:=true;END;IF NOT rejected THEN RAISE EXCEPTION ''فشل صلاحيات التحكم'';END IF;
+ UPDATE public.user_roles SET is_active=false WHERE user_id=actor;
+ INSERT INTO public.user_roles(user_id,role,is_active) VALUES(actor,''manager'',true) ON CONFLICT(user_id,role) DO UPDATE SET is_active=true;
+ rejected:=false;BEGIN PERFORM public.set_unit_status(uid,''maintenance'',''منع المدير من التعديل'',''maintenance'',NULL);EXCEPTION WHEN OTHERS THEN rejected:=true;END;IF NOT rejected THEN RAISE EXCEPTION ''فشل منع المدير'';END IF;
+ UPDATE public.user_roles SET is_active=false WHERE user_id=actor;UPDATE public.user_roles SET is_active=true WHERE user_id=actor AND role=''admin'';
+ result:=result||jsonb_build_object(''control_maintenance_only'',true,''manager_read_only'',true);');d:=replace(d,'<>5 THEN','<>7 THEN');EXECUTE d;END $$;
+SELECT exists(SELECT 1 FROM pg_proc WHERE proname='unit_status_regression_tests');
