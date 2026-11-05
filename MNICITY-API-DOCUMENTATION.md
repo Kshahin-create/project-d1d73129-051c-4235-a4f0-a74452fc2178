@@ -12,7 +12,7 @@
 | Web app | React + Vite SPA (booking site, admin, owner dashboard) — `https://ejar.mnicity.com` |
 | Backend | Lovable Cloud (managed Postgres + Auth + Storage + Edge Functions on Deno) |
 | Integration API | Edge Function `crm-api` (this document) — **GET only** |
-| Legacy API | Edge Function `api` — older, includes write endpoints. **Not for CRM use** (see §13). |
+| Legacy API | Edge Function `api` — v2.0, **read-only (GET only)**, no personal data, CORS restricted to an allow-list. **Not for CRM use** (see §13). |
 
 Business flow that produces the data:
 
@@ -411,4 +411,4 @@ Run every 5–15 minutes via Celery beat / cron. Sync order: buildings → units
 - Projects/phases tables, contracts, payment schedules, payment review/approval — they don't exist in the platform.
 - Webhooks/push events (pull-only for now), deletion tombstones, rate limiting.
 - Write API for the CRM (phase 2).
-- **Risk:** the legacy `api` function still allows writes for keys with `write`/`admin` scopes and returns personal data under plain `read`. Do not issue such keys to the CRM; consider retiring it.
+- **Legacy `api` (v2.0):** read-only. Remaining routes: `GET /buildings`, `/buildings/:number`, `/units`, `/units/:id`, `/bookings`, `/bookings/:id`, `/stats`, `/stats/overview`. Any non-GET method returns 405. `/tenants`, `/tenant-accounts`, `/customers`, `/users`, `/audit-log`, `/invoices` return 410. Responses contain unit fields and aggregate counts only; bookings return real database IDs without customer data. Browser CORS is limited to `app_settings.api_cors_allowlist`.
