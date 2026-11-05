@@ -4460,6 +4460,15 @@ export type Database = {
     Functions: {
       _assert_admin_writer: { Args: never; Returns: undefined }
       _assert_reason: { Args: { _reason: string }; Returns: string }
+      _metrics_drilldown_base: {
+        Args: {
+          _limit?: number
+          _metric: string
+          _offset?: number
+          _scope?: Json
+        }
+        Returns: Json
+      }
       _metrics_snapshot: {
         Args: { _audience: string; _scope: Json }
         Returns: Json
@@ -5054,6 +5063,7 @@ export type Database = {
           merged_groups: number
         }[]
       }
+      metrics_admin_verify: { Args: never; Returns: Json }
       metrics_drilldown: {
         Args: {
           _limit?: number
