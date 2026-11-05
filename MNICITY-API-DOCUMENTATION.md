@@ -18,13 +18,19 @@ Business flow that produces the data:
 
 ```text
 Customer picks activity -> building -> units -> submits booking request
-   create_booking(): booking.status = pending, units.status = reserved, expires_at set
-Admin confirms after payment (manual)  -> booking.status = confirmed, units.status = rented,
-                                          tenants + tenant_accounts rows created/linked
+   create_booking(): booking.status = pending, units.leasing_status = on_hold, expires_at from app_settings
+Admin confirms request -> booking.status = confirmed, units.leasing_status = pending_contract
+Active contract + explicitly verified first receipt + manual confirmation -> units.leasing_status = leased
 No action before expires_at            -> booking.status = expired, units back to available
 Admin/customer cancels                 -> booking.status = cancelled, units back to available
 Payments are recorded as unit_collections (cash received) and invoices.
 ```
+
+Unit state now uses `leasing_status`: `available | on_hold | pending_contract | leased | maintenance | blocked`.
+`null` means unresolved legacy data awaiting review and is never bookable. Historical `units.status` is frozen.
+Read-only legacy responses project `status`: available→available, leased→rented, maintenance→maintenance,
+all other states→reserved (unavailable). CRM unit responses also include `leasing_status`; no API writes were added.
+Holds use database settings: 48 hours and one extension, by the separate leasing-manager role with a reason.
 
 Scope: **one project, one phase** ("المرحلة الأولى"). There is no projects/phases table; the API exposes them as constants via `/meta`.
 
