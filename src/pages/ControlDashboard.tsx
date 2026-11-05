@@ -104,7 +104,7 @@ const ControlDashboard = () => {
       const { data, error } = await supabase
         .from("units")
         .select(
-          "id,building_number,unit_number,unit_type,activity,area,price,status,updated_at",
+          "id,building_number,unit_number,unit_type,activity,area,price,status,status_before_maintenance,updated_at",
         )
         .order("building_number")
         .order("unit_number")
