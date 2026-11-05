@@ -151,8 +151,8 @@ const AdminBookings = () => {
       "عدد الوحدات": b.units_count,
       "إجمالي المساحة (م²)": b.total_area,
       "الإجمالي (ر.س)": b.total_price,
-      "المدفوع (ر.س)": b.paid_amount,
-      "المتبقي (ر.س)": Math.max(0, Number(b.total_price) - Number(b.paid_amount)),
+      "مدفوع تاريخي بدون الضريبة (ر.س)": b.paid_amount,
+      "فرق العرض والتحصيل التاريخي — ليس مستحق أقساط (ر.س)": Math.max(0, Number(b.total_price) - Number(b.paid_amount)),
       "خطة الدفع": PLAN_LABEL[b.payment_plan] ?? b.payment_plan,
       "الحالة": STATUS[b.status]?.label ?? b.status,
       "الوحدات": (b.booking_units ?? []).map((u) => `م${u.building_number}-و${u.unit_number}`).join(" | "),
@@ -412,16 +412,16 @@ const AdminBookings = () => {
               tone="rose"
             />
             <StatCard
-              title="إيرادات مؤكدة"
+              title="قيمة عروض مؤكدة بدون الضريبة"
               value={`${fmtNum(stats.confirmedRevenue)} ر.س`}
-              hint={`${stats.confirmedUnits} وحدة مؤجَّرة`}
+              hint={`${stats.confirmedUnits} وحدة ضمن حجوزات مؤكدة`}
               Icon={Wallet}
               tone="emerald"
             />
             <StatCard
-              title="المحصَّل فعلياً"
+              title="المحصّل التاريخي بدون الضريبة"
               value={`${fmtNum(stats.collected)} ر.س`}
-              hint={`${stats.collectionRate}% من المؤكد • متبقي ${fmtNum(stats.remaining)}`}
+              hint="الدفعات الجديدة من الإيصالات؛ التاريخي قيد مراجعة المصدر"
               Icon={Wallet}
               tone="emerald"
             />
@@ -549,15 +549,15 @@ const AdminBookings = () => {
                       السعر: <span className="num font-semibold text-foreground">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
                     </div>
                     <div className="text-muted-foreground">
-                      المدفوع: <span className={`num font-semibold ${Number(b.paid_amount) > 0 ? "text-emerald-600" : "text-foreground"}`}>{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> ر.س
+                      مدفوع تاريخي بدون الضريبة: <span className={`num font-semibold ${Number(b.paid_amount) > 0 ? "text-emerald-600" : "text-foreground"}`}>{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> ر.س
                     </div>
                   </div>
 
                   {b.status === "confirmed" && (
                     <div className="mt-2 rounded-lg bg-emerald-500/10 p-2 text-center text-xs font-semibold text-emerald-700">
-                      ✅ مؤكد • مدفوع <span className="num">{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> من <span className="num">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
+                      ✅ حجز مؤكد • مدفوع تاريخي بدون الضريبة <span className="num">{Number(b.paid_amount || 0).toLocaleString("en-US")}</span> من <span className="num">{Number(b.total_price).toLocaleString("en-US")}</span> ر.س
                       {Number(b.total_price) - Number(b.paid_amount || 0) > 0 && (
-                        <> • متبقي <span className="num">{(Number(b.total_price) - Number(b.paid_amount || 0)).toLocaleString("en-US")}</span></>
+                        <> • فرق العرض التاريخي <span className="num">{(Number(b.total_price) - Number(b.paid_amount || 0)).toLocaleString("en-US")}</span></>
                       )}
                     </div>
                   )}

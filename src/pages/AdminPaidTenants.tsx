@@ -161,9 +161,9 @@ export default function AdminPaidTenants() {
           "المبنى": "",
           "الوحدة": "",
           "سعر الوحدة": "",
-          "المسدد على الوحدة": "",
+          "تحصيل الوحدة التاريخي بدون الضريبة": "",
           "الملفات": (filesByTenant.get(t.id) ?? []).join("، "),
-          "إجمالي المحصل": t.collected_total ?? 0,
+          "إجمالي التحصيل التاريخي بدون الضريبة": t.collected_total ?? 0,
         });
       } else {
         units.forEach((u, idx) => {
@@ -176,9 +176,9 @@ export default function AdminPaidTenants() {
             "المبنى": u.building_number,
             "الوحدة": u.unit_number,
             "سعر الوحدة": u.price,
-            "المسدد على الوحدة": paidByTenantUnit.get(`${t.id}:${u.unit_id}`) ?? 0,
+            "تحصيل الوحدة التاريخي بدون الضريبة": paidByTenantUnit.get(`${t.id}:${u.unit_id}`) ?? 0,
             "الملفات": (filesByTenant.get(t.id) ?? []).join("، "),
-            "إجمالي المحصل": idx === 0 ? (t.collected_total ?? 0) : "",
+            "إجمالي التحصيل التاريخي بدون الضريبة": idx === 0 ? (t.collected_total ?? 0) : "",
           });
         });
       }
@@ -215,9 +215,9 @@ export default function AdminPaidTenants() {
       <main className="container-tight space-y-6 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl font-bold">المستأجرون المسددون</h1>
+            <h1 className="font-display text-2xl font-bold">المستأجرون — التحصيل التاريخي</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              كل المستأجرين الذين سددوا أي دفعات — مع تفاصيل الوحدات والتحصيلات والملفات
+              تحصيلات تاريخية بدون الضريبة؛ الدفعات الجديدة في الإيصالات والمصادر التاريخية قيد المراجعة
             </p>
           </div>
           <button
@@ -233,7 +233,7 @@ export default function AdminPaidTenants() {
           {[
             { label: "عدد المسددين", value: fmt(stats.count), Icon: BadgeCheck },
             { label: "إجمالي العقود", value: `${fmt(stats.totalContracts)} ر.س`, Icon: Building2 },
-            { label: "إجمالي المحصل", value: `${fmt(stats.totalCollected)} ر.س`, Icon: Wallet },
+            { label: "إجمالي التحصيل التاريخي بدون الضريبة", value: `${fmt(stats.totalCollected)} ر.س`, Icon: Wallet },
             { label: "إجمالي الوحدات", value: fmt(stats.totalUnits), Icon: FolderOpen },
           ].map((k) => (
             <div key={k.label} className="rounded-2xl border border-border bg-card p-4">
@@ -282,9 +282,9 @@ export default function AdminPaidTenants() {
                     <th className="px-3 py-3 text-right font-medium whitespace-nowrap">النوع</th>
                     <th className="px-3 py-3 text-right font-medium whitespace-nowrap">المساحة</th>
                     <th className="px-3 py-3 text-right font-medium whitespace-nowrap">سعر الوحدة</th>
-                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">المسدد على الوحدة</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">تحصيل الوحدة التاريخي بدون الضريبة</th>
                     <th className="px-3 py-3 text-right font-medium whitespace-nowrap">الملفات</th>
-                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">إجمالي المحصل</th>
+                    <th className="px-3 py-3 text-right font-medium whitespace-nowrap">إجمالي التحصيل التاريخي بدون الضريبة</th>
                     <th className="px-3 py-3 text-right font-medium whitespace-nowrap">الحالة</th>
                   </tr>
                 </thead>
@@ -382,7 +382,7 @@ export default function AdminPaidTenants() {
                         </div>
                       </div>
                       <div className="text-left text-sm">
-                        <div className="text-xs text-muted-foreground">إجمالي المحصل</div>
+                        <div className="text-xs text-muted-foreground">إجمالي التحصيل التاريخي بدون الضريبة</div>
                         <div className="font-display text-lg font-bold text-primary">
                           {fmt(Number(t.collected_total || 0))} ر.س
                         </div>

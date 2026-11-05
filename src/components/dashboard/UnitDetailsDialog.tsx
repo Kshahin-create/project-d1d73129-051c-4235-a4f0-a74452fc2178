@@ -246,32 +246,11 @@ export function UnitDetailsDialog({ unit, open, onOpenChange }: Props) {
                         ["إجمالي مرات الحجز", String(totalBookings)],
                       ]}
                     />
-                    {/* Financial breakdown */}
-                    <div className="rounded-xl border bg-gradient-to-b from-primary/5 to-card p-4">
-                      <div className="mb-2 flex items-center gap-2 text-xs font-bold text-primary">
-                        <Wallet className="h-4 w-4" /> ملخص التحصيل
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                        <MiniKV label="قيمة الوحدة" value={`${fmt(unit.price)} ر.س`} />
-                        <MiniKV label="إجمالي المدفوع" value={`${fmt(totalPaid)} ر.س`} tone="emerald" />
-                        <MiniKV label="المتبقي" value={`${fmt(remainingUnit)} ر.س`} tone={remainingUnit < 0 ? "amber" : "rose"} />
-                        <MiniKV label="عدد الدفعات" value={String(collectionsCount)} />
-                      </div>
-                      <div className="mt-3">
-                        <div className="mb-1 flex items-center justify-between text-[11px]">
-                          <span className="text-muted-foreground">نسبة التحصيل</span>
-                          <span className="num font-bold">{collectionRate}%</span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                          <div className={cn("h-full rounded-full", remainingUnit < 0 ? "bg-amber-500" : "bg-primary")} style={{ width: `${collectionRate}%` }} />
-                        </div>
-                        {remainingUnit < 0 && (
-                          <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-800">
-                            تم تحصيل مبلغ زائد عن قيمة الوحدة.
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <section className="py-3 space-y-2 border-b border-border">
+                      <h3 className="font-semibold">التحصيل التاريخي — بدون الضريبة</h3>
+                      <p className="text-sm">{fmt(totalPaid)} ريال · {collectionsCount} سجل تاريخي</p>
+                      <Button variant="outline" onClick={()=>window.location.assign("/admin/collections-report")}>الأقساط والتحصيلات المتحققة</Button>
+                    </section>
                     {currentTenant && (
                       <div className="rounded-xl border bg-gradient-to-b from-primary/5 to-card p-4">
                         <div className="mb-2 flex items-center gap-2 text-xs font-bold text-primary">
