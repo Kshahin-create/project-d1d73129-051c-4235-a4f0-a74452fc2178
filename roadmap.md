@@ -1,3 +1,9 @@
+# Phase 2 / Prompt 8 — Dashboard and metrics
+- [ ] Inspect current reporting sources and clarify grace days, collection period semantics and investor access.
+- [ ] Present affected tables/functions/edge functions/files and additive migration plan; wait for approval.
+- [ ] Implement centralized scoped metrics, role-based home and executive dashboard migration only after approval; preserve legacy URLs and financial review gate.
+- [ ] Verify definitions, scoped drilldowns, source parity across screens/API/Telegram, role restrictions and desktop/mobile.
+
 # Phase 2 / Prompt 7 — Navigation, record pages, global search
 - [x] Present affected tables/views/functions/edge functions/files and migration scope; plan approved.
 - [x] Organize six navigation sections, Settings/Developers and compatible redirects; preserve all dashboards until Prompt 8 is verified.
