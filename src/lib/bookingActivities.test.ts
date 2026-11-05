@@ -21,21 +21,27 @@ describe("booking activity scopes", () => {
 });
 import { buildingInActivity } from "./bookingActivities";
 describe("owner activity-to-building mapping", () => {
-  it("offers car showrooms only in buildings 21 and 22 without replacing commercial shops", () => {
+  it("offers car showrooms only in building 22 while 21 is closed without replacing commercial shops", () => {
     expect(parseBookingActivity("car-showrooms")).toBe("car-showrooms");
-    expect([12, 13, 21, 22].filter(number => buildingInActivity({ number, type: "" }, "car-showrooms"))).toEqual([21, 22]);
-    expect([12, 13, 21, 22].filter(number => buildingInActivity({ number, type: "" }, "shops"))).toEqual([12, 13, 21, 22]);
+    expect([12, 13, 21, 22].filter(number => buildingInActivity({ number, type: "" }, "car-showrooms"))).toEqual([22]);
+    expect([12, 13, 21, 22].filter(number => buildingInActivity({ number, type: "" }, "shops"))).toEqual([12, 13, 22]);
   });
   it("maps buildings per the owner list", () => {
     expect(buildingInActivity({ number: 11, type: "" }, "service")).toBe(true);
     expect(buildingInActivity({ number: 7, type: "" }, "service")).toBe(false);
     expect(buildingInActivity({ number: 12, type: "" }, "parts")).toBe(true);
     expect(buildingInActivity({ number: 12, type: "" }, "shops")).toBe(true);
-    expect(buildingInActivity({ number: 21, type: "" }, "shops")).toBe(true);
+    expect(buildingInActivity({ number: 21, type: "" }, "shops")).toBe(false);
     expect(parseBookingActivity("food")).toBeNull();
     expect(buildingInActivity({ number: 9, type: "" }, "tires")).toBe(true);
     expect(buildingInActivity({ number: 32, type: "" }, "warehouse-a")).toBe(true);
     expect(buildingInActivity({ number: 31, type: "" }, "warehouse-b")).toBe(true);
     expect(buildingInActivity({ number: 14, type: "ورش نجارة" }, "carpentry")).toBe(true);
+  });
+  it("adds the owner's alternative activities on their buildings", () => {
+    expect([7, 10, 12].filter(n => buildingInActivity({ number: n, type: "" }, "car-wash"))).toEqual([7, 10]);
+    expect([7, 12, 13, 14].filter(n => buildingInActivity({ number: n, type: "" }, "restaurants"))).toEqual([12, 13]);
+    expect([13, 14, 19, 20].filter(n => buildingInActivity({ number: n, type: "" }, "glass"))).toEqual([14, 19]);
+    expect([12, 22, 21].filter(n => buildingInActivity({ number: n, type: "" }, "quick-maintenance"))).toEqual([12, 22]);
   });
 });
