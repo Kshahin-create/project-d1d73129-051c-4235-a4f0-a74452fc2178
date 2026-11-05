@@ -619,6 +619,7 @@ const Admin = () => {
         confirmLabel="تأكيد الإخلاء"
         variant="destructive"
         loading={saving}
+        minReasonLength={5}
         reasonPlaceholder="مثال: انتهاء العقد / فسخ بناءً على طلب المستأجر..."
         reasonSuggestions={["انتهاء العقد", "فسخ من المستأجر", "إخلال بشروط العقد", "تصحيح إدخال خاطئ"]}
         onConfirm={handleReleaseConfirmed}
