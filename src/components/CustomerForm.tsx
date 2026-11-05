@@ -34,8 +34,8 @@ export const customerSchema = z
     .trim()
     .min(2, "يرجى ذكر النشاط التجاري")
     .max(150),
-  idType: z.enum(["commercial_registration", "national_id", "iqama"], {
-    errorMap: () => ({ message: "يرجى اختيار نوع الهوية" }),
+  idType: z.enum(["commercial_registration", "national_id", "iqama"] as const, {
+    message: "يرجى اختيار نوع الهوية",
   }),
   crNumber: z.string().trim(),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
