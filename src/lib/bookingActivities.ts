@@ -1,5 +1,22 @@
-// buildings: explicit building numbers for the activity (owner-provided mapping); null = classify by building type.
-export const BOOKING_ACTIVITIES = [
+// Activities, their buildings and unit restrictions come from the database registry
+// (public_activities / public_building_activities / public_unit_activities).
+// The seed below mirrors the registry's initial content and is used only until the
+// registry has loaded (and in unit tests). applyActivityRegistry() replaces it in place.
+
+export type BookingActivity = string;
+
+export interface ActivityDef {
+  key: string;
+  short: string;
+  title: string;
+  description: string;
+  marker: string;
+  unitType?: string;
+  riskClass?: "low" | "medium" | "high" | null;
+  buildings: number[] | null;
+}
+
+const SEED: ActivityDef[] = [
   { key: "service", short: "صيانة السيارات", title: "ورش صيانة السيارات", description: "مباني 1 إلى 6 ومبنى 11", marker: "صيانة", buildings: [1, 2, 3, 4, 5, 6, 11] },
   { key: "parts", short: "قطع الغيار", title: "قطع غيار السيارات", description: "مباني 7 إلى 10 ومبنى 22", marker: "قطع غيار", buildings: [7, 8, 9, 10, 22] },
   { key: "batteries-decor", short: "بطاريات وزينة", title: "بطاريات وزينة السيارات", description: "على وحدات قطع الغيار — مباني 7 إلى 10", marker: "بطاريات", buildings: [7, 8, 9, 10] },
@@ -8,25 +25,70 @@ export const BOOKING_ACTIVITIES = [
   { key: "large-maintenance", short: "مراكز صيانة كبيرة", title: "مراكز صيانة السيارات الكبيرة", description: "على وحدات المعارض — مبنى 22", marker: "مركز صيانة", buildings: [22] },
   { key: "shops", short: "محلات تجارية", title: "المحلات التجارية والمعارض", description: "محلات ومعارض تجارية — مباني 12 و13 ومبنى 22", marker: "محل", buildings: [12, 13, 22] },
   { key: "car-showrooms", short: "معارض السيارات", title: "معارض السيارات", description: "معارض السيارات — مبنى 22", marker: "معرض سيارات", buildings: [22] },
-  { key: "carpentry", short: "النجارة", title: "ورش النجارة", description: "ورش النجارة والأخشاب", marker: "نجارة", buildings: null },
-  { key: "smithing", short: "الألمنيوم والحدادة", title: "ورش الألمنيوم والحدادة", description: "ورش الألمنيوم وأعمال الحدادة", marker: "حدادة", buildings: null },
+  { key: "carpentry", short: "النجارة", title: "ورش النجارة", description: "ورش النجارة والأخشاب", marker: "نجارة", buildings: [14, 15, 16] },
+  { key: "smithing", short: "الألمنيوم والحدادة", title: "ورش الألمنيوم والحدادة", description: "ورش الألمنيوم وأعمال الحدادة", marker: "حدادة", buildings: [17, 18, 19] },
   { key: "glass", short: "ورش الزجاج", title: "ورش الزجاج", description: "مباني 14 إلى 19", marker: "زجاج", buildings: [14, 15, 16, 17, 18, 19] },
   { key: "civil-defense", short: "الدفاع المدني", title: "أنشطة الدفاع المدني", description: "مباني 14 إلى 19", marker: "دفاع مدني", buildings: [14, 15, 16, 17, 18, 19] },
-  { key: "warehouse-a", short: "مستودعات (أ)", title: "مستودعات متوسطة — مواد غير قابلة للاحتراق", description: "سيراميك وبورسلان، أدوات صحية، مواد بناء (أسمنت، جبس، حجر، رخام)، حديد وألومنيوم، زجاج ومرايا، قطع غيار صناعية معدنية، محركات كهربائية، أثاث وخزائن معدنية، أوانٍ معدنية وخزفية — مباني 23 إلى 30 ومبنى 32", marker: "مستودع", buildings: [23, 24, 25, 26, 27, 28, 29, 30, 32] },
-  { key: "warehouse-b", short: "مستودعات (ب)", title: "مستودعات متوسطة — ملابس وأثاث وورق", description: "ملابس ومنسوجات، أثاث خشبي ومنجّد، مفروشات وسجاد ومراتب، أخشاب، ورق وكرتون وكتب، مواد تغليف، حقائب وجلديات، إطارات مركبات، منتجات بلاستيكية — مباني 31 و33 و34 و35", marker: "مستودع", buildings: [31, 33, 34, 35] },
-] as const;
+  { key: "warehouse-a", short: "مستودعات (أ)", title: "مستودعات متوسطة — مواد غير قابلة للاحتراق", description: "مباني 23 إلى 30 ومبنى 32", marker: "مستودع", riskClass: "low", buildings: [23, 24, 25, 26, 27, 28, 29, 30, 32] },
+  { key: "warehouse-b", short: "مستودعات (ب)", title: "مستودعات متوسطة — ملابس وأثاث وورق", description: "مباني 31 و33 و34 و35", marker: "مستودع", riskClass: "medium", buildings: [31, 33, 34, 35] },
+];
+
+const SEED_RESTRICTED: Record<string, Record<number, number[]>> = {
+  tires: { 7: [75, 85, 86, 96], 8: [97, 107, 108, 118], 9: [119, 128, 129, 138], 10: [139, 148, 149, 158] },
+  "car-wash": { 7: [75, 85, 86, 96], 8: [97, 107, 108, 118], 9: [119, 128, 129, 138], 10: [139, 148, 149, 158] },
+};
+
+/** Live list of active activities (mutated in place when the registry loads). */
+export const BOOKING_ACTIVITIES: ActivityDef[] = SEED.map((a) => ({ ...a }));
+/** Activity code → building → unit numbers allowed. Activities without an entry allow every unit. */
+const RESTRICTED_UNITS: Record<string, Record<number, number[]>> = structuredClone(SEED_RESTRICTED);
+
+export const RISK_LABELS: Record<string, string> = { low: "خطورة منخفضة", medium: "خطورة متوسطة", high: "خطورة مرتفعة" };
+
+export interface RegistryRows {
+  activities: { code: string; name_ar: string; short_name: string | null; description: string | null; marker: string | null; unit_type: string | null; risk_class: string | null }[];
+  buildingActivities: { building_number: number; activity_code: string }[];
+  unitActivities: { building_number: number; unit_number: number; activity_code: string }[];
+}
+
+export function applyActivityRegistry(rows: RegistryRows): void {
+  const byActivity = new Map<string, number[]>();
+  for (const r of rows.buildingActivities) {
+    const list = byActivity.get(r.activity_code) ?? [];
+    if (!list.includes(r.building_number)) list.push(r.building_number);
+    byActivity.set(r.activity_code, list);
+  }
+  const next: ActivityDef[] = rows.activities.map((a) => ({
+    key: a.code,
+    short: a.short_name || a.name_ar,
+    title: a.name_ar,
+    description: a.description ?? "",
+    marker: a.marker ?? "",
+    unitType: a.unit_type ?? undefined,
+    riskClass: (a.risk_class as ActivityDef["riskClass"]) ?? null,
+    buildings: (byActivity.get(a.code) ?? []).sort((x, y) => x - y),
+  }));
+  BOOKING_ACTIVITIES.splice(0, BOOKING_ACTIVITIES.length, ...next);
+  for (const k of Object.keys(RESTRICTED_UNITS)) delete RESTRICTED_UNITS[k];
+  for (const r of rows.unitActivities) {
+    const byB = (RESTRICTED_UNITS[r.activity_code] ??= {});
+    (byB[r.building_number] ??= []).push(r.unit_number);
+  }
+}
+
+export function getActivity(key: string | null | undefined): ActivityDef | undefined {
+  return BOOKING_ACTIVITIES.find((a) => a.key === key);
+}
 
 export function buildingInActivity(building: { number: number; type: string }, key: BookingActivity): boolean {
-  const activity = BOOKING_ACTIVITIES.find((a) => a.key === key);
+  const activity = getActivity(key);
   if (!activity) return false;
-  if (activity.buildings) return (activity.buildings as readonly number[]).includes(building.number);
+  if (activity.buildings) return activity.buildings.includes(building.number);
   return classifyBookingActivity(building.type) === key;
 }
 
-export type BookingActivity = typeof BOOKING_ACTIVITIES[number]["key"];
-
 export function parseBookingActivity(value: string | null): BookingActivity | null {
-  return BOOKING_ACTIVITIES.find((activity) => activity.key === value)?.key ?? null;
+  return getActivity(value)?.key ?? null;
 }
 
 export function classifyBookingActivity(value: string | null): BookingActivity | null {
@@ -47,20 +109,14 @@ export function countAvailableUnits(units: ReadonlyArray<{ status: string }>): n
   return units.filter((unit) => unit.status === "available").length;
 }
 
-// Owner's red corner units; also recorded as بنشر / مغسلة سيارات in the unit sheet.
-export const TYRE_WASH_UNITS: Readonly<Record<number, readonly number[]>> = {
-  7: [75, 85, 86, 96],
-  8: [97, 107, 108, 118],
-  9: [119, 128, 129, 138],
-  10: [139, 148, 149, 158],
-};
-
 export function unitAllowedForActivity(
   unit: { buildingNumber: number; unitNumber: number },
   activity: BookingActivity | null | undefined,
 ): boolean {
-  if (activity !== "tires" && activity !== "car-wash") return true;
-  return TYRE_WASH_UNITS[unit.buildingNumber]?.includes(unit.unitNumber) ?? false;
+  if (!activity) return true;
+  const restricted = RESTRICTED_UNITS[activity];
+  if (!restricted) return true;
+  return restricted[unit.buildingNumber]?.includes(unit.unitNumber) ?? false;
 }
 
 export function countActivityAvailableUnits(

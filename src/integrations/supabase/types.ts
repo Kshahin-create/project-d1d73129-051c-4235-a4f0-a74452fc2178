@@ -92,6 +92,54 @@ export type Database = {
         }
         Relationships: []
       }
+      activities: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          marker: string | null
+          name_ar: string
+          notes: string | null
+          risk_class: string | null
+          short_name: string | null
+          sort_order: number
+          unit_type: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          marker?: string | null
+          name_ar: string
+          notes?: string | null
+          risk_class?: string | null
+          short_name?: string | null
+          sort_order?: number
+          unit_type: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          marker?: string | null
+          name_ar?: string
+          notes?: string | null
+          risk_class?: string | null
+          short_name?: string | null
+          sort_order?: number
+          unit_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -411,35 +459,88 @@ export type Database = {
           },
         ]
       }
+      building_activities: {
+        Row: {
+          activity_id: string
+          building_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          activity_id: string
+          building_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          activity_id?: string
+          building_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_activities_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buildings: {
         Row: {
+          activity_id: string | null
           booking_enabled: boolean
           created_at: string
           expected_annual_revenue: number
           id: string
+          is_published: boolean
           number: number
+          phase: number | null
           type: string
           updated_at: string
         }
         Insert: {
+          activity_id?: string | null
           booking_enabled?: boolean
           created_at?: string
           expected_annual_revenue?: number
           id?: string
+          is_published?: boolean
           number: number
+          phase?: number | null
           type: string
           updated_at?: string
         }
         Update: {
+          activity_id?: string | null
           booking_enabled?: boolean
           created_at?: string
           expected_annual_revenue?: number
           id?: string
+          is_published?: boolean
           number?: number
+          phase?: number | null
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "buildings_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_profiles: {
         Row: {
@@ -782,6 +883,13 @@ export type Database = {
             columns: ["tenant_account_id"]
             isOneToOne: false
             referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
             referencedColumns: ["id"]
           },
           {
@@ -1269,6 +1377,13 @@ export type Database = {
             foreignKeyName: "tenant_account_units_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_account_units_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
@@ -1462,6 +1577,56 @@ export type Database = {
             foreignKeyName: "tenants_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_activities: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          unit_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          unit_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_activities_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_activities_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
@@ -1511,6 +1676,13 @@ export type Database = {
           unit_number?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "unit_audit_log_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unit_audit_log_unit_id_fkey"
             columns: ["unit_id"]
@@ -1597,6 +1769,13 @@ export type Database = {
             foreignKeyName: "unit_collections_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_collections_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
@@ -1644,19 +1823,58 @@ export type Database = {
             foreignKeyName: "unit_files_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
+            referencedRelation: "public_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_files_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
       }
+      unit_import_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          id: string
+          reason: string
+          summary: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          reason: string
+          summary?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          reason?: string
+          summary?: Json
+        }
+        Relationships: []
+      }
       units: {
         Row: {
           activity: string | null
+          activity_id: string | null
           area: number
+          area_m2: number | null
+          building_id: string | null
           building_number: number
           created_at: string
           id: string
+          is_test: boolean
           price: number
+          publish_state: string
           status: string
           status_before_maintenance: string | null
           unit_number: number
@@ -1665,11 +1883,16 @@ export type Database = {
         }
         Insert: {
           activity?: string | null
+          activity_id?: string | null
           area?: number
+          area_m2?: number | null
+          building_id?: string | null
           building_number: number
           created_at?: string
           id?: string
+          is_test?: boolean
           price?: number
+          publish_state?: string
           status?: string
           status_before_maintenance?: string | null
           unit_number: number
@@ -1678,11 +1901,16 @@ export type Database = {
         }
         Update: {
           activity?: string | null
+          activity_id?: string | null
           area?: number
+          area_m2?: number | null
+          building_id?: string | null
           building_number?: number
           created_at?: string
           id?: string
+          is_test?: boolean
           price?: number
+          publish_state?: string
           status?: string
           status_before_maintenance?: string | null
           unit_number?: number
@@ -1691,10 +1919,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "units_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "units_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "units_building_number_fkey"
             columns: ["building_number"]
             isOneToOne: false
             referencedRelation: "buildings"
+            referencedColumns: ["number"]
+          },
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "public_buildings"
             referencedColumns: ["number"]
           },
         ]
@@ -1722,7 +1971,109 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_activities: {
+        Row: {
+          code: string | null
+          description: string | null
+          marker: string | null
+          name_ar: string | null
+          risk_class: string | null
+          short_name: string | null
+          sort_order: number | null
+          unit_type: string | null
+        }
+        Insert: {
+          code?: string | null
+          description?: string | null
+          marker?: string | null
+          name_ar?: string | null
+          risk_class?: string | null
+          short_name?: string | null
+          sort_order?: number | null
+          unit_type?: string | null
+        }
+        Update: {
+          code?: string | null
+          description?: string | null
+          marker?: string | null
+          name_ar?: string | null
+          risk_class?: string | null
+          short_name?: string | null
+          sort_order?: number | null
+          unit_type?: string | null
+        }
+        Relationships: []
+      }
+      public_building_activities: {
+        Row: {
+          activity_code: string | null
+          building_number: number | null
+        }
+        Relationships: []
+      }
+      public_buildings: {
+        Row: {
+          activity_code: string | null
+          booking_enabled: boolean | null
+          expected_annual_revenue: number | null
+          number: number | null
+          phase: number | null
+          type: string | null
+        }
+        Relationships: []
+      }
+      public_unit_activities: {
+        Row: {
+          activity_code: string | null
+          building_number: number | null
+          unit_number: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["number"]
+          },
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "public_buildings"
+            referencedColumns: ["number"]
+          },
+        ]
+      }
+      public_units: {
+        Row: {
+          activity: string | null
+          activity_code: string | null
+          area: number | null
+          building_number: number | null
+          id: string | null
+          price: number | null
+          status: string | null
+          unit_number: number | null
+          unit_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["number"]
+          },
+          {
+            foreignKeyName: "units_building_number_fkey"
+            columns: ["building_number"]
+            isOneToOne: false
+            referencedRelation: "public_buildings"
+            referencedColumns: ["number"]
+          },
+        ]
+      }
     }
     Functions: {
       _assert_admin_writer: { Args: never; Returns: undefined }
@@ -1800,8 +2151,23 @@ export type Database = {
         Args: { _canonical_id: string; _duplicate_ids: string[] }
         Returns: Json
       }
+      admin_set_building_registry: {
+        Args: {
+          _building_number: number
+          _extra_codes: string[]
+          _is_published: boolean
+          _phase: number
+          _primary_code: string
+          _reason: string
+        }
+        Returns: undefined
+      }
       admin_set_role: {
         Args: { _make_admin: boolean; _target_user: string }
+        Returns: undefined
+      }
+      admin_set_unit_test: {
+        Args: { _is_test: boolean; _reason: string; _unit_id: string }
         Returns: undefined
       }
       admin_set_user_role: {
@@ -1811,6 +2177,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_units_needing_completion: {
+        Args: {
+          _issue?: string
+          _limit?: number
+          _offset?: number
+          _search?: string
+        }
+        Returns: Json
+      }
       admin_unlink_tenant_unit: {
         Args: { _tenant_account_id: string; _unit_id: string }
         Returns: undefined
@@ -1818,6 +2193,23 @@ export type Database = {
       admin_unmerge_tenant_account: {
         Args: { _merged_id: string; _reason: string }
         Returns: Json
+      }
+      admin_upsert_activity: {
+        Args: {
+          _code: string
+          _description: string
+          _id: string
+          _is_active: boolean
+          _marker: string
+          _name_ar: string
+          _notes: string
+          _reason: string
+          _risk_class: string
+          _short_name: string
+          _sort_order: number
+          _unit_type: string
+        }
+        Returns: string
       }
       admin_user_directory: { Args: never; Returns: Json }
       archive_record: {
@@ -2005,6 +2397,10 @@ export type Database = {
       }
       next_invoice_number: { Args: never; Returns: string }
       next_offer_number: { Args: { _booking_id?: string }; Returns: string }
+      publish_unit: {
+        Args: { _reason: string; _state: string; _unit_id: string }
+        Returns: string
+      }
       recalc_tenant_account_total: {
         Args: { _account_id: string }
         Returns: undefined
@@ -2049,6 +2445,11 @@ export type Database = {
         Args: { _id: string; _reason: string; _table: string }
         Returns: undefined
       }
+      unit_import_apply: {
+        Args: { _file_name: string; _reason: string; _rows: Json }
+        Returns: Json
+      }
+      unit_import_preview: { Args: { _rows: Json }; Returns: Json }
       unlink_my_telegram: { Args: { _chat_id: number }; Returns: undefined }
       validate_identity: {
         Args: { _id_type: string; _number: string }

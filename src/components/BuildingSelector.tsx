@@ -1,4 +1,4 @@
-import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, Store, Car, Hammer, Flame, Warehouse, Package, MapPin, BatteryCharging, PanelTop, ShieldAlert, type LucideIcon } from "lucide-react";
+import { CheckCircle2, ArrowLeft, ArrowRight, Wrench, Cog, Droplets, Store, Car, Hammer, Flame, Warehouse, Package, MapPin, BatteryCharging, PanelTop, ShieldAlert, type LucideIcon , Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 import serviceMap from "@/assets/activity-map-service.png";
 import smithingMap from "@/assets/activity-map-smithing.png.asset.json";
@@ -10,7 +10,7 @@ import type { Building, Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BOOKING_ACTIVITIES, buildingInActivity, classifyBookingActivity, countActivityAvailableUnits, type BookingActivity } from "@/lib/bookingActivities";
+import { BOOKING_ACTIVITIES, RISK_LABELS, buildingInActivity, classifyBookingActivity, countActivityAvailableUnits, type BookingActivity } from "@/lib/bookingActivities";
 
 interface BuildingSelectorProps {
   buildings: Building[];
@@ -20,7 +20,7 @@ interface BuildingSelectorProps {
   activityFilter?: BookingActivity | null;
 }
 
-const ACTIVITY_ICONS: Record<BookingActivity, LucideIcon> = {
+const ACTIVITY_ICONS: Partial<Record<BookingActivity, LucideIcon>> = {
   service: Wrench, parts: Cog, tires: Droplets, shops: Store,
   "car-showrooms": Car, "batteries-decor": BatteryCharging, "car-wash": Droplets,
   "large-maintenance": Wrench,
@@ -101,7 +101,7 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
           const scoped = buildings.filter((b) => buildingInActivity(b, activity.key));
           const available = countActivityAvailableUnits(units.filter((u) => scoped.some((b) => b.number === u.buildingNumber)), activity.key);
           const total = scoped.reduce((s, b) => s + b.totalUnits, 0);
-          const Icon = ACTIVITY_ICONS[activity.key];
+          const Icon = ACTIVITY_ICONS[activity.key] ?? Building2;
           const ready = scoped.length > 0;
           const body = (
             <>
@@ -114,6 +114,7 @@ export const BuildingSelector = ({ buildings, units, onSelect, selected, activit
                 </span>
               </div>
               <h3 className="mt-5 font-display text-xl font-bold text-foreground">{activity.title}</h3>
+              {activity.riskClass && <span className="mt-2 inline-flex w-fit rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">{RISK_LABELS[activity.riskClass]}</span>}
               <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-muted-foreground">{activity.description}</p>
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-sm">
                 <span className="text-muted-foreground">{ready ? <><span className="num">{scoped.length}</span> مبانٍ · <span className="num">{total}</span> وحدة</> : "الوحدات تُطرح قريبًا"}</span>

@@ -46,7 +46,7 @@ const AdminBookingControl = () => {
     const since = new Date(Date.now() - 30 * 864e5).toISOString();
     const [b, u, bk] = await Promise.all([
       supabase.from("buildings").select("id,number,type,booking_enabled").order("number"),
-      supabase.from("units").select("building_number,status").limit(5000),
+      supabase.from("units").select("building_number,status").eq("is_test", false).limit(5000),
       supabase.from("bookings").select("id,customer_full_name,customer_phone,business_name,status,total_price,units_count,created_at,expires_at").gte("created_at", since).order("created_at", { ascending: false }).limit(200),
     ]);
     if (b.error || u.error || bk.error) toast.error("تعذر تحميل بعض البيانات");
