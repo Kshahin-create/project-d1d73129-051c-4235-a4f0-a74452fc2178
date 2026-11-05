@@ -9,9 +9,9 @@
 - [x] Verify authenticated directory and details on desktop/mobile without changing user records.
 
 # Manager read-only access
-- [ ] Audit and block manager administrative writes in database functions/policies and service functions.
-- [ ] Remove manager editing controls, including returning-customer marking and user deletion.
-- [ ] Test permissions and verify admin and manager views.
+- [x] Audit and block manager administrative writes in database functions/policies and service functions.
+- [x] Remove manager editing controls, including returning-customer marking and user deletion.
+- [x] Test permission rules and verify admin view plus simulated manager UI; real manager-session end-to-end remains unverified (no manager session supplied).
 
 # Email corrections
 - [x] Correct Arabic rendering and RTL in email templates.

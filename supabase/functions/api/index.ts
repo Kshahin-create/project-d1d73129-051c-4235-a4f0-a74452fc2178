@@ -24,6 +24,7 @@ interface AuthCtx {
   scopes: Scope[];
   userId?: string;
   isAdmin?: boolean;
+  isManager?: boolean;
   apiKeyId?: string;
 }
 
@@ -80,6 +81,7 @@ async function authenticate(req: Request): Promise<AuthCtx | null> {
       type: "jwt",
       userId,
       isAdmin,
+      isManager: (roles ?? []).some((r) => r.role === "manager"),
       scopes: isAdmin ? ["read", "write", "admin"] : ["read"],
     };
   }
@@ -630,6 +632,10 @@ Deno.serve(async (req) => {
       "Unauthorized. Provide X-API-Key header or Authorization: Bearer <jwt>.",
       401,
     );
+  }
+
+  if (ctx.type === "jwt" && ctx.isManager && !ctx.isAdmin && !["GET", "HEAD"].includes(req.method)) {
+    return err("صلاحية المدير للعرض فقط", 403);
   }
 
   try {
