@@ -4158,6 +4158,7 @@ export type Database = {
         }
         Returns: string
       }
+      enable_finance_cutover: { Args: { _reason: string }; Returns: undefined }
       ensure_tenant_account_for_tenant: {
         Args: { _tenant_id: string }
         Returns: string
@@ -4409,6 +4410,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      resolve_legacy_receipt: {
+        Args: { _reason: string; _resolution: string; _source: string }
+        Returns: undefined
       }
       reverse_collection: {
         Args: { _collection_id: string; _reason: string }
