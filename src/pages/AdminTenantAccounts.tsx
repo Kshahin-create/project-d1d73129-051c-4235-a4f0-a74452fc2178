@@ -6,6 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtNum } from "@/lib/utils";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { ArchiveActionDialog, ShowArchivedToggle, type ArchiveTarget } from "@/components/ArchiveActionDialog";
+import { MIN_REASON_LENGTH } from "@/lib/safetyRules";
 import {
   Users,
   Lock,
@@ -130,6 +133,47 @@ export default function AdminTenantAccounts() {
   const [showCreate, setShowCreate] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [filesFor, setFilesFor] = useState<{ id: string; name: string } | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [inactive, setInactive] = useState<InactiveRow[]>([]);
+  const [archiveAcc, setArchiveAcc] = useState<{ id: string; name: string } | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<ArchiveTarget>(null);
+  const [unmergeTarget, setUnmergeTarget] = useState<InactiveRow | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+
+  const loadInactive = async () => {
+    const { data, error } = await supabase.rpc("admin_list_inactive_tenant_accounts" as any);
+    if (error) { toast.error(error.message); return; }
+    setInactive(((data as any) ?? []) as InactiveRow[]);
+  };
+  useEffect(() => { if (showArchived) loadInactive(); }, [showArchived]);
+
+  const doArchiveAccount = async (reason: string) => {
+    if (!archiveAcc) return;
+    setActionBusy(true);
+    try {
+      await callTenantAdmin({ action: "delete", tenant_account_id: archiveAcc.id, reason });
+      toast.success("تمت أرشفة الحساب وإيقاف دخوله");
+      setArchiveAcc(null);
+      await load();
+      if (showArchived) loadInactive();
+    } catch (e: any) {
+      toast.error(e?.message || "تعذرت الأرشفة");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const doUnmerge = async (reason: string) => {
+    if (!unmergeTarget) return;
+    setActionBusy(true);
+    const { error } = await supabase.rpc("admin_unmerge_tenant_account" as any, { _merged_id: unmergeTarget.id, _reason: reason });
+    setActionBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم التراجع عن الدمج");
+    setUnmergeTarget(null);
+    await load();
+    loadInactive();
+  };
 
   const load = async () => {
     setFetching(true);
@@ -378,21 +422,7 @@ export default function AdminTenantAccounts() {
           >
             <Download className="h-4 w-4" /> تصدير
           </button>
-          {isAdmin && <button
-            onClick={async () => {
-              if (!isAdmin) return;
-              if (!confirm("سيتم دمج المستأجرين المكررين تلقائياً بمطابقة الاسم أو اسم المنشأة بالضبط. سيتم نقل كل الوحدات والتحصيلات والملفات والفواتير إلى السجل الرئيسي، وتُخفى النسخ المكررة (تُحفظ للمراجعة). المتابعة؟")) return;
-              const { data, error } = await supabase.rpc("admin_auto_merge_duplicate_tenants");
-              if (error) { toast.error(error.message); return; }
-              const d: any = data || {};
-              toast.success(`تم الدمج: ${d.groups ?? 0} مجموعة، ${d.merged_duplicates ?? 0} سجل مكرر`);
-              load();
-            }}
-            className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 sm:text-sm"
-          >
-            <AlertTriangle className="h-4 w-4" /> دمج المكررين
-          </button>}
-
+          <ShowArchivedToggle checked={showArchived} onChange={setShowArchived} />
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -447,21 +477,11 @@ export default function AdminTenantAccounts() {
                             {isAdmin ? "إدارة" : "التفاصيل"}
                           </button>
                           {isAdmin && <button
-                            onClick={async () => {
-                              if (!isAdmin) return;
-                              if (!confirm(`حذف حساب "${r.full_name}" نهائياً؟ سيتم فك ربط الوحدات ولن يتمكن من الدخول.`)) return;
-                              try {
-                                await callTenantAdmin({ action: "delete", tenant_account_id: r.id });
-                                toast.success("تم الحذف");
-                                await load();
-                              } catch (e: any) {
-                                toast.error(e?.message || "تعذر الحذف");
-                              }
-                            }}
+                            onClick={() => isAdmin && setArchiveAcc({ id: r.id, name: r.full_name })}
                             className="inline-flex items-center gap-1 rounded-lg border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
-                            title="حذف نهائي"
+                            title="أرشفة"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Archive className="h-3 w-3" />
                           </button>}
                         </div>
                       </td>
@@ -473,7 +493,82 @@ export default function AdminTenantAccounts() {
           )}
         </div>
 
+        {showArchived && (
+          <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="border-b border-border bg-secondary/50 px-4 py-3 text-sm font-bold">الحسابات المؤرشفة والمدمجة ({inactive.length})</div>
+            {inactive.length === 0 ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">لا توجد حسابات مؤرشفة أو مدمجة</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead className="border-b border-border text-xs">
+                    <tr>
+                      <th className="p-3 text-right">الحساب</th>
+                      <th className="p-3 text-right">الحالة</th>
+                      <th className="p-3 text-right">التفاصيل</th>
+                      <th className="p-3 text-right">التاريخ</th>
+                      <th className="p-3 text-right"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inactive.map((r) => (
+                      <tr key={r.id} className="border-b border-border last:border-0">
+                        <td className="p-3 font-medium">{r.full_name}<div className="text-xs text-muted-foreground">{r.business_name || ""}</div></td>
+                        <td className="p-3 text-xs">{r.kind === "merged" ? "مدمج" : "مؤرشف"}</td>
+                        <td className="p-3 text-xs text-muted-foreground">{r.kind === "merged" ? `مدمج في: ${r.merged_into_name ?? "—"}` : r.reason || "—"}</td>
+                        <td className="p-3 text-xs text-muted-foreground">{r.at ? new Date(r.at).toLocaleDateString("ar-EG-u-nu-latn") : "—"}</td>
+                        <td className="p-3">
+                          {isAdmin && r.kind === "merged" && (
+                            <button
+                              disabled={!r.can_unmerge}
+                              title={r.can_unmerge ? "" : "دمج قديم بدون بيانات تراجع"}
+                              onClick={() => setUnmergeTarget(r)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary disabled:opacity-40"
+                            >
+                              <RotateCcw className="h-3 w-3" /> تراجع عن الدمج
+                            </button>
+                          )}
+                          {isAdmin && r.kind === "archived" && (
+                            <button
+                              onClick={() => setRestoreTarget({ id: r.id, label: r.full_name, restore: true })}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                            >
+                              <RotateCcw className="h-3 w-3" /> استرجاع
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
+      <ConfirmDialog
+        open={!!archiveAcc}
+        title="أرشفة حساب المستأجر"
+        description={archiveAcc ? `حساب «${archiveAcc.name}» هيتخفي ويتوقف دخوله، وكل بياناته تفضل محفوظة. مفيش حذف نهائي.` : ""}
+        confirmLabel="أرشفة"
+        variant="destructive"
+        loading={actionBusy}
+        minReasonLength={MIN_REASON_LENGTH}
+        onConfirm={doArchiveAccount}
+        onCancel={() => setArchiveAcc(null)}
+      />
+      <ConfirmDialog
+        open={!!unmergeTarget}
+        title="تراجع عن الدمج"
+        description={unmergeTarget ? `هيرجع «${unmergeTarget.full_name}» حساب مستقل بوحداته وفواتيره وتحصيلاته وملفاته اللي اتنقلت وقت الدمج.` : ""}
+        confirmLabel="تراجع عن الدمج"
+        loading={actionBusy}
+        minReasonLength={MIN_REASON_LENGTH}
+        onConfirm={doUnmerge}
+        onCancel={() => setUnmergeTarget(null)}
+      />
+      <ArchiveActionDialog table="tenant_accounts" target={restoreTarget} onClose={() => setRestoreTarget(null)} onDone={() => { load(); loadInactive(); }} />
 
       {isAdmin && showCreate && (
         <CreateModal
