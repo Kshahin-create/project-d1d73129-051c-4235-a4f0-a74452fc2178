@@ -1,8 +1,8 @@
 # Phase 2 / Prompt 8 — Dashboard and metrics
-- [ ] Inspect current reporting sources and clarify grace days, collection period semantics and investor access.
-- [ ] Present affected tables/functions/edge functions/files and additive migration plan; wait for approval.
-- [ ] Implement centralized scoped metrics, role-based home and executive dashboard migration only after approval; preserve legacy URLs and financial review gate.
-- [ ] Verify definitions, scoped drilldowns, source parity across screens/API/Telegram, role restrictions and desktop/mobile.
+- [x] Inspect current reporting sources and clarify grace days=3, period installment allocation ratio and independent investor access.
+- [x] Present affected tables/functions/edge functions/files and additive migration plan; approved.
+- [x] Add central snapshots/drilldowns, role home, executive presentation, investor scope, VAT display and deployed API/MCP/Telegram report adapters; preserve review gate.
+- [ ] Finish verification: admin counts/drilldown/export and deployed developer parity passed; 33 tests and 8 live DB checks passed. Dedicated role sessions and external API/MCP key checks await selected accounts/test key; synthetic real ledger attribution/reversal coverage remains unverified. Historical evidence-only report modules remain separate. Desktop/915/mobile and 708-row XLSX scope sheet verified; no final cutover/site publish or live test Telegram sends.
 
 # Phase 2 / Prompt 7 — Navigation, record pages, global search
 - [x] Present affected tables/views/functions/edge functions/files and migration scope; plan approved.

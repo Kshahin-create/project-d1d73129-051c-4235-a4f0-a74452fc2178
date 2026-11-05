@@ -137,15 +137,6 @@ const ControlDashboard = () => {
     [units],
   );
 
-  const stats = useMemo(() => {
-    const total = units.length;
-    const maintenance = units.filter((u) => u.status === "maintenance").length;
-    const available = units.filter((u) => u.status === "available").length;
-    const rented = units.filter((u) => u.status === "rented").length;
-    const reserved = units.filter((u) => u.status === "reserved").length;
-    return { total, maintenance, available, rented, reserved };
-  }, [units]);
-
   const filtered = useMemo(() => {
     return units.filter((u) => {
       if (filter !== "all" && u.status !== filter) return false;
@@ -222,20 +213,7 @@ const ControlDashboard = () => {
       </section>
 
       <main className="container-tight space-y-6 py-6">
-        {/* KPI cards */}
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <KpiCard label="إجمالي الوحدات" value={stats.total} Icon={Building2} tone="navy" />
-          <KpiCard
-            label="تحت الصيانة"
-            value={stats.maintenance}
-            Icon={Wrench}
-            tone="red"
-            highlight
-          />
-          <KpiCard label="متاحة" value={stats.available} Icon={CheckCircle2} tone="green" />
-          <KpiCard label="مؤجرة" value={stats.rented} Icon={Clock} tone="blue" />
-          <KpiCard label="محجوزة" value={stats.reserved} Icon={AlertTriangle} tone="amber" />
-        </section>
+        <Button variant="outline" onClick={()=>navigate('/dashboard')}>ملخص الصيانة والمؤشرات</Button>
 
         {/* Filters */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">

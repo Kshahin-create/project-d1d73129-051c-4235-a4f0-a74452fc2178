@@ -218,7 +218,7 @@ export const AdminSidebar = () => {
           "fixed inset-y-0 right-0 z-50 flex flex-col border-l border-border bg-card shadow-elevated transition-all duration-300",
           collapsed ? "lg:w-14" : "lg:w-56",
           "w-60",
-          mobileOpen ? "translate-x-0" : "max-lg:translate-x-full",
+          mobileOpen ? "translate-x-0" : "max-lg:hidden",
         )}
       >
         {/* Header */}

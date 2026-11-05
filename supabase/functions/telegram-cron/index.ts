@@ -1,4 +1,4 @@
-import { metricsSnapshot,metricsTelegramText } from "../_shared/metrics.ts";
+import { metricsActorSnapshot,metricsSnapshot,metricsTelegramText } from "../_shared/metrics.ts";
 // Periodic Telegram cron: daily summary, expiring bookings, overdue invoices, end-of-contract alerts.
 // Triggered by pg_cron via HTTP. Use ?job=daily|expiring|overdue|contracts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
@@ -38,7 +38,9 @@ async function broadcast(admin: any, token: string, topic: string, text: string)
 }
 
 async function jobDaily(admin: any, token: string) {
-  const snapshot=await metricsSnapshot(admin);await broadcast(admin,token,"daily_summary",metricsTelegramText(snapshot));
+  const {data:subs,error}=await admin.from("telegram_subscribers").select("chat_id,user_id,subscriptions,muted_until");if(error)throw error;
+  for(const sub of subs??[]){if(!sub.user_id||!sub.subscriptions?.includes("daily_summary")||(sub.muted_until&&Date.parse(sub.muted_until)>Date.now()))continue;try{const snapshot=await metricsActorSnapshot(admin,sub.user_id);const r=await fetch(TG(token,"sendMessage"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:sub.chat_id,text:metricsTelegramText(snapshot),parse_mode:"HTML"})});if(!r.ok)console.error("daily metric report delivery failed",r.status);}catch{console.error("daily metric report unavailable for subscriber");}}
+
 }
 
 async function jobExpiring(admin: any, token: string) {

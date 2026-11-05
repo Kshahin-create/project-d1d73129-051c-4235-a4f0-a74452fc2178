@@ -393,6 +393,27 @@
       "when": 1793918113911,
       "tag": "0055_metrics_drilldown_scope_alignment",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1793918500807,
+      "tag": "0056_metrics_receipt_attribution_and_isolated_sections",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1793918606409,
+      "tag": "0057_metrics_trusted_telegram_audiences",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793918899541,
+      "tag": "0058_metrics_inventory_server_status_counts",
+      "breakpoints": true
     }
   ]
 }

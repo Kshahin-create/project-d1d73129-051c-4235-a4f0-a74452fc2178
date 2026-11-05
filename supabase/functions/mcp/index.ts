@@ -1,3 +1,4 @@
+import { metricsSnapshot } from "../_shared/metrics.ts";
 // MCP Server for Mnicejar - exposes platform data/tools to MCP clients.
 // Auth: requires `X-API-Key: nkb_...` header (verified via verify_api_key RPC).
 import { Hono } from "hono";
@@ -156,31 +157,10 @@ mcp.tool("search_units", {
 
 mcp.tool("stats_overview", {
   description:
-    "إحصائيات سريعة: عدد الوحدات حسب الحالة، عدد الحجوزات، وإجمالي الإيراد السنوي المتوقع.",
+    "المؤشرات الموحدة: المخزون والتأجير والأقساط والتحصيل المعتمد، مع النطاق ووقت التحديث.",
   inputSchema: z.object({}),
   handler: async () => {
-    const [units, bookings, buildings] = await Promise.all([
-      admin.from("units_status_read").select("status,price,area").eq("is_test", false),
-      admin.from("bookings").select("status,total_price,units_count"),
-      admin.from("buildings").select("expected_annual_revenue"),
-    ]);
-    const byStatus: Record<string, number> = {};
-    for (const u of units.data ?? [])
-      byStatus[u.status] = (byStatus[u.status] ?? 0) + 1;
-    const bookingsByStatus: Record<string, number> = {};
-    for (const b of bookings.data ?? [])
-      bookingsByStatus[b.status] = (bookingsByStatus[b.status] ?? 0) + 1;
-    const expectedAnnual = (buildings.data ?? []).reduce(
-      (s, b) => s + Number(b.expected_annual_revenue ?? 0),
-      0,
-    );
-    return text({
-      units_total: units.data?.length ?? 0,
-      units_by_status: byStatus,
-      bookings_total: bookings.data?.length ?? 0,
-      bookings_by_status: bookingsByStatus,
-      expected_annual_revenue: expectedAnnual,
-    });
+    try {return text(await metricsSnapshot(admin));}catch{return text({error:"metrics_unavailable"});}
   },
 });
 

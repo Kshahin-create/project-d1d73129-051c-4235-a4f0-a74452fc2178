@@ -59,16 +59,6 @@ const Admin = () => {
     return list;
   }, [selectedBuilding, units, search, statusFilter]);
 
-  const stats = useMemo(() => {
-    const scope = buildingUnits;
-    const total = scope.length;
-    const rented = scope.filter((u) => u.status === "rented").length;
-    const reserved = scope.filter((u) => u.status === "reserved").length;
-    const available = scope.filter((u) => u.status === "available").length;
-    const revenue = scope.filter((u) => u.status === "rented").reduce((s, u) => s + u.price, 0);
-    return { total, rented, reserved, available, revenue };
-  }, [buildingUnits]);
-
   // Auth gate (after hooks to keep hook order stable)
   if (!authLoading && !user) {
     navigate("/auth");
@@ -247,14 +237,7 @@ const Admin = () => {
           <MaintenanceToggle />
         </div>
 
-        {/* Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <StatCard icon={<Building2 />} label="إجمالي الوحدات" value={stats.total} color="text-primary" />
-          <StatCard icon={<CheckCircle2 />} label="متاحة" value={stats.available} color="text-success" />
-          <StatCard icon={<Lock />} label="محجوزة" value={stats.reserved} color="text-accent" />
-          <StatCard icon={<Users />} label="مؤجرة" value={stats.rented} color="text-destructive" />
-          <StatCard icon={<TrendingUp />} label="إيراد سنوي" value={stats.revenue.toLocaleString("en-US")} color="text-accent" small />
-        </div>
+        <Button asChild variant="outline" className="mb-6"><Link to="/dashboard">ملخص المشروع والمؤشرات</Link></Button>
 
         <Tabs defaultValue="table" className="mb-6" dir="rtl">
           <TabsList className="mb-4">

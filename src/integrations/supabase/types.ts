@@ -4469,6 +4469,17 @@ export type Database = {
         }
         Returns: Json
       }
+      _metrics_drilldown_extended: {
+        Args: {
+          _limit?: number
+          _metric: string
+          _offset?: number
+          _scope?: Json
+        }
+        Returns: Json
+      }
+      _metrics_finance_base: { Args: { _scope?: Json }; Returns: Json }
+      _metrics_inventory_base: { Args: { _scope?: Json }; Returns: Json }
       _metrics_snapshot: {
         Args: { _audience: string; _scope: Json }
         Returns: Json
@@ -5064,6 +5075,23 @@ export type Database = {
         }[]
       }
       metrics_admin_verify: { Args: never; Returns: Json }
+      metrics_collected_rows: {
+        Args: { _scope: Json }
+        Returns: {
+          amount_excl_vat: number
+          amount_incl_vat: number
+          id: string
+          paid_at: string
+          receipt_no: string
+          status: string
+          unallocated_excl: number
+          vat_amount: number
+        }[]
+      }
+      metrics_contract_factor: {
+        Args: { _contract: string; _scope: Json }
+        Returns: number
+      }
       metrics_drilldown: {
         Args: {
           _limit?: number
@@ -5098,8 +5126,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      metrics_section: { Args: { _name: string; _scope: Json }; Returns: Json }
       metrics_service_snapshot: { Args: { _scope?: Json }; Returns: Json }
       metrics_snapshot: { Args: { _scope?: Json }; Returns: Json }
+      metrics_telegram_snapshot: {
+        Args: { _actor: string; _scope?: Json }
+        Returns: Json
+      }
       move_opportunity: {
         Args: {
           _lost_to?: string
