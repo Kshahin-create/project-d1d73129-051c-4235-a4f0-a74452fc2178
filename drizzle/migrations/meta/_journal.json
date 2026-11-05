@@ -316,6 +316,13 @@
       "when": 1793912029688,
       "tag": "0044_admin_directory_paged_read",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793912425033,
+      "tag": "0045_admin_tenant_accounts_paged_read",
+      "breakpoints": true
     }
   ]
 }

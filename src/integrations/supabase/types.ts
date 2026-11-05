@@ -4292,6 +4292,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_tenant_accounts_page: {
+        Args: {
+          _ascending?: boolean
+          _filter?: string
+          _limit?: number
+          _offset?: number
+          _search?: string
+          _sort?: string
+        }
+        Returns: Json
+      }
       admin_units_needing_completion: {
         Args: {
           _issue?: string
