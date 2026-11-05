@@ -15,14 +15,15 @@ export const useAuth = () => {
   const [isSalesAgent, setIsSalesAgent] = useState(false);
   const [isInvestor,setIsInvestor]=useState(false);
   const [isAccountant, setIsAccountant] = useState(false);
+  const [permissions,setPermissions]=useState<Record<string,string[]>>({});
 
   useEffect(() => {
     const fetchRoles = async (uid: string) => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role").eq("is_active", true)
-        .eq("user_id", uid);
-      const roles = (data ?? []).map((r) => r.role as string);
+      await supabase.rpc('accept_my_staff_invitation');
+      const {data}=await supabase.rpc('my_permissions');
+      const result=data as unknown as {roles:string[];permissions:{capability:string;levels:string[]}[]}|null;
+      const roles=result?.roles??[];
+      setPermissions(Object.fromEntries((result?.permissions??[]).map(p=>[p.capability,p.levels])));
       setIsAdmin(roles.includes("admin"));
       setIsControl(roles.includes("control"));
       setIsManager(roles.includes("manager"));
@@ -30,7 +31,7 @@ export const useAuth = () => {
       setIsLeasingManager(roles.includes("leasing_manager"));
       setIsSalesAgent(roles.includes("sales_agent"));
       setIsAccountant(roles.includes("accountant"));
-      setIsInvestor(roles.includes("investor"));
+      setIsInvestor(roles.includes("investor")||roles.includes('investor_viewer'));
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
@@ -58,6 +59,7 @@ export const useAuth = () => {
         setIsSalesAgent(false);
         setIsAccountant(false);
         setIsInvestor(false);
+        setPermissions({});
       }
     });
 
@@ -75,5 +77,6 @@ export const useAuth = () => {
 
   // Manager is read-only: only admins can perform write actions on admin surfaces.
   const canEdit = isAdmin;
-  return { session, user, loading, isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, isInvestor, canEdit };
+  const can=(capability:string,level='view')=>permissions[capability]?.includes(level)??false;
+  return { session, user, loading, isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, isInvestor, canEdit,can,permissions };
 };
