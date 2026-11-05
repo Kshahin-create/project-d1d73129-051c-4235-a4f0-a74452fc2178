@@ -64,6 +64,13 @@
       "when": 1793887270600,
       "tag": "0008_identity_type_and_api_cors",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793888471877,
+      "tag": "0009_activities_registry_and_unit_import",
+      "breakpoints": true
     }
   ]
 }
