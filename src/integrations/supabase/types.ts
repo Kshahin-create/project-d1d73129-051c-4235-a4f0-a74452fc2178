@@ -1637,6 +1637,7 @@ export type Database = {
         Args: { _tenant_account_id: string; _unit_id: string }
         Returns: undefined
       }
+      admin_user_directory: { Args: never; Returns: Json }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
       claim_marketing_recipient: {
         Args: { _campaign_id: string }
