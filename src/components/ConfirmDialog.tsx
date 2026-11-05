@@ -9,6 +9,7 @@ interface ConfirmDialogProps {
   confirmLabel: string;
   variant?: "primary" | "destructive";
   reasonRequired?: boolean;
+  minReasonLength?: number;
   reasonPlaceholder?: string;
   reasonSuggestions?: string[];
   loading?: boolean;
@@ -23,6 +24,7 @@ export const ConfirmDialog = ({
   confirmLabel,
   variant = "primary",
   reasonRequired = true,
+  minReasonLength = 3,
   reasonPlaceholder = "اكتب سبب التغيير...",
   reasonSuggestions = [],
   loading,
@@ -42,8 +44,8 @@ export const ConfirmDialog = ({
   if (!open) return null;
 
   const handleConfirm = () => {
-    if (reasonRequired && reason.trim().length < 3) {
-      setError("الرجاء كتابة سبب لا يقل عن 3 أحرف");
+    if (reasonRequired && reason.trim().length < minReasonLength) {
+      setError(`الرجاء كتابة سبب لا يقل عن ${minReasonLength} أحرف`);
       return;
     }
     onConfirm(reason.trim());

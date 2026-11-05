@@ -399,6 +399,7 @@ function EditCollectionDialog({ row, onClose, onSaved }: { row: UnitCollection; 
       } else if (row.proof_path && name.trim() && name.trim() !== row.proof_name) {
         patch.proof_name = name.trim();
       }
+      if (Object.keys(patch).length === 0) { onSaved(); return; }
       const { error } = await supabase.from("unit_collections" as any).update(patch).eq("id", row.id);
       if (error) throw error;
       toast.success("تم الحفظ");
@@ -420,7 +421,8 @@ function EditCollectionDialog({ row, onClose, onSaved }: { row: UnitCollection; 
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-medium">المبلغ (ر.س)</label>
-            <Input type="number" min={1} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} dir="ltr" />
+            <Input type="number" value={amount} disabled readOnly dir="ltr" />
+            <p className="mt-1 text-[10px] text-muted-foreground">المبلغ لا يُعدّل؛ لتصحيحه سجّل قيدًا عكسيًا ثم دفعة جديدة.</p>
           </div>
           {row.proof_path && (
             <div>
