@@ -4266,6 +4266,27 @@ export type Database = {
         Args: { _canonical_id: string; _duplicate_ids: string[] }
         Returns: Json
       }
+      admin_paid_tenants_page: {
+        Args: {
+          _ascending?: boolean
+          _limit?: number
+          _offset?: number
+          _search?: string
+          _sort?: string
+        }
+        Returns: Json
+      }
+      admin_pipeline_page: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _owner?: string
+          _search?: string
+          _source?: string
+          _stage?: string
+        }
+        Returns: Json
+      }
       admin_set_building_registry: {
         Args: {
           _building_number: number
@@ -4291,6 +4312,21 @@ export type Database = {
           _target_user: string
         }
         Returns: undefined
+      }
+      admin_tenant_accounts_page: {
+        Args: {
+          _ascending?: boolean
+          _filter?: string
+          _limit?: number
+          _offset?: number
+          _search?: string
+          _sort?: string
+        }
+        Returns: Json
+      }
+      admin_unit_timeline: {
+        Args: { _limit?: number; _offset?: number; _unit: string }
+        Returns: Json
       }
       admin_units_needing_completion: {
         Args: {

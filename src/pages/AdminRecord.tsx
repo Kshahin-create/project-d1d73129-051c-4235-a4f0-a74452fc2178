@@ -8,11 +8,13 @@ import { AdminServerList } from "@/components/admin/AdminServerList";
 import { adminClient, adminLists, canReadFinance, displayAdminValue, type AdminRow, type ListSpec } from "@/lib/adminData";
 import { recordHref, type RecordKind } from "@/lib/adminNavigation";
 import { money } from "@/lib/finance";
+import { statementTotals } from "@/lib/statement";
+import type { StatementInstallment,StatementReceipt,StatementAllocation } from "@/lib/statement";
 import { toast } from "sonner";
 
 const tabs:Record<string,string[]>={units:["نظرة عامة","الحجوزات","العقد","الأقساط والسندات","المستندات","السجل"],parties:["البيانات","الوحدات","الفرص","الحجوزات","العقود","كشف الحساب","التواصل","المستندات","السجل"],contracts:["نظرة عامة","الوحدات","الأقساط والسندات","المستندات","السجل"],receipts:["نظرة عامة","التخصيصات","المستندات","السجل"],bookings:["نظرة عامة","الوحدات","العقود","السجل"]};
 export default function AdminRecord(){
- const auth=useAuth(),{id}=useParams(),location=useLocation(),[params,setParams]=useSearchParams();const kind=location.pathname.split("/")[2] as RecordKind;const spec=adminLists[kind];const tab=params.get("tab")??tabs[kind]?.[0];
+ const auth=useAuth(),{id}=useParams(),location=useLocation(),[params,setParams]=useSearchParams();const kind=location.pathname.split("/")[2] as RecordKind;const spec=adminLists[kind];const requested=params.get("tab");const tab=requested&&tabs[kind]?.includes(requested)?requested:tabs[kind]?.[0];
  const allowed=!!auth.user&&(auth.isAdmin||auth.isManager||auth.isControl||auth.isLeasingManager||auth.isSalesAgent||auth.isAccountant)&&(!spec?.finance||canReadFinance(auth));
  const q=useQuery({queryKey:["admin-record",kind,id,auth.user?.id],enabled:allowed&&!!id&&!!spec,queryFn:async()=>{if(!id)throw new Error("السجل غير متاح");const r=await adminClient.from(spec.table).select("*").eq("id",id).maybeSingle();if(r.error)throw r.error;if(!r.data)throw new Error("السجل غير موجود أو غير مسموح لك بعرضه");return r.data as AdminRow;}});
  if(auth.loading)return null;if(!allowed)return <Navigate to="/auth" replace/>;
@@ -24,18 +26,26 @@ export default function AdminRecord(){
 
 function RecordTab({kind,id,row,tab,spec}:{kind:RecordKind;id:string;row:AdminRow;tab:string;spec:ListSpec}){
  const auth=useAuth();const financial=canReadFinance(auth);const [page,setPage]=useState(0);
- const q=useQuery({queryKey:["admin-record-tab",kind,id,tab,page,auth.user?.id],queryFn:async()=>{
+ const q=useQuery({queryKey:["admin-record-tab",kind,id,tab,page,auth.user?.id],enabled:["السجل","التواصل","التخصيصات","المستندات"].includes(tab)&&(!(tab==="التخصيصات")||financial),queryFn:async()=>{
    const read=async(table:string,filters:Record<string,string|boolean>,order="created_at")=>{let request=adminClient.from(table).select("*",{count:"exact"});for(const [key,value] of Object.entries(filters))request=request.eq(key,value);const r=await request.order(order,{ascending:false}).order("id").range(page*25,page*25+24);if(r.error)throw r.error;return{rows:r.data as AdminRow[],count:r.count??0,table};};
    if(tab==="السجل"){
+     if(kind==="units"){const r=await adminClient.rpc("admin_unit_timeline",{_unit:id,_limit:25,_offset:page*25});if(r.error)throw r.error;return{...r.data as {rows:AdminRow[];count:number},table:"timeline"};}
      const audit=auth.isAdmin?await read("audit_log",{entity_table:kind==="parties"?"parties":spec.table,entity_id:id}):{rows:[],count:0,table:"audit_log"};
-     const status=kind==="units"&&(auth.isAdmin||auth.isManager)?await read("unit_status_history",{unit_id:id},"at"):{rows:[],count:0};
-     return{...audit,rows:[...audit.rows,...status.rows].sort((a,b)=>String(b.at??b.created_at).localeCompare(String(a.at??a.created_at))),count:audit.count+status.count};
+     return audit;
    }
    if(tab==="التواصل")return read("party_contacts",{party_id:id});
    if(tab==="التخصيصات")return read("receipt_allocations",{receipt_id:id});
    if(tab==="المستندات"){
      if(kind==="units")return read("unit_files",{unit_id:id});
-     if(kind==="parties")return read("contracts",{party_id:id});
+     if(kind==="parties"){
+       const contracts=financial?await read("contracts",{party_id:id}):{rows:[],count:0};
+       const accounts=await adminClient.from("tenant_accounts").select("id").eq("party_id",id).is("archived_at",null);
+       if(accounts.error)return{...contracts,table:"contracts"};
+       const accountIds=(accounts.data??[]).map(a=>a.id);
+       if(!accountIds.length)return{...contracts,table:"contracts"};
+       const files=await adminClient.from("tenant_account_files").select("*",{count:"exact"}).in("tenant_account_id",accountIds).eq("is_archived",false).order("created_at",{ascending:false}).range(page*25,page*25+24);
+       if(files.error)throw files.error;return{rows:[...contracts.rows,...files.data.map(f=>({...f,file_name:f.custom_name,file_bucket:"tenant-account-files"}))],count:contracts.count+(files.count??0),table:"documents"};
+     }
      return{rows:[row],count:1,table:spec.table};
    }
    return{rows:[],count:0,table:""};
@@ -50,7 +60,7 @@ function RecordTab({kind,id,row,tab,spec}:{kind:RecordKind;id:string;row:AdminRo
  if(q.isError)return <p role="alert" className="text-destructive">تعذر تحميل البيانات: {(q.error as Error).message}</p>;
  if(q.isPending)return <p>جارٍ التحميل…</p>;
  const openFile=async(bucket:string,path:string)=>{const r=await adminClient.storage.from(bucket).createSignedUrl(path,300);if(r.error)toast.error(r.error.message);else window.open(r.data.signedUrl,"_blank","noopener,noreferrer");};
- return <section className="space-y-3">{q.data?.rows.map(item=><div key={String(item.id)} className="space-y-2 border-b border-border py-3 text-sm">{tab==="السجل"?<><p className="font-semibold">{String(item.action??"تغيير حالة الوحدة")} {item.to_status&&displayAdminValue({key:"leasing_status",label:"الحالة"},item.to_status)}</p><p className="text-muted-foreground">{String(item.at??item.created_at)} · {String(item.actor_role??"—")}</p><p>{String(item.reason??(item.context as {reason?:string}|undefined)?.reason??"—")}</p></>:tab==="المستندات"?<>{item.storage_path&&<Button variant="outline" onClick={()=>void openFile("unit-files",String(item.storage_path))}>{String(item.file_name??"المستند")}</Button>}{Array.isArray(item.documents)&&item.documents.map((path,index)=><Button key={index} variant="outline" onClick={()=>void openFile("contract-documents",String(path))}>مستند العقد {index+1}</Button>)}{item.proof_file&&<Button variant="outline" onClick={()=>void openFile(String(item.proof_bucket),String(item.proof_file))}>إثبات السداد</Button>}</>:tab==="التواصل"?<p>{String(item.full_name)} · {String(item.phone??"غير متاح")} · {String(item.role_label??"")}</p>:<p>شامل الضريبة: {money(item.amount_incl_vat)} {item.installment_id&&<span> · قسط مرتبط</span>}</p>}</div>)}{!q.data?.rows.length&&<p className="py-6 text-muted-foreground">لا توجد سجلات متاحة في هذا القسم</p>}<div className="flex gap-2"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></div></section>;
+ return <section className="space-y-3">{q.data?.rows.map(item=><div key={String(item.id)} className="space-y-2 border-b border-border py-3 text-sm">{tab==="السجل"?<><p className="font-semibold">{String(({UNIT_STATUS_TRANSITION:"تغيير حالة الوحدة",INSERT:"إضافة",UPDATE:"تعديل",CONTRACT_STATE:"حالة العقد",RECEIPT_REVERSED:"قيد عكسي",EXPORT_GENERATED:"تصدير ملف"} as Record<string,string>)[String(item.action)]??"إجراء مسجل")} {item.to_status&&displayAdminValue({key:"leasing_status",label:"الحالة"},item.to_status)}</p><p className="text-muted-foreground">{String(item.at??item.created_at)} · {String(item.actor_role??"—")}</p><p>{String(item.reason??(item.context as {reason?:string}|undefined)?.reason??"—")}</p></>:tab==="المستندات"?<>{item.storage_path&&<Button variant="outline" onClick={()=>void openFile(String(item.file_bucket??"unit-files"),String(item.storage_path))}>{String(item.file_name??"المستند")}</Button>}{Array.isArray(item.documents)&&item.documents.map((path,index)=><Button key={index} variant="outline" onClick={()=>void openFile("contract-documents",String(path))}>مستند العقد {index+1}</Button>)}{item.proof_file&&<Button variant="outline" onClick={()=>void openFile(String(item.proof_bucket),String(item.proof_file))}>إثبات السداد</Button>}</>:tab==="التواصل"?<p>{String(item.full_name)} · {String(item.phone??"غير متاح")} · {String(item.role_label??"")}</p>:<p>شامل الضريبة: {money(item.amount_incl_vat)} {item.installment_id&&<span> · قسط مرتبط</span>}</p>}</div>)}{!q.data?.rows.length&&<p className="py-6 text-muted-foreground">لا توجد سجلات متاحة في هذا القسم</p>}<div className="flex gap-2"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></div></section>;
 }
 function Unavailable(){return <p className="py-6 text-muted-foreground">البيانات دي غير متاحة لصلاحية حسابك</p>;}
 function UnitContext({unit}:{unit:AdminRow}){
@@ -61,7 +71,7 @@ function UnitContext({unit}:{unit:AdminRow}){
 function LinkedUnitList({id,target}:{id:string;target:"bookings"|"contracts"|"installments"}){
  const q=useQuery({queryKey:["unit-record-links",id,target],queryFn:async()=>{const r=await adminClient.from(target==="bookings"?"booking_units":"contract_units").select(target==="bookings"?"booking_id":"contract_id").eq("unit_id",id);if(r.error)throw r.error;return r.data as AdminRow[];}});
  if(q.isError)return <p role="alert" className="text-destructive">تعذر تحميل الروابط</p>;
- return <div className="space-y-6">{q.data?.map((link,index)=><div key={index}><Link className="text-primary hover:underline" to={recordHref(target==="bookings"?"bookings":"contracts",String(link.booking_id??link.contract_id))}>فتح {target==="bookings"?"الحجز":"العقد"}</Link>{target==="installments"&&<AdminServerList spec={adminLists.installments} filters={{contract_id:String(link.contract_id)}}/>}</div>)}{!q.data?.length&&<p className="text-muted-foreground">لا سجلات مرتبطة متاحة</p>}</div>;
+ return <div className="space-y-6">{q.data?.map((link,index)=><div key={index}><Link className="text-primary hover:underline" to={recordHref(target==="bookings"?"bookings":"contracts",String(link.booking_id??link.contract_id))}>فتح {target==="bookings"?"الحجز":"العقد"}</Link>{target==="installments"&&<div className="space-y-6"><AdminServerList spec={adminLists.installments} filters={{contract_id:String(link.contract_id)}}/><AdminServerList spec={adminLists.receipts} filters={{contract_id:String(link.contract_id)}}/></div>}</div>)}{!q.data?.length&&<p className="text-muted-foreground">لا سجلات مرتبطة متاحة</p>}</div>;
 }
 function LinkedUnits({kind,id}:{kind:RecordKind;id:string}){
  const [page,setPage]=useState(0);const q=useQuery({queryKey:["record-unit-links",kind,id,page],queryFn:async()=>{let request=adminClient.from(kind==="contracts"?"contract_units":kind==="bookings"?"booking_units":"contracts").select(kind==="parties"?"id,contract_units(unit_id,units(id,unit_number,building_number))":"unit_id,units(id,unit_number,building_number)",{count:"exact"}).eq(kind==="contracts"?"contract_id":kind==="bookings"?"booking_id":"party_id",id);const r=await request.order("id").range(page*25,page*25+24);if(r.error)throw r.error;return{rows:r.data as AdminRow[],count:r.count??0};}});
@@ -69,5 +79,15 @@ function LinkedUnits({kind,id}:{kind:RecordKind;id:string}){
  return <section className="space-y-4">{q.isError&&<p role="alert" className="text-destructive">تعذر تحميل الوحدات</p>}<div className="flex flex-wrap gap-3">{units.filter(Boolean).map(unit=><Button key={String(unit.id)} asChild variant="outline"><Link to={recordHref("units",String(unit.id))}>وحدة {String(unit.unit_number)} · مبنى {String(unit.building_number)}</Link></Button>)}</div>{!units.length&&<p className="text-muted-foreground">لا وحدات مرتبطة متاحة</p>}<Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></section>;
 }
 function PartyStatement({id}:{id:string}){
- return <div className="space-y-8"><p className="border-r-4 border-primary pr-3 text-sm">المصادر التاريخية قيد المراجعة ليست تحصيلًا معتمدًا. الرصيد يُراجع من الأقساط والتخصيصات الفعلية، وليس من سعر الوحدة.</p><AdminServerList spec={{...adminLists.receipts,table:"receipt_cash_read"}} filters={{party_id:id}}/><AdminServerList spec={adminLists.contracts} filters={{party_id:id}}/></div>;
+ const q=useQuery({queryKey:["party-statement",id],queryFn:async()=>{
+   const all=async(table:string,key:string,value:string|string[])=>{const rows:AdminRow[]=[];for(let offset=0;;offset+=500){let request=adminClient.from(table).select("*").order("id");request=Array.isArray(value)?request.in(key,value):request.eq(key,value);const r=await request.range(offset,offset+499);if(r.error)throw r.error;rows.push(...r.data as AdminRow[]);if(r.data.length<500)break;}return rows;};
+   const contracts=await all("contracts","party_id",id);
+   const ids=contracts.map(c=>String(c.id));
+   const receipts=await all("receipt_cash_read","party_id",id);
+   const installments=ids.length?await all("installments_read","contract_id",ids):[];
+   const allocations:AdminRow[]=[];
+   for(let chunk=0;chunk<receipts.length;chunk+=100){const receiptIds=receipts.slice(chunk,chunk+100).map(r=>String(r.id));allocations.push(...await all("receipt_allocations","receipt_id",receiptIds));}
+   return statementTotals(installments as unknown as StatementInstallment[],receipts as unknown as StatementReceipt[],allocations as unknown as StatementAllocation[]);
+ }});
+ return <div className="space-y-8">{q.isError?<p role="alert" className="text-destructive">تعذر حساب كشف الحساب</p>:<dl className="grid gap-5 border-b border-border pb-5 sm:grid-cols-4">{[["المستحق شامل الضريبة",q.data?.due],["المخصص المتحقق شامل الضريبة",q.data?.allocated],["الرصيد المتبقي شامل الضريبة",q.data?.balance],["متحقق غير مخصص شامل الضريبة",q.data?.unallocated]].map(([label,value])=><div key={String(label)}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-2 text-xl font-bold">{value==null?"—":money(value)} ريال</dd></div>)}</dl>}<p className="border-r-4 border-primary pr-3 text-sm">المصادر التاريخية قيد المراجعة ليست تحصيلًا معتمدًا.</p><AdminServerList spec={{...adminLists.receipts,table:"receipt_cash_read"}} filters={{party_id:id}}/><AdminServerList spec={adminLists.contracts} filters={{party_id:id}}/></div>;
 }

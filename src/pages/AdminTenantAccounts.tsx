@@ -1,3 +1,6 @@
+import { exportAdminList } from "@/lib/adminExport";
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -131,6 +134,8 @@ export default function AdminTenantAccounts() {
   const { user, isAdmin, isManager, loading } = useAuth();
   const [rows, setRows] = useState<TenantRow[]>([]);
   const [search, setSearch] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
   const [fetching, setFetching] = useState(true);
   const [filterKey, setFilterKey] = useState<FilterKey>("all");
 
@@ -181,15 +186,15 @@ export default function AdminTenantAccounts() {
 
   const load = async () => {
     setFetching(true);
-    const { data, error } = await supabase.rpc("admin_list_tenant_accounts");
+    const { data, error } = await supabase.rpc("admin_tenant_accounts_page",{_search:search,_filter:filterKey,_limit:25,_offset:page*25});
     if (error) toast.error(error.message);
-    else setRows((data as TenantRow[]) ?? []);
+    else {const r=data as unknown as {rows:TenantRow[];count:number};setRows(r.rows??[]);setTotal(r.count??0);}
     setFetching(false);
   };
 
   useEffect(() => {
     if (!loading && (isAdmin || isManager)) load();
-  }, [loading, isAdmin, isManager]);
+  }, [loading, isAdmin, isManager,page,search,filterKey]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -251,19 +256,7 @@ export default function AdminTenantAccounts() {
     );
   }
 
-  const filtered = rows
-    .filter((r) => {
-      if (!matchesFilter(r, filterKey)) return false;
-      const q = search.trim().toLowerCase();
-      if (!q) return true;
-      return (
-        r.full_name.toLowerCase().includes(q) ||
-        (r.email ?? "").toLowerCase().includes(q) ||
-        (r.phone ?? "").toLowerCase().includes(q) ||
-        (r.business_name ?? "").toLowerCase().includes(q)
-      );
-    })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const filtered=rows;
 
   const filterChips: { id: FilterKey; label: string }[] = [
     { id: "all", label: "الكل" },
@@ -279,6 +272,7 @@ export default function AdminTenantAccounts() {
     <div className="min-h-screen bg-background" dir="rtl">
       <Header />
       <main className="container-tight py-8">
+        <details className="my-4"><summary className="cursor-pointer text-primary">بحث متقدم وتصدير الحسابات</summary><AdminServerList spec={adminLists.tenant_accounts}/></details>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground shadow-card">
@@ -286,7 +280,7 @@ export default function AdminTenantAccounts() {
             </div>
             <div>
               <h1 className="font-display text-xl font-bold sm:text-2xl">حسابات المستأجرين</h1>
-              <p className="text-xs text-muted-foreground">{rows.length} حساب</p>
+              <p className="text-xs text-muted-foreground">{total} حساب · حسب الفلاتر الحالية</p>
             </div>
           </div>
           {isAdmin && <button
@@ -299,7 +293,7 @@ export default function AdminTenantAccounts() {
         </div>
 
         {/* Stats */}
-        {!fetching && rows.length > 0 && (
+        {false && !fetching && rows.length > 0 && (
           <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             <StatCard
               title={filterKey === "all" ? "إجمالي الحسابات" : `الحسابات (${filterChips.find((f) => f.id === filterKey)?.label})`}
@@ -384,44 +378,7 @@ export default function AdminTenantAccounts() {
             ))}
           </div>
           <button
-            onClick={async () => {
-              const { data: links, error: linksErr } = await supabase
-                .from("tenant_account_units")
-                .select("tenant_account_id, units:unit_id(unit_number, building_number, unit_type, area, price)")
-                .in("tenant_account_id", filtered.map((r) => r.id));
-              if (linksErr) { toast.error(linksErr.message); return; }
-
-              const unitsByTenant = new Map<string, any[]>();
-              for (const l of (links as any[]) ?? []) {
-                if (!l.units) continue;
-                const arr = unitsByTenant.get(l.tenant_account_id) ?? [];
-                arr.push(l.units);
-                unitsByTenant.set(l.tenant_account_id, arr);
-              }
-
-              const data = filtered.map((r) => {
-                const units = (unitsByTenant.get(r.id) ?? []).sort(
-                  (a, b) => a.building_number - b.building_number || a.unit_number - b.unit_number,
-                );
-                return {
-                  "اسم المستأجر أو المنشأة": r.full_name,
-                  "العلامة التجارية": r.business_name || "",
-                  "الرقم الوطني الموحد": r.cr_number || "",
-                  "النشاط": r.activity_type || "",
-                  "الجوال": r.phone || "",
-                  "البريد الإلكتروني": r.email || "",
-                  "المباني": [...new Set(units.map((u) => u.building_number))].join("، "),
-                  "الوحدات": units.map((u) => `مبنى ${u.building_number} - وحدة ${u.unit_number}`).join("، "),
-                  "عدد الوحدات": r.units_count ?? 0,
-                  "عدد الملفات": r.files_count ?? 0,
-                  "إجمالي المبلغ المدفوع": r.collected_total ?? 0,
-                };
-              });
-
-              if (!data.length) { toast.error("لا يوجد بيانات للتصدير"); return; }
-              exportRowsToExcel(data, "tenant-accounts", "المستأجرون");
-              toast.success("تم التصدير");
-            }}
+            onClick={async()=>{try{await exportAdminList("tenant_accounts","xlsx",search);}catch(e){toast.error((e as Error).message);}}}
             className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm"
           >
             <Download className="h-4 w-4" /> تصدير
@@ -454,7 +411,7 @@ export default function AdminTenantAccounts() {
                 <tbody>
                   {filtered.map((r) => (
                     <tr key={r.id} className="border-b border-border last:border-0">
-                      <td className="p-3 font-medium">{r.full_name}</td>
+                      <td className="p-3 font-medium"><button className="text-primary hover:underline" onClick={()=>setDetailId(r.id)}>{r.full_name}</button></td>
                       <td className="p-3 text-muted-foreground">{r.business_name || "—"}</td>
                       <td className="p-3 text-muted-foreground" dir="ltr">{r.cr_number || "—"}</td>
                       <td className="p-3 text-muted-foreground">{r.activity_type || "—"}</td>
@@ -549,6 +506,7 @@ export default function AdminTenantAccounts() {
             )}
           </div>
         )}
+        <div className="mt-5 flex gap-3"><button disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</button><span>صفحة {page+1} · {total} حساب</span><button disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</button></div>
       </main>
 
       <ConfirmDialog

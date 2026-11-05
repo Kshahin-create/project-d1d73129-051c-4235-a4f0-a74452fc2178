@@ -1,3 +1,6 @@
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
+import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -54,17 +57,18 @@ const AdminAudit = () => {
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [tableFilter, setTableFilter] = useState<string>("all");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setFetching(true);
-    const { data, error } = await supabase
-      .from("audit_log" as any)
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+    let request=supabase.from("audit_log").select("*",{count:"exact"});
+    const term=search.trim().replace(/[,()%]/g,"");if(term)request=request.or(`actor_email.ilike.%${term}%,entity_id.ilike.%${term}%,entity_table.ilike.%${term}%`);
+    if(actionFilter!=="all")request=request.eq("action",actionFilter);if(tableFilter!=="all")request=request.eq("entity_table",tableFilter);
+    const {data,error,count}=await request.order("created_at",{ascending:false}).order("id").range(page*25,page*25+24);setTotal(count??0);
     if (error) toast.error("تعذر التحميل: " + error.message);
     else setRows((data as any as AuditRow[]) ?? []);
     setFetching(false);
@@ -72,33 +76,14 @@ const AdminAudit = () => {
 
   useEffect(() => {
     if (!loading && isAdmin) load();
-  }, [loading, isAdmin]);
+  }, [loading, isAdmin,page,search,actionFilter,tableFilter]);
 
   const tables = useMemo(() => {
     const s = new Set(rows.map((r) => r.entity_table));
     return Array.from(s).sort();
   }, [rows]);
 
-  const filtered = useMemo(() => {
-    return rows.filter((r) => {
-      if (actionFilter !== "all" && r.action !== actionFilter) return false;
-      if (tableFilter !== "all" && r.entity_table !== tableFilter) return false;
-      const q = search.trim().toLowerCase();
-      if (!q) return true;
-      const haystack = [
-        r.actor_email,
-        r.entity_table,
-        r.entity_id,
-        JSON.stringify(r.before_data ?? {}),
-        JSON.stringify(r.after_data ?? {}),
-        (r.changed_fields ?? []).join(","),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [rows, search, actionFilter, tableFilter]);
+  const filtered = rows;
 
   const toggle = (id: string) => {
     setExpanded((prev) => {
@@ -121,7 +106,8 @@ const AdminAudit = () => {
             <Lock className="mx-auto h-12 w-12 text-destructive" />
             <h2 className="mt-4 font-display text-xl font-bold">لا تملك صلاحية الوصول</h2>
           </div>
-        </main>
+  <div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} سجل · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
+      </main>
         <Footer />
       </div>
     );
@@ -139,7 +125,7 @@ const AdminAudit = () => {
             <div className="min-w-0">
               <h1 className="font-display text-xl font-bold sm:text-2xl">سجل التدقيق الكامل</h1>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                {filtered.length} عملية من إجمالي {rows.length}
+                {total} عملية · صفحة {page+1}
               </p>
             </div>
           </div>
@@ -151,12 +137,13 @@ const AdminAudit = () => {
           </Link>
         </div>
 
+<details className="my-4"><summary className="cursor-pointer text-primary">خيارات القائمة والتصدير</summary><AdminServerList spec={adminLists.audit_log}/></details>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card p-2">
             <Search className="mr-2 h-4 w-4 text-muted-foreground" />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {setSearch(e.target.value);setPage(0);}}
               placeholder="ابحث في كل الحقول..."
               className="flex-1 bg-transparent text-sm outline-none"
             />
@@ -297,6 +284,7 @@ const AdminAudit = () => {
             </ul>
           )}
         </div>
+<div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} سجل · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
       </main>
       <Footer />
     </div>

@@ -1,3 +1,6 @@
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
+import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -42,6 +45,8 @@ const AdminAccessLog = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
 
   useEffect(() => {
     if (loading) return;
@@ -54,26 +59,14 @@ const AdminAccessLog = () => {
       return;
     }
     (async () => {
-      const { data, error } = await supabase
-        .from("access_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(500);
+      let request=supabase.from("access_log").select("*",{count:"exact"});const term=search.trim().replace(/[,()%]/g,"");if(term)request=request.or(`phone.ilike.%${term}%,email.ilike.%${term}%,country.ilike.%${term}%,ip_address.ilike.%${term}%,city.ilike.%${term}%`);const {data,error,count}=await request.order("created_at",{ascending:false}).order("id").range(page*25,page*25+24);setTotal(count??0);
       if (error) toast.error("تعذر تحميل السجل");
       setRows((data ?? []) as Row[]);
       setFetching(false);
     })();
-  }, [user, isAdmin, loading, navigate]);
+  }, [user, isAdmin, loading, navigate,page,search]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      [r.phone, r.email, r.ip_address, r.country, r.city, r.isp, r.event]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q)),
-    );
-  }, [rows, search]);
+  const filtered=rows;
 
   if (loading || fetching) {
     return (
@@ -90,7 +83,8 @@ const AdminAccessLog = () => {
         <main className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
           <Lock className="h-8 w-8" />
           هذه الصفحة للمشرفين فقط
-        </main>
+  <div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} سجل · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
+      </main>
         <Footer />
       </div>
     );
@@ -110,11 +104,12 @@ const AdminAccessLog = () => {
           </div>
         </div>
 
+<details className="my-4"><summary className="cursor-pointer text-primary">خيارات القائمة والتصدير</summary><AdminServerList spec={adminLists.access_log}/></details>
         <div className="relative max-w-md">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {setSearch(e.target.value);setPage(0);}}
             placeholder="ابحث برقم الجوال أو الـ IP أو الدولة…"
             className="w-full rounded-xl border border-border bg-background py-2.5 pr-10 pl-3 text-sm"
           />
@@ -175,6 +170,7 @@ const AdminAccessLog = () => {
             </table>
           </div>
         )}
+<div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} سجل · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
       </main>
       <Footer />
     </div>

@@ -1,3 +1,6 @@
+import { exportAdminList } from "@/lib/adminExport";
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -98,6 +101,8 @@ const AdminLeads = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [template, setTemplate] = useState<string>(() => {
     return localStorage.getItem("leads_msg_template") || DEFAULT_TEMPLATE;
@@ -172,11 +177,11 @@ const AdminLeads = () => {
 
   const fetchLeads = async () => {
     setBusy(true);
-    const { data, error } = await supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+    let request=supabase.from("leads").select("*",{count:"exact"});
+    const term=q.trim().replace(/[,()%]/g,"");if(term)request=request.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,notes.ilike.%${term}%`);
+    if(!showArchived)request=request.is("archived_at",null);
+    if(statusFilter!=="all")request=request.eq("status",statusFilter);
+    const {data,error,count}=await request.order("created_at",{ascending:false}).order("id").range(page*25,page*25+24);setTotal(count??0);
     if (error) toast({ title: "خطأ", description: error.message, variant: "destructive" });
     else setLeads((data as Lead[]) || []);
     setBusy(false);
@@ -188,21 +193,9 @@ const AdminLeads = () => {
       loadSettings();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, isAdmin, isManager]);
+  }, [loading, isAdmin, isManager,page,q,statusFilter,showArchived]);
 
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    return leads.filter((l) => {
-      if (!showArchived && l.archived_at) return false;
-      if (statusFilter !== "all" && l.status !== statusFilter) return false;
-      if (!s) return true;
-      return (
-        l.full_name.toLowerCase().includes(s) ||
-        l.phone.toLowerCase().includes(s) ||
-        (l.notes || "").toLowerCase().includes(s)
-      );
-    });
-  }, [leads, q, statusFilter, showArchived]);
+  const filtered = leads;
 
   if (loading) return <div className="p-8 text-center">جاري التحميل...</div>;
   if (!isAdmin && !isManager) return <Navigate to="/" replace />;
@@ -269,23 +262,7 @@ const AdminLeads = () => {
     toast({ title: ok ? "تم النسخ" : "فشل النسخ", variant: ok ? "default" : "destructive" });
   };
 
-  const handleExport = () => {
-    const rows = filtered.map((l) => ({
-      الاسم: l.full_name,
-      "رقم الجوال": l.phone,
-      "ملاحظات": l.notes || "",
-      "الحالة": STATUSES.find((s) => s.value === l.status)?.label || l.status,
-      "آخر تواصل": l.last_message_at
-        ? new Date(l.last_message_at).toLocaleString("ar-SA-u-nu-latn")
-        : "",
-      "تاريخ الإضافة": new Date(l.created_at).toLocaleString("ar-SA-u-nu-latn"),
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 28 }, { wch: 18 }, { wch: 40 }, { wch: 14 }, { wch: 22 }, { wch: 22 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "المستهدفون");
-    XLSX.writeFile(wb, `leads-${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
+  const handleExport = async()=>{try{await exportAdminList("leads","xlsx",q,statusFilter==="all"?{}:{status:statusFilter},showArchived);}catch(e){toast({title:"تعذر التصدير",description:(e as Error).message,variant:"destructive"});}};
 
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([
@@ -603,10 +580,12 @@ const AdminLeads = () => {
         </Table>
       </div>
 
+<details className="my-4"><summary className="cursor-pointer text-primary">خيارات القائمة والتصدير</summary><AdminServerList spec={adminLists.leads}/></details>
       <div className="text-xs text-muted-foreground">
-        إجمالي: {filtered.length} من {leads.length}
+        إجمالي: {total} · صفحة {page+1}
       </div>
 
+<div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} سجل · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
       <Dialog open={isAdmin && !!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent dir="rtl">
           <DialogHeader>

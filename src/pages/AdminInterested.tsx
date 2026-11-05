@@ -1,3 +1,7 @@
+import { exportAdminList } from "@/lib/adminExport";
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
+import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -59,6 +63,8 @@ const AdminInterested = () => {
   const [rows, setRows] = useState<InterestedRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [search, setSearch] = useState("");
+  const [page,setPage]=useState(0);
+  const [total,setTotal]=useState(0);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...empty });
   const [saving, setSaving] = useState(false);
@@ -67,10 +73,10 @@ const AdminInterested = () => {
 
   const load = async () => {
     setFetching(true);
-    const { data, error } = await supabase
-      .from("interested_customers" as any)
-      .select("*")
-      .order("created_at", { ascending: false });
+    let request=supabase.from("interested_customers").select("*",{count:"exact"});
+    const term=search.trim().replace(/[,()%]/g,"");if(term)request=request.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,business_name.ilike.%${term}%,requested_activity.ilike.%${term}%,notes.ilike.%${term}%`);
+    if(!showArchived)request=request.is("archived_at",null);
+    const {data,error,count}=await request.order("created_at",{ascending:false}).order("id").range(page*25,page*25+24);setTotal(count??0);
     if (error) toast.error("تعذر التحميل: " + error.message);
     else setRows((data as any) ?? []);
     setFetching(false);
@@ -86,18 +92,9 @@ const AdminInterested = () => {
         .subscribe();
       return () => { supabase.removeChannel(ch); };
     }
-  }, [loading, canAccess]);
+  }, [loading, canAccess,page,search,showArchived]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const visible = showArchived ? rows : rows.filter((r) => !r.archived_at);
-    if (!q) return visible;
-    return visible.filter((r) =>
-      [r.full_name, r.phone, r.business_name, r.requested_activity, r.requested_building, r.requested_unit, r.customer_source, r.notes]
-        .filter(Boolean)
-        .some((v) => v!.toString().toLowerCase().includes(q))
-    );
-  }, [rows, search, showArchived]);
+  const filtered = rows;
 
   const stats = useMemo(() => {
     const by = (s: string) => rows.filter((r) => r.status === s).length;
@@ -160,23 +157,7 @@ const AdminInterested = () => {
     else toast.success("تم تحديث الحالة");
   };
 
-  const exportRows = (fmt: "xlsx" | "csv") => {
-    const data = filtered.map((r) => ({
-      "اسم العميل": r.full_name,
-      "رقم الجوال": r.phone,
-      "النشاط المطلوب": r.requested_activity ?? "",
-      "الاسم التجاري": r.business_name ?? "",
-      "المبنى المطلوب": r.requested_building ?? "",
-      "الوحدة المطلوبة": r.requested_unit ?? "",
-      "مصدر العميل": r.customer_source ?? "",
-      "الملاحظات": r.notes ?? "",
-      "المصدر": r.source === "telegram" ? "تيليجرام" : r.source === "web" ? "ويب" : "يدوي",
-      "الحالة": STATUS_LABEL[r.status] ?? r.status,
-      "تاريخ التسجيل": new Date(r.created_at).toLocaleString("ar-EG-u-nu-latn"),
-    }));
-    if (fmt === "xlsx") exportRowsToExcel(data, "interested", "المهتمون");
-    else exportRowsToCSV(data, "interested");
-  };
+  const exportRows = async (fmt:"csv"|"xlsx")=>{try{await exportAdminList("interested_customers",fmt,search,{},showArchived);}catch(e){toast.error((e as Error).message);}};
 
   if (!loading && !user) { navigate("/auth"); return null; }
   if (!loading && user && !canAccess) {
@@ -188,7 +169,8 @@ const AdminInterested = () => {
             <Lock className="mx-auto h-12 w-12 text-destructive" />
             <h2 className="mt-4 font-display text-xl font-bold">لا تملك صلاحية الوصول</h2>
           </div>
-        </main>
+  <div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} سجل · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
+      </main>
         <Footer />
       </div>
     );
@@ -205,7 +187,7 @@ const AdminInterested = () => {
             </div>
             <div className="min-w-0">
               <h1 className="font-display text-xl font-bold sm:text-2xl">المهتمون</h1>
-              <p className="text-xs text-muted-foreground sm:text-sm">{rows.length} مهتم • {stats.fromTelegram} من تيليجرام</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">{total} مهتم · حسب الفلاتر</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -222,7 +204,7 @@ const AdminInterested = () => {
           </div>
         </div>
 
-        <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="hidden">
           {[
             { l: "إجمالي", v: stats.total, c: "bg-primary/10 text-primary" },
             { l: "جديد", v: stats.new, c: "bg-sky-500/10 text-sky-600" },
@@ -262,10 +244,11 @@ const AdminInterested = () => {
           </div>
         )}
 
+<details className="my-4"><summary className="cursor-pointer text-primary">خيارات القائمة والتصدير</summary><AdminServerList spec={adminLists.interested_customers}/></details>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-border bg-card p-2">
             <Search className="mr-2 h-4 w-4 text-muted-foreground" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث..." className="flex-1 bg-transparent text-sm outline-none" />
+            <input value={search} onChange={(e) => {setSearch(e.target.value);setPage(0);}} placeholder="ابحث..." className="flex-1 bg-transparent text-sm outline-none" />
           </div>
           <button onClick={() => exportRows("xlsx")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary sm:text-sm">
             <Download className="h-4 w-4" /> Excel
@@ -331,6 +314,7 @@ const AdminInterested = () => {
             </div>
           </div>
         )}
+<div className="mt-5 flex items-center gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>{total} سجل · صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=total} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>
       </main>
       <ArchiveActionDialog table="interested_customers" target={archiveTarget} onClose={() => setArchiveTarget(null)} onDone={load} />
       <Footer />

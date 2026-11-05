@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -83,7 +84,7 @@ export default function CrmTeamPerformance() {
   const name = (id: string) => (id === "none" ? "غير موزّعة" : (namesQ.data?.[id] ?? "…"));
 
   return (
-    <main dir="rtl" className="container-tight space-y-5 py-8">
+    <><Header/><main dir="rtl" className="container-tight space-y-5 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">أداء الفريق</h1>
         <Button variant="outline" onClick={() => exportRowsToExcel(stats.map((s) => ({ الوسيط: name(s.owner), مفتوحة: s.open, مستأجر: s.won, مغلقة_خسارة: s.lost, متابعة_متأخرة: s.overdue, وصلت_للعقد: s.toContract, متوسط_أول_رد_ساعات: s.avgResponse?.toFixed(1) ?? "" })), "أداء-الفريق")}>تصدير</Button>
@@ -118,6 +119,6 @@ export default function CrmTeamPerformance() {
         </TableBody>
       </Table>
       <p className="text-xs text-muted-foreground">النطاق: كل الفرص — آخر تحديث: {new Date().toLocaleString("ar-SA")}</p>
-    </main>
+    </main></>
   );
 }

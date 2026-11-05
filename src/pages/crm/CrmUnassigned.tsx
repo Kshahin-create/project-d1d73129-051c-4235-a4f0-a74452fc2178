@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -86,7 +87,7 @@ export default function CrmUnassigned() {
   };
 
   return (
-    <main dir="rtl" className="container-tight space-y-6 py-8">
+    <><Header/><main dir="rtl" className="container-tight space-y-6 py-8">
       <h1 className="text-2xl font-bold">غير موزّعة وطلبات النقل</h1>
 
       <section className="space-y-3">
@@ -144,6 +145,6 @@ export default function CrmUnassigned() {
         {alertsQ.data?.length === 0 && <p className="text-sm text-muted-foreground">لا تنبيهات</p>}
       </section>
       <Input className="hidden" aria-hidden readOnly />
-    </main>
+    </main></>
   );
 }

@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { FunctionsHttpError } from '@supabase/supabase-js';
@@ -37,7 +38,7 @@ export default function AdminCampaigns(){
   if(!user||!isAdmin)return <Navigate to="/" replace/>;
   const valid=summary&&summary.total>0&&name.trim()&&/^[a-z0-9_]+$/.test(template)&&/^[a-z]{2,3}(_[A-Z]{2})?$/.test(language)&&Number(channel)>0&&variables.every(v=>v.trim())&&(!image||image.startsWith('https://'))&&!(image&&header)&&approved;
   const processed=detail?(detail.counts.accepted||0)+(detail.counts.failed||0)+(detail.counts.unknown||0):0;
-  return <main dir="rtl" className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
+  return <><Header/><main dir="rtl" className="mx-auto min-h-screen max-w-6xl px-4 py-8 md:px-8">
     <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6"><div className="flex items-center gap-3"><Megaphone className="h-9 w-9 text-primary"/><div><p className="mb-1 text-sm text-muted-foreground">المدينة الصناعية · Respond.io</p><h1 className="text-2xl">الحملات الإعلانية</h1></div></div><Button variant="outline" onClick={refresh} disabled={busy||sending}><RefreshCw className="ml-2 h-4 w-4"/>تحديث الأرقام</Button></header>
     {loadError&&<div role="alert" className="mb-6 border border-destructive/30 bg-destructive/10 p-4 text-destructive">{loadError}</div>}
     <section aria-label="جمهور الحملة" className="mb-8 border-b border-border pb-8"><div className="grid gap-5 sm:grid-cols-3">{[{label:'الأرقام الفريدة',value:summary?.total},{label:'أرقام مكررة مستبعدة',value:summary?.duplicates},{label:'أرقام غير صالحة',value:summary?.invalid}].map(item=><div key={item.label} className="rounded-lg border border-border bg-card p-5"><p className="num text-3xl font-bold text-primary">{item.value===undefined?'—':item.value.toLocaleString('en-US')}</p><p className="mt-2 text-sm text-muted-foreground">{item.label}</p></div>)}</div>{summary&&<div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">{Object.entries(summary.sources).map(([source,count])=><span key={source}>{source}: <span className="num">{count.toLocaleString('en-US')}</span></span>)}</div>}</section>
@@ -55,5 +56,5 @@ export default function AdminCampaigns(){
       <h3 className="mb-3 mt-8 text-lg">الحملات السابقة</h3><div className="divide-y divide-border">{!campaigns.length&&<p className="py-4 text-sm text-muted-foreground">لا توجد حملات بعد</p>}{campaigns.map(c=><div key={c.id} className="flex items-center justify-between gap-3 py-4"><div className="min-w-0"><p className="truncate font-medium">{c.name}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString('ar-SA')} · {labels[c.status]} · <span className="num">{c.audience_summary.total}</span> رقم</p></div><Button variant="outline" size="sm" disabled={sending} onClick={async()=>{try{setDetail(await call<Detail>({action:'detail',id:c.id}));}catch(e){toast.error(e instanceof Error?e.message:'تعذر فتح الحملة');}}}>متابعة</Button></div>)}</div>
     </section></div>
     <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}><AlertDialogContent dir="rtl"><AlertDialogHeader><AlertDialogTitle>تأكيد إرسال الحملة الإعلانية</AlertDialogTitle><AlertDialogDescription>سيتم إرسال القالب «{template}» باللغة {language} إلى {summary?.total.toLocaleString('en-US')} رقمًا فريدًا. هذه عملية مدفوعة، ولا يمكن سحب الرسائل بعد إرسالها.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={busy}>رجوع</AlertDialogCancel><Button disabled={busy} onClick={create}><Send className="ml-2 h-4 w-4"/>{busy?'جارٍ تجهيز الحملة…':'تأكيد وبدء الإرسال'}</Button></AlertDialogFooter></AlertDialogContent></AlertDialog>
-  </main>;
+  </main></>;
 }

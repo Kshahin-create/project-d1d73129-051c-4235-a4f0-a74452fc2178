@@ -9,6 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { OPEN_STAGES, PARKED_STAGES, STAGE_LABELS, SOURCE_LABELS, stageLabel, isOverdue } from "@/lib/crm";
 import { exportRowsToExcel } from "@/lib/exportData";
+import { Header } from "@/components/Header";
+import { AdminServerList } from "@/components/admin/AdminServerList";
+import { adminLists } from "@/lib/adminData";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 type OppRow = {
@@ -26,22 +30,6 @@ type OppRow = {
 
 const PAGE_SIZE = 25;
 const BOARD_STAGES = [...OPEN_STAGES, ...PARKED_STAGES] as const;
-
-async function fetchOpenOpportunities(): Promise<OppRow[]> {
-  const rows: OppRow[] = [];
-  for (let offset = 0; ; offset += 500) {
-    const { data, error } = await supabase
-      .from("opportunities")
-      .select("id, stage, source, next_action, next_action_at, no_answer_attempts, owner_user_id, party_id, created_at, parties(name_ar, tenant_code)")
-      .is("outcome", null)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + 499);
-    if (error) throw error;
-    rows.push(...((data ?? []) as unknown as OppRow[]));
-    if (!data || data.length < 500) break;
-  }
-  return rows;
-}
 
 async function fetchOwnerNames(ownerIds: string[]): Promise<Record<string, string>> {
   if (ownerIds.length === 0) return {};
@@ -62,24 +50,15 @@ export default function CrmPipeline() {
   const [sourceFilter, setSourceFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
 
-  const q = useQuery({ queryKey: ["crm-open-opportunities"], enabled: allowed, queryFn: fetchOpenOpportunities });
+  const {user}=useAuth();
+  const q = useQuery({ queryKey: ["crm-open-opportunities",user?.id,page,search,stageFilter,sourceFilter,ownerFilter], enabled: allowed, queryFn: async()=>{const r=await supabase.rpc("admin_pipeline_page",{_search:search,_stage:stageFilter,_source:sourceFilter,_owner:ownerFilter,_limit:25,_offset:page*25});if(r.error)throw r.error;return r.data as unknown as {rows:OppRow[];count:number};} });
   const ownerIds = useMemo(
-    () => [...new Set((q.data ?? []).map((o) => o.owner_user_id).filter((x): x is string => !!x))],
+    () => [...new Set((q.data?.rows ?? []).map((o) => o.owner_user_id).filter((x): x is string => !!x))],
     [q.data],
   );
   const ownersQ = useQuery({ queryKey: ["crm-owner-names", ownerIds], enabled: ownerIds.length > 0, queryFn: () => fetchOwnerNames(ownerIds) });
 
-  const filtered = useMemo(() => {
-    return (q.data ?? []).filter((o) => {
-      if (stageFilter && o.stage !== stageFilter) return false;
-      if (sourceFilter && o.source !== sourceFilter) return false;
-      if (ownerFilter === "none" && o.owner_user_id) return false;
-      if (ownerFilter && ownerFilter !== "none" && o.owner_user_id !== ownerFilter) return false;
-      if (search && !(o.parties?.name_ar ?? "").includes(search) && !(o.parties?.tenant_code ?? "").includes(search)) return false;
-      return true;
-    });
-  }, [q.data, stageFilter, sourceFilter, ownerFilter, search]);
-
+  const filtered=q.data?.rows??[];
   const byStage = useMemo(() => {
     const map: Record<string, OppRow[]> = {};
     for (const s of BOARD_STAGES) map[s] = [];
@@ -115,7 +94,7 @@ export default function CrmPipeline() {
   const ownerName = (id: string | null) => (id ? (ownersQ.data?.[id] ?? "…") : "غير موزّعة");
 
   return (
-    <main dir="rtl" className="container-tight space-y-5 py-8">
+    <><Header/><main dir="rtl" className="container-tight space-y-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">لوحة الفرص</h1>
         <div className="flex gap-2">
@@ -139,7 +118,7 @@ export default function CrmPipeline() {
           <option value="none">غير موزّعة</option>
           {ownerIds.map((id) => <option key={id} value={id}>{ownerName(id)}</option>)}
         </select>
-        <Button variant="outline" onClick={() => exportRowsToExcel(filtered.map((o) => ({ الكود: o.parties?.tenant_code, العميل: o.parties?.name_ar, المرحلة: stageLabel(o.stage), المصدر: SOURCE_LABELS[o.source] ?? o.source, المالك: ownerName(o.owner_user_id), الإجراء_القادم: o.next_action ?? "", تاريخه: o.next_action_at ?? "" })), "الفرص")}>تصدير</Button>
+        
       </div>
 
       {q.isError && <p role="alert" className="text-destructive">تعذر تحميل الفرص</p>}
@@ -166,13 +145,13 @@ export default function CrmPipeline() {
                   key={o.id}
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", o.id)}
-                  onClick={() => navigate(`/crm/opportunity/${o.id}`)}
+                  onClick={() => navigate(`/admin/opportunities/${o.id}`)}
                   className={cn(
                     "cursor-grab rounded-lg border border-border bg-background p-2 text-right text-sm transition hover:border-primary",
                     isOverdue(o.next_action_at) && "border-destructive/50",
                   )}
                 >
-                  <div className="font-medium">{o.parties?.name_ar ?? "—"}</div>
+                  <Link className="font-medium text-primary hover:underline" to={`/admin/parties/${o.party_id}`} onClick={e=>e.stopPropagation()}>{o.parties?.name_ar ?? "—"}</Link>
                   <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                     <span>{o.parties?.tenant_code}</span>
                     <span>{ownerName(o.owner_user_id)}</span>
@@ -185,39 +164,10 @@ export default function CrmPipeline() {
         </div>
       )}
 
-      {view === "list" && !q.isError && (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>العميل</TableHead>
-                <TableHead>المرحلة</TableHead>
-                <TableHead>المصدر</TableHead>
-                <TableHead>المالك</TableHead>
-                <TableHead>الإجراء القادم</TableHead>
-                <TableHead>لا يرد</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageRows.map((o) => (
-                <TableRow key={o.id} className="cursor-pointer" onClick={() => navigate(`/crm/opportunity/${o.id}`)}>
-                  <TableCell>{o.parties?.name_ar} <span className="text-xs text-muted-foreground">({o.parties?.tenant_code})</span></TableCell>
-                  <TableCell>{stageLabel(o.stage)}</TableCell>
-                  <TableCell>{SOURCE_LABELS[o.source] ?? o.source}</TableCell>
-                  <TableCell>{ownerName(o.owner_user_id)}</TableCell>
-                  <TableCell className={cn(isOverdue(o.next_action_at) && "text-destructive")}>{o.next_action ?? "—"}</TableCell>
-                  <TableCell>{o.no_answer_attempts}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" disabled={!page} onClick={() => setPage((p) => p - 1)}>السابق</Button>
-            <span>{page + 1} / {Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))}</span>
-            <Button variant="outline" disabled={(page + 1) * PAGE_SIZE >= filtered.length} onClick={() => setPage((p) => p + 1)}>التالي</Button>
-          </div>
-        </>
-      )}
-    </main>
+      <p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?new Date(q.dataUpdatedAt).toLocaleString("ar-SA"):"—"}</p>
+      {view === "board"&&<div className="flex gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>}
+      {view === "list" && <AdminServerList spec={adminLists.opportunities} filters={{...(stageFilter?{stage:stageFilter}:{}),...(sourceFilter?{source:sourceFilter}:{}),...(ownerFilter&&ownerFilter!=="none"?{owner_user_id:ownerFilter}:{})}} onFilters={f=>{setStageFilter(f.stage??"");setSourceFilter(f.source??"");setOwnerFilter(f.owner_user_id??"");}}/>}
+
+    </main></>
   );
 }
