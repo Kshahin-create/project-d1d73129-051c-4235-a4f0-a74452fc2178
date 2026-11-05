@@ -176,6 +176,13 @@
       "when": 1793895903906,
       "tag": "0024_crm_add_sales_agent_role",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793895932375,
+      "tag": "0025_crm_parties_opportunities",
+      "breakpoints": true
     }
   ]
 }
