@@ -1,3 +1,9 @@
+# Phase 1 / Prompt 6 — Contracts, installments, receipts
+- [ ] Approve the plan, separate accountant role and historical precision reconciliation.
+- [ ] Add audited contracts, payment plans, installments, receipts and allocations with private documents and single status-writer integration.
+- [ ] Backfill with provenance, reconcile monthly/per-unit amounts and make legacy money records read-only without losing invoice-only payments.
+- [ ] Update financial screens, existing callers and canonical collections statuses; verify permissions, reversals, schedules, reconciliation and complete leasing flow.
+
 # Phase 1 / Prompt 5 — CRM inside the platform
 - [x] Parties/opportunities/ownership tables, sales_agent role, backfill (954 parties, 49 won opportunities, 157 linked bookings), round-robin assignment, hourly reopen cron.
 - [x] Writer functions with Arabic errors, contact masking for agents, booking/leasing stage hooks, no-answer auto-close at 10, transfer requests and bulk reassign.
