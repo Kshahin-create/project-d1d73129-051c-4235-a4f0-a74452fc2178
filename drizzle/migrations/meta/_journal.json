@@ -393,6 +393,13 @@
       "when": 1793918113911,
       "tag": "0055_metrics_drilldown_scope_alignment",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1793918500807,
+      "tag": "0056_metrics_receipt_attribution_and_isolated_sections",
+      "breakpoints": true
     }
   ]
 }
