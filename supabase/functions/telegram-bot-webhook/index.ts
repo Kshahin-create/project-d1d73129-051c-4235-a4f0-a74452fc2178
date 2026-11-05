@@ -837,7 +837,7 @@ const AI_TOOLS = [
     function: {
       name: "extend_booking_expiry",
       description: "تمديد فترة انتهاء حجز بعدد ساعات (موجب يمدد، سالب يقصّر).",
-      parameters: { type: "object", properties: { booking_id: { type: "string" }, hours: { type: "number" } }, required: ["booking_id","hours"], additionalProperties: false },
+      parameters: { type: "object", properties: { booking_id: { type: "string" }, reason: { type: "string" } }, required: ["booking_id","reason"], additionalProperties: false },
     },
   },
   {
@@ -889,7 +889,7 @@ const AI_TOOLS = [
     function: {
       name: "set_unit_status",
       description: "تغيير حالة وحدة (متاحة/محجوزة/مؤجّرة). استخدمها بحذر.",
-      parameters: { type: "object", properties: { unit_id: { type: "string" }, status: { type: "string", enum: ["available","reserved","rented"] } }, required: ["unit_id","status"], additionalProperties: false },
+      parameters: { type: "object", properties: { unit_id: { type: "string" }, status: { type: "string", enum: ["available","on_hold","pending_contract","leased","maintenance","blocked"] }, reason: { type: "string" }, ref_type: { type: "string" }, ref_id: { type: "string" } }, required: ["unit_id","status","reason","ref_type"], additionalProperties: false },
     },
   },
   {
@@ -1350,53 +1350,9 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
   const allowed = await canWrite(admin, userId);
   if (!allowed) return { error: "forbidden: صلاحية المدير للعرض فقط؛ التعديل للأدمن" };
 
-  if (name === "confirm_booking") {
-    const bookingId = String(args.booking_id);
-    const paid = Number(args.paid_amount || 0);
-    const { data: b } = await admin.from("bookings").select("*").eq("id", bookingId).maybeSingle();
-    if (!b) return { error: "booking not found" };
-    await admin.from("bookings").update({ status: "confirmed", paid_amount: paid, updated_at: new Date().toISOString() }).eq("id", bookingId);
-    const { data: bus } = await admin.from("booking_units").select("unit_id,activity").eq("booking_id", bookingId);
-    for (const bu of bus || []) {
-      await admin.from("units").update({ status: "rented", updated_at: new Date().toISOString() }).eq("id", bu.unit_id);
-      const { data: existing } = await admin.from("tenants").select("id").eq("unit_id", bu.unit_id).eq("booking_id", bookingId).maybeSingle();
-      if (!existing) {
-        await admin.from("tenants").insert({
-          unit_id: bu.unit_id, tenant_name: b.customer_full_name, business_name: b.business_name,
-          activity_type: bu.activity, phone: b.customer_phone, notes: b.notes,
-          start_date: new Date().toISOString().slice(0,10), booking_id: bookingId,
-          offer_image_url: b.offer_image_url, cr_number: b.cr_number,
-        });
-      }
-    }
-    return { ok: true, booking_id: bookingId, status: "confirmed", paid_amount: paid };
-  }
-  if (name === "cancel_booking") {
-    const bookingId = String(args.booking_id);
-    await admin.from("bookings").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", bookingId);
-    const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", bookingId);
-    const ids = (bus || []).map((x: any) => x.unit_id);
-    if (ids.length) await admin.from("units").update({ status: "available", updated_at: new Date().toISOString() }).in("id", ids).eq("status", "reserved");
-    return { ok: true, booking_id: bookingId, status: "cancelled" };
-  }
-  if (name === "extend_booking_expiry") {
-    const bookingId = String(args.booking_id);
-    const hrs = Number(args.hours);
-    if (!hrs) return { error: "hours required" };
-    const { data: b } = await admin.from("bookings").select("expires_at,status").eq("id", bookingId).maybeSingle();
-    if (!b) return { error: "booking not found" };
-    const cur = b.expires_at ? new Date(b.expires_at) : new Date();
-    const base = cur < new Date() ? new Date() : cur;
-    const next = new Date(base.getTime() + hrs * 3600 * 1000).toISOString();
-    const upd: any = { expires_at: next, updated_at: new Date().toISOString() };
-    if (b.status === "expired") upd.status = "pending";
-    await admin.from("bookings").update(upd).eq("id", bookingId);
-    if (b.status === "expired") {
-      const { data: bus } = await admin.from("booking_units").select("unit_id").eq("booking_id", bookingId);
-      const ids = (bus || []).map((x: any) => x.unit_id);
-      if (ids.length) await admin.from("units").update({ status: "reserved", updated_at: new Date().toISOString() }).in("id", ids).eq("status", "available");
-    }
-    return { ok: true, booking_id: bookingId, new_expires_at: next };
+  if (["confirm_booking", "cancel_booking", "extend_booking_expiry"].includes(name)) {
+    const { data, error } = await admin.rpc("telegram_unit_status_action", { _actor: userId, _action: name, _args: args });
+    return error ? { error: error.message } : data;
   }
   if (name === "record_payment") {
     const amt = Number(args.amount);
@@ -1423,9 +1379,8 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
     return { ok: true, booking_id: args.booking_id, paid_amount: v };
   }
   if (name === "set_unit_status") {
-    if (!["available","reserved","rented"].includes(args.status)) return { error: "invalid status" };
-    await admin.from("units").update({ status: args.status, updated_at: new Date().toISOString() }).eq("id", args.unit_id);
-    return { ok: true, unit_id: args.unit_id, status: args.status };
+    const { data, error } = await admin.rpc("telegram_unit_status_action", { _actor: userId, _action: name, _args: args });
+    return error ? { error: error.message } : data;
   }
   if (name === "mark_invoice_paid") {
     const { data: inv } = await admin.from("invoices").select("amount").eq("id", args.invoice_id).maybeSingle();
@@ -1461,7 +1416,7 @@ async function runAIWriteTool(admin: any, userId: string, name: string, args: an
   }
   if (name === "update_booking") {
     const upd: any = { updated_at: new Date().toISOString() };
-    for (const k of ["customer_full_name","customer_phone","customer_email","business_name","notes","payment_plan","expires_at"]) {
+    for (const k of ["customer_full_name","customer_phone","customer_email","business_name","notes","payment_plan"]) {
       if (args[k] !== undefined) upd[k] = args[k];
     }
     if (Object.keys(upd).length === 1) return { error: "no fields to update" };
@@ -1843,11 +1798,13 @@ async function handleCallback(admin: any, token: string, cb: any) {
   const [action, arg] = data.split(":");
   try {
     if (action === "confirm_b") {
-      await admin.rpc("confirm_booking", { _booking_id: arg, _paid_amount: 0 });
+      const { error } = await admin.rpc("telegram_unit_status_action", { _actor: sub.user_id, _action: "confirm_booking", _args: { booking_id: arg } });
+      if (error) throw error;
       await answerCb(token, cb.id, "✅ تم التأكيد");
       await editText(token, chat_id, message_id, `${cb.message.text}\n\n✅ <b>تم التأكيد</b>`);
     } else if (action === "cancel_b") {
-      await admin.rpc("cancel_booking", { _booking_id: arg });
+      const { error } = await admin.rpc("telegram_unit_status_action", { _actor: sub.user_id, _action: "cancel_booking", _args: { booking_id: arg, reason: "إلغاء الحجز من فريق التأجير" } });
+      if (error) throw error;
       await answerCb(token, cb.id, "❌ تم الإلغاء");
       await editText(token, chat_id, message_id, `${cb.message.text}\n\n❌ <b>تم الإلغاء</b>`);
     } else if (action === "pay_full") {

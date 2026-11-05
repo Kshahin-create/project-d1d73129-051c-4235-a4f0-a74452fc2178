@@ -626,7 +626,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
 
   useEffect(() => {
     supabase
-      .from("units")
+      .from("units_status_read")
       .select("id, building_number, unit_number, unit_type, status, area, price")
       .order("building_number")
       .order("unit_number")
@@ -814,14 +814,14 @@ function DetailModal({
     const linkRows = (lu as any[]) ?? [];
     if (linkRows.length > 0) {
       const { data: us } = await supabase
-        .from("units")
+        .from("units_status_read")
         .select("id, building_number, unit_number, unit_type, status, area, price")
         .in("id", linkRows.map((l) => l.unit_id));
       setLinked(linkRows.map((l) => ({ ...l, unit: (us as any)?.find((u: any) => u.id === l.unit_id) })));
     } else setLinked([]);
 
     const { data: au } = await supabase
-      .from("units")
+      .from("units_status_read")
       .select("id, building_number, unit_number, unit_type, status, area, price")
       .order("building_number")
       .order("unit_number");

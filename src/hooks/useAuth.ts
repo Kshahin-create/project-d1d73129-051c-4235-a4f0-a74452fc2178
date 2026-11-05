@@ -17,7 +17,7 @@ export const useAuth = () => {
     const fetchRoles = async (uid: string) => {
       const { data } = await supabase
         .from("user_roles")
-        .select("role")
+        .select("role").eq("is_active", true)
         .eq("user_id", uid);
       const roles = (data ?? []).map((r) => r.role as string);
       setIsAdmin(roles.includes("admin"));
