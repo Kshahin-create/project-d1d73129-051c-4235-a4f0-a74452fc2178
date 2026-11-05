@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 const tabs:Record<string,string[]>={units:["نظرة عامة","الحجوزات","العقد","الأقساط والسندات","المستندات","السجل"],parties:["البيانات","الوحدات","الفرص","الحجوزات","العقود","كشف الحساب","التواصل","المستندات","السجل"],contracts:["نظرة عامة","الوحدات","الأقساط والسندات","المستندات","السجل"],receipts:["نظرة عامة","التخصيصات","المستندات","السجل"],bookings:["نظرة عامة","الوحدات","العقود","السجل"]};
 export default function AdminRecord(){
- const auth=useAuth(),{id}=useParams(),location=useLocation(),[params,setParams]=useSearchParams();const kind=location.pathname.split("/")[2] as RecordKind;const spec=adminLists[kind];const tab=params.get("tab")??tabs[kind]?.[0];
+ const auth=useAuth(),{id}=useParams(),location=useLocation(),[params,setParams]=useSearchParams();const kind=location.pathname.split("/")[2] as RecordKind;const spec=adminLists[kind];const requested=params.get("tab");const tab=requested&&tabs[kind]?.includes(requested)?requested:tabs[kind]?.[0];
  const allowed=!!auth.user&&(auth.isAdmin||auth.isManager||auth.isControl||auth.isLeasingManager||auth.isSalesAgent||auth.isAccountant)&&(!spec?.finance||canReadFinance(auth));
  const q=useQuery({queryKey:["admin-record",kind,id,auth.user?.id],enabled:allowed&&!!id&&!!spec,queryFn:async()=>{if(!id)throw new Error("السجل غير متاح");const r=await adminClient.from(spec.table).select("*").eq("id",id).maybeSingle();if(r.error)throw r.error;if(!r.data)throw new Error("السجل غير موجود أو غير مسموح لك بعرضه");return r.data as AdminRow;}});
  if(auth.loading)return null;if(!allowed)return <Navigate to="/auth" replace/>;
@@ -26,7 +26,7 @@ export default function AdminRecord(){
 
 function RecordTab({kind,id,row,tab,spec}:{kind:RecordKind;id:string;row:AdminRow;tab:string;spec:ListSpec}){
  const auth=useAuth();const financial=canReadFinance(auth);const [page,setPage]=useState(0);
- const q=useQuery({queryKey:["admin-record-tab",kind,id,tab,page,auth.user?.id],queryFn:async()=>{
+ const q=useQuery({queryKey:["admin-record-tab",kind,id,tab,page,auth.user?.id],enabled:["السجل","التواصل","التخصيصات","المستندات"].includes(tab)&&(!(tab==="التخصيصات")||financial),queryFn:async()=>{
    const read=async(table:string,filters:Record<string,string|boolean>,order="created_at")=>{let request=adminClient.from(table).select("*",{count:"exact"});for(const [key,value] of Object.entries(filters))request=request.eq(key,value);const r=await request.order(order,{ascending:false}).order("id").range(page*25,page*25+24);if(r.error)throw r.error;return{rows:r.data as AdminRow[],count:r.count??0,table};};
    if(tab==="السجل"){
      if(kind==="units"){const r=await adminClient.rpc("admin_unit_timeline",{_unit:id,_limit:25,_offset:page*25});if(r.error)throw r.error;return{...r.data as {rows:AdminRow[];count:number},table:"timeline"};}
