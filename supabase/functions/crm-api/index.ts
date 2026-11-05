@@ -40,7 +40,7 @@ const R: Record<string, Resource> = {
     pii: [], finance: ["expected_annual_revenue"], filters: { type: "text", number: "int" },
   },
   units: {
-    table: "units", select: "id,building_number,unit_number,unit_type,activity,area,price,status,publish_state,created_at,updated_at", ts: "updated_at",
+    table: "units_status_read", select: "id,building_number,unit_number,unit_type,activity,area,price,status,leasing_status,publish_state,created_at,updated_at", ts: "updated_at",
     pii: [], finance: [], filters: { status: "text", building_number: "int", activity: "text", unit_type: "text", publish_state: "text" },
     base: (q: any) => q.eq("is_test", false), // test units are never exposed
   },

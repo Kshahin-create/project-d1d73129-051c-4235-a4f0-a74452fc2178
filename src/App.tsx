@@ -47,6 +47,8 @@ const AdminSheetsSync = lazy(() => import("./pages/AdminSheetsSync.tsx"));
 const AdminActivities = lazy(() => import("./pages/AdminActivities.tsx"));
 const AdminUnitImport = lazy(() => import("./pages/AdminUnitImport.tsx"));
 const AdminUnitsIncomplete = lazy(() => import("./pages/AdminUnitsIncomplete.tsx"));
+const AdminUnitStatusReview = lazy(() => import("./pages/AdminUnitStatusReview.tsx"));
+const LeasingHolds = lazy(() => import("./pages/LeasingHolds.tsx"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup.tsx"));
 const AdminBookingControl = lazy(() => import("./pages/AdminBookingControl.tsx"));
 import { MaintenanceGate } from "./components/MaintenanceGate.tsx";
@@ -105,6 +107,8 @@ const App = () => (
           <Route path="/admin/settings/activities" element={<AdminActivities />} />
           <Route path="/admin/settings/unit-import" element={<AdminUnitImport />} />
           <Route path="/admin/units-incomplete" element={<AdminUnitsIncomplete />} />
+          <Route path="/admin/unit-status-review" element={<AdminUnitStatusReview />} />
+          <Route path="/leasing/holds" element={<LeasingHolds />} />
           <Route path="/admin/backup" element={<AdminBackup />} />
           <Route path="/admin/booking-control" element={<AdminBookingControl />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
