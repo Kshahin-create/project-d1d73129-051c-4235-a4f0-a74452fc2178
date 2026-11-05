@@ -4303,6 +4303,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_unit_timeline: {
+        Args: { _limit?: number; _offset?: number; _unit: string }
+        Returns: Json
+      }
       admin_units_needing_completion: {
         Args: {
           _issue?: string
