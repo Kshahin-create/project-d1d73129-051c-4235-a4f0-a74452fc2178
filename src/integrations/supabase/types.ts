@@ -4940,6 +4940,7 @@ export type Database = {
         Args: { _from_user: string; _reason: string; _to_user: string }
         Returns: number
       }
+      can_read_party_contact: { Args: { _party: string }; Returns: boolean }
       cancel_booking: { Args: { _booking_id: string }; Returns: undefined }
       cancel_booking_with_reason: {
         Args: { _booking_id: string; _reason: string }
