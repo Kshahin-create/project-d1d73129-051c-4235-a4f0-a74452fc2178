@@ -1,4 +1,5 @@
 # Architecture rules
+- Dynamic roles and permission levels live in protected registry tables; audited writers manage assignments while legacy enum roles are synchronized compatibility projections, so custom roles never require schema changes.
 - Admin navigation uses canonical record routes with parameter-preserving legacy redirects; record views and server-filtered lists reuse Phase 1 permissions, while per-user preferences and export audit requests use separate audited writers so navigation cannot change business state.
 - Contracts and accounting use audited database writers and a receipt/allocation ledger; preserve legacy source precision and provenance, and do not cut over reporting until duplicate review and reconciliation succeed.
 - Financial and enclosing booking/status writers acquire the same transaction advisory lock before row locks to serialize receipt reversals with manual leasing confirmation; legacy financial tables remain immutable, including service-role writes.

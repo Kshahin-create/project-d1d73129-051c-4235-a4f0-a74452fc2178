@@ -11,6 +11,7 @@ import { fmtNum } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DirectoryAvatar, UserDirectoryDetails } from "@/components/admin/UserDirectoryDetails";
 import { directoryName, matchesDirectorySearch, type DirectoryDetails } from "@/lib/userDirectory";
+import { PermissionsWorkspace } from '@/components/admin/PermissionsWorkspace';
 
 type AppRole = "admin" | "control" | "manager" | "tenant" | "user" | "leasing_manager" | "sales_agent" | "accountant" | "investor";
 
