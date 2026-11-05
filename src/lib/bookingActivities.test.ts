@@ -29,7 +29,7 @@ describe("owner activity-to-building mapping", () => {
   it("maps buildings per the owner list", () => {
     expect(buildingInActivity({ number: 11, type: "" }, "service")).toBe(true);
     expect(buildingInActivity({ number: 7, type: "" }, "service")).toBe(false);
-    expect(buildingInActivity({ number: 12, type: "" }, "parts")).toBe(true);
+    expect(buildingInActivity({ number: 12, type: "" }, "parts")).toBe(false);
     expect(buildingInActivity({ number: 12, type: "" }, "shops")).toBe(true);
     expect(buildingInActivity({ number: 21, type: "" }, "shops")).toBe(false);
     expect(parseBookingActivity("food")).toBeNull();
@@ -40,7 +40,11 @@ describe("owner activity-to-building mapping", () => {
   });
   it("adds the owner's alternative activities on their buildings", () => {
     expect([7, 10, 12].filter(n => buildingInActivity({ number: n, type: "" }, "car-wash"))).toEqual([7, 10]);
-    expect([7, 12, 13, 14].filter(n => buildingInActivity({ number: n, type: "" }, "restaurants"))).toEqual([12, 13]);
+    expect([7, 12, 13, 22].filter(n => buildingInActivity({ number: n, type: "" }, "parts"))).toEqual([7, 22]);
+    // مباني 12 و13 للمحلات التجارية فقط: أُلغيت المطاعم والآيس كريم وعصيرات
+    expect(parseBookingActivity("restaurants")).toBeNull();
+    expect(parseBookingActivity("icecream-juices")).toBeNull();
+    expect([11, 12, 13, 14].filter(n => buildingInActivity({ number: n, type: "" }, "shops"))).toEqual([12, 13]);
     expect([13, 14, 19, 20].filter(n => buildingInActivity({ number: n, type: "" }, "glass"))).toEqual([14, 19]);
   });
 });
