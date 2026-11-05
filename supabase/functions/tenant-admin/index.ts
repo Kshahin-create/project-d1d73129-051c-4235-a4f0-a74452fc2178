@@ -1,6 +1,7 @@
 // Admin endpoint for managing tenant accounts (create, set password, magic link)
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 import { hasAdministrativeWriteAccess } from "../_shared/admin-permissions.ts";
+import { allowsTenantCredentialAction } from '../_shared/tenant-account-security.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,9 +36,10 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!SUPABASE_URL || !SERVICE || !ANON) return json({error:'تعذر إدارة الحسابات'},500);
 
     // All actions mutate accounts or generate login credentials: admin only.
     const userClient = createClient(SUPABASE_URL, ANON, {
@@ -47,17 +49,14 @@ Deno.serve(async (req) => {
     if (userErr || !userRes?.user) return json({ error: "Unauthorized" }, 401);
 
     const admin = createClient(SUPABASE_URL, SERVICE);
-    const { data: roles } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userRes.user.id);
-    const roleSet = new Set((roles ?? []).map((r: any) => r.role));
-    if (!hasAdministrativeWriteAccess(Array.from(roleSet) as string[])) {
+    const permission = await userClient.rpc('has_permission',{_capability:'security.roles',_level:'edit'});
+    if (permission.error || !permission.data) {
       return json({ error: "Not authorized" }, 403);
     }
 
     const body = await req.json();
     const action = body.action as string;
+    if (!allowsTenantCredentialAction(action,body.password)) return json({error:'المستأجر يدخل برمز تحقق على الجوال؛ الموظف لا يحدد كلمة مروره أو ينشئ رابطًا يغيرها'},403);
 
     if (action === "create") {
       const {

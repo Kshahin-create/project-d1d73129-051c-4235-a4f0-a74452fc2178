@@ -104,7 +104,7 @@ const App = () => (
           <Route path="/admin/maintenance" element={<ControlDashboard />} />
           <Route path="/admin/legacy-units" element={<Admin />} />
           <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/settings/permissions" element={<AdminOnly><PermissionsGuide /></AdminOnly>} />
+          <Route path="/admin/settings/permissions" element={<AdminOnly><AdminUsers /></AdminOnly>} />
           <Route path="/admin/permissions-guide" element={<PermissionsGuide />} />
           <Route path="/admin/audit" element={<AdminAudit />} />
           <Route path="/admin/access-log" element={<AdminAccessLog />} />
