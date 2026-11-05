@@ -295,6 +295,13 @@
       "when": 1793910861932,
       "tag": "0041_finance_legacy_contract_provenance",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793910950448,
+      "tag": "0042_finance_outer_writer_lock_and_receipt_validation",
+      "breakpoints": true
     }
   ]
 }
