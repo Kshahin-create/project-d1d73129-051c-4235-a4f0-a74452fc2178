@@ -2708,6 +2708,10 @@ export type Database = {
             Args: { _booking_id: string; _paid_amount?: number }
             Returns: undefined
           }
+      confirm_booking_transition: {
+        Args: { _booking_id: string }
+        Returns: undefined
+      }
       consolidate_existing_tenants: {
         Args: never
         Returns: {
