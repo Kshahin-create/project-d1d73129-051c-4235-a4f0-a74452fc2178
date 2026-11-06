@@ -5981,6 +5981,7 @@ export type Database = {
         Returns: undefined
       }
       sync_all_rented_units_to_accounts: { Args: never; Returns: number }
+      task_assignees: { Args: never; Returns: Json }
       task_can_read: {
         Args: { _task: Database["public"]["Tables"]["tasks"]["Row"] }
         Returns: boolean
@@ -5990,16 +5991,28 @@ export type Database = {
       task_pick_role: { Args: { _role: string }; Returns: string }
       task_staff_active: { Args: { _user: string }; Returns: boolean }
       tasks_bootstrap: { Args: { _reason: string }; Returns: undefined }
-      tasks_page: {
-        Args: {
-          _limit?: number
-          _offset?: number
-          _search?: string
-          _status?: string
-          _today?: boolean
-        }
-        Returns: Json
-      }
+      tasks_page:
+        | {
+            Args: {
+              _limit?: number
+              _offset?: number
+              _search?: string
+              _status?: string
+              _today?: boolean
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _limit?: number
+              _offset?: number
+              _search?: string
+              _status?: string
+              _team?: boolean
+              _today?: boolean
+            }
+            Returns: Json
+          }
       tasks_regression_tests: { Args: never; Returns: Json }
       team_followup_view: {
         Args: { _limit?: number; _offset?: number; _view: string }
