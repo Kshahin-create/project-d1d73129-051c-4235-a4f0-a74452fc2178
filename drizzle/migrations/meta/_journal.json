@@ -512,6 +512,13 @@
       "when": 1793933251836,
       "tag": "0072_task_visibility_lifecycle_and_schedule_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1793933345776,
+      "tag": "0073_task_own_scope_and_admin_assignment_directory",
+      "breakpoints": true
     }
   ]
 }
