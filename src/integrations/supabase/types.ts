@@ -1981,6 +1981,39 @@ export type Database = {
           },
         ]
       }
+      opportunity_sheet_runs: {
+        Row: {
+          actor_id: string
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          row_count: number
+          spreadsheet_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          actor_id: string
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          row_count?: number
+          spreadsheet_id: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          actor_id?: string
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          row_count?: number
+          spreadsheet_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       parties: {
         Row: {
           archive_reason: string | null
@@ -5667,6 +5700,15 @@ export type Database = {
           phone: string
         }[]
       }
+      finish_opportunity_sheet_sync: {
+        Args: {
+          _count: number
+          _error?: string
+          _id: string
+          _success: boolean
+        }
+        Returns: undefined
+      }
       generate_time_tasks: { Args: never; Returns: Json }
       get_invoice_for_view: {
         Args: { _invoice_id: string }
@@ -5899,6 +5941,18 @@ export type Database = {
         Args: { _limit?: number; _offset?: number }
         Returns: Json
       }
+      opportunity_export_page: {
+        Args: {
+          _board?: boolean
+          _limit?: number
+          _offset?: number
+          _owner?: string
+          _search?: string
+          _source?: string
+          _stage?: string
+        }
+        Returns: Json
+      }
       permission_levels_allow: {
         Args: { _granted: string; _requested: string }
         Returns: boolean
@@ -6088,6 +6142,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      start_opportunity_sheet_sync: { Args: never; Returns: Json }
       sync_all_rented_units_to_accounts: { Args: never; Returns: number }
       task_assignees: { Args: never; Returns: Json }
       task_can_read: {

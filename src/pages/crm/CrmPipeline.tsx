@@ -14,6 +14,9 @@ import { AdminServerList } from "@/components/admin/AdminServerList";
 import { adminLists } from "@/lib/adminData";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Download, RefreshCw, FileSpreadsheet } from "lucide-react";
+import { FunctionsHttpError } from "@supabase/supabase-js";
+import { exportOpportunities } from "@/lib/opportunityExport";
 
 type OppRow = {
   id: string;
@@ -49,6 +52,17 @@ export default function CrmPipeline() {
   const [stageFilter, setStageFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
+  const [exporting,setExporting]=useState(false),[syncing,setSyncing]=useState(false);
+  const destinationQ=useQuery({queryKey:['opportunity-sheet-destination'],enabled:isAdmin,queryFn:async()=>{const r=await supabase.from('app_settings').select('buildings_sheet_id').eq('id',1).maybeSingle();if(r.error)throw r.error;return r.data?.buildings_sheet_id;}});
+  const sheetQ=useQuery({queryKey:['opportunity-sheet-last'],enabled:isAdmin,queryFn:async()=>{const r=await supabase.from('opportunity_sheet_runs').select('status,row_count,completed_at').eq('status','succeeded').order('completed_at',{ascending:false}).limit(1).maybeSingle();if(r.error)throw r.error;return r.data;}});
+  const exportBoard=async()=>{setExporting(true);try{await exportOpportunities({search,stage:stageFilter,source:sourceFilter,owner:ownerFilter,board:true});}catch(e){toast.error((e as Error).message);}finally{setExporting(false);}};
+  const syncSheet=async()=>{setSyncing(true);try{
+    const r=await supabase.rpc('opportunity_export_page',{_board:false,_limit:1});if(r.error)throw r.error;const count=(r.data as unknown as {count:number}).count;
+    if(!window.confirm(`تحديث تبويب الفرص بكل ${count} فرصة؟ باقي التبويبات لن تتغير.`))return;
+    const {data,error}=await supabase.functions.invoke('opportunities-sheets-sync',{body:{action:'push',confirmed_count:count}});
+    if(error){const detail=error instanceof FunctionsHttpError?await error.context.text():error.message;let message=detail;try{message=JSON.parse(detail).error??detail;}catch{}throw new Error(message);}
+    toast.success(`تم تحديث الشيت بـ ${data.count} فرصة`);void sheetQ.refetch();
+  }catch(e){toast.error((e as Error).message);}finally{setSyncing(false);}};
 
   const {user}=useAuth();
   const q = useQuery({ queryKey: ["crm-open-opportunities",user?.id,page,search,stageFilter,sourceFilter,ownerFilter], enabled: allowed, queryFn: async()=>{const r=await supabase.rpc("admin_pipeline_page",{_search:search,_stage:stageFilter,_source:sourceFilter,_owner:ownerFilter,_limit:25,_offset:page*25});if(r.error)throw r.error;return r.data as unknown as {rows:OppRow[];count:number};} });
@@ -98,12 +112,16 @@ export default function CrmPipeline() {
     <><Header/><main dir="rtl" className="container-tight space-y-5 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">لوحة الفرص</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {view==="board"&&<Button variant="outline" disabled={exporting||q.isPending||q.isError} onClick={()=>void exportBoard()}><Download className="ml-2 h-4 w-4"/>{exporting?'جارٍ التصدير…':'تصدير إكسل'}</Button>}
+          {isAdmin&&<Button variant="outline" disabled={syncing} onClick={()=>void syncSheet()}><RefreshCw className={cn("ml-2 h-4 w-4",syncing&&"animate-spin")}/>{syncing?'جارٍ تحديث الشيت…':'تحديث الشيت'}</Button>}
+          {isAdmin&&destinationQ.data&&<Button asChild variant="ghost"><a href={`https://docs.google.com/spreadsheets/d/${destinationQ.data}/edit`} target="_blank" rel="noopener noreferrer"><FileSpreadsheet className="ml-2 h-4 w-4"/>فتح الشيت</a></Button>}
           <Button variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>لوحة المراحل</Button>
           <Button variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")}>قائمة</Button>
         </div>
       </div>
 
+      {isAdmin&&<p className="text-xs text-muted-foreground">آخر تحديث لشيت الفرص: {sheetQ.data?.completed_at?`${new Date(sheetQ.data.completed_at).toLocaleString('ar-SA')} · ${sheetQ.data.row_count} فرصة`:'لم يتم تحديثه بعد'}</p>}
       {view==="board"&&<div className="flex flex-wrap gap-3">
         <Input className="max-w-xs" placeholder="بحث بالاسم أو الكود" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         <select className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm" value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); setPage(0); }}>
@@ -168,7 +186,7 @@ export default function CrmPipeline() {
 
       {view==="board"&&<p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?new Date(q.dataUpdatedAt).toLocaleString("ar-SA"):"—"}</p>}
       {view === "board"&&<div className="flex gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>}
-      {view === "list" && <AdminServerList spec={adminLists.opportunities} filters={{...(stageFilter?{stage:stageFilter}:{}),...(sourceFilter?{source:sourceFilter}:{}),...(ownerFilter&&ownerFilter!=="none"?{owner_user_id:ownerFilter}:{})}} onFilters={f=>{setStageFilter(f.stage??"");setSourceFilter(f.source??"");setOwnerFilter(f.owner_user_id??"");}}/>}
+      {view === "list" && <AdminServerList onExport={(format,term)=>exportOpportunities({search:term,stage:stageFilter,source:sourceFilter,owner:ownerFilter,board:false},format)} spec={adminLists.opportunities} filters={{...(stageFilter?{stage:stageFilter}:{}),...(sourceFilter?{source:sourceFilter}:{}),...(ownerFilter&&ownerFilter!=="none"?{owner_user_id:ownerFilter}:{})}} onFilters={f=>{setStageFilter(f.stage??"");setSourceFilter(f.source??"");setOwnerFilter(f.owner_user_id??"");}}/>}
 
     </main></>
   );

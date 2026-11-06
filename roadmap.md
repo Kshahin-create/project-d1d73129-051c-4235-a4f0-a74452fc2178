@@ -1,8 +1,9 @@
 # Opportunity board Excel and Sheets
 - [x] Inspect pipeline export, existing Sheets settings and connector availability; user chose a new tab in the current full-system sheet.
-- [ ] Present scope and additive migration plan; wait for approval before implementation.
-- [ ] Add audited complete filtered XLSX export and admin-only push to the opportunities tab; verify real download, sheet readback and permissions.
-- [ ] Sheet write verification requires an accessible Google Sheets connection for the project owner; existing listed connection is not accessible to requester.
+- [x] Plan approved; existing Google Sheets connection successfully linked and app credential path verified against current full-system spreadsheet.
+- [x] Migration 0076: caller-scoped explicit export read, protected sync runs, admin-only audited start/finish; dedicated push-only edge deployed. Board XLSX and optional list export reuse full filtered reads and export audit; last sync and destination link visible to admin.
+- [x] 10 export/CRM tests passed (1207-row batching, count-change rejection, restricted columns); authenticated admin UI downloaded 52-row XLSX, filtered 1-row XLSX and 52-row list XLSX. Actual sheet push succeeded with 52 rows; headers and IDs read back. Desktop/mobile screenshots and automatic build OK. No site publication or business mutation.
+- [ ] Dedicated non-admin session rejection remains unverified; server gates use live dynamic has_role/has_permission and caller RLS, no service-role data reads.
 
 # Booking plan availability visibility
 - [x] Inspect live public_units and authenticated building 1: statuses remain available; plan uses transparent available overlays, locked Button opacity 0.5, and hides reserved classification for non-admin viewers.
