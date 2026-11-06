@@ -1,3 +1,9 @@
+# Opportunity board Excel and Sheets
+- [x] Inspect pipeline export, existing Sheets settings and connector availability; user chose a new tab in the current full-system sheet.
+- [ ] Present scope and additive migration plan; wait for approval before implementation.
+- [ ] Add audited complete filtered XLSX export and admin-only push to the opportunities tab; verify real download, sheet readback and permissions.
+- [ ] Sheet write verification requires an accessible Google Sheets connection for the project owner; existing listed connection is not accessible to requester.
+
 # Booking plan availability visibility
 - [x] Inspect live public_units and authenticated building 1: statuses remain available; plan uses transparent available overlays, locked Button opacity 0.5, and hides reserved classification for non-admin viewers.
 - [x] Approved presentation-only repair plan; no business-state changes, migration or publication.
