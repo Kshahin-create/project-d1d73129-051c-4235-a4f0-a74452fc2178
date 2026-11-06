@@ -1,3 +1,7 @@
+# Phase 3 / Prompt 11 — Data quality and unified audit
+- [x] Inspect audit_log/unit_audit_log/duplicate_candidates/system_backups schemas and cron inventory (12h backup job active; no API for Cloud daily backups).
+- [ ] Plan written and shown; awaiting user approval before any implementation.
+
 # Phase 3 / Prompt 10 — Tasks, alerts, activity log
 - [x] Inspect existing sources; response 24h maximum, installment 3 days, renewal calendar month then 7 days, daily midnight Asia/Riyadh confirmed.
 - [x] Present affected tables/functions/edge files and additive migration plan; approved.
