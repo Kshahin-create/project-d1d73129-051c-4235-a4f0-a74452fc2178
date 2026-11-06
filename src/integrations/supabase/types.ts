@@ -5023,6 +5023,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      _task_upsert: {
+        Args: {
+          _due: string
+          _entity: string
+          _id: string
+          _key: string
+          _title: string
+          _type: string
+          _user: string
+          _visibility?: string
+        }
+        Returns: string
+      }
       accept_my_staff_invitation: { Args: never; Returns: boolean }
       activate_contract: {
         Args: { _id: string; _reason: string }
@@ -5532,6 +5545,7 @@ export type Database = {
           phone: string
         }[]
       }
+      generate_time_tasks: { Args: never; Returns: Json }
       get_invoice_for_view: {
         Args: { _invoice_id: string }
         Returns: {
@@ -5935,6 +5949,7 @@ export type Database = {
         Args: { _task: Database["public"]["Tables"]["tasks"]["Row"] }
         Returns: boolean
       }
+      task_pick_role: { Args: { _role: string }; Returns: string }
       task_staff_active: { Args: { _user: string }; Returns: boolean }
       tasks_bootstrap: { Args: { _reason: string }; Returns: undefined }
       tasks_page: {
