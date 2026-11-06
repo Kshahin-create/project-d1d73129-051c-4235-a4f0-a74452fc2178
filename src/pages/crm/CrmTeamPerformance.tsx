@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OUTCOME_LABELS, stageLabel } from "@/lib/crm";
+import { formatDateTime } from "@/lib/format";
 import { exportRowsToExcel } from "@/lib/exportData";
 import { Button } from "@/components/ui/button";
 
@@ -119,7 +120,7 @@ export default function CrmTeamPerformance() {
           ))}
         </TableBody>
       </Table>
-      <p className="text-xs text-muted-foreground">النطاق: كل الفرص — آخر تحديث: {new Date().toLocaleString("ar-SA")}</p>
+      <p className="text-xs text-muted-foreground">النطاق: كل الفرص — آخر تحديث: {formatDateTime(new Date())}</p>
     </main></>
   );
 }
