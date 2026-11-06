@@ -1,0 +1,2 @@
+DO $$ DECLARE d text;BEGIN SELECT pg_get_functiondef('public.generate_time_tasks()'::regprocedure) INTO d;d:=replace(d,'SELECT x.*,c.party_id FROM public.installments x JOIN public.contracts c ON c.id=x.contract_id WHERE c.status=''active'' AND NOT c.needs_review','SELECT x.*,ct.party_id FROM public.installments x JOIN public.contracts ct ON ct.id=x.contract_id WHERE ct.status=''active'' AND NOT ct.needs_review');EXECUTE d;END $$;
+SELECT to_regprocedure('public.generate_time_tasks()') IS NOT NULL AS generator_ready;

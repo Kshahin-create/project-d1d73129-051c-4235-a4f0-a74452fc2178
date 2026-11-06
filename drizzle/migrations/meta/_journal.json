@@ -484,6 +484,13 @@
       "when": 1793932862854,
       "tag": "0068_automatic_task_sources_and_activity_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1793932965130,
+      "tag": "0069_task_generator_alias_resolution",
+      "breakpoints": true
     }
   ]
 }
