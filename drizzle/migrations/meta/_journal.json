@@ -470,6 +470,13 @@
       "when": 1793923281293,
       "tag": "0066_staff_invitation_email_variable_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1793932822336,
+      "tag": "0067_audited_tasks_and_notifications_foundation",
+      "breakpoints": true
     }
   ]
 }

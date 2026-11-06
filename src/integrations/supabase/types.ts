@@ -254,15 +254,22 @@ export type Database = {
           buildings_sheet_id: string | null
           buildings_sheet_last_direction: string | null
           buildings_sheet_last_sync_at: string | null
+          contract_alert_months: number
+          contract_second_alert_days: number
           grace_days: number
           hold_hours: number
           id: number
+          installment_alert_days: number
           leads_sheet_id: string | null
           leads_sheet_last_sync_at: string | null
           leads_sheet_name: string | null
           maintenance_message: string | null
           maintenance_mode: boolean
           max_hold_extensions: number
+          task_response_hours: number
+          task_summary_time: string
+          task_telegram_enabled: boolean
+          task_timezone: string
           updated_at: string
           updated_by: string | null
         }
@@ -271,15 +278,22 @@ export type Database = {
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
+          contract_alert_months?: number
+          contract_second_alert_days?: number
           grace_days?: number
           hold_hours?: number
           id?: number
+          installment_alert_days?: number
           leads_sheet_id?: string | null
           leads_sheet_last_sync_at?: string | null
           leads_sheet_name?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean
           max_hold_extensions?: number
+          task_response_hours?: number
+          task_summary_time?: string
+          task_telegram_enabled?: boolean
+          task_timezone?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -288,15 +302,22 @@ export type Database = {
           buildings_sheet_id?: string | null
           buildings_sheet_last_direction?: string | null
           buildings_sheet_last_sync_at?: string | null
+          contract_alert_months?: number
+          contract_second_alert_days?: number
           grace_days?: number
           hold_hours?: number
           id?: number
+          installment_alert_days?: number
           leads_sheet_id?: string | null
           leads_sheet_last_sync_at?: string | null
           leads_sheet_name?: string | null
           maintenance_message?: string | null
           maintenance_mode?: boolean
           max_hold_extensions?: number
+          task_response_hours?: number
+          task_summary_time?: string
+          task_telegram_enabled?: boolean
+          task_timezone?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -1623,6 +1644,53 @@ export type Database = {
           },
         ]
       }
+      notification_outbox: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          id: string
+          kind: string
+          result_code: string | null
+          source_key: string
+          status: string
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          result_code?: string | null
+          source_key: string
+          status?: string
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          result_code?: string | null
+          source_key?: string
+          status?: string
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       one_time_tokens: {
         Row: {
           access_token: string
@@ -1940,6 +2008,57 @@ export type Database = {
           {
             foreignKeyName: "parties_merged_into_id_fkey"
             columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      party_activities: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["opportunity_activity_type"]
+          actor_id: string
+          created_at: string
+          id: string
+          next_action: string | null
+          next_action_at: string | null
+          notes: string | null
+          outcome: Database["public"]["Enums"]["opportunity_activity_outcome"]
+          party_id: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["opportunity_activity_type"]
+          actor_id: string
+          created_at?: string
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          outcome: Database["public"]["Enums"]["opportunity_activity_outcome"]
+          party_id: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["opportunity_activity_type"]
+          actor_id?: string
+          created_at?: string
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["opportunity_activity_outcome"]
+          party_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_activities_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_activities_party_id_fkey"
+            columns: ["party_id"]
             isOneToOne: false
             referencedRelation: "parties_crm"
             referencedColumns: ["id"]
@@ -2651,6 +2770,107 @@ export type Database = {
           size_bytes?: number
           storage_path?: string
           table_counts?: Json
+        }
+        Relationships: []
+      }
+      task_generation_state: {
+        Row: {
+          last_checked_at: string
+          source_key: string
+          task_id: string | null
+        }
+        Insert: {
+          last_checked_at?: string
+          source_key: string
+          task_id?: string | null
+        }
+        Update: {
+          last_checked_at?: string
+          source_key?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_generation_state_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assignee_user_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          outcome_note: string | null
+          source_key: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          assignee_user_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          outcome_note?: string | null
+          source_key?: string | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          assignee_user_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          outcome_note?: string | null
+          source_key?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      team_saved_views: {
+        Row: {
+          code: string
+          created_at: string
+          name_ar: string
+          required_capability: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          name_ar: string
+          required_capability: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          name_ar?: string
+          required_capability?: string
         }
         Relationships: []
       }
@@ -3945,6 +4165,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_buildings"
             referencedColumns: ["number"]
+          },
+        ]
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          read_at: string | null
+          task_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          task_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          task_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5383,6 +5638,7 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: undefined
       }
+      mark_notifications_read: { Args: { _id?: string }; Returns: undefined }
       merge_duplicate_tenant_accounts: {
         Args: never
         Returns: {
@@ -5492,6 +5748,10 @@ export type Database = {
       my_permissions: { Args: never; Returns: Json }
       next_invoice_number: { Args: never; Returns: string }
       next_offer_number: { Args: { _booking_id?: string }; Returns: string }
+      notifications_page: {
+        Args: { _limit?: number; _offset?: number }
+        Returns: Json
+      }
       permission_levels_allow: {
         Args: { _granted: string; _requested: string }
         Returns: boolean
@@ -5616,6 +5876,17 @@ export type Database = {
         }
         Returns: string
       }
+      save_task_settings: {
+        Args: {
+          _installment: number
+          _months: number
+          _reason: string
+          _response: number
+          _second: number
+          _time: string
+        }
+        Returns: undefined
+      }
       set_booking_paid_amount: {
         Args: { _booking_id: string; _paid_amount: number }
         Returns: undefined
@@ -5626,6 +5897,10 @@ export type Database = {
       }
       set_metrics_settings: {
         Args: { _grace_days: number; _reason: string }
+        Returns: undefined
+      }
+      set_task_state: {
+        Args: { _id: string; _note: string; _status: string }
         Returns: undefined
       }
       set_tenant_account_paid_amount: {
@@ -5656,6 +5931,22 @@ export type Database = {
         Returns: undefined
       }
       sync_all_rented_units_to_accounts: { Args: never; Returns: number }
+      task_can_read: {
+        Args: { _task: Database["public"]["Tables"]["tasks"]["Row"] }
+        Returns: boolean
+      }
+      task_staff_active: { Args: { _user: string }; Returns: boolean }
+      tasks_bootstrap: { Args: { _reason: string }; Returns: undefined }
+      tasks_page: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _search?: string
+          _status?: string
+          _today?: boolean
+        }
+        Returns: Json
+      }
       telegram_unit_status_action: {
         Args: { _action: string; _actor: string; _args: Json }
         Returns: Json
