@@ -15,6 +15,9 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import Index from "./pages/Index.tsx";
 const TaskSettings = lazy(()=>import('./pages/admin/TaskSettings'));
 const TeamFollowupViews = lazy(()=>import('./pages/admin/TeamFollowupViews'));
+const DataQuality = lazy(()=>import('./pages/admin/DataQuality'));
+const SystemAuditLog = lazy(()=>import('./pages/admin/SystemAuditLog'));
+const AdminHelp = lazy(()=>import('./pages/admin/AdminHelp'));
 const MyTasks = lazy(()=>import('./pages/MyTasks'));
 const Booking = lazy(() => import("./pages/Booking.tsx"));
 const Privacy = lazy(() => import("./pages/Privacy.tsx"));
@@ -106,6 +109,9 @@ const App = () => (
           <Route path="/admin/tasks" element={<MyTasks/>}/>
           <Route path="/admin/settings/tasks" element={<TaskSettings/>}/>
           <Route path="/admin/followup" element={<TeamFollowupViews/>}/>
+          <Route path="/admin/data-quality" element={<DataQuality/>}/>
+          <Route path="/admin/system-log" element={<AdminOnly><SystemAuditLog/></AdminOnly>}/>
+          <Route path="/admin/help" element={<AdminOnly><AdminHelp/></AdminOnly>}/>
           <Route path="/admin" element={<MetricsHome />} />
           <Route path="/admin/maintenance" element={<ControlDashboard />} />
           <Route path="/admin/legacy-units" element={<Admin />} />
