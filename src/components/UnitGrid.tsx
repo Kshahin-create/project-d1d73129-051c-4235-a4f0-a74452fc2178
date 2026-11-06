@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, CheckCircle2, ZoomIn, X } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingPlans";
@@ -258,13 +259,16 @@ const UnitGridSection = ({
 
       {/* Lightbox */}
       <AnimatePresence>
-        {zoomed && planImage && (
+        {zoomed && planImage && createPortal(
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setZoomed(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`مخطط ${displayLabel} مكبّر`}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
           >
             <Button
               aria-label="إغلاق المخطط"
@@ -282,7 +286,7 @@ const UnitGridSection = ({
               <img
                 src={planImage}
                 alt={`مخطط ${displayLabel}`}
-                className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-elevated"
+                className="block max-h-[90vh] max-w-[calc(100vw-2rem)] rounded-xl object-contain shadow-elevated"
               />
               {layout && (
                 <div className="absolute inset-0">
@@ -290,7 +294,7 @@ const UnitGridSection = ({
                 </div>
               )}
             </motion.div>
-          </motion.div>
+          </motion.div>, document.body
         )}
       </AnimatePresence>
     </div>
