@@ -5041,6 +5041,15 @@ export type Database = {
         Args: { _id: string; _reason: string }
         Returns: undefined
       }
+      activity_page: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _opportunity?: string
+          _party?: string
+        }
+        Returns: Json
+      }
       adjust_payment: {
         Args: { _amount: number; _notes?: string; _tenant_account_id: string }
         Returns: string
@@ -5328,6 +5337,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_task: {
+        Args: { _id: string; _reason: string; _user: string }
+        Returns: undefined
+      }
       bulk_reassign_opportunities: {
         Args: { _from_user: string; _reason: string; _to_user: string }
         Returns: number
@@ -5493,6 +5506,18 @@ export type Database = {
         }
         Returns: Json
       }
+      create_task: {
+        Args: {
+          _due: string
+          _entity: string
+          _entity_id: string
+          _reason: string
+          _title: string
+          _type: string
+          _user: string
+        }
+        Returns: string
+      }
       create_telegram_link_token: { Args: never; Returns: string }
       crm_backfill_parties: { Args: never; Returns: Json }
       crm_ensure_party: {
@@ -5646,6 +5671,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      log_party_activity: {
+        Args: {
+          _at: string
+          _next: string
+          _notes: string
+          _outcome: Database["public"]["Enums"]["opportunity_activity_outcome"]
+          _party: string
+          _type: Database["public"]["Enums"]["opportunity_activity_type"]
+        }
+        Returns: string
       }
       lookup_login_email: { Args: { _identifier: string }; Returns: string }
       mark_booking_whatsapp_sent: {
@@ -5960,6 +5996,10 @@ export type Database = {
           _status?: string
           _today?: boolean
         }
+        Returns: Json
+      }
+      team_followup_view: {
+        Args: { _limit?: number; _offset?: number; _view: string }
         Returns: Json
       }
       telegram_unit_status_action: {

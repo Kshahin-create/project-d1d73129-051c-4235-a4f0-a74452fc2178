@@ -491,6 +491,13 @@
       "when": 1793932965130,
       "tag": "0069_task_generator_alias_resolution",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1793933021319,
+      "tag": "0070_task_assignment_and_followup_views",
+      "breakpoints": true
     }
   ]
 }
