@@ -1,3 +1,8 @@
+# Booking plan availability visibility
+- [x] Inspect live public_units and authenticated building 1: statuses remain available; plan uses transparent available overlays, locked Button opacity 0.5, and hides reserved classification for non-admin viewers.
+- [ ] Approve presentation-only repair plan; no business-state changes, migration or publication.
+- [ ] Implement authoritative status display, clear plan overlays/legend and matching list/zoom; run regression tests and desktop/mobile booking selection verification without submitting a booking.
+
 # Sidebar redesign
 - [x] Approved presentation-only plan; preserve six sections, all existing routes and visibility rules.
 - [x] Reorganize sidebar within six sections, settings subheadings, existing followup/task settings links, home aliases and record active detection, compact icon mode and mobile Escape/route-close controls; preserve existing visibility rules.
