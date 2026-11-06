@@ -1003,6 +1003,60 @@ export type Database = {
           },
         ]
       }
+      data_quality_resolutions: {
+        Row: {
+          check_code: string
+          entity_id: string
+          entity_table: string
+          id: string
+          reason: string | null
+          resolution: string
+          resolved_at: string
+          resolved_by: string | null
+        }
+        Insert: {
+          check_code: string
+          entity_id: string
+          entity_table: string
+          id?: string
+          reason?: string | null
+          resolution: string
+          resolved_at?: string
+          resolved_by?: string | null
+        }
+        Update: {
+          check_code?: string
+          entity_id?: string
+          entity_table?: string
+          id?: string
+          reason?: string | null
+          resolution?: string
+          resolved_at?: string
+          resolved_by?: string | null
+        }
+        Relationships: []
+      }
+      data_quality_snapshots: {
+        Row: {
+          captured_at: string
+          check_code: string
+          finding_count: number
+          id: string
+        }
+        Insert: {
+          captured_at?: string
+          check_code: string
+          finding_count: number
+          id?: string
+        }
+        Update: {
+          captured_at?: string
+          check_code?: string
+          finding_count?: number
+          id?: string
+        }
+        Relationships: []
+      }
       duplicate_candidates: {
         Row: {
           candidate_party_id: string | null
@@ -4267,6 +4321,16 @@ export type Database = {
       }
     }
     Views: {
+      data_quality_findings_raw: {
+        Row: {
+          check_code: string | null
+          detail: string | null
+          entity_id: string | null
+          entity_table: string | null
+          label: string | null
+        }
+        Relationships: []
+      }
       finance_source_integrity: {
         Row: {
           changed_source: boolean | null
@@ -5058,7 +5122,40 @@ export type Database = {
         Args: { _reason: string; _role: string; _user: string }
         Returns: undefined
       }
+      admin_audit_log_page: {
+        Args: {
+          p_action?: string
+          p_actor_email?: string
+          p_entity_table?: string
+          p_from?: string
+          p_page?: number
+          p_page_size?: number
+          p_to?: string
+        }
+        Returns: {
+          action: string
+          actor_email: string
+          actor_role: string
+          after_data: Json
+          before_data: Json
+          created_at: string
+          entity_id: string
+          entity_table: string
+          id: string
+          total_count: number
+        }[]
+      }
       admin_auto_merge_duplicate_tenants: { Args: never; Returns: Json }
+      admin_data_quality_checks: {
+        Args: never
+        Returns: {
+          check_code: string
+          detail: string
+          entity_id: string
+          entity_table: string
+          label: string
+        }[]
+      }
       admin_link_tenant_units: {
         Args: { _tenant_account_id: string; _unit_ids: string[] }
         Returns: undefined
@@ -5886,6 +5983,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      resolve_data_quality_finding: {
+        Args: {
+          p_check_code: string
+          p_entity_id: string
+          p_entity_table: string
+          p_reason?: string
+          p_resolution: string
+        }
+        Returns: string
+      }
       resolve_legacy_receipt: {
         Args: { _reason: string; _resolution: string; _source: string }
         Returns: undefined
@@ -5971,6 +6078,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      snapshot_data_quality: { Args: never; Returns: number }
       staff_service_result: {
         Args: {
           _id: string
