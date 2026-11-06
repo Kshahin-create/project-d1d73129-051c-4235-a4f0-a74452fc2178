@@ -5985,6 +5985,8 @@ export type Database = {
         Args: { _task: Database["public"]["Tables"]["tasks"]["Row"] }
         Returns: boolean
       }
+      task_daily_summary: { Args: never; Returns: number }
+      task_installment_balance: { Args: { _id: string }; Returns: number }
       task_pick_role: { Args: { _role: string }; Returns: string }
       task_staff_active: { Args: { _user: string }; Returns: boolean }
       tasks_bootstrap: { Args: { _reason: string }; Returns: undefined }
