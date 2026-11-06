@@ -1,8 +1,10 @@
 # Phase 3 / Prompt 10 — Tasks, alerts, activity log
-- [ ] Inspect existing activity/settings/Telegram/home capabilities and clarify response/alert deadlines and summary time.
-- [ ] Present affected tables/functions/edge files and additive migration plan; wait for approval before implementation.
-- [ ] Build audited tasks and deduplicated automation, own task list/home block, activity+next action, private bell and sanitized Telegram, permission-aware team views.
-- [ ] Verify scheduling, duplicates/concurrency, ownership/finance privacy, activity transaction, configured recipients and mobile/desktop; preserve existing booking/status/finance writers.
+- [x] Inspect existing sources; response 24h maximum, installment 3 days, renewal calendar month then 7 days, daily midnight Asia/Riyadh confirmed.
+- [x] Present affected tables/functions/edge files and additive migration plan; approved.
+- [x] Add audited tasks, own/team lists and admin assignment, today block, private bell, team views, settings, party/opportunity activity pagination and next-action transaction, source triggers and hourly time windows.
+- [x] Verify 6 real tasks remain 6 after regeneration; 8 database rollback assertions; 31 unit tests; admin tasks/team/settings/record/bell desktop/915/mobile no runtime errors/overflow; automatic build OK. Hourly generator and 21:00 UTC summary jobs exist; no messages/site publication or booking-state changes performed.
+- [ ] Telegram sanitized sender/queue wake-on-enqueue and summary delivery remain blocked: user declined Telegram connection; new task Telegram delivery stays disabled, existing bot unchanged. Queue schema only, no working delivery processor yet.
+- [ ] Finish task creation UI, audited permitted exports/saved personal filters, tenant record notifications and real role/concurrency/source-ledger tests; not yet complete. Actual dedicated sales/accountant/leasing sessions unavailable; Prompt 9 protection remains incomplete.
 
 # Phase 2 / Prompt 9 — Roles, permissions, security
 - [x] Review existing roles, policies, writers, account flows and private documents; resolve dynamic roles and admin approvals.
