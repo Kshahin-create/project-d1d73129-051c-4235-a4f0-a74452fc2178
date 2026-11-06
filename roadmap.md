@@ -1,3 +1,9 @@
+# Phase 3 / Prompt 10 — Tasks, alerts, activity log
+- [ ] Inspect existing activity/settings/Telegram/home capabilities and clarify response/alert deadlines and summary time.
+- [ ] Present affected tables/functions/edge files and additive migration plan; wait for approval before implementation.
+- [ ] Build audited tasks and deduplicated automation, own task list/home block, activity+next action, private bell and sanitized Telegram, permission-aware team views.
+- [ ] Verify scheduling, duplicates/concurrency, ownership/finance privacy, activity transaction, configured recipients and mobile/desktop; preserve existing booking/status/finance writers.
+
 # Phase 2 / Prompt 9 — Roles, permissions, security
 - [x] Review existing roles, policies, writers, account flows and private documents; resolve dynamic roles and admin approvals.
 - [x] Present complete affected tables/functions/edge files and additive migration plan; approved.
