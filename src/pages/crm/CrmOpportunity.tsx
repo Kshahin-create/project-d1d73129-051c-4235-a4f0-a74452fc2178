@@ -16,6 +16,7 @@ export default function CrmOpportunity() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin, isManager, isLeasingManager, isSalesAgent, user, loading } = useAuth();
   const allowed = isAdmin || isManager || isLeasingManager || isSalesAgent;
+  const [activityPage,setActivityPage]=useState(0);
   const [actType, setActType] = useState("call");
   const [actOutcome, setActOutcome] = useState("answered");
   const [actNotes, setActNotes] = useState("");
@@ -26,7 +27,7 @@ export default function CrmOpportunity() {
     queryKey: ["crm-opportunity", id],
     enabled: allowed && !!id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("opportunities").select("*, parties(name_ar, tenant_code)").eq("id", id!).single();
+      const { data, error } = await supabase.from("opportunities").select("*, parties(name_ar, tenant_code)").eq("id", id??"").single();
       if (error) throw error;
       const { data: party } = await supabase.from("parties_crm").select("*").eq("id", data.party_id).maybeSingle();
       return { opp: data, party };
@@ -34,12 +35,13 @@ export default function CrmOpportunity() {
   });
 
   const activitiesQ = useQuery({
-    queryKey: ["crm-opportunity-activities", id],
+    queryKey: ["crm-opportunity-activities", id,activityPage],
     enabled: allowed && !!id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("opportunity_activities").select("*").eq("opportunity_id", id!).order("created_at", { ascending: false }).range(0, 99);
-      if (error) throw error;
-      return data ?? [];
+      if(!id)throw new Error('الفرصة غير موجودة');
+      const {data,error}=await supabase.rpc('activity_page',{_opportunity:id,_offset:activityPage*25,_limit:25});
+      if(error)throw error;
+      return data as unknown as {rows:{id:string;activity_type:string;outcome:string;notes:string|null;created_at:string;actor_name:string|null}[];count:number};
     },
   });
 
@@ -47,7 +49,7 @@ export default function CrmOpportunity() {
     queryKey: ["crm-opportunity-owners", id],
     enabled: allowed && !!id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("opportunity_owner_history").select("*").eq("opportunity_id", id!).order("created_at", { ascending: false }).range(0, 49);
+      const { data, error } = await supabase.from("opportunity_owner_history").select("*").eq("opportunity_id", id??"").order("created_at", { ascending: false }).range(0, 49);
       if (error) throw error;
       return data ?? [];
     },
@@ -64,7 +66,7 @@ export default function CrmOpportunity() {
 
   const logActivity = async () => {
     const { error } = await supabase.rpc("log_opportunity_activity", {
-      _opportunity_id: id!,
+      _opportunity_id: id??"",
       _activity_type: actType as never,
       _outcome: actOutcome as never,
       _notes: actNotes || null,
@@ -87,7 +89,7 @@ export default function CrmOpportunity() {
       revisitAt = window.prompt("تاريخ إعادة الزيارة (مثال 2026-12-01)")?.trim() ?? null;
       if (!revisitAt) return;
     }
-    const { error } = await supabase.rpc("move_opportunity", { _opportunity_id: id!, _to_stage: toStage as never, _reason: reason, _revisit_at: revisitAt });
+    const { error } = await supabase.rpc("move_opportunity", { _opportunity_id: id??"", _to_stage: toStage as never, _reason: reason, _revisit_at: revisitAt });
     if (error) toast.error(error.message);
     else { toast.success("تم النقل"); void oppQ.refetch(); }
   };
@@ -96,7 +98,7 @@ export default function CrmOpportunity() {
     const reason = window.prompt(`سبب الإغلاق «${OUTCOME_LABELS[outcome]}» (5 أحرف على الأقل)`)?.trim();
     if (!reason || reason.length < 5) return;
     const lostTo = outcome === "chose_other" ? window.prompt("اختار مكانًا آخر — اذكره (اختياري)")?.trim() ?? null : null;
-    const { error } = await supabase.rpc("move_opportunity", { _opportunity_id: id!, _to_stage: opp!.stage as never, _reason: reason, _outcome: outcome as never, _outcome_reason: reason, _lost_to: lostTo });
+    const { error } = await supabase.rpc("move_opportunity", { _opportunity_id: id??"", _to_stage: opp?.stage??"new" as never, _reason: reason, _outcome: outcome as never, _outcome_reason: reason, _lost_to: lostTo });
     if (error) toast.error(error.message);
     else { toast.success("تم إغلاق الفرصة"); void oppQ.refetch(); }
   };
@@ -104,7 +106,7 @@ export default function CrmOpportunity() {
   const requestTransfer = async () => {
     const reason = window.prompt("سبب طلب نقل الفرصة إليك (5 أحرف على الأقل)")?.trim();
     if (!reason || reason.length < 5) return;
-    const { error } = await supabase.rpc("request_transfer", { _opportunity_id: id!, _reason: reason });
+    const { error } = await supabase.rpc("request_transfer", { _opportunity_id: id??"", _reason: reason });
     if (error) toast.error(error.message);
     else toast.success("أُرسل الطلب لمدير التأجير");
   };
@@ -179,16 +181,18 @@ export default function CrmOpportunity() {
 
           <section className="space-y-2">
             <h2 className="font-bold">سجل الأنشطة</h2>
-            {(activitiesQ.data ?? []).map((a) => (
+            {activitiesQ.isError&&<p role="alert" className="text-destructive">تعذر تحميل سجل التواصل</p>}
+            {(activitiesQ.data?.rows ?? []).map((a) => (
               <div key={a.id} className="rounded-lg border border-border bg-card p-3 text-sm">
                 <span className="font-medium">{ACTIVITY_TYPE_LABELS[a.activity_type]}</span> — {ACTIVITY_OUTCOME_LABELS[a.outcome]}
                 {a.notes && <> — {a.notes}</>}
-                <span className="block text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString("ar-SA")}</span>
+                <span className="block text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString("ar-SA")} · {a.actor_name??"مستخدم مسجل"}</span>
               </div>
             ))}
-            {activitiesQ.data?.length === 0 && <p className="text-sm text-muted-foreground">لا أنشطة بعد</p>}
+            {activitiesQ.data?.count === 0 && <p className="text-sm text-muted-foreground">لا أنشطة بعد</p>}
           </section>
 
+          <div className="flex gap-3"><Button variant="outline" disabled={!activityPage} onClick={()=>setActivityPage(p=>p-1)}>السابق</Button><span>{activitiesQ.data?.count??0} نشاط</span><Button variant="outline" disabled={(activityPage+1)*25>=(activitiesQ.data?.count??0)} onClick={()=>setActivityPage(p=>p+1)}>التالي</Button></div>
           <section className="space-y-2">
             <h2 className="font-bold">سجل الملكية</h2>
             {(historyQ.data ?? []).map((h) => (
