@@ -11,9 +11,11 @@ import {
   ACTIVITY_OUTCOME_LABELS, ACTIVITY_TYPE_LABELS, LIFECYCLE_LABELS, OPEN_STAGES,
   OUTCOME_LABELS, SOURCE_LABELS, canMoveStage, stageLabel,
 } from "@/lib/crm";
+import { formatDateTime } from "@/lib/format";
 
 export default function CrmOpportunity() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ opportunityId?: string; id?: string }>();
+  const id = params.opportunityId ?? params.id;
   const { isAdmin, isManager, isLeasingManager, isSalesAgent, user, loading } = useAuth();
   const allowed = isAdmin || isManager || isLeasingManager || isSalesAgent;
   const [activityPage,setActivityPage]=useState(0);
@@ -137,7 +139,7 @@ export default function CrmOpportunity() {
             <div><span className="text-xs text-muted-foreground">البريد</span><p>{party?.email ?? "—"}</p></div>
             <div><span className="text-xs text-muted-foreground">الهوية</span><p>{party?.id_number ? `${party.id_type}: ${party.id_number}` : "غير متاحة لك"}</p></div>
             <div><span className="text-xs text-muted-foreground">المدينة</span><p>{party?.city ?? "—"}</p></div>
-            <div><span className="text-xs text-muted-foreground">الإجراء القادم</span><p>{opp.next_action ?? "—"} {opp.next_action_at ? `(${new Date(opp.next_action_at).toLocaleString("ar-SA")})` : ""}</p></div>
+            <div><span className="text-xs text-muted-foreground">الإجراء القادم</span><p>{opp.next_action ?? "—"} {opp.next_action_at ? `(${formatDateTime(opp.next_action_at)})` : ""}</p></div>
             <div><span className="text-xs text-muted-foreground">ملاحظات</span><p>{opp.notes ?? "—"}</p></div>
           </div>
 
@@ -186,7 +188,7 @@ export default function CrmOpportunity() {
               <div key={a.id} className="rounded-lg border border-border bg-card p-3 text-sm">
                 <span className="font-medium">{ACTIVITY_TYPE_LABELS[a.activity_type]}</span> — {ACTIVITY_OUTCOME_LABELS[a.outcome]}
                 {a.notes && <> — {a.notes}</>}
-                <span className="block text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString("ar-SA")} · {a.actor_name??"مستخدم مسجل"}</span>
+                <span className="block text-xs text-muted-foreground">{formatDateTime(a.created_at)} · {a.actor_name??"مستخدم مسجل"}</span>
               </div>
             ))}
             {activitiesQ.data?.count === 0 && <p className="text-sm text-muted-foreground">لا أنشطة بعد</p>}
@@ -198,7 +200,7 @@ export default function CrmOpportunity() {
             {(historyQ.data ?? []).map((h) => (
               <div key={h.id} className="rounded-lg border border-border bg-card p-3 text-sm">
                 {h.reason}
-                <span className="block text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("ar-SA")}</span>
+                <span className="block text-xs text-muted-foreground">{formatDateTime(h.created_at)}</span>
               </div>
             ))}
           </section>

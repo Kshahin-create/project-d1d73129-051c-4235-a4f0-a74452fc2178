@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { OPEN_STAGES, PARKED_STAGES, STAGE_LABELS, SOURCE_LABELS, stageLabel, isOverdue } from "@/lib/crm";
+import { formatDateTime } from "@/lib/format";
 import { exportRowsToExcel } from "@/lib/exportData";
 import { Header } from "@/components/Header";
 import { AdminServerList } from "@/components/admin/AdminServerList";
@@ -121,7 +122,7 @@ export default function CrmPipeline() {
         </div>
       </div>
 
-      {isAdmin&&<p className="text-xs text-muted-foreground">آخر تحديث لشيت الفرص: {sheetQ.data?.completed_at?`${new Date(sheetQ.data.completed_at).toLocaleString('ar-SA')} · ${sheetQ.data.row_count} فرصة`:'لم يتم تحديثه بعد'}</p>}
+      {isAdmin&&<p className="text-xs text-muted-foreground">آخر تحديث لشيت الفرص: {sheetQ.data?.completed_at?`${formatDateTime(sheetQ.data.completed_at)} · ${sheetQ.data.row_count} فرصة`:'لم يتم تحديثه بعد'}</p>}
       {view==="board"&&<div className="flex flex-wrap gap-3">
         <Input className="max-w-xs" placeholder="بحث بالاسم أو الكود" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
         <select className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm" value={stageFilter} onChange={(e) => { setStageFilter(e.target.value); setPage(0); }}>
@@ -184,7 +185,7 @@ export default function CrmPipeline() {
         </div>
       )}
 
-      {view==="board"&&<p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?new Date(q.dataUpdatedAt).toLocaleString("ar-SA"):"—"}</p>}
+      {view==="board"&&<p className="text-xs text-muted-foreground">المرحلة الأولى · {q.data?.count??0} فرصة مطابقة · آخر تحديث {q.dataUpdatedAt?formatDateTime(q.dataUpdatedAt):"—"}</p>}
       {view === "board"&&<div className="flex gap-3"><Button variant="outline" disabled={!page} onClick={()=>setPage(p=>p-1)}>السابق</Button><span>صفحة {page+1}</span><Button variant="outline" disabled={(page+1)*25>=(q.data?.count??0)} onClick={()=>setPage(p=>p+1)}>التالي</Button></div>}
       {view === "list" && <AdminServerList onExport={(format,term)=>exportOpportunities({search:term,stage:stageFilter,source:sourceFilter,owner:ownerFilter,board:false},format)} spec={adminLists.opportunities} filters={{...(stageFilter?{stage:stageFilter}:{}),...(sourceFilter?{source:sourceFilter}:{}),...(ownerFilter&&ownerFilter!=="none"?{owner_user_id:ownerFilter}:{})}} onFilters={f=>{setStageFilter(f.stage??"");setSourceFilter(f.source??"");setOwnerFilter(f.owner_user_id??"");}}/>}
 
