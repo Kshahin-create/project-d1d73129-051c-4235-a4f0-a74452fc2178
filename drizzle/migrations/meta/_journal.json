@@ -505,6 +505,13 @@
       "when": 1793933111965,
       "tag": "0071_task_source_record_guard_and_ledger_balance",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1793933251836,
+      "tag": "0072_task_visibility_lifecycle_and_schedule_guards",
+      "breakpoints": true
     }
   ]
 }

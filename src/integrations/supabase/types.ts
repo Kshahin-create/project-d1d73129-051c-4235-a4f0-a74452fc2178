@@ -6000,6 +6000,7 @@ export type Database = {
         }
         Returns: Json
       }
+      tasks_regression_tests: { Args: never; Returns: Json }
       team_followup_view: {
         Args: { _limit?: number; _offset?: number; _view: string }
         Returns: Json
