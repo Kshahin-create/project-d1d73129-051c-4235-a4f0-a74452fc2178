@@ -53,6 +53,7 @@ export default function CrmPipeline() {
   const [sourceFilter, setSourceFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
   const [exporting,setExporting]=useState(false),[syncing,setSyncing]=useState(false);
+  const destinationQ=useQuery({queryKey:['opportunity-sheet-destination'],enabled:isAdmin,queryFn:async()=>{const r=await supabase.from('app_settings').select('buildings_sheet_id').eq('id',1).maybeSingle();if(r.error)throw r.error;return r.data?.buildings_sheet_id;}});
   const sheetQ=useQuery({queryKey:['opportunity-sheet-last'],enabled:isAdmin,queryFn:async()=>{const r=await supabase.from('opportunity_sheet_runs').select('status,row_count,completed_at').eq('status','succeeded').order('completed_at',{ascending:false}).limit(1).maybeSingle();if(r.error)throw r.error;return r.data;}});
   const exportBoard=async()=>{setExporting(true);try{await exportOpportunities({search,stage:stageFilter,source:sourceFilter,owner:ownerFilter,board:true});}catch(e){toast.error((e as Error).message);}finally{setExporting(false);}};
   const syncSheet=async()=>{setSyncing(true);try{
@@ -114,7 +115,7 @@ export default function CrmPipeline() {
         <div className="flex flex-wrap gap-2">
           {view==="board"&&<Button variant="outline" disabled={exporting||q.isPending||q.isError} onClick={()=>void exportBoard()}><Download className="ml-2 h-4 w-4"/>{exporting?'جارٍ التصدير…':'تصدير إكسل'}</Button>}
           {isAdmin&&<Button variant="outline" disabled={syncing} onClick={()=>void syncSheet()}><RefreshCw className={cn("ml-2 h-4 w-4",syncing&&"animate-spin")}/>{syncing?'جارٍ تحديث الشيت…':'تحديث الشيت'}</Button>}
-          {isAdmin&&<Button asChild variant="ghost"><a href="https://docs.google.com/spreadsheets/d/1MqVP44GX9uHgxJSDYCtJ2fKndvIQVABRqdi0_hpVgVQ/edit" target="_blank" rel="noopener noreferrer"><FileSpreadsheet className="ml-2 h-4 w-4"/>فتح الشيت</a></Button>}
+          {isAdmin&&destinationQ.data&&<Button asChild variant="ghost"><a href={`https://docs.google.com/spreadsheets/d/${destinationQ.data}/edit`} target="_blank" rel="noopener noreferrer"><FileSpreadsheet className="ml-2 h-4 w-4"/>فتح الشيت</a></Button>}
           <Button variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>لوحة المراحل</Button>
           <Button variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")}>قائمة</Button>
         </div>
