@@ -1,0 +1,7 @@
+export type Task={id:string;title:string;type:string;assignee_user_id:string|null;due_at:string;status:'open'|'done'|'cancelled';entity_type:string;entity_id:string;visibility:string;outcome_note:string|null};
+export type TaskPage={rows:Task[];count:number;as_of:string};
+export function taskHref(task:Pick<Task,'entity_type'|'entity_id'>){const kind=({unit:'units',party:'parties',opportunity:'opportunities',booking:'bookings',contract:'contracts',installment:'installments'} as Record<string,string>)[task.entity_type];return kind?`/admin/${kind}/${encodeURIComponent(task.entity_id)}`:'/admin/tasks';}
+export function bookingResponseAt(created:string,hours:number){return new Date(new Date(created).getTime()+hours*3600000).toISOString();}
+export function beforeDays(date:string,days:number){const d=new Date(`${date}T00:00:00Z`);d.setUTCDate(d.getUTCDate()-days);return d.toISOString().slice(0,10);}
+export function beforeCalendarMonths(date:string,months:number){const d=new Date(`${date}T00:00:00Z`),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-months);const end=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,end));return d.toISOString().slice(0,10);}
+export function saudiMidnight(date:string){return new Date(`${date}T00:00:00+03:00`).toISOString();}

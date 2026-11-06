@@ -470,6 +470,48 @@
       "when": 1793923281293,
       "tag": "0066_staff_invitation_email_variable_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1793932822336,
+      "tag": "0067_audited_tasks_and_notifications_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1793932862854,
+      "tag": "0068_automatic_task_sources_and_activity_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1793932965130,
+      "tag": "0069_task_generator_alias_resolution",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1793933021319,
+      "tag": "0070_task_assignment_and_followup_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1793933111965,
+      "tag": "0071_task_source_record_guard_and_ledger_balance",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1793933251836,
+      "tag": "0072_task_visibility_lifecycle_and_schedule_guards",
+      "breakpoints": true
     }
   ]
 }
