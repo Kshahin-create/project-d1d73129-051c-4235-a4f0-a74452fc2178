@@ -258,8 +258,8 @@ const UnitGridSection = ({
       </div>
 
       {/* Lightbox */}
-      <AnimatePresence>
-        {zoomed && planImage && createPortal(
+      {createPortal(<AnimatePresence>
+        {zoomed && planImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -294,9 +294,9 @@ const UnitGridSection = ({
                 </div>
               )}
             </motion.div>
-          </motion.div>, document.body
+          </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
     </div>
   );
 };
