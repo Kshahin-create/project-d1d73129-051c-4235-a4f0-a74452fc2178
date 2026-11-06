@@ -1,4 +1,5 @@
 # Architecture rules
+- Opportunity XLSX exports use explicit caller-scoped CRM fields and audited all-page reads; Google Sheets pushes are separately audited, admin-only, manual and confined to the opportunities tab, so external edits cannot mutate business records.
 - Task automation is an audited read-derived follow-up layer with stable source keys; completing a task never mutates booking, leasing or financial state, and task notifications apply source permissions before rendering.
 - Dynamic roles and permission levels live in protected registry tables; audited writers manage assignments while legacy enum roles are synchronized compatibility projections, so custom roles never require schema changes.
 - Staff invitation and deactivation use caller-authorized database writers before Auth service operations; service outcomes remain explicit, while tenant password-setting and password-changing link issuance are denied to staff.
