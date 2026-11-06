@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { LIFECYCLE_LABELS, SOURCE_LABELS, stageLabel } from "@/lib/crm";
 import {PartyActivityPanel} from '@/components/tasks/PartyActivityPanel';
+import { formatDateTime } from "@/lib/format";
 
 export default function CrmParty() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ partyId?: string; id?: string }>();
+  const id = params.partyId ?? params.id;
   const { isAdmin, isManager, isLeasingManager, isSalesAgent, loading } = useAuth();
   const allowed = isAdmin || isManager || isLeasingManager || isSalesAgent;
   const canWrite = isAdmin || isLeasingManager || isSalesAgent;
@@ -114,7 +116,7 @@ export default function CrmParty() {
             {(oppsQ.data ?? []).map((o) => (
               <button key={o.id} onClick={() => navigate(`/crm/opportunity/${o.id}`)} className="block w-full rounded-lg border border-border bg-card p-3 text-right text-sm hover:border-primary">
                 {stageLabel(o.stage)} — {SOURCE_LABELS[o.source] ?? o.source}
-                <span className="block text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("ar-SA")}</span>
+                <span className="block text-xs text-muted-foreground">{formatDateTime(o.created_at)}</span>
               </button>
             ))}
             {oppsQ.data?.length === 0 && <p className="text-sm text-muted-foreground">لا فرص بعد</p>}
