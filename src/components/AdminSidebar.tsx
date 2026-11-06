@@ -3,7 +3,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Home,
   LayoutDashboard,
-  Shield,
   CalendarRange,
   LogOut,
   LogIn,
@@ -12,7 +11,6 @@ import {
   ChevronDown,
   Menu,
   X,
-  UserCircle2,
   User,
   Users,
   History,
@@ -26,19 +24,18 @@ import {
   FileSpreadsheet,
   Database,
   Building2,
-  Compass,
   Briefcase,
   BadgeCheck,
   Banknote,
   Settings2,
-  Terminal,
   Globe2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { activeAdminGroup } from "@/lib/adminNavigation";
+import { activeAdminGroup, isAdminNavActive } from "@/lib/adminNavigation";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type ExtLink = {
   to: string;
@@ -54,6 +51,7 @@ type ExtLink = {
   crmManagerOnly?: boolean;
   financeOnly?: boolean;
   homeOnly?: boolean;
+  section?: string;
 };
 
 type LinkGroup = {
@@ -64,7 +62,7 @@ type LinkGroup = {
 };
 
 const groups: LinkGroup[] = [
-  {id:"home",label:"الرئيسية",Icon:Home,links:[{to:"/dashboard",label:"ملخص المشروع",Icon:LayoutDashboard,homeOnly:true},{to:"/admin/tasks",label:"مهامي",Icon:ClipboardList,authOnly:true}]},
+  {id:"home",label:"الرئيسية",Icon:Home,links:[{to:"/admin",label:"ملخص المشروع",Icon:LayoutDashboard,homeOnly:true},{to:"/admin/tasks",label:"مهامي",Icon:ClipboardList,authOnly:true}]},
   {id:"units",label:"الوحدات",Icon:Building2,links:[
     {to:"/admin/units",label:"الخريطة والوحدات",Icon:Building2,controlOnly:true},
     {to:"/admin/units-incomplete",label:"وحدات تحتاج استكمال",Icon:ClipboardList,managerOnly:true},
@@ -76,6 +74,7 @@ const groups: LinkGroup[] = [
     {to:"/admin/bookings",label:"الحجوزات",Icon:CalendarRange,managerOnly:true},
     {to:"/leasing/holds",label:"تمديد الحجوزات",Icon:CalendarRange,leasingOnly:true},
     {to:"/admin/opportunities/unassigned",label:"غير موزعة وطلبات النقل",Icon:ClipboardList,crmManagerOnly:true},
+    {to:"/admin/followup",label:"متابعة الفريق",Icon:ClipboardList,authOnly:true},
     {to:"/admin/opportunities/team",label:"أداء الفريق",Icon:Activity,crmManagerOnly:true},
     {to:"/admin/opportunities/import",label:"القائمة المستهدفة",Icon:FileSpreadsheet,crmOnly:true},
     {to:"/admin/interested",label:"المهتمون",Icon:MessageCircle,managerOnly:true},
@@ -95,22 +94,23 @@ const groups: LinkGroup[] = [
     {to:"/admin/collections-report",label:"تقارير التحصيل",Icon:Banknote,managerOnly:true},
   ]},
   {id:"settings",label:"الإعدادات",Icon:Settings2,links:[
-    {to:"/admin/booking-control",label:"المباني والتحكم في الحجز",Icon:Building2,managerOnly:true},
+    {section:"إدارة المشروع",to:"/admin/booking-control",label:"المباني والتحكم في الحجز",Icon:Building2,managerOnly:true},
     {to:"/admin/settings/activities",label:"الأنشطة والمباني",Icon:Building2,managerOnly:true},
     {to:"/admin/settings/payment-plans",label:"خطط السداد",Icon:CalendarRange,financeOnly:true},
     {to:"/admin/settings/unit-import",label:"استيراد الوحدات",Icon:FileSpreadsheet,managerOnly:true},
-    {to:"/admin/users",label:"المستخدمون والصلاحيات",Icon:Users,adminOnly:true},
-    {to:"/admin/sheets-sync",label:"التكاملات والشييت",Icon:FileSpreadsheet,managerOnly:true},
+    {to:"/admin/settings/tasks",label:"المهام والتنبيهات",Icon:ClipboardList,adminOnly:true},
+    {section:"المستخدمون والأمان",to:"/admin/users",label:"المستخدمون والصلاحيات",Icon:Users,adminOnly:true},
+    {section:"التكاملات والنسخ الاحتياطي",to:"/admin/sheets-sync",label:"التكاملات والشييت",Icon:FileSpreadsheet,managerOnly:true},
     {to:"/admin/backup",label:"النسخ الاحتياطي",Icon:Database,adminOnly:true},
-    {to:"/admin/data-quality",label:"جودة البيانات",Icon:BadgeCheck,managerOnly:true},
+    {section:"الجودة والسجلات",to:"/admin/data-quality",label:"جودة البيانات",Icon:BadgeCheck,managerOnly:true},
     {to:"/admin/system-log",label:"سجل النظام",Icon:History,adminOnly:true},
     {to:"/admin/help",label:"المساعدة والاستعادة",Icon:Database,adminOnly:true},
     {to:"/admin/audit",label:"سجل التدقيق",Icon:History,adminOnly:true},
     {to:"/admin/access-log",label:"سجل الدخول",Icon:Globe2,adminOnly:true},
-    {to:"/admin/settings/developers/api-keys",label:"المطورون — مفاتيح API",Icon:KeyRound,adminOnly:true},
-    {to:"/admin/settings/developers/api-docs",label:"المطورون — توثيق API",Icon:Code2,adminOnly:true},
-    {to:"/admin/settings/developers/mcp",label:"المطورون — MCP",Icon:Bot,adminOnly:true},
-    {to:"/admin/settings/developers/stats",label:"المطورون — إحصائيات السيرفر",Icon:Activity,adminOnly:true},
+    {section:"المطورون",to:"/admin/settings/developers/api-keys",label:"مفاتيح API",Icon:KeyRound,adminOnly:true},
+    {to:"/admin/settings/developers/api-docs",label:"توثيق API",Icon:Code2,adminOnly:true},
+    {to:"/admin/settings/developers/mcp",label:"MCP",Icon:Bot,adminOnly:true},
+    {to:"/admin/settings/developers/stats",label:"إحصائيات السيرفر",Icon:Activity,adminOnly:true},
   ]},
 ];
 
@@ -119,6 +119,24 @@ export const AdminSidebar = () => {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 1024px)").matches);
+  const compact = collapsed && desktop;
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const update = () => { setDesktop(media.matches); if (media.matches) setMobileOpen(false); };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setMobileOpen(false); };
+    window.addEventListener("keydown", close);
+    return () => { document.body.style.overflow = previous; window.removeEventListener("keydown", close); };
+  }, [mobileOpen]);
 
   // Reserve horizontal space on the page so the sidebar never covers content.
   // Sidebar is fixed on the RIGHT (Arabic / RTL layout).
@@ -132,8 +150,8 @@ export const AdminSidebar = () => {
       const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
       document.body.style.paddingRight = isDesktop
         ? collapsed
-          ? "56px"
-          : "224px"
+          ? "72px"
+          : "280px"
         : "";
       document.body.style.paddingLeft = "";
     };
@@ -166,7 +184,7 @@ export const AdminSidebar = () => {
       .filter((g) => g.links.length > 0);
   }, [isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, isInvestor, user]);
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ home: true });
   useEffect(() => {
     // auto-open the group that contains the active route
     setOpenGroups((prev) => {
@@ -195,184 +213,75 @@ export const AdminSidebar = () => {
           ? "لوحة المبيعات"
           : "القائمة";
 
+  const renderLink = ({ to, label, Icon, section }: ExtLink) => {
+    const active = isAdminNavActive(pathname, to);
+    const link = (
+      <NavLink key={to} to={to} aria-label={label} aria-current={active ? "page" : undefined}
+        className={cn(
+          "relative flex min-h-10 items-center gap-3 rounded-md text-sm transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+          compact ? "justify-center px-2" : "px-3 py-2",
+          active ? "bg-sidebar-accent font-bold text-sidebar-accent-foreground after:absolute after:inset-y-2 after:right-0 after:w-1 after:rounded-full after:bg-sidebar-primary" : "text-sidebar-foreground hover:bg-sidebar-accent/70",
+        )}>
+        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+        {!compact && <span className="min-w-0 flex-1 whitespace-normal leading-5">{label}</span>}
+      </NavLink>
+    );
+    if (compact) return <Tooltip key={to}><TooltipTrigger asChild>{link}</TooltipTrigger><TooltipContent side="left" dir="rtl">{label}</TooltipContent></Tooltip>;
+    return <div key={to}>{section && <div className="px-3 pb-1 pt-4 text-xs font-medium text-muted-foreground">{section}</div>}{link}</div>;
+  };
+
   return (
-    <>
-      {/* Mobile open button — bottom-right for RTL */}
-      <Button variant="ghost"
-        onClick={() => setMobileOpen(true)}
-        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg lg:hidden"
-        aria-label="فتح القائمة"
-      >
+    <TooltipProvider delayDuration={150}>
+      <Button variant="default" onClick={() => setMobileOpen(true)}
+        className="fixed bottom-5 right-5 z-40 h-12 w-12 rounded-lg shadow-elevated lg:hidden"
+        aria-label="فتح القائمة" aria-expanded={mobileOpen} aria-controls="admin-navigation">
         <Menu className="h-5 w-5" />
       </Button>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* Sidebar — fixed on RIGHT for Arabic/RTL */}
-      <aside
-        dir="rtl"
-        className={cn(
-          "fixed inset-y-0 right-0 z-50 flex flex-col border-l border-border bg-card shadow-elevated transition-all duration-300",
-          collapsed ? "lg:w-14" : "lg:w-56",
-          "w-60",
-          mobileOpen ? "translate-x-0" : "max-lg:hidden",
-        )}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-3 py-3">
-          {!collapsed && (
-            <span className="truncate text-sm font-bold">{title}</span>
-          )}
-          <Button variant="ghost"
-            onClick={() => setCollapsed((c) => !c)}
-            className="hidden h-7 w-7 items-center justify-center rounded-md hover:bg-secondary lg:inline-flex"
-            aria-label="طي القائمة"
-          >
-            {collapsed ? (
-              <ChevronLeft className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
-          <Button variant="ghost"
-            onClick={() => setMobileOpen(false)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-secondary lg:hidden"
-            aria-label="إغلاق"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      {mobileOpen && <div className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} aria-hidden="true" />}
+      <aside id="admin-navigation" dir="rtl" aria-label="القائمة الجانبية"
+        className={cn("fixed inset-y-0 right-0 z-50 flex w-[min(320px,calc(100vw-32px))] flex-col border-l border-sidebar-border bg-sidebar text-sidebar-foreground shadow-soft transition-[width] duration-200 motion-reduce:transition-none",
+          compact ? "lg:w-[72px]" : "lg:w-[280px]", mobileOpen ? "flex" : "max-lg:hidden")}>
+        <div className={cn("flex shrink-0 items-center border-b border-sidebar-border", compact ? "flex-col gap-3 px-2 py-4" : "gap-3 px-5 py-5")}>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"><Building2 className="h-5 w-5" /></div>
+          {!compact && <div className="min-w-0 flex-1"><div className="text-lg font-bold" dir="ltr">MNICity</div><p className="mt-0.5 text-xs text-muted-foreground">{title}</p></div>}
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => setCollapsed(c => !c)}
+            className="hidden h-8 w-8 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent lg:inline-flex" aria-label={compact ? "توسيع القائمة" : "طي القائمة"}>
+            {compact ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button></TooltipTrigger><TooltipContent side="left">{compact ? "توسيع القائمة" : "طي القائمة"}</TooltipContent></Tooltip>
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} className="h-8 w-8 shrink-0 lg:hidden" aria-label="إغلاق القائمة"><X className="h-4 w-4" /></Button>
         </div>
-
-        {/* Groups */}
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-          {visibleGroups.map((group) => {
+        <nav aria-label="أقسام الإدارة" className={cn("min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain py-4", compact ? "px-3" : "px-3")}>
+          {visibleGroups.map(group => {
             const GroupIcon = group.Icon;
             const isOpen = openGroups[group.id] ?? false;
             const hasActive = group.id === activeAdminGroup(pathname);
-
-            if (collapsed) {
-              // In collapsed mode, just render icons flat
-              return (
-                <div key={group.id} className="flex flex-col gap-1">
-                  {group.links.map(({ to, label, Icon }) => {
-                    const active = pathname === to;
-                    return (
-                      <NavLink
-                        key={to}
-                        to={to}
-                        title={`${group.label} — ${label}`}
-                        className={cn(
-                          "flex items-center justify-center rounded-xl px-2 py-2 text-sm font-medium transition",
-                          active
-                            ? "bg-primary text-primary-foreground"
-                            : "text-foreground hover:bg-secondary",
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                      </NavLink>
-                    );
-                  })}
-                  <div className="my-1 border-t border-border/60" />
-                </div>
-              );
-            }
-
-            return (
-              <div key={group.id} className="flex flex-col">
-                <Button variant="ghost"
-                  type="button"
-                  onClick={() =>
-                    setOpenGroups((p) => ({ ...p, [group.id]: !isOpen }))
-                  }
-                  className={cn(
-                    "flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-wide transition",
-                    hasActive
-                      ? "text-primary"
-                      : "text-muted-foreground hover:bg-secondary",
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    <GroupIcon className="h-4 w-4 shrink-0" />
-                    <span>{group.label}</span>
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0 transition-transform",
-                      isOpen ? "rotate-180" : "",
-                    )}
-                  />
-                </Button>
-                {isOpen && (
-                  <div className="mt-1 flex flex-col gap-0.5 pr-3">
-                    {group.links.map(({ to, label, Icon }) => {
-                      const active = pathname === to;
-                      return (
-                        <NavLink
-                          key={to}
-                          to={to}
-                          className={cn(
-                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                            active
-                              ? "bg-primary text-primary-foreground"
-                              : "text-foreground hover:bg-secondary",
-                          )}
-                          title={label}
-                        >
-                          <Icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{label}</span>
-                        </NavLink>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
+            if (compact) return <div key={group.id} className="space-y-1 border-b border-sidebar-border pb-2 last:border-0">{group.links.map(renderLink)}</div>;
+            return <div key={group.id}>
+              <Button variant="ghost" type="button" aria-expanded={isOpen} aria-controls={`nav-group-${group.id}`}
+                onClick={() => setOpenGroups(p => ({ ...p, [group.id]: !isOpen }))}
+                className={cn("h-auto min-h-11 w-full justify-between gap-2 rounded-md px-3 py-2 text-sm font-bold hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", hasActive ? "text-sidebar-primary" : "text-sidebar-foreground")}>
+                <span className="flex min-w-0 items-center gap-3"><GroupIcon className="h-[18px] w-[18px] shrink-0" /><span className="whitespace-normal text-right leading-5">{group.label}</span></span>
+                <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none", isOpen && "rotate-180")} />
+              </Button>
+              {isOpen && <div id={`nav-group-${group.id}`} className="mr-5 mt-1 space-y-1 border-r border-sidebar-border pr-3">{group.links.map(renderLink)}</div>}
+            </div>;
           })}
         </nav>
-
-        <div className="border-t border-border p-2 flex flex-wrap gap-2 text-xs">
-          <NavLink to="/" title="الموقع">{collapsed ? <Home className="h-4 w-4"/> : "الموقع"}</NavLink>
-          <NavLink to="/booking" title="الحجز">{collapsed ? <CalendarRange className="h-4 w-4"/> : "الحجز"}</NavLink>
-          {user && <NavLink to="/profile" title="حسابي">{collapsed ? <User className="h-4 w-4"/> : "حسابي"}</NavLink>}
-          {isTenant && <NavLink to="/tenant">وحداتي وفواتيري</NavLink>}
+        <div className="shrink-0 border-t border-sidebar-border p-3">
+          <div className={cn("flex gap-1", compact ? "flex-col" : "items-center justify-between")}>
+            {[{ to: "/", label: "الموقع", Icon: Home }, { to: "/booking", label: "الحجز", Icon: CalendarRange }, ...(user ? [{ to: "/profile", label: "حسابي", Icon: User }] : [])].map(({ to, label, Icon }) =>
+              <Tooltip key={to}><TooltipTrigger asChild><NavLink to={to} aria-label={label} className={cn("flex items-center justify-center gap-1.5 rounded-md py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring", compact ? "px-2" : "px-3")}><Icon className="h-4 w-4" />{!compact && label}</NavLink></TooltipTrigger>{compact && <TooltipContent side="left">{label}</TooltipContent>}</Tooltip>
+            )}
+          </div>
+          {isTenant && <NavLink to="/tenant" aria-label="وحداتي وفواتيري" className="mt-2 flex items-center gap-2 rounded-md p-2 text-sm hover:bg-sidebar-accent"><ClipboardList className="h-4 w-4 shrink-0" />{!compact && "وحداتي وفواتيري"}</NavLink>}
         </div>
-        {/* Footer */}
-        <div className="border-t border-border p-2">
-          {user ? (
-            <>
-              <Button variant="ghost"
-                onClick={handleSignOut}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10"
-                title="تسجيل الخروج"
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>تسجيل الخروج</span>}
-              </Button>
-              {!collapsed && user.email && (
-                <div className="flex items-center gap-2 truncate px-3 pb-1 pt-2 text-[10px] text-muted-foreground">
-                  <UserCircle2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{user.email}</span>
-                </div>
-              )}
-            </>
-          ) : (
-            <NavLink
-              to="/auth"
-              className="flex w-full items-center gap-3 rounded-xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-              title="تسجيل الدخول"
-            >
-              <LogIn className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>تسجيل الدخول</span>}
-            </NavLink>
-          )}
+        <div className="shrink-0 border-t border-sidebar-border p-3">
+          {user ? <div className={cn("flex items-center gap-2", compact && "flex-col")}>
+            {!compact && <><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground"><User className="h-4 w-4" /></div><div className="min-w-0 flex-1"><p className="text-xs font-bold">{title.replace("لوحة ", "")}</p><p className="mt-1 truncate text-[11px] text-muted-foreground" dir="ltr" title={user.email}>{user.email}</p></div></>}
+            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="تسجيل الخروج" className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><LogOut className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent side="left">تسجيل الخروج</TooltipContent></Tooltip>
+          </div> : <NavLink to="/auth" className="flex items-center justify-center gap-2 rounded-md bg-sidebar-primary p-2 text-sm text-sidebar-primary-foreground" aria-label="تسجيل الدخول"><LogIn className="h-4 w-4" />{!compact && "تسجيل الدخول"}</NavLink>}
         </div>
       </aside>
-    </>
+    </TooltipProvider>
   );
 };
