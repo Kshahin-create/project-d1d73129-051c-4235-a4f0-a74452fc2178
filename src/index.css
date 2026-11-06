@@ -43,6 +43,13 @@
     --success: 152 60% 36%;
     --success-foreground: 0 0% 100%;
 
+    --unit-available: 152 65% 25%;
+    --unit-available-surface: 152 45% 93%;
+    --unit-leased: 0 65% 38%;
+    --unit-leased-surface: 0 65% 95%;
+    --unit-hold: 35 90% 27%;
+    --unit-hold-surface: 40 85% 92%;
+
     --border: 195 20% 88%;
     --input: 195 20% 88%;
     --ring: 195 70% 25%;
@@ -95,6 +102,12 @@
     --border: 195 30% 20%;
     --input: 195 30% 20%;
     --ring: 188 65% 45%;
+    --unit-available: 152 55% 72%;
+    --unit-available-surface: 152 35% 16%;
+    --unit-leased: 0 80% 78%;
+    --unit-leased-surface: 0 35% 19%;
+    --unit-hold: 40 85% 72%;
+    --unit-hold-surface: 35 40% 17%;
     --sidebar-background: 195 40% 12%;
     --sidebar-foreground: 40 30% 96%;
     --sidebar-primary: 188 65% 45%;
@@ -272,4 +285,25 @@
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Unit-list labels retain their database status; colors are display-only. */
+.admin-unit-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: .125rem .5rem;
+  border-radius: .25rem;
+}
+.admin-unit-status[data-leasing-status="available"] {
+  color: hsl(var(--unit-available));
+  background-color: hsl(var(--unit-available-surface));
+}
+.admin-unit-status[data-leasing-status="leased"] {
+  color: hsl(var(--unit-leased));
+  background-color: hsl(var(--unit-leased-surface));
+}
+.admin-unit-status[data-leasing-status="on_hold"] {
+  color: hsl(var(--unit-hold));
+  background-color: hsl(var(--unit-hold-surface));
 }
