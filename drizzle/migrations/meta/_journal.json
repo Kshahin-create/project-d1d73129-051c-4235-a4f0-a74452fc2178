@@ -463,6 +463,13 @@
       "when": 1793921965021,
       "tag": "0065_permission_matrix_safety_and_invitation_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1793923281293,
+      "tag": "0066_staff_invitation_email_variable_fix",
+      "breakpoints": true
     }
   ]
 }
