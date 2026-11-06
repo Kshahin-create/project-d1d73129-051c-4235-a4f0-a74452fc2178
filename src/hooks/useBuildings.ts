@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Building, Unit } from "@/data/types";
 import { applyActivityRegistry, countAvailableUnits } from "@/lib/bookingActivities";
 import { useAuth } from "@/hooks/useAuth";
+import { legacyUnitStatus } from "@/lib/unitStatus";
 
 export const useBuildingsAndUnits = () => {
   const { isAdmin, isManager } = useAuth();
@@ -81,7 +82,7 @@ export const useBuildingsAndUnits = () => {
           area: Number(u.area),
           activity: u.activity,
           price: Number(u.price),
-          status: u.status as "available" | "rented" | "reserved",
+          status: u.leasing_status === "maintenance" ? "reserved" : legacyUnitStatus(u.leasing_status) as Unit["status"],
           leasingStatus: u.leasing_status,
           tenant: tenantInfo?.name ?? bookingNameByUnitId.get(u.id)?.name ?? null,
         };

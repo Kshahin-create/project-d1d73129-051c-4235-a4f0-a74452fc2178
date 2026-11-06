@@ -24,3 +24,21 @@ export function legacyUnitStatus(status: string | null | undefined): "available"
   if (status === "maintenance") return "maintenance";
   return "reserved";
 }
+
+// Public display is derived from leasing status, never from viewer roles or tenant data.
+export function bookingUnitState(status: string | null | undefined, activityAllowed = true) {
+  const known = Object.prototype.hasOwnProperty.call(UNIT_STATUS_LABELS, status ?? "")
+    ? status as keyof typeof UNIT_STATUS_LABELS : "review";
+  // Preserve real occupancy/maintenance/review before applying activity-only restrictions.
+  const activityReserved = known === "available" && !activityAllowed;
+  const state = activityReserved ? "on_hold" : known;
+  return {
+    state,
+    label: activityReserved ? "محجوزة لهذا النشاط" : UNIT_STATUS_LABELS[state],
+    selectable: state === "available",
+    kind: state === "available" ? "available" as const
+      : state === "leased" ? "leased" as const
+      : state === "on_hold" || state === "pending_contract" ? "reserved" as const
+      : "unavailable" as const,
+  };
+}

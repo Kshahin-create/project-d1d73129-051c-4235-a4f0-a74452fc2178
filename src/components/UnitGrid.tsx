@@ -1,14 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, CheckCircle2, ZoomIn, X } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingPlans";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
 import { unitAllowedForActivity, type BookingActivity } from "@/lib/bookingActivities";
-import { unitStatusLabel } from "@/lib/unitStatus";
+import { bookingUnitState } from "@/lib/unitStatus";
 
 interface UnitGridProps {
   buildingNumber: number;
@@ -71,8 +71,6 @@ const UnitGridSection = ({
 }: UnitGridProps & { layoutOverride?: PlanLayout; planLabel?: string }) => {
   const [zoomed, setZoomed] = useState(false);
   const [hoveredUnit, setHoveredUnit] = useState<number | null>(null);
-  const { isAdmin, isManager, isControl } = useAuth();
-  const canDistinguish = isAdmin || isManager || isControl;
   const layout = layoutOverride ?? getPlanLayout(buildingNumber);
   const unitsByNumber = new Map(units.map((u) => [u.unitNumber, u]));
   const selectedSet = new Set(selectedUnits);
@@ -82,22 +80,12 @@ const UnitGridSection = ({
     layout?.units.map((area) => {
       const unit = unitsByNumber.get(area.unitNumber);
       if (!unit) return null;
-      const activityReserved = !unitAllowedForActivity(unit, activity);
-      const rawRented = unit.status === "rented";
-      const rawReserved = unit.status === "reserved";
-      const isRented = !activityReserved && (canDistinguish ? rawRented : (rawRented || rawReserved));
-      const isReserved = activityReserved || (canDistinguish && rawReserved);
-      const isLocked = activityReserved || unit.status !== "available";
+      const display = bookingUnitState(unit.leasingStatus, unitAllowedForActivity(unit, activity));
+      const isRented = display.kind === "leased";
+      const isReserved = display.kind === "reserved";
+      const isLocked = !display.selectable;
       const isSelected = selectedSet.has(unit.unitNumber);
       const isHovered = hoveredUnit === unit.unitNumber;
-
-      const ringColor = isRented
-        ? "hsl(var(--destructive))"
-          : isReserved
-            ? "hsl(var(--primary))"
-          : isSelected
-            ? "hsl(var(--accent))"
-            : "transparent";
 
       return (
         <Button
@@ -107,15 +95,18 @@ const UnitGridSection = ({
           onClick={() => interactive && onSelect(unit)}
           onMouseEnter={() => interactive && setHoveredUnit(unit.unitNumber)}
           onMouseLeave={() => interactive && setHoveredUnit(null)}
-          aria-label={`وحدة ${area.unitNumber}${isRented ? " (مؤجرة)" : isReserved ? " (محجوزة)" : ""}`}
+          aria-label={`وحدة ${area.unitNumber} (${display.label})`}
+          aria-pressed={isSelected}
+          title={display.label}
           className={cn(
-            "absolute box-border flex min-h-0 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[10px] font-bold transition-colors duration-200 sm:text-xs",
+            "absolute box-border flex min-h-0 items-center justify-center rounded-none border p-0 text-[10px] font-bold transition-colors duration-200 disabled:opacity-100 sm:text-xs [&_svg]:size-3",
             "focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
-            isRented && "cursor-not-allowed bg-destructive/75 text-primary-foreground",
-            isReserved && "cursor-not-allowed bg-foreground/80 text-background",
+            isRented && "cursor-not-allowed border-background bg-destructive/95 text-primary-foreground",
+            isReserved && "cursor-not-allowed border-background bg-foreground/95 text-background",
+            display.kind === "unavailable" && "cursor-not-allowed border-foreground/60 bg-secondary/95 text-secondary-foreground",
             !isLocked && !isSelected &&
-              "bg-transparent text-transparent hover:bg-accent/25 hover:text-accent-foreground",
-            !isLocked && isSelected && "bg-accent/70 text-accent-foreground",
+              "border-primary/60 bg-background/85 text-foreground hover:bg-accent/80 hover:text-accent-foreground",
+            !isLocked && isSelected && "border-accent-foreground bg-accent/95 text-accent-foreground",
             isHovered && !isSelected && !isLocked && "z-10"
           )}
           style={{
@@ -123,7 +114,6 @@ const UnitGridSection = ({
             top: `${area.y}%`,
             width: `${area.w}%`,
             height: `${area.h}%`,
-            boxShadow: ringColor === "transparent" ? undefined : `inset 0 0 0 2px ${isLocked ? "hsl(var(--background))" : ringColor}`,
             backgroundImage: isLocked
               ? "repeating-linear-gradient(45deg, hsl(var(--background) / 0.28) 0 3px, transparent 3px 9px)"
               : undefined,
@@ -197,12 +187,11 @@ const UnitGridSection = ({
 
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
-        <LegendDot colorClass="bg-card border-2 border-border" label="متاح" />
+        <LegendDot colorClass="bg-background border-2 border-primary/60" label="متاح" />
         <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
-        {(canDistinguish || activity === "tires" || activity === "car-wash") && (
-          <LegendDot colorClass="bg-foreground/80 border-2 border-foreground text-background" label="محجوز" icon={<Lock className="h-3 w-3" />} />
-        )}
-        <LegendDot colorClass="bg-destructive/40 border-2 border-destructive/70" label={canDistinguish ? "مؤجر" : "غير متاح"} icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-foreground border-2 border-foreground text-background" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-destructive border-2 border-destructive text-primary-foreground" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
+        {units.some(u => bookingUnitState(u.leasingStatus).kind === "unavailable") && <LegendDot colorClass="bg-secondary border-2 border-foreground/60 text-secondary-foreground" label="غير متاح" icon={<Lock className="h-3 w-3" />} />}
       </div>
 
       {/* Units grid (alternative quick selection) */}
@@ -210,28 +199,28 @@ const UnitGridSection = ({
         <h4 className="mb-3 font-display font-bold">أو اختر رقم الوحدة من القائمة</h4>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
-            const activityReserved = !unitAllowedForActivity(u, activity);
-            const rawRented = u.status === "rented";
-            const rawReserved = u.status === "reserved";
-            const isRented = !activityReserved && (canDistinguish ? rawRented : (rawRented || rawReserved));
-            const isReserved = activityReserved || (canDistinguish && rawReserved);
-            const isLocked = activityReserved || u.status !== "available";
+            const display = bookingUnitState(u.leasingStatus, unitAllowedForActivity(u, activity));
+            const isRented = display.kind === "leased";
+            const isReserved = display.kind === "reserved";
+            const isLocked = !display.selectable;
             const isSelected = selectedSet.has(u.unitNumber);
             const isCorner = u.unitType === "ركنية";
             return (
-              <motion.button
+              <Button
                 key={u.unitNumber}
-                whileHover={!isLocked ? { scale: 1.05 } : undefined}
-                whileTap={!isLocked ? { scale: 0.96 } : undefined}
+                type="button"
                 disabled={isLocked}
-                title={activityReserved ? "محجوزة لهذا النشاط" : unitStatusLabel(u.leasingStatus)}
-                onClick={() => onSelect(u)}
+                title={display.label}
+                aria-label={`وحدة ${u.unitNumber} (${display.label}) من القائمة`}
+                aria-pressed={isSelected}
+                onClick={() => display.selectable && onSelect(u)}
                 className={cn(
-                  "group relative flex h-auto w-full aspect-square flex-col items-center justify-center rounded-xl border-2 p-1 text-center transition-all",
+                  "group relative flex h-auto w-full aspect-square flex-col items-center justify-center gap-0 whitespace-normal rounded-lg border-2 p-1 text-center transition-all disabled:opacity-100",
                   isRented &&
-                    "cursor-not-allowed border-destructive/40 bg-destructive/10 opacity-80",
+                    "cursor-not-allowed border-destructive bg-destructive/10 text-foreground",
                   isReserved &&
-                    "cursor-not-allowed border-primary/40 bg-primary/10 opacity-80",
+                    "cursor-not-allowed border-foreground bg-foreground/10 text-foreground",
+                  display.kind === "unavailable" && "cursor-not-allowed border-foreground/60 bg-secondary text-secondary-foreground",
                   !isLocked && !isSelected &&
                     "border-border bg-card hover:border-primary hover:shadow-card",
                   isSelected &&
@@ -251,30 +240,35 @@ const UnitGridSection = ({
                 </div>
                 {isRented ? (
                   <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-destructive">
-                    <Lock className="h-2.5 w-2.5" /> {canDistinguish ? "مؤجر" : "غير متاح"}
+                    <Lock className="h-2.5 w-2.5" /> {display.label}
                   </div>
                 ) : isReserved ? (
-                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-primary">
-                    <Lock className="h-2.5 w-2.5" /> محجوز
+                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-foreground">
+                    <Lock className="h-2.5 w-2.5" /> {display.label}
                   </div>
+                ) : isLocked ? (
+                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-bold text-secondary-foreground"><Lock className="h-2.5 w-2.5" /> {display.label}</div>
                 ) : isSelected ? (
                   <CheckCircle2 className="mt-1 h-3.5 w-3.5 text-primary-foreground" />
-                ) : null}
-              </motion.button>
+                ) : <span className="mt-1 text-[9px] font-bold text-primary">متاحة</span>}
+              </Button>
             );
           })}
         </div>
       </div>
 
       {/* Lightbox */}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {zoomed && planImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setZoomed(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`مخطط ${displayLabel} مكبّر`}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
           >
             <Button
               aria-label="إغلاق المخطط"
@@ -292,7 +286,7 @@ const UnitGridSection = ({
               <img
                 src={planImage}
                 alt={`مخطط ${displayLabel}`}
-                className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-elevated"
+                className="block max-h-[90vh] max-w-[calc(100vw-2rem)] rounded-xl object-contain shadow-elevated"
               />
               {layout && (
                 <div className="absolute inset-0">
@@ -302,7 +296,7 @@ const UnitGridSection = ({
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
     </div>
   );
 };
