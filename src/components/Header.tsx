@@ -5,6 +5,8 @@ import { COMPANY, CONTACT } from "@/lib/config";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo-nukhbat.webp";
 
+import {NotificationBell} from '@/components/tasks/NotificationBell';
+
 export const Header = () => {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
@@ -30,6 +32,7 @@ export const Header = () => {
         </Link>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {user&&<NotificationBell/>}
           {administration && <AdminGlobalSearch />}
           {!loading && !user && (
             <Link

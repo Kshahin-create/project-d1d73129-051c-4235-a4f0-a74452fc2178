@@ -64,7 +64,7 @@ type LinkGroup = {
 };
 
 const groups: LinkGroup[] = [
-  {id:"home",label:"الرئيسية",Icon:Home,links:[{to:"/dashboard",label:"ملخص المشروع",Icon:LayoutDashboard,homeOnly:true}]},
+  {id:"home",label:"الرئيسية",Icon:Home,links:[{to:"/dashboard",label:"ملخص المشروع",Icon:LayoutDashboard,homeOnly:true},{to:"/admin/tasks",label:"مهامي",Icon:ClipboardList,authOnly:true}]},
   {id:"units",label:"الوحدات",Icon:Building2,links:[
     {to:"/admin/units",label:"الخريطة والوحدات",Icon:Building2,controlOnly:true},
     {to:"/admin/units-incomplete",label:"وحدات تحتاج استكمال",Icon:ClipboardList,managerOnly:true},
