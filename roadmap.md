@@ -1,7 +1,8 @@
 # Booking plan availability visibility
 - [x] Inspect live public_units and authenticated building 1: statuses remain available; plan uses transparent available overlays, locked Button opacity 0.5, and hides reserved classification for non-admin viewers.
-- [ ] Approve presentation-only repair plan; no business-state changes, migration or publication.
-- [ ] Implement authoritative status display, clear plan overlays/legend and matching list/zoom; run regression tests and desktop/mobile booking selection verification without submitting a booking.
+- [x] Approved presentation-only repair plan; no business-state changes, migration or publication.
+- [x] Implement leasing-status-derived public display in unitStatus/useBuildings/UnitGrid, clear overlays and legend, locked full opacity, consistent list/zoom, body-portal zoom outside transformed sidebar content; documented display boundary in AGENTS.md.
+- [x] 34 status/activity tests pass; authenticated real-data booking verified at 1280×1800 and 390×844: building 1 unit 399 leased and 411 review disabled, unit 400 selected with list/zoom parity; building 2 holds visible; tyre unit 87 restricted; no horizontal overflow or runtime errors. Automatic build OK. No booking submitted or notification sent. Published site unchanged pending approved publication.
 
 # Sidebar redesign
 - [x] Approved presentation-only plan; preserve six sections, all existing routes and visibility rules.
