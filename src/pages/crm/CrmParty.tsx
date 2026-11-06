@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { LIFECYCLE_LABELS, SOURCE_LABELS, stageLabel } from "@/lib/crm";
+import {PartyActivityPanel} from '@/components/tasks/PartyActivityPanel';
 
 export default function CrmParty() {
   const { id } = useParams<{ id: string }>();
@@ -102,6 +103,8 @@ export default function CrmParty() {
               </div>
             )}
           </section>
+
+          <PartyActivityPanel partyId={id??''}/>
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">

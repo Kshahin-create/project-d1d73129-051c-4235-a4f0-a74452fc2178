@@ -1,4 +1,5 @@
 # Architecture rules
+- Task automation is an audited read-derived follow-up layer with stable source keys; completing a task never mutates booking, leasing or financial state, and task notifications apply source permissions before rendering.
 - Dynamic roles and permission levels live in protected registry tables; audited writers manage assignments while legacy enum roles are synchronized compatibility projections, so custom roles never require schema changes.
 - Staff invitation and deactivation use caller-authorized database writers before Auth service operations; service outcomes remain explicit, while tenant password-setting and password-changing link issuance are denied to staff.
 - Admin navigation uses canonical record routes with parameter-preserving legacy redirects; record views and server-filtered lists reuse Phase 1 permissions, while per-user preferences and export audit requests use separate audited writers so navigation cannot change business state.

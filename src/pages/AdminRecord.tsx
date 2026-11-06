@@ -11,6 +11,7 @@ import { money } from "@/lib/finance";
 import { statementTotals } from "@/lib/statement";
 import type { StatementInstallment,StatementReceipt,StatementAllocation } from "@/lib/statement";
 import { toast } from "sonner";
+import {PartyActivityPanel} from '@/components/tasks/PartyActivityPanel';
 
 const tabs:Record<string,string[]>={units:["نظرة عامة","الحجوزات","العقد","الأقساط والسندات","المستندات","السجل"],parties:["البيانات","الوحدات","الفرص","الحجوزات","العقود","كشف الحساب","التواصل","المستندات","السجل"],contracts:["نظرة عامة","الوحدات","الأقساط والسندات","المستندات","السجل"],receipts:["نظرة عامة","التخصيصات","المستندات","السجل"],bookings:["نظرة عامة","الوحدات","العقود","السجل"]};
 export default function AdminRecord(){
@@ -57,6 +58,7 @@ function RecordTab({kind,id,row,tab,spec}:{kind:RecordKind;id:string;row:AdminRo
  if(tab==="الوحدات")return kind==="parties"?<PartyUnits id={id}/>:<LinkedUnits kind={kind} id={id}/>;
  if(tab==="الأقساط والسندات")return financial?(kind==="contracts"?<div className="space-y-8"><AdminServerList spec={adminLists.installments} filters={{contract_id:id}}/><AdminServerList spec={adminLists.receipts} filters={{contract_id:id}}/></div>:<LinkedUnitList id={id} target="installments"/>):<Unavailable/>;
  if(tab==="كشف الحساب")return financial?<PartyStatement id={id}/>:<Unavailable/>;
+ if(tab==='التواصل'&&kind==='parties')return <PartyActivityPanel partyId={id}/>;
  if(q.isError)return <p role="alert" className="text-destructive">تعذر تحميل البيانات: {(q.error as Error).message}</p>;
  if(q.isPending)return <p>جارٍ التحميل…</p>;
  const openFile=async(bucket:string,path:string)=>{const r=await adminClient.storage.from(bucket).createSignedUrl(path,300);if(r.error)toast.error(r.error.message);else window.open(r.data.signedUrl,"_blank","noopener,noreferrer");};
