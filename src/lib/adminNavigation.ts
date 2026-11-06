@@ -16,10 +16,20 @@ export function redirectedAdminHref(path: string, search = "", hash = "") {
   return destination ? `${destination}${search}${hash}` : null;
 }
 export function activeAdminGroup(path: string) {
-  if (path.startsWith("/admin/settings") || /\/admin\/(users|audit|access-log|backup|sheets-sync|booking-control)/.test(path)) return "settings";
+  if (path.startsWith("/admin/settings") || /\/admin\/(users|audit|access-log|backup|sheets-sync|booking-control|data-quality|system-log|help)/.test(path)) return "settings";
   if (/\/admin\/(units|unit-status)/.test(path)) return "units";
   if (/\/admin\/(contracts|tenant)/.test(path)) return "tenants";
   if (/\/admin\/(receipts|receipt-|installments|paid-tenants|collections-report)/.test(path)) return "finance";
-  if (/\/admin\/(parties|opportunities|bookings|leads|interested|campaigns)/.test(path) || path.startsWith("/leasing")) return "customers";
+  if (/\/admin\/(parties|opportunities|bookings|leads|interested|campaigns|followup)/.test(path) || path.startsWith("/leasing")) return "customers";
   return "home";
+}
+export function isAdminNavActive(path: string, destination: string) {
+  if (destination === "/admin") return ["/admin", "/dashboard", "/control"].includes(path);
+  if (path === destination) return true;
+  if (["/admin/units", "/admin/parties", "/admin/opportunities", "/admin/bookings", "/admin/contracts", "/admin/receipts"].includes(destination)) {
+    const remainder = path.slice(destination.length + 1);
+    return path.startsWith(`${destination}/`) && remainder.length > 0 && !remainder.includes("/") &&
+      !["unassigned", "team", "import"].includes(remainder);
+  }
+  return false;
 }

@@ -1,3 +1,8 @@
+# Sidebar redesign
+- [x] Approved presentation-only plan; preserve six sections, all existing routes and visibility rules.
+- [x] Reorganize sidebar within six sections, settings subheadings, existing followup/task settings links, home aliases and record active detection, compact icon mode and mobile Escape/route-close controls; preserve existing visibility rules.
+- [x] 11 navigation tests pass; authenticated admin desktop 1280×1800, 915×775 and mobile 390×844 verified visually. Compact width 72px, home active, settings auto-open, followup click and drawer closure pass; no overflow/runtime errors; automatic build OK. No business changes or publication.
+
 # Phase 3 / Prompt 11 — Data quality and unified audit
 - [x] Inspect audit_log/unit_audit_log/duplicate_candidates/system_backups schemas and cron inventory (12h backup job active; no API for Cloud daily backups).
 - [x] Plan approved; migration 0075 applied: 8 live checks, resolutions with audited writer, daily snapshot cron (job 115), unit_audit_log backfilled (112 rows) and frozen read-only/deprecated, admin_audit_log_page.
