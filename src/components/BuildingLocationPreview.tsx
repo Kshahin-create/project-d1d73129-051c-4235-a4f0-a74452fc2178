@@ -5,6 +5,11 @@ import building2A from "@/assets/building-2-a-location.webp.asset.json";
 import building2B from "@/assets/building-2-b-location.webp.asset.json";
 import building3A from "@/assets/building-3-a-location.webp.asset.json";
 import building3B from "@/assets/building-3-b-location.webp.asset.json";
+import building4A from "@/assets/building-4-a-location.webp.asset.json";
+import building4B from "@/assets/building-4-b-location.webp.asset.json";
+import building5A from "@/assets/building-5-a-location.webp.asset.json";
+import building5B from "@/assets/building-5-b-location.webp.asset.json";
+import building6B from "@/assets/building-6-b-location.webp.asset.json";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -18,6 +23,11 @@ const locationImages: Record<string, LocationImage> = {
   "2-b": { url: building2B.url, label: "مبنى ٢ — ب" },
   "3-a": { url: building3A.url, label: "مبنى ٣ — أ" },
   "3-b": { url: building3B.url, label: "مبنى ٣ — ب" },
+  "4-a": { url: building4A.url, label: "مبنى ٤ — أ" },
+  "4-b": { url: building4B.url, label: "مبنى ٤ — ب" },
+  "5-a": { url: building5A.url, label: "مبنى ٥ — أ" },
+  "5-b": { url: building5B.url, label: "مبنى ٥ — ب" },
+  "6-b": { url: building6B.url, label: "مبنى ٦ — ب" },
 };
 
 const SECTION_ORDER = ["a", "b"];

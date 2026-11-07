@@ -23,6 +23,10 @@ describe("building sections (أ / ب)", () => {
   it("shows only the chosen part's location image", () => {
     expect(getBuildingLocationImages(1, "a").map((i) => i.label)).toEqual(["مبنى ١ — أ"]);
     expect(getBuildingLocationImages(1, "b").map((i) => i.label)).toEqual(["مبنى ١ — ب"]);
+    expect(getBuildingLocationImages(5, "a").map((i) => i.label)).toEqual(["مبنى ٥ — أ"]);
+    // 6-أ has no supplied image yet; it must never borrow 6-ب's.
+    expect(getBuildingLocationImages(6, "a")).toEqual([]);
+    expect(getBuildingLocationImages(6).map((i) => i.label)).toEqual(["مبنى ٦ — ب"]);
   });
 
   it("opens a building directly when only one section has units", () => {
