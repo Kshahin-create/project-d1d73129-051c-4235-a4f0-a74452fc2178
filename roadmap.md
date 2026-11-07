@@ -156,3 +156,8 @@
 - [x] كارت خطوات تشغيل الملخص الجديد (وحدات مؤجرة بدون عقد، سندات بانتظار التحقق)
 - [x] أرقام اللوحة الرئيسية بالإنجليزي
 - [ ] تسجيل عقود الوحدات المؤجرة والتحقق من السندات — إدخال بيانات من المحاسب
+
+# Building 1-B and section choice
+- [x] Plan approved; 24 units 423–446 added via audited import, published and available (60,060 inner / 65,000 corner, 200 m²).
+- [x] Booking asks أ/ب for multi-section buildings; chosen section shows only its plan, units and location image; tests + desktop/mobile check.
+- [ ] Building 2-B plan image not received yet (units 375–398 show as list only); location images for buildings 4–6, 14, 16–19 sections not received.
