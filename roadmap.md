@@ -142,3 +142,9 @@
 - [x] Verify public pages, image loading, crawler files and regression tests; do not change booking records.
 - [ ] Complete Google Search Console verification and sitemap submission (blocked: connection request declined).
 - [ ] Verify real HTTP 404 and server-rendered content (blocked: requires hosting/template change, not a client-side fix).
+
+## الملخص المالي — السجلات القديمة (2026-11-07)
+- [x] قراءة منفصلة للتحصيلات والفواتير القديمة بدون الضريبة تحت الملخص المالي
+- [x] كارت خطوات تشغيل الملخص الجديد (وحدات مؤجرة بدون عقد، سندات بانتظار التحقق)
+- [x] أرقام اللوحة الرئيسية بالإنجليزي
+- [ ] تسجيل عقود الوحدات المؤجرة والتحقق من السندات — إدخال بيانات من المحاسب

@@ -540,6 +540,13 @@
       "when": 1793954721523,
       "tag": "0076_opportunity_exports_and_sheet_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1794017214806,
+      "tag": "0077_metrics_legacy_finance",
+      "breakpoints": true
     }
   ]
 }

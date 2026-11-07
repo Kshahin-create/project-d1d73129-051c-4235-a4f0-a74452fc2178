@@ -5868,6 +5868,7 @@ export type Database = {
         Args: { _due: string; _grace: number; _today: string }
         Returns: boolean
       }
+      metrics_legacy_finance: { Args: { _scope?: Json }; Returns: Json }
       metrics_opportunity_matches: {
         Args: { _id: string; _scope: Json }
         Returns: boolean
