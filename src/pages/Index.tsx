@@ -9,6 +9,7 @@ import masterPlan from "@/assets/master-plan-preview.webp";
 import fullMasterPlan from "@/assets/master-plan.webp";
 import heroBg from "@/assets/hero-bg.webp";
 import overviewBg from "@/assets/overview-city.webp";
+import cityOverviewAsset from "@/assets/industrial_city_overview.webp.asset.json";
 const landSpaces = "/land-spaces.webp";
 import { useBuildingsAndUnits } from "@/hooks/useBuildings";
 import { BOOKING_ACTIVITIES, buildingInActivity, classifyBookingActivity } from "@/lib/bookingActivities";
@@ -84,6 +85,34 @@ const Index = () => {
               <Stat value={isLoading || isError ? undefined : totalUnits} label="إجمالي الوحدات" />
               <Stat value={isLoading || isError ? undefined : availableUnits} label="وحدة متاحة" accent />
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Project overview visual */}
+      <section className="bg-background py-8 sm:py-12">
+        <div className="container-tight">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <Link
+              to="/booking"
+              aria-label="مدينة صناعية متكاملة — وحدات متنوعة للتأجير، احجز وحدتك الآن"
+              className="block overflow-hidden rounded-2xl border border-border shadow-elevated transition-transform hover:scale-[1.005]"
+            >
+              <img
+                src={cityOverviewAsset.url}
+                alt="مدينة صناعية متكاملة — وحدات متنوعة للتأجير: 760 ورشة، 226 محلًا ومعرضًا، 251 مستودعًا، بإجمالي 1,237 وحدة على مساحة 759,000 م²"
+                width={1600}
+                height={800}
+                decoding="async"
+                loading="lazy"
+                className="h-auto w-full"
+              />
+            </Link>
           </motion.div>
         </div>
       </section>
