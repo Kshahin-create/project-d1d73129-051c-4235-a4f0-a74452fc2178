@@ -57,7 +57,7 @@ export const BuildingSectionPicker = ({ buildingNumber, sections, units, selecte
               <div className="space-y-1">
                 <div className="font-display text-xl font-extrabold text-foreground">{s.label}</div>
                 <div className="text-xs text-muted-foreground">
-                  الوحدات <span className="num">{first}</span> – <span className="num">{last}</span>
+                  الوحدات من <span className="num">{first}</span> إلى <span className="num">{last}</span>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1 text-xs">
                   <span className="rounded-full bg-success/15 px-2 py-0.5 font-bold text-foreground">
