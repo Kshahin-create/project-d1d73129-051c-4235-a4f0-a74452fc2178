@@ -8,6 +8,8 @@ import { ProgressSteps } from "@/components/ProgressSteps";
 import { BuildingSelector } from "@/components/BuildingSelector";
 import { UnitGrid } from "@/components/UnitGrid";
 import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
+import { BuildingSectionPicker } from "@/components/BuildingSectionPicker";
+import { getBuildingSections } from "@/data/buildingPlans";
 import { UnitDetailsCard } from "@/components/UnitDetailsCard";
 import { CustomerForm, type CustomerFormData } from "@/components/CustomerForm";
 import { TenantNoticeScreen } from "@/components/TenantNotice";
@@ -43,6 +45,7 @@ type BookingProgress = {
   activity: string | null;
   step: number;
   building: number | null;
+  section?: string | null;
   units: { b: number; u: number }[];
   customer: CustomerFormData | null;
   paymentPlan: "full" | "70" | "50";
@@ -74,6 +77,7 @@ const Booking = () => {
   const activityFilter = parseBookingActivity(searchParams.get("activity"));
   // ?building=N (from the homepage master plan) opens that building's units directly.
   const buildingParam = Number(searchParams.get("building")) || null;
+  const sectionParam = searchParams.get("section");
   const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -91,6 +95,8 @@ const Booking = () => {
     }
   }, [user, authLoading, navigate, activityFilter, buildingParam]);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  // Part of a multi-section building (أ = "a", ب = "b"); null until the customer picks one.
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
   const [savedProfile, setSavedProfile] = useState<Partial<CustomerFormData> | null>(null);
@@ -117,7 +123,7 @@ const Booking = () => {
       ? buildings.find((b) => b.number === buildingParam && (!activityFilter || buildingInActivity(b, activityFilter))) ?? null
       : null;
     if (!saved || saved.activity !== (activityFilter ?? null)) {
-      if (requested) { setSelectedBuilding(requested); setStep(2); }
+      if (requested) { setSelectedBuilding(requested); setSelectedSection(sectionParam); setStep(2); }
       return;
     }
     const restoredUnits = saved.units
@@ -126,6 +132,7 @@ const Booking = () => {
     const building = saved.building == null ? null : buildings.find((b) => b.number === saved.building) ?? null;
     setSelectedUnits(restoredUnits);
     setSelectedBuilding(building);
+    setSelectedSection(building ? saved.section ?? null : null);
     if (saved.customer) setCustomer(saved.customer);
     setPaymentPlan(saved.paymentPlan);
     if (saved.bookingId) setBookingId(saved.bookingId);
@@ -133,9 +140,14 @@ const Booking = () => {
     if (nextStep >= 3 && restoredUnits.length === 0) nextStep = building ? 2 : 1;
     if (nextStep === 5 && !saved.customer) nextStep = 4;
     if (nextStep === 2 && !building) nextStep = 1;
-    if (requested && nextStep <= 2) { setSelectedBuilding(requested); nextStep = 2; }
+    if (requested && nextStep <= 2) {
+      if (requested.number !== building?.number) setSelectedSection(sectionParam);
+      else if (sectionParam) setSelectedSection(sectionParam);
+      setSelectedBuilding(requested);
+      nextStep = 2;
+    }
     setStep(nextStep);
-  }, [isLoading, data, units, buildings, activityFilter, buildingParam]);
+  }, [isLoading, data, units, buildings, activityFilter, buildingParam, sectionParam]);
 
   useEffect(() => {
     if (!progressRestored.current) return;
@@ -143,12 +155,13 @@ const Booking = () => {
       activity: activityFilter ?? null,
       step,
       building: selectedBuilding?.number ?? null,
+      section: selectedSection,
       units: selectedUnits.map((u) => ({ b: u.buildingNumber, u: u.unitNumber })),
       customer,
       paymentPlan,
       bookingId,
     });
-  }, [activityFilter, step, selectedBuilding, selectedUnits, customer, paymentPlan, bookingId]);
+  }, [activityFilter, step, selectedBuilding, selectedSection, selectedUnits, customer, paymentPlan, bookingId]);
 
   // Once a booking was sent, leaving the page starts the next booking fresh.
   const sentBookingRef = useRef<string | null>(null);
@@ -190,6 +203,13 @@ const Booking = () => {
     [selectedBuilding, units]
   );
 
+  const buildingSections = useMemo(
+    () => (selectedBuilding ? getBuildingSections(selectedBuilding.number, buildingUnits.map((u) => u.unitNumber)) : []),
+    [selectedBuilding, buildingUnits]
+  );
+  const hasSectionChoice = buildingSections.length > 1;
+  const activeSection = hasSectionChoice ? buildingSections.find((s) => s.key === selectedSection) ?? null : null;
+
   const selectedUnitNumbers = useMemo(
     () =>
       selectedBuilding
@@ -222,12 +242,14 @@ const Booking = () => {
 
   const handleBuildingSelect = (b: Building) => {
     setSelectedBuilding(b);
+    setSelectedSection(null);
     // لا نمسح الوحدات السابقة — نسمح بالاختيار من عدة مباني
     setStep(2);
   };
 
   const goAddAnotherBuilding = () => {
     setSelectedBuilding(null);
+    setSelectedSection(null);
     setStep(1);
   };
 
@@ -456,9 +478,22 @@ const Booking = () => {
     return () => window.clearTimeout(timeout);
   }, [activityFilter, isLoading, step]);
 
+  // Picking or changing a building part brings the customer back to the top of that part.
+  const sectionScrollReady = useRef(false);
+  useEffect(() => {
+    if (!sectionScrollReady.current) { sectionScrollReady.current = true; return; }
+    if (step !== 2) return;
+    bookingContentRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [selectedSection, step]);
+
   const goBack = () => {
     if (step === 1) {
       navigate("/");
+      return;
+    }
+    // From a chosen part (أ/ب), "back" returns to the part choice first.
+    if (step === 2 && activeSection) {
+      setSelectedSection(null);
       return;
     }
     setStep((s) => Math.max(1, s - 1));
@@ -526,11 +561,36 @@ const Booking = () => {
               </StepWrap>
             )}
 
-            {step === 2 && selectedBuilding && (
+            {step === 2 && selectedBuilding && hasSectionChoice && !activeSection && (
               <StepWrap
                 title={`المبنى رقم ${selectedBuilding.number} — ${selectedBuilding.type}`}
+                desc={`المبنى ده فيه ${buildingSections.length === 2 ? "جزئين" : `${buildingSections.length} أجزاء`} — اختار الجزء اللي عاوز تحجز فيه.`}
+              >
+                <BuildingSectionPicker
+                  buildingNumber={selectedBuilding.number}
+                  sections={buildingSections}
+                  units={buildingUnits}
+                  selectedUnitNumbers={selectedUnitNumbers}
+                  activity={activityFilter}
+                  onPick={setSelectedSection}
+                />
+              </StepWrap>
+            )}
+
+            {step === 2 && selectedBuilding && (!hasSectionChoice || activeSection) && (
+              <StepWrap
+                title={`${activeSection ? activeSection.label : `المبنى رقم ${selectedBuilding.number}`} — ${selectedBuilding.type}`}
                 desc="يمكنك اختيار وحدة واحدة أو أكثر. اضغط على الوحدة لإضافتها/إزالتها، ثم اضغط متابعة."
-                aside={<BuildingLocationPreview buildingNumber={selectedBuilding.number} />}
+                aside={
+                  <div className="flex flex-col items-start gap-2">
+                    <BuildingLocationPreview buildingNumber={selectedBuilding.number} section={activeSection?.key} />
+                    {activeSection && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => setSelectedSection(null)}>
+                        تغيير الجزء (أ / ب)
+                      </Button>
+                    )}
+                  </div>
+                }
               >
                 <UnitGrid
                   buildingNumber={selectedBuilding.number}
@@ -539,6 +599,7 @@ const Booking = () => {
                   selectedUnits={selectedUnitNumbers}
                   onSelect={handleUnitToggle}
                   planImage={getPlanImage(selectedBuilding.number)}
+                  section={activeSection?.key}
                 />
 
                 {/* Sticky selection bar */}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
-import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingPlans";
+import { getPlanLayout, getBuildingSections, type BuildingSection, type PlanLayout } from "@/data/buildingPlans";
 import { Button } from "@/components/ui/button";
 import { unitAllowedForActivity, type BookingActivity } from "@/lib/bookingActivities";
 import { bookingUnitState } from "@/lib/unitStatus";
@@ -28,32 +28,32 @@ const sectionImages = import.meta.glob("@/assets/plans/section-*.svg", {
 const sectionImage = (key: string) =>
   Object.entries(sectionImages).find(([k]) => k.endsWith(`section-${key}.svg`))?.[1];
 
-export const UnitGrid = (props: UnitGridProps) => {
-  const extras = EXTRA_SECTIONS[props.buildingNumber] ?? [];
-  if (extras.length === 0) return <UnitGridSection {...props} />;
-  const usedNumbers = new Set(extras.flatMap((s) => s.layout.units.map((u) => u.unitNumber)));
-  const mainUnits = props.units.filter((u) => !usedNumbers.has(u.unitNumber));
+export const UnitGrid = ({ section, ...props }: UnitGridProps & { section?: string | null }) => {
+  const sections = getBuildingSections(props.buildingNumber, props.units.map((u) => u.unitNumber));
+  if (sections.length <= 1 && !sections[0]?.planKey) return <UnitGridSection {...props} />;
+  const renderSection = (s: BuildingSection) => {
+    const nums = new Set(s.unitNumbers);
+    return (
+      <UnitGridSection
+        {...props}
+        units={props.units.filter((u) => nums.has(u.unitNumber))}
+        planImage={s.planKey ? sectionImage(s.planKey) : props.planImage}
+        layoutOverride={s.layout}
+        planLabel={s.label}
+      />
+    );
+  };
+  // A chosen section shows only that section's plan and units.
+  const chosen = section ? sections.find((s) => s.key === section) : undefined;
+  if (chosen) return renderSection(chosen);
   return (
     <div className="space-y-10">
-      {mainUnits.length > 0 && <section className="space-y-3">
-        <h3 className="font-display text-lg font-bold">مبنى {props.buildingNumber} - أ</h3>
-        <UnitGridSection {...props} units={mainUnits} />
-      </section>}
-      {extras.map((s) => {
-        const nums = new Set(s.layout.units.map((u) => u.unitNumber));
-        return (
-          <section key={s.key} className="space-y-3">
-            <h3 className="font-display text-lg font-bold">{s.label}</h3>
-            <UnitGridSection
-              {...props}
-              units={props.units.filter((u) => nums.has(u.unitNumber))}
-              planImage={sectionImage(s.key)}
-              layoutOverride={s.layout}
-              planLabel={s.label}
-            />
-          </section>
-        );
-      })}
+      {sections.map((s) => (
+        <section key={s.key} className="space-y-3">
+          <h3 className="font-display text-lg font-bold">{s.label}</h3>
+          {renderSection(s)}
+        </section>
+      ))}
     </div>
   );
 };

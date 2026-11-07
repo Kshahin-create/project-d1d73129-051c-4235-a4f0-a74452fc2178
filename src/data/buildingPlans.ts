@@ -275,6 +275,10 @@ export function getPlanLayout(buildingNumber: number): PlanLayout | undefined {
 
 /** الجزء (ب) من مباني الورش — نفس هندسة الجزء (أ) بأرقام وحدات مختلفة. */
 export const EXTRA_SECTIONS: Record<number, { key: string; label: string; layout: PlanLayout }[]> = {
+  // 1-ب: نفس هندسة 1-أ (مقاسة من مخطط المالك) — الصف العلوي 435→446، السفلي 423→434
+  1: [{ key: "1b", label: "مبنى 1 - ب", layout: buildLayout(B1, 435, 423) }],
+  // 2-ب: الوحدات 375–398 مسجلة؛ مخطط الجزء لم يُستلم بعد فتظهر كقائمة فقط
+  2: [{ key: "2b", label: "مبنى 2 - ب", layout: buildLayout(B2, 387, 375) }],
   3: [{ key: "3b", label: "مبنى 3 - ب", layout: buildLayout(B3, 339, 327) }],
   4: [{ key: "4b", label: "مبنى 4 - ب", layout: buildLayout(B4, 291, 279) }],
   5: [{ key: "5b", label: "مبنى 5 - ب", layout: buildLayout(B5, 243, 231) }],
@@ -286,3 +290,38 @@ export const EXTRA_SECTIONS: Record<number, { key: string; label: string; layout
   16: [{ key: "16b", label: "مبنى 16 - ب", layout: buildLayout(B6, 832, 820) }],
   14: [{ key: "14b", label: "مبنى 14 - ب", layout: buildLayout(B6, 736, 724) }],
 };
+
+export interface BuildingSection {
+  /** "a" | "b" — matches the location-image section keys. */
+  key: string;
+  label: string;
+  /** Plan section key for extra sections (e.g. "1b"); undefined for the main (أ) section. */
+  planKey?: string;
+  layout?: PlanLayout;
+  unitNumbers: number[];
+}
+
+/**
+ * Splits a building's units into its sections (أ = main plan, ب = extra plan).
+ * Only sections that actually contain units are returned, so a building with
+ * a single populated section opens directly without a section choice.
+ */
+export function getBuildingSections(buildingNumber: number, unitNumbers: number[]): BuildingSection[] {
+  const extras = EXTRA_SECTIONS[buildingNumber] ?? [];
+  if (extras.length === 0) return [{ key: "a", label: `مبنى ${buildingNumber}`, unitNumbers }];
+  const extraNumbers = new Set(extras.flatMap((s) => s.layout.units.map((u) => u.unitNumber)));
+  const sections: BuildingSection[] = [
+    { key: "a", label: `مبنى ${buildingNumber} - أ`, unitNumbers: unitNumbers.filter((n) => !extraNumbers.has(n)) },
+    ...extras.map((s) => {
+      const nums = new Set(s.layout.units.map((u) => u.unitNumber));
+      return {
+        key: s.key.replace(/^\d+/, ""),
+        label: s.label,
+        planKey: s.key,
+        layout: s.layout,
+        unitNumbers: unitNumbers.filter((n) => nums.has(n)),
+      };
+    }),
+  ];
+  return sections.filter((s) => s.unitNumbers.length > 0);
+}
