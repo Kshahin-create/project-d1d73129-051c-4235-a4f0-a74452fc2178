@@ -1,12 +1,10 @@
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, ZoomIn, X, Navigation } from "lucide-react";
-import { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Building2, MapPin, Sparkles, Wrench, Cog, Navigation } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PROJECT, LOCATION } from "@/lib/config";
-import masterPlan from "@/assets/master-plan-preview.webp";
-import fullMasterPlan from "@/assets/master-plan.webp";
+import { MasterPlanMap } from "@/components/MasterPlanMap";
 import heroBg from "@/assets/hero-bg.webp";
 import overviewBg from "@/assets/overview-city.webp";
 import cityOverviewAsset from "@/assets/industrial_city_overview.webp.asset.json";
@@ -20,7 +18,6 @@ const Index = () => {
   const buildings = data?.buildings ?? [];
   const totalUnits = buildings.reduce((s, b) => s + b.totalUnits, 0);
   const availableUnits = buildings.reduce((s, b) => s + b.availableUnits, 0);
-  const [zoomed, setZoomed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,7 +120,7 @@ const Index = () => {
           <img src={overviewBg} width={1535} height={1024} decoding="async" alt="" className="h-full w-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-background/92 sm:bg-background/85 backdrop-blur-[3px]" />
         </div>
-        <div className="container-tight grid items-start gap-8 sm:gap-10 lg:grid-cols-2">
+        <div className="container-tight">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -144,7 +141,7 @@ const Index = () => {
             </p>
 
             <h3 className="mt-6 font-display text-lg font-bold">اختر نشاطك</h3>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {BOOKING_ACTIVITIES.map((activity) => {
                 const scoped = buildings.filter((building) => buildingInActivity(building, activity.key));
                 const available = scoped.reduce((sum, building) => sum + building.availableUnits, 0);
@@ -153,74 +150,20 @@ const Index = () => {
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="overflow-hidden rounded-2xl border border-border bg-card shadow-elevated"
-          >
-            <div className="flex items-center justify-between border-b border-border bg-secondary/50 px-5 py-3">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <MapPin className="h-4 w-4 text-accent" />
-                الماستر بلان الشامل
-              </div>
-              <button
-                onClick={() => setZoomed(true)}
-                className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[10px] font-medium text-primary-foreground transition hover:bg-primary/90"
-              >
-                <ZoomIn className="h-3 w-3" /> تكبير
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setZoomed(true)}
-              className="block w-full cursor-zoom-in"
-              aria-label="تكبير الماستر بلان"
-            >
-              <img
-                src={masterPlan}
-                alt="الماستر بلان الشامل للمدينة الصناعية بشمال مكة المكرمة"
-                className="w-full bg-secondary object-contain"
-                width={850}
-                height={1195}
-                loading="lazy"
-              />
-            </button>
-          </motion.div>
         </div>
 
         <div className="container-tight">
-          {/* Lightbox */}
-          <AnimatePresence>
-            {zoomed && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setZoomed(false)}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95 p-4 backdrop-blur-sm"
-              >
-                <button
-                  onClick={() => setZoomed(false)}
-                  className="absolute left-4 top-4 rounded-full bg-background/10 p-2 text-primary-foreground hover:bg-background/20"
-                  aria-label="إغلاق"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-                <motion.img
-                  initial={{ scale: 0.9 }}
-                  animate={{ scale: 1 }}
-                  src={fullMasterPlan}
-                  width={1074}
-                  height={1510}
-                  alt="الماستر بلان الشامل"
-                  onClick={(e) => e.stopPropagation()}
-                  className="max-h-full max-w-full rounded-xl object-contain shadow-elevated"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Full master plan — one button per building */}
+          <motion.div
+            id="master-plan"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-10 sm:mt-14"
+          >
+            <MasterPlanMap buildings={buildings} units={data?.units ?? []} loading={isLoading} />
+          </motion.div>
 
           {/* Land spaces visual banner — مساحات مرنة */}
           <motion.div

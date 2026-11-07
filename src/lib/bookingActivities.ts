@@ -100,8 +100,12 @@ export function classifyBookingActivity(value: string | null): BookingActivity |
   return null;
 }
 
-export function bookingRedirect(activity: BookingActivity | null): string {
-  const destination = `/booking${activity ? `?activity=${activity}` : ""}`;
+export function bookingRedirect(activity: BookingActivity | null, building?: number | null): string {
+  const params = new URLSearchParams();
+  if (activity) params.set("activity", activity);
+  if (building) params.set("building", String(building));
+  const query = params.toString();
+  const destination = `/booking${query ? `?${query}` : ""}`;
   return `/auth?redirect=${encodeURIComponent(destination)}`;
 }
 

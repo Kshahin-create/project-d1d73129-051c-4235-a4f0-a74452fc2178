@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { Unit, Building } from "@/data/types";
 import { fmtNum } from "@/lib/utils";
-import { bookingRedirect, parseBookingActivity, unitAllowedForActivity } from "@/lib/bookingActivities";
+import { bookingRedirect, buildingInActivity, parseBookingActivity, unitAllowedForActivity } from "@/lib/bookingActivities";
 import { Button } from "@/components/ui/button";
 
 const planModules = import.meta.glob("@/assets/plans/building-*.{svg,png,jpg,jpeg}", {
@@ -72,6 +72,8 @@ const Booking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activityFilter = parseBookingActivity(searchParams.get("activity"));
+  // ?building=N (from the homepage master plan) opens that building's units directly.
+  const buildingParam = Number(searchParams.get("building")) || null;
   const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -85,9 +87,9 @@ const Booking = () => {
   useEffect(() => {
     if (!authLoading && !user) {
       toast.info("سجّل دخولك أو أنشئ حساب لإتمام الحجز");
-      navigate(bookingRedirect(activityFilter));
+      navigate(bookingRedirect(activityFilter, buildingParam));
     }
-  }, [user, authLoading, navigate, activityFilter]);
+  }, [user, authLoading, navigate, activityFilter, buildingParam]);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<Unit[]>([]);
   const [customer, setCustomer] = useState<CustomerFormData | null>(null);
@@ -111,7 +113,13 @@ const Booking = () => {
     if (progressRestored.current || isLoading || !data) return;
     progressRestored.current = true;
     const saved = readBookingProgress();
-    if (!saved || saved.activity !== (activityFilter ?? null)) return;
+    const requested = buildingParam
+      ? buildings.find((b) => b.number === buildingParam && (!activityFilter || buildingInActivity(b, activityFilter))) ?? null
+      : null;
+    if (!saved || saved.activity !== (activityFilter ?? null)) {
+      if (requested) { setSelectedBuilding(requested); setStep(2); }
+      return;
+    }
     const restoredUnits = saved.units
       .map((key) => units.find((u) => u.buildingNumber === key.b && u.unitNumber === key.u))
       .filter((u): u is Unit => !!u && (saved.bookingId ? true : u.status === "available" && unitAllowedForActivity(u, activityFilter)));
@@ -125,8 +133,9 @@ const Booking = () => {
     if (nextStep >= 3 && restoredUnits.length === 0) nextStep = building ? 2 : 1;
     if (nextStep === 5 && !saved.customer) nextStep = 4;
     if (nextStep === 2 && !building) nextStep = 1;
+    if (requested && nextStep <= 2) { setSelectedBuilding(requested); nextStep = 2; }
     setStep(nextStep);
-  }, [isLoading, data, units, buildings, activityFilter]);
+  }, [isLoading, data, units, buildings, activityFilter, buildingParam]);
 
   useEffect(() => {
     if (!progressRestored.current) return;
