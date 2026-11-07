@@ -6,7 +6,6 @@ import type { Unit } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { getPlanLayout, EXTRA_SECTIONS, type PlanLayout } from "@/data/buildingPlans";
 import { Button } from "@/components/ui/button";
-import { BuildingLocationPreview } from "@/components/BuildingLocationPreview";
 import { unitAllowedForActivity, type BookingActivity } from "@/lib/bookingActivities";
 import { bookingUnitState } from "@/lib/unitStatus";
 
@@ -129,7 +128,6 @@ const UnitGridSection = ({
 
   return (
     <div className="space-y-6">
-      {layoutOverride && <BuildingLocationPreview buildingNumber={buildingNumber} section="extra" />}
       {/* Plan image with interactive overlay */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         {planImage ? (

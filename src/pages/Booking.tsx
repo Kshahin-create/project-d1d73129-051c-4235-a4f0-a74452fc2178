@@ -530,7 +530,7 @@ const Booking = () => {
               <StepWrap
                 title={`المبنى رقم ${selectedBuilding.number} — ${selectedBuilding.type}`}
                 desc="يمكنك اختيار وحدة واحدة أو أكثر. اضغط على الوحدة لإضافتها/إزالتها، ثم اضغط متابعة."
-                aside={<BuildingLocationPreview buildingNumber={selectedBuilding.number} section="a" />}
+                aside={<BuildingLocationPreview buildingNumber={selectedBuilding.number} />}
               >
                 <UnitGrid
                   buildingNumber={selectedBuilding.number}
