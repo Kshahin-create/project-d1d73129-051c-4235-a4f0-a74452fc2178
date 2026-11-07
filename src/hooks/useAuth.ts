@@ -1,99 +1,137 @@
-import { useEffect, useRef, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logAccess } from "@/lib/accessLog";
 import type { Session, User } from "@supabase/supabase-js";
 
-export const useAuth = () => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isControl, setIsControl] = useState(false);
-  const [isManager, setIsManager] = useState(false);
-  const [isTenant, setIsTenant] = useState(false);
-  const [isLeasingManager, setIsLeasingManager] = useState(false);
-  const [isSalesAgent, setIsSalesAgent] = useState(false);
-  const [isInvestor,setIsInvestor]=useState(false);
-  const [isAccountant, setIsAccountant] = useState(false);
-  const [permissions,setPermissions]=useState<Record<string,string[]>>({});
-  const activeUser=useRef<string|null>(null);
+/**
+ * One shared sign-in state for the whole app.
+ *
+ * Every page reads the same session and roles, so leaving the tab and coming back
+ * (which makes the auth client re-announce the session) never shows a page a
+ * temporary "signed out / no role" state that would redirect the user away.
+ */
+type AuthState = {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+  roles: string[];
+  permissions: Record<string, string[]>;
+};
 
-  useEffect(() => {
-    const fetchRoles = async (uid: string) => {
-      const accepted=await supabase.rpc('accept_my_staff_invitation');
-      if(accepted.error||activeUser.current!==uid)return;
-      const {data,error}=await supabase.rpc('my_permissions');
-      if(error||activeUser.current!==uid)return;
-      const result=data as unknown as {roles:string[];permissions:{capability:string;levels:string[]}[]}|null;
-      const roles=result?.roles??[];
-      setPermissions(Object.fromEntries((result?.permissions??[]).map(p=>[p.capability,p.levels])));
-      setIsAdmin(roles.includes("admin"));
-      setIsControl(roles.includes("control"));
-      setIsManager(roles.includes("manager"));
-      setIsTenant(roles.includes("tenant"));
-      setIsLeasingManager(roles.includes("leasing_manager"));
-      setIsSalesAgent(roles.includes("sales_agent"));
-      setIsAccountant(roles.includes("accountant"));
-      setIsInvestor(roles.includes("investor")||roles.includes('investor_viewer'));
-    };
+let state: AuthState = { session: null, user: null, loading: true, roles: [], permissions: {} };
+const listeners = new Set<() => void>();
+let started = false;
+let activeUser: string | null = null;
+let rolesRequest: { uid: string; promise: Promise<void> } | null = null;
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
-      const previousUser=activeUser.current;
-      const nextUser=sess?.user.id??null;
-      activeUser.current=nextUser;
-      // Clear roles only when the signed-in identity changes. Token refreshes and repeated
-      // SIGNED_IN events for the same user keep current roles while they are re-checked,
-      // so route guards never see a transient "no role" state.
-      if(previousUser!==nextUser){
-        setPermissions({});
-        setIsAdmin(false);setIsControl(false);setIsManager(false);setIsTenant(false);
-        setIsLeasingManager(false);setIsSalesAgent(false);setIsAccountant(false);setIsInvestor(false);
-        setLoading(nextUser!==null);
-      }
-      setSession(sess);
-      setUser(sess?.user ?? null);
-      if (event === "SIGNED_IN" && sess?.user) {
-        const key = `access_logged_${sess.user.id}_${sess.access_token.slice(-12)}`;
-        if (!sessionStorage.getItem(key)) {
-          sessionStorage.setItem(key, "1");
-          logAccess("sign_in", {
-            user_id: sess.user.id,
-            email: sess.user.email ?? null,
-            phone: sess.user.phone ?? null,
+const setState = (patch: Partial<AuthState>) => {
+  state = { ...state, ...patch };
+  listeners.forEach((listener) => listener());
+};
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Loads roles for the given user; retries temporary network failures (common right after
+// the phone wakes the tab) instead of treating the user as having no role.
+const loadRoles = (uid: string): Promise<void> => {
+  if (rolesRequest?.uid === uid) return rolesRequest.promise;
+  const promise = (async () => {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (activeUser !== uid) return;
+      const accepted = await supabase.rpc("accept_my_staff_invitation");
+      if (activeUser !== uid) return;
+      if (!accepted.error) {
+        const { data, error } = await supabase.rpc("my_permissions");
+        if (activeUser !== uid) return;
+        if (!error) {
+          const result = data as unknown as { roles: string[]; permissions: { capability: string; levels: string[] }[] } | null;
+          setState({
+            roles: result?.roles ?? [],
+            permissions: Object.fromEntries((result?.permissions ?? []).map((p) => [p.capability, p.levels])),
           });
+          return;
         }
       }
-      if (sess?.user) {
-        const uid=sess.user.id;
-        setTimeout(() => { void fetchRoles(uid).finally(()=>{ if(activeUser.current===uid) setLoading(false); }); }, 0);
-      } else {
-        setIsAdmin(false);
-        setIsControl(false);
-        setIsManager(false);
-        setIsTenant(false);
-        setIsLeasingManager(false);
-        setIsSalesAgent(false);
-        setIsAccountant(false);
-        setIsInvestor(false);
-        setPermissions({});
+      await wait(600 * (attempt + 1));
+    }
+  })().finally(() => {
+    if (rolesRequest?.promise === promise) rolesRequest = null;
+    if (activeUser === uid && state.loading) setState({ loading: false });
+  });
+  rolesRequest = { uid, promise };
+  return promise;
+};
+
+const applySession = (sess: Session | null) => {
+  const nextUser = sess?.user.id ?? null;
+  const identityChanged = nextUser !== activeUser;
+  activeUser = nextUser;
+  if (identityChanged) {
+    // Only a different person (or sign-out) clears roles and shows loading.
+    setState({ session: sess, user: sess?.user ?? null, roles: [], permissions: {}, loading: nextUser !== null });
+  } else {
+    // Same person: keep the same user object so pages don't reset their forms.
+    setState({ session: sess });
+  }
+  if (nextUser) void loadRoles(nextUser);
+};
+
+const start = () => {
+  if (started) return;
+  started = true;
+
+  supabase.auth.onAuthStateChange((event, sess) => {
+    if (event === "SIGNED_IN" && sess?.user) {
+      const key = `access_logged_${sess.user.id}_${sess.access_token.slice(-12)}`;
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        logAccess("sign_in", {
+          user_id: sess.user.id,
+          email: sess.user.email ?? null,
+          phone: sess.user.phone ?? null,
+        });
       }
-    });
+    }
+    if (event === "USER_UPDATED" && sess?.user && sess.user.id === activeUser) {
+      setState({ user: sess.user });
+    }
+    // Defer so we never call the auth client from inside its own callback.
+    setTimeout(() => applySession(sess), 0);
+  });
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      activeUser.current=data.session?.user.id??null;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        await fetchRoles(data.session.user.id);
-      }
-      setLoading(false);
-    });
+  supabase.auth.getSession().then(({ data }) => {
+    applySession(data.session);
+    if (!data.session) setState({ loading: false });
+  });
+};
 
-    return () => sub.subscription.unsubscribe();
-  }, []);
+const subscribe = (listener: () => void) => {
+  start();
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
+const getSnapshot = () => state;
 
+export const useAuth = () => {
+  const { session, user, loading, roles, permissions } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const isAdmin = roles.includes("admin");
   // Manager is read-only: only admins can perform write actions on admin surfaces.
   const canEdit = isAdmin;
-  const can=(capability:string,level='view')=>permissions[capability]?.includes(level)??false;
-  return { session, user, loading, isAdmin, isControl, isManager, isTenant, isLeasingManager, isSalesAgent, isAccountant, isInvestor, canEdit,can,permissions };
+  const can = (capability: string, level = "view") => permissions[capability]?.includes(level) ?? false;
+  return {
+    session,
+    user,
+    loading,
+    isAdmin,
+    isControl: roles.includes("control"),
+    isManager: roles.includes("manager"),
+    isTenant: roles.includes("tenant"),
+    isLeasingManager: roles.includes("leasing_manager"),
+    isSalesAgent: roles.includes("sales_agent"),
+    isAccountant: roles.includes("accountant"),
+    isInvestor: roles.includes("investor") || roles.includes("investor_viewer"),
+    canEdit,
+    can,
+    permissions,
+  };
 };

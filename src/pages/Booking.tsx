@@ -38,6 +38,34 @@ function getPlanImage(buildingNumber: number): string | undefined {
 }
 
 const STEPS = ["المبنى", "الوحدات", "التفاصيل", "بياناتك", "الإرسال"];
+const PROGRESS_KEY = "booking_progress_v1";
+type BookingProgress = {
+  activity: string | null;
+  step: number;
+  building: number | null;
+  units: { b: number; u: number }[];
+  customer: CustomerFormData | null;
+  paymentPlan: "full" | "70" | "50";
+  bookingId: string | null;
+};
+function readBookingProgress(): BookingProgress | null {
+  try {
+    const raw = sessionStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as BookingProgress;
+    if (typeof p.step !== "number" || p.step < 1 || p.step > 5 || !Array.isArray(p.units)) return null;
+    return p;
+  } catch {
+    return null;
+  }
+}
+function writeBookingProgress(p: BookingProgress) {
+  try {
+    sessionStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  } catch {
+    // storage full or blocked: progress just won't survive a reload
+  }
+}
 const FORM_ID = "customer-booking-form";
 
 const Booking = () => {
@@ -75,6 +103,50 @@ const Booking = () => {
   useEffect(() => {
     setSelectedUnits((previous) => previous.filter((unit) => unitAllowedForActivity(unit, activityFilter)));
   }, [activityFilter]);
+
+  // Keep booking progress for this browser tab, so a phone that reloads the page
+  // after switching apps returns the customer to the same step and selections.
+  const progressRestored = useRef(false);
+  useEffect(() => {
+    if (progressRestored.current || isLoading || !data) return;
+    progressRestored.current = true;
+    const saved = readBookingProgress();
+    if (!saved || saved.activity !== (activityFilter ?? null)) return;
+    const restoredUnits = saved.units
+      .map((key) => units.find((u) => u.buildingNumber === key.b && u.unitNumber === key.u))
+      .filter((u): u is Unit => !!u && (saved.bookingId ? true : u.status === "available" && unitAllowedForActivity(u, activityFilter)));
+    const building = saved.building == null ? null : buildings.find((b) => b.number === saved.building) ?? null;
+    setSelectedUnits(restoredUnits);
+    setSelectedBuilding(building);
+    if (saved.customer) setCustomer(saved.customer);
+    setPaymentPlan(saved.paymentPlan);
+    if (saved.bookingId) setBookingId(saved.bookingId);
+    let nextStep = saved.step;
+    if (nextStep >= 3 && restoredUnits.length === 0) nextStep = building ? 2 : 1;
+    if (nextStep === 5 && !saved.customer) nextStep = 4;
+    if (nextStep === 2 && !building) nextStep = 1;
+    setStep(nextStep);
+  }, [isLoading, data, units, buildings, activityFilter]);
+
+  useEffect(() => {
+    if (!progressRestored.current) return;
+    writeBookingProgress({
+      activity: activityFilter ?? null,
+      step,
+      building: selectedBuilding?.number ?? null,
+      units: selectedUnits.map((u) => ({ b: u.buildingNumber, u: u.unitNumber })),
+      customer,
+      paymentPlan,
+      bookingId,
+    });
+  }, [activityFilter, step, selectedBuilding, selectedUnits, customer, paymentPlan, bookingId]);
+
+  // Once a booking was sent, leaving the page starts the next booking fresh.
+  const sentBookingRef = useRef<string | null>(null);
+  sentBookingRef.current = bookingId;
+  useEffect(() => () => {
+    if (sentBookingRef.current) sessionStorage.removeItem(PROGRESS_KEY);
+  }, []);
 
   // Fetch saved customer profile when user logs in
   useEffect(() => {
