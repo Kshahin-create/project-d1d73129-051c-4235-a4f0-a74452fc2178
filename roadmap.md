@@ -1,3 +1,11 @@
+# Platform changes file — staged delivery (user reviews after each stage)
+- [ ] Stage 1 — Customers: unified parties, computed type, single upsert with phone-key dedupe, auto-link interested/leads, edit with before/after, close reasons, 10 no-answer auto-close, duplicate/merge/unmerge, optional owner + shared team tasks, do-not-contact, import batches with preview, three pages.
+- [ ] Stage 2 — Permissions & security (sales scope, finance admin/accountant only in RLS, revoke TRUNCATE).
+- [ ] Stage 3 — Phone +966 fixed and identity validation in UI + DB; normalize old numbers with review list.
+- [ ] Stage 4 — Per-unit installments, payment auto/manual allocation, finance tab, payment documents, customer documents.
+- [ ] Stage 5 — Bookings page (active default filter, re-book, test bookings hidden, hide generated emails, sales restrictions).
+- [ ] Stage 6 — UI fixes (customer list columns/filters, party header/actions, name review list, pipeline board, sidebar).
+
 # Opportunity board Excel and Sheets
 - [x] Inspect pipeline export, existing Sheets settings and connector availability; user chose a new tab in the current full-system sheet.
 - [x] Plan approved; existing Google Sheets connection successfully linked and app credential path verified against current full-system spreadsheet.

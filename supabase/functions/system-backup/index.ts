@@ -24,6 +24,21 @@ const TABLES = [
   "suppressed_emails",
   "email_send_log",
   "system_backups",
+  "interested_customers",
+  "parties",
+  "party_contacts",
+  "party_activities",
+  "opportunities",
+  "opportunity_activities",
+  "opportunity_owner_history",
+  "duplicate_candidates",
+  "contracts",
+  "contract_units",
+  "installments",
+  "receipts",
+  "receipt_allocations",
+  "unit_collections",
+  "tasks",
 ];
 
 const BUCKET = "system-backups";
