@@ -38,10 +38,18 @@ export const useAuth = () => {
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
-      activeUser.current=sess?.user.id??null;
-      setPermissions({});
-      setIsAdmin(false);setIsControl(false);setIsManager(false);setIsTenant(false);
-      setIsLeasingManager(false);setIsSalesAgent(false);setIsAccountant(false);setIsInvestor(false);
+      const previousUser=activeUser.current;
+      const nextUser=sess?.user.id??null;
+      activeUser.current=nextUser;
+      // Clear roles only when the signed-in identity changes. Token refreshes and repeated
+      // SIGNED_IN events for the same user keep current roles while they are re-checked,
+      // so route guards never see a transient "no role" state.
+      if(previousUser!==nextUser){
+        setPermissions({});
+        setIsAdmin(false);setIsControl(false);setIsManager(false);setIsTenant(false);
+        setIsLeasingManager(false);setIsSalesAgent(false);setIsAccountant(false);setIsInvestor(false);
+        setLoading(nextUser!==null);
+      }
       setSession(sess);
       setUser(sess?.user ?? null);
       if (event === "SIGNED_IN" && sess?.user) {
@@ -56,7 +64,8 @@ export const useAuth = () => {
         }
       }
       if (sess?.user) {
-        setTimeout(() => fetchRoles(sess.user.id), 0);
+        const uid=sess.user.id;
+        setTimeout(() => { void fetchRoles(uid).finally(()=>{ if(activeUser.current===uid) setLoading(false); }); }, 0);
       } else {
         setIsAdmin(false);
         setIsControl(false);
