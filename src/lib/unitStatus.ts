@@ -26,9 +26,15 @@ export function legacyUnitStatus(status: string | null | undefined): "available"
 }
 
 // Public display is derived from leasing status, never from viewer roles or tenant data.
-export function bookingUnitState(status: string | null | undefined, activityAllowed = true) {
+// legacyStatus only colors unresolved records as reserved/leased; it never makes a unit selectable.
+export function bookingUnitState(status: string | null | undefined, activityAllowed = true, legacyStatus?: string | null) {
   const known = Object.prototype.hasOwnProperty.call(UNIT_STATUS_LABELS, status ?? "")
     ? status as keyof typeof UNIT_STATUS_LABELS : "review";
+  if (known === "review" && (legacyStatus === "reserved" || legacyStatus === "rented")) {
+    const leased = legacyStatus === "rented";
+    return { state: known, label: leased ? UNIT_STATUS_LABELS.leased : "محجوزة", selectable: false,
+      kind: leased ? "leased" as const : "reserved" as const };
+  }
   // Preserve real occupancy/maintenance/review before applying activity-only restrictions.
   const activityReserved = known === "available" && !activityAllowed;
   const state = activityReserved ? "on_hold" : known;

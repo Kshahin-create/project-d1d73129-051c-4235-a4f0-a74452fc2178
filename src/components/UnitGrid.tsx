@@ -80,7 +80,7 @@ const UnitGridSection = ({
     layout?.units.map((area) => {
       const unit = unitsByNumber.get(area.unitNumber);
       if (!unit) return null;
-      const display = bookingUnitState(unit.leasingStatus, unitAllowedForActivity(unit, activity));
+      const display = bookingUnitState(unit.leasingStatus, unitAllowedForActivity(unit, activity), unit.legacyStatus);
       const isRented = display.kind === "leased";
       const isReserved = display.kind === "reserved";
       const isLocked = !display.selectable;
@@ -102,11 +102,11 @@ const UnitGridSection = ({
             "absolute box-border flex min-h-0 items-center justify-center rounded-none border p-0 text-[10px] font-bold transition-colors duration-200 disabled:opacity-100 sm:text-xs [&_svg]:size-3",
             "focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
             isRented && "cursor-not-allowed border-background bg-destructive/95 text-primary-foreground",
-            isReserved && "cursor-not-allowed border-background bg-foreground/95 text-background",
-            display.kind === "unavailable" && "cursor-not-allowed border-foreground/60 bg-secondary/95 text-secondary-foreground",
+            isReserved && "cursor-not-allowed border-background bg-accent/95 text-accent-foreground",
+            display.kind === "unavailable" && "cursor-not-allowed border-background bg-muted-foreground/90 text-background",
             !isLocked && !isSelected &&
-              "border-primary/60 bg-background/85 text-foreground hover:bg-accent/80 hover:text-accent-foreground",
-            !isLocked && isSelected && "border-accent-foreground bg-accent/95 text-accent-foreground",
+              "border-2 border-success bg-background/55 text-foreground hover:bg-success/40",
+            !isLocked && isSelected && "border-primary-foreground bg-primary/95 text-primary-foreground",
             isHovered && !isSelected && !isLocked && "z-10"
           )}
           style={{
@@ -187,11 +187,11 @@ const UnitGridSection = ({
 
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
-        <LegendDot colorClass="bg-background border-2 border-primary/60" label="متاح" />
-        <LegendDot colorClass="bg-accent border-2 border-accent" label="مختار" />
-        <LegendDot colorClass="bg-foreground border-2 border-foreground text-background" label="محجوز" icon={<Lock className="h-3 w-3" />} />
+        <LegendDot colorClass="bg-success/15 border-2 border-success" label="متاح" />
+        <LegendDot colorClass="bg-primary border-2 border-primary" label="مختار" />
+        <LegendDot colorClass="bg-accent border-2 border-accent text-accent-foreground" label="محجوز" icon={<Lock className="h-3 w-3" />} />
         <LegendDot colorClass="bg-destructive border-2 border-destructive text-primary-foreground" label="مؤجر" icon={<Lock className="h-3 w-3" />} />
-        {units.some(u => bookingUnitState(u.leasingStatus).kind === "unavailable") && <LegendDot colorClass="bg-secondary border-2 border-foreground/60 text-secondary-foreground" label="غير متاح" icon={<Lock className="h-3 w-3" />} />}
+        {units.some(u => bookingUnitState(u.leasingStatus, true, u.legacyStatus).kind === "unavailable") && <LegendDot colorClass="bg-muted-foreground border-2 border-muted-foreground text-background" label="غير متاح" icon={<Lock className="h-3 w-3" />} />}
       </div>
 
       {/* Units grid (alternative quick selection) */}
@@ -199,7 +199,7 @@ const UnitGridSection = ({
         <h4 className="mb-3 font-display font-bold">أو اختر رقم الوحدة من القائمة</h4>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {units.map((u) => {
-            const display = bookingUnitState(u.leasingStatus, unitAllowedForActivity(u, activity));
+            const display = bookingUnitState(u.leasingStatus, unitAllowedForActivity(u, activity), u.legacyStatus);
             const isRented = display.kind === "leased";
             const isReserved = display.kind === "reserved";
             const isLocked = !display.selectable;
@@ -219,10 +219,10 @@ const UnitGridSection = ({
                   isRented &&
                     "cursor-not-allowed border-destructive bg-destructive/10 text-foreground",
                   isReserved &&
-                    "cursor-not-allowed border-foreground bg-foreground/10 text-foreground",
-                  display.kind === "unavailable" && "cursor-not-allowed border-foreground/60 bg-secondary text-secondary-foreground",
+                    "cursor-not-allowed border-accent bg-accent/15 text-foreground",
+                  display.kind === "unavailable" && "cursor-not-allowed border-muted-foreground/60 bg-muted text-muted-foreground",
                   !isLocked && !isSelected &&
-                    "border-border bg-card hover:border-primary hover:shadow-card",
+                    "border-success/60 bg-success/10 hover:border-success hover:shadow-card",
                   isSelected &&
                     "border-primary bg-primary text-primary-foreground shadow-elevated"
                 )}

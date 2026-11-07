@@ -84,6 +84,7 @@ export const useBuildingsAndUnits = () => {
           price: Number(u.price),
           status: u.leasing_status === "maintenance" ? "reserved" : legacyUnitStatus(u.leasing_status) as Unit["status"],
           leasingStatus: u.leasing_status,
+          legacyStatus: u.status ?? null,
           tenant: tenantInfo?.name ?? bookingNameByUnitId.get(u.id)?.name ?? null,
         };
       });

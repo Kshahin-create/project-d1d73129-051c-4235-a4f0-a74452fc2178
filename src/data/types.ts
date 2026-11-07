@@ -9,6 +9,8 @@ export interface Unit {
   price: number;
   status: "available" | "rented" | "reserved";
   leasingStatus?: string | null;
+  /** Legacy status, display-only for unresolved leasing states. */
+  legacyStatus?: string | null;
   tenant: string | null;
 }
 

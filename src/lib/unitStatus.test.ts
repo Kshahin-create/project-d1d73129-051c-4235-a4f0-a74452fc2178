@@ -37,3 +37,14 @@ describe("public booking availability", () => {
     expect(bookingUnitState(state, false)).toEqual(bookingUnitState(state, true));
   });
 });
+describe("legacy reserved display", () => {
+  it("shows unresolved units recorded as reserved in the reserved color, never selectable", () => {
+    expect(bookingUnitState(null, true, "reserved")).toMatchObject({ kind: "reserved", label: "محجوزة", selectable: false });
+  });
+  it("shows unresolved units recorded as rented as leased", () => {
+    expect(bookingUnitState(null, true, "rented")).toMatchObject({ kind: "leased", selectable: false });
+  });
+  it("never lets a legacy available status make an unresolved unit selectable", () => {
+    expect(bookingUnitState(null, true, "available")).toMatchObject({ kind: "unavailable", selectable: false });
+  });
+});
