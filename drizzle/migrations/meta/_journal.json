@@ -547,6 +547,27 @@
       "when": 1794017214806,
       "tag": "0077_metrics_legacy_finance",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1794022891750,
+      "tag": "0078_stage1_unified_customers",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1794022954104,
+      "tag": "0079_stage1_party_regression_tests",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1794022998347,
+      "tag": "0080_stage1_party_staff_options",
+      "breakpoints": true
     }
   ]
 }

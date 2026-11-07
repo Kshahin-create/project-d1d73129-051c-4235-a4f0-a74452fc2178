@@ -2020,17 +2020,29 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           city: string | null
+          close_reason: string | null
+          closed_at: string | null
+          closed_by: string | null
           created_at: string
           created_by: string | null
+          do_not_contact: boolean
+          do_not_contact_at: string | null
+          do_not_contact_by: string | null
+          do_not_contact_reason: string | null
+          duplicate_of_id: string | null
           email: string | null
           id: string
           id_number: string | null
           id_type: string | null
+          interested_at: string | null
           merged_into_id: string | null
           name_ar: string
           name_en: string | null
+          owner_user_id: string | null
           party_type: Database["public"]["Enums"]["party_type"]
           phone: string | null
+          phone_key: string | null
+          reopened_at: string | null
           source: string | null
           tenant_code: string
           tenant_lifecycle:
@@ -2043,17 +2055,29 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
+          close_reason?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           created_by?: string | null
+          do_not_contact?: boolean
+          do_not_contact_at?: string | null
+          do_not_contact_by?: string | null
+          do_not_contact_reason?: string | null
+          duplicate_of_id?: string | null
           email?: string | null
           id?: string
           id_number?: string | null
           id_type?: string | null
+          interested_at?: string | null
           merged_into_id?: string | null
           name_ar: string
           name_en?: string | null
+          owner_user_id?: string | null
           party_type?: Database["public"]["Enums"]["party_type"]
           phone?: string | null
+          phone_key?: string | null
+          reopened_at?: string | null
           source?: string | null
           tenant_code: string
           tenant_lifecycle?:
@@ -2066,17 +2090,29 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
+          close_reason?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           created_by?: string | null
+          do_not_contact?: boolean
+          do_not_contact_at?: string | null
+          do_not_contact_by?: string | null
+          do_not_contact_reason?: string | null
+          duplicate_of_id?: string | null
           email?: string | null
           id?: string
           id_number?: string | null
           id_type?: string | null
+          interested_at?: string | null
           merged_into_id?: string | null
           name_ar?: string
           name_en?: string | null
+          owner_user_id?: string | null
           party_type?: Database["public"]["Enums"]["party_type"]
           phone?: string | null
+          phone_key?: string | null
+          reopened_at?: string | null
           source?: string | null
           tenant_code?: string
           tenant_lifecycle?:
@@ -2085,6 +2121,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "parties_duplicate_of_id_fkey"
+            columns: ["duplicate_of_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parties_duplicate_of_id_fkey"
+            columns: ["duplicate_of_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "parties_merged_into_id_fkey"
             columns: ["merged_into_id"]
@@ -2215,6 +2265,189 @@ export type Database = {
           {
             foreignKeyName: "party_contacts_party_id_fkey"
             columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      party_import_batches: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          id: string
+          owner_user_id: string | null
+          source: string
+          status: string
+          summary: Json
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          owner_user_id?: string | null
+          source: string
+          status?: string
+          summary?: Json
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          owner_user_id?: string | null
+          source?: string
+          status?: string
+          summary?: Json
+        }
+        Relationships: []
+      }
+      party_import_rows: {
+        Row: {
+          action: string
+          applied: boolean
+          batch_id: string
+          city: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          id_number: string | null
+          id_type: string | null
+          notes: string | null
+          party_id: string | null
+          phone: string | null
+          phone_key: string | null
+          reason: string | null
+          row_no: number
+        }
+        Insert: {
+          action: string
+          applied?: boolean
+          batch_id: string
+          city?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          id_number?: string | null
+          id_type?: string | null
+          notes?: string | null
+          party_id?: string | null
+          phone?: string | null
+          phone_key?: string | null
+          reason?: string | null
+          row_no: number
+        }
+        Update: {
+          action?: string
+          applied?: boolean
+          batch_id?: string
+          city?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          id_number?: string | null
+          id_type?: string | null
+          notes?: string | null
+          party_id?: string | null
+          phone?: string | null
+          phone_key?: string | null
+          reason?: string | null
+          row_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_import_rows_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "party_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_import_rows_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_import_rows_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      party_merges: {
+        Row: {
+          from_party_id: string
+          id: string
+          into_party_id: string
+          merged_at: string
+          merged_by: string | null
+          moved: Json
+          reason: string
+          undo_reason: string | null
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          from_party_id: string
+          id?: string
+          into_party_id: string
+          merged_at?: string
+          merged_by?: string | null
+          moved?: Json
+          reason: string
+          undo_reason?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          from_party_id?: string
+          id?: string
+          into_party_id?: string
+          merged_at?: string
+          merged_by?: string | null
+          moved?: Json
+          reason?: string
+          undo_reason?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_merges_from_party_id_fkey"
+            columns: ["from_party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_merges_from_party_id_fkey"
+            columns: ["from_party_id"]
+            isOneToOne: false
+            referencedRelation: "parties_crm"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_merges_into_party_id_fkey"
+            columns: ["into_party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_merges_into_party_id_fkey"
+            columns: ["into_party_id"]
             isOneToOne: false
             referencedRelation: "parties_crm"
             referencedColumns: ["id"]
@@ -5109,6 +5342,109 @@ export type Database = {
         Args: { _audience: string; _scope: Json }
         Returns: Json
       }
+      _party_find: {
+        Args: { _id_number: string; _phone_key: string }
+        Returns: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
+          city: string | null
+          close_reason: string | null
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          created_by: string | null
+          do_not_contact: boolean
+          do_not_contact_at: string | null
+          do_not_contact_by: string | null
+          do_not_contact_reason: string | null
+          duplicate_of_id: string | null
+          email: string | null
+          id: string
+          id_number: string | null
+          id_type: string | null
+          interested_at: string | null
+          merged_into_id: string | null
+          name_ar: string
+          name_en: string | null
+          owner_user_id: string | null
+          party_type: Database["public"]["Enums"]["party_type"]
+          phone: string | null
+          phone_key: string | null
+          reopened_at: string | null
+          source: string | null
+          tenant_code: string
+          tenant_lifecycle:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "parties"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _party_insert: {
+        Args: {
+          _city: string
+          _email: string
+          _id_number: string
+          _id_type: string
+          _interested: boolean
+          _name: string
+          _owner: string
+          _party_type: Database["public"]["Enums"]["party_type"]
+          _phone: string
+          _source: string
+        }
+        Returns: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
+          city: string | null
+          close_reason: string | null
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          created_by: string | null
+          do_not_contact: boolean
+          do_not_contact_at: string | null
+          do_not_contact_by: string | null
+          do_not_contact_reason: string | null
+          duplicate_of_id: string | null
+          email: string | null
+          id: string
+          id_number: string | null
+          id_type: string | null
+          interested_at: string | null
+          merged_into_id: string | null
+          name_ar: string
+          name_en: string | null
+          owner_user_id: string | null
+          party_type: Database["public"]["Enums"]["party_type"]
+          phone: string | null
+          phone_key: string | null
+          reopened_at: string | null
+          source: string | null
+          tenant_code: string
+          tenant_lifecycle:
+            | Database["public"]["Enums"]["tenant_lifecycle"]
+            | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "parties"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _party_json: {
+        Args: { _p: Database["public"]["Tables"]["parties"]["Row"] }
+        Returns: Json
+      }
       _safety_audit: {
         Args: {
           _action: string
@@ -5525,6 +5861,10 @@ export type Database = {
       control_set_maintenance: {
         Args: { _on: boolean; _unit_id: string }
         Returns: string
+      }
+      convert_target_to_interested: {
+        Args: { _id: string; _note?: string }
+        Returns: Json
       }
       create_booking:
         | {
@@ -5951,6 +6291,87 @@ export type Database = {
           _search?: string
           _source?: string
           _stage?: string
+        }
+        Returns: Json
+      }
+      party_can_write: { Args: never; Returns: boolean }
+      party_close: {
+        Args: { _id: string; _note?: string; _reason: string }
+        Returns: Json
+      }
+      party_directory_page: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _owner?: string
+          _search?: string
+          _status?: string
+        }
+        Returns: Json
+      }
+      party_get: { Args: { _id: string }; Returns: Json }
+      party_history: {
+        Args: { _id: string; _limit?: number; _offset?: number }
+        Returns: Json
+      }
+      party_import_apply: { Args: { _batch: string }; Returns: Json }
+      party_import_cancel: { Args: { _batch: string }; Returns: undefined }
+      party_import_preview: {
+        Args: {
+          _file_name: string
+          _owner?: string
+          _rows: Json
+          _source: string
+        }
+        Returns: Json
+      }
+      party_mark_duplicate: {
+        Args: { _id: string; _original: string; _reason: string }
+        Returns: Json
+      }
+      party_merge: {
+        Args: { _from: string; _into: string; _reason: string }
+        Returns: Json
+      }
+      party_phone_key: { Args: { _phone: string }; Returns: string }
+      party_regression_tests: { Args: { _sales_user?: string }; Returns: Json }
+      party_restore_duplicate: {
+        Args: { _id: string; _reason: string }
+        Returns: Json
+      }
+      party_set_do_not_contact: {
+        Args: { _id: string; _on: boolean; _reason: string }
+        Returns: Json
+      }
+      party_set_owner: {
+        Args: { _id: string; _owner: string; _reason?: string }
+        Returns: Json
+      }
+      party_staff_options: { Args: never; Returns: Json }
+      party_status: {
+        Args: { _p: Database["public"]["Tables"]["parties"]["Row"] }
+        Returns: string
+      }
+      party_unmerge: {
+        Args: { _merge_id: string; _reason: string }
+        Returns: Json
+      }
+      party_update: {
+        Args: { _id: string; _patch: Json; _reason?: string }
+        Returns: Json
+      }
+      party_upsert: {
+        Args: {
+          _city?: string
+          _email?: string
+          _id_number?: string
+          _id_type?: string
+          _interested?: boolean
+          _name: string
+          _owner?: string
+          _party_type?: Database["public"]["Enums"]["party_type"]
+          _phone?: string
+          _source?: string
         }
         Returns: Json
       }
